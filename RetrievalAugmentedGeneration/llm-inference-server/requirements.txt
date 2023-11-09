@@ -1,0 +1,7 @@
+jinja2
+langchain
+numpy
+protobuf
+requests
+tritonclient[all]
+pyyaml
