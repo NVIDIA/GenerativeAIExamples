@@ -1,0 +1,9 @@
+/**
+ * Ensure the root HTML nodes fill the screen
+ */
+html,
+body,
+#__next,
+[data-testid="kui-theme"] {
+  height: 100%;
+}
