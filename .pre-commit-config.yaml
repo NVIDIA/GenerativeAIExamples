@@ -1,0 +1,11 @@
+repos:
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.4.2
+    hooks:
+      - id: insert-license
+        files: ^RetrievalAugmentedGeneration/
+        exclude: ^RetrievalAugmentedGeneration/llm-inference-server/conversion_scripts/|^RetrievalAugmentedGeneration/llm-inference-server/ensemble_models
+        types: [python]
+        args:
+          - --license-filepath
+          - RetrievalAugmentedGeneration/LICENSE.md

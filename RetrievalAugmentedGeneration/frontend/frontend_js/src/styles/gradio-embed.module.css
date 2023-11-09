@@ -1,0 +1,13 @@
+.gradioPortal {
+    min-width: 85%;
+    width: 1px;
+    border: 0px;
+    height: 100%;
+    padding: 5px;
+}
+
+.gradioPortalWrapper {
+    text-align: center;
+    margin: 10px;
+    height: 100%;
+}

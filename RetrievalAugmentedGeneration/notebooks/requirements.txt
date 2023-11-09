@@ -1,0 +1,14 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+langchain==0.0.330
+tritonclient[all]==2.39.0
+unstructured[all-docs]==0.10.28
+sentence-transformers==2.2.2
+llama-index==0.8.28
+dataclass-wizard==0.22.2
+opencv-python==4.8.0.74
+llama-hub==0.0.43
+pymilvus==2.3.1
+jupyterlab==4.0.8
+openai==0.28.1
