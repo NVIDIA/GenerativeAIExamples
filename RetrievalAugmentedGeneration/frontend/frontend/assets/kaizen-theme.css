@@ -1,0 +1,13 @@
+.tabitem {
+    background-color: var(--block-background-fill);
+  }
+
+  .gradio-container {
+    /* This needs to be !important, otherwise the breakpoint override the container being full width */
+    max-width: 100%  !important;
+    padding: 10px !important;
+  }
+
+  footer {
+    visibility: hidden;
+  }

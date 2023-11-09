@@ -1,0 +1,25 @@
+# Python Exclusions
+.venv
+__pycache__
+
+# Sphinx Exclusions
+_build
+
+# Helm Exclusions
+**/charts/*.tgz
+
+# project temp files
+deploy/*.log
+deploy/*.txt
+**/my.*
+**/my-*
+
+# Next JS Exclusions
+**/.next
+frontend/frontend_js/out
+frontend-sdxl/frontend_js/out
+**/node_modules
+
+# Docker Compose exclusions
+volumes/
+uploaded_files/
