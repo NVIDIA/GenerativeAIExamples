@@ -1,5 +1,5 @@
-ARG BASE_IMAGE_URL=nvcr.io/ea-bignlp/beta-inf-prerelease/infer
-ARG BASE_IMAGE_TAG=23.10.v3
+ARG BASE_IMAGE_URL=nvcr.io/ea-bignlp/ga-participants/nemofw-inference
+ARG BASE_IMAGE_TAG=23.10
 
 FROM ${BASE_IMAGE_URL}:${BASE_IMAGE_TAG}
 
