@@ -4,10 +4,10 @@
 **Project Goal**: An external reference for a chatbot to question answer off public press releases & tech blogs. Performs document ingestion & Q&A interface using best open models in any cloud or customer datacenter, leverages the power of GPU-accelerated Milvus for efficient vector storage and retrieval, along with TRT-LLM, to achieve lightning-fast inference speeds with custom LangChain LLM wrapper.
 
 ## Components
-- **LLM**: Llama2 -- 7b, 13b, and 70b all supported. 13b and 70b generate good responses. Wanted best open-source model available at the time of creation.
-- **LLM Backend**: TRT-LLM for speed.
+- **LLM**: [Llama2](https://ai.meta.com/llama/) - 7b, 13b, and 70b all supported. 13b and 70b generate good responses. Wanted best open-source model available at the time of creation.
+- **LLM Backend**: Nemo framework inference container with TRT-LLM backend for speed.
 - **Vector DB**: Milvus because it's GPU accelerated.
-- **Embedding Model**: e5-large-v2 since it appeared to be one of the best embedding model available at the moment.
+- **Embedding Model**: [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) since it is one of the best embedding model available at the moment.
 - **Framework(s)**: LangChain and LlamaIndex.
 
 This reference workflow uses a variety of components and services to customize and deploy the RAG based chatbot. The following diagram illustrates how they work together. Refer to the [detailed architecture guide](./docs/architecture.md) to understand more about these components and how they are tied together.
@@ -15,6 +15,8 @@ This reference workflow uses a variety of components and services to customize a
 
 ![Diagram](./../RetrievalAugmentedGeneration/images/image3.jpg)
 
+*Note:*
+We've used [Llama2](https://ai.meta.com/llama/) and [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) models as example defaults in this workflow, you should ensure that both the LLM and embedding model are appropriate for your use case, and validate that they are secure and have not been tampered with prior to use.
 
 # Getting Started
 This section covers step by step guide to setup and try out this example workflow.
