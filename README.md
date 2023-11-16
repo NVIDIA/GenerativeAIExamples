@@ -34,6 +34,6 @@ This AI Workflow includes different examples illustrating generative AI workflow
 - [Retrieval Augmented Generation](./RetrievalAugmentedGeneration/README.md): A reference RAG workflow to a chatbot which can answer questions off public press releases & tech blogs.
 
 *Note::*
-- This project is releasing a [sample dataset](./RetrievalAugmentedGeneration/notebooks/dataset.zip) to quickly get started with the Retrieval Augmented Generation(RAG) workflow under [NVIDIA Asset License Agreement](./RetrievalAugmentedGeneration/notebooks/LICENSE.NSCL). Review the license terms and agree before using the dataset.
+- The datasets provided as part of this project is under a different license for research and evaluation purposes.
 - This project will download and install additional third-party open source software projects. Review the license terms of these open source projects before use.
 - The components and instructions used in the workflow are intended to be used as examples for integration, and may not be sufficiently production-ready or enterprise ready on their own as stated. The workflow should be customized and integrated into one’s own infrastructure, using the workflow as reference. For example, all of the instructions in these workflows assume a single node infrastructure, whereas production deployments should be performed in a high availability (HA) environment.

@@ -12,3 +12,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+The dataset provided at this project is licensed under NVIDIA Data License
+for Research and Evaluation for Retrieval Augmented Generation(RAG) workflow
+[LICENSE.DATA](./LICENSE.DATA)
