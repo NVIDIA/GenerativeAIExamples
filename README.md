@@ -4,7 +4,7 @@
 This repository provides State-of-the-Art Generative AI examples that are easy to deploy, test, and extend. All examples run on the high performance NVIDIA CUDA-X software stack and NVIDIA GPUs.
 
 ## NVIDIA NGC
-Generative AI Examples examples uses resources from the [NVIDIA NGC AI Development Catalog](https://ngc.nvidia.com).
+Generative AI Examples uses resources from the [NVIDIA NGC AI Development Catalog](https://ngc.nvidia.com).
 
 Sign up for a [free NGC developer account](https://ngc.nvidia.com/signin) to access: 
 
