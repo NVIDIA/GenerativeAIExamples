@@ -1,39 +1,48 @@
 # NVIDIA Generative AI Examples
 
 ## Introduction
+State-of-the-art Generative AI examples that are easy to deploy, test, and extend. All examples run on the high performance NVIDIA CUDA-X software stack and NVIDIA GPUs.
 
-This repository provides Generative AI examples targetted for different usecases. Modern enterprise applications are becoming more cloud-native and based on a microservices architecture. Microservices, by definition, consist of a collection of small independent services that communicate over well-defined APIs. AI applications, in most instances, adhere well to this same architectural design, as there are typically many different components that all need to work together in both training and inferencing workflows.
+## NVIDIA NGC
+Generative AI Examples uses resources from the [NVIDIA NGC AI Development Catalog](https://ngc.nvidia.com).
 
-To deploy an application in a production environment, the application must also meet the following criteria:
+Sign up for a [free NGC developer account](https://ngc.nvidia.com/signin) to access: 
 
-- Reliability
-- Security
-- Performance
-- Scalability
-- Interoperability
+- The GPU-optimized NVIDIA containers, models, scripts, and tools used in these examples
+- The latest NVIDIA upstream contributions to the respective programming frameworks
+- The latest NVIDIA Deep Learning and LLM software libraries
+- Release notes for each of the NVIDIA optimized containers
+- Links to developer documentation
 
-## What are NVIDIA AI Workflows?
------------------------------
-NVIDIA AI Workflows are intended to provide reference solutions of how to leverage NVIDIA frameworks to build AI solutions for solving common use cases. These workflows provide guidance like fine tuning and AI model creation to build upon NVIDIA frameworks. The pipelines to create applications are highlighted, as well as opinions on how to deploy customized applications and integrate them with various components typically found in enterprise environments, such as components for orchestration and management, storage, security, networking, etc.
+## Retrieval Augmented Generation (RAG)
 
-By leveraging an AI workflow for your specific use case, you can streamline development of AI solutions following the example provided by the workflow to:
+A RAG pipeline embeds multimodal data --  such as documents, images, and video -- into a database connected to a Large Language Model.  RAG lets users use an LLM to chat with their own data. 
 
-- Reduce development time, at lower cost
-- Improve accuracy and performance
-- Gain confidence in outcome, by leveraging NVIDIA AI expertise
+| Name          | Description           | LLM        | Framework               | Multi-GPU | Multi-node | Embedding   | TRT-LLM | Triton | VectorDB | K8s |
+|---------------|-----------------------|------------|-------------------------|-----------|------------|-------------|---------|--------|----------|-----|
+| [Linux developer RAG](https://github.com/NVIDIA/GenerativeAIExamples/tree/main/RetrievalAugmentedGeneration) | Single VM, single GPU | llama2-13b | Langchain + Llama Index | No        | No         | e5-large-v2 | Yes     | Yes    | Milvus   | No  |
+| [Windows developer RAG](https://github.com/NVIDIA/trt-llm-rag-windows) | RAG on Windows | llama2-13b | Llama Index | No        | No         | NA | Yes     | No    | FAISS   | NA  |
 
-Using the example workflow provided in this repository, you know exactly what AI framework to use, how to bring data into the pipeline, and what to do with the data output. AI Workflows are designed as microservices, which means they can be deployed on Kubernetes alone or with other microservices to create a production-ready application for seamless scaling. The workflow cloud deployable package can be used across different cloud instances and is automatable and interoperable.
 
-NVIDIA AI Workflows are available on NVIDIA NGC for [NVIDIA AI Enterprise](https://www.nvidia.com/en-us/data-center/products/ai-enterprise/) software customers.
+## Large Language Models
+NVIDIA LLMs are optimized for building enterprise generative AI applications.
 
-## Examples
---------------------------
+| Name          | Description           | Type       | Context Length | Example | License |
+|---------------|-----------------------|------------|----------------|---------|---------|
+| [nemotron-3-8b-qa-4k](https://huggingface.co/nvidia/nemotron-3-8b-qa-4k) | Q&A LLM customized on knowledge bases | Text Generation | 4096 | No | [NVIDIA AI Foundation Models Community License Agreement](https://developer.nvidia.com/downloads/nv-ai-foundation-models-license) |
+| [nemotron-3-8b-chat-4k-steerlm](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-steerlm) | Best out-of-the-box chat model with flexible alignment at inference | Text Generation | 4096 | No | [NVIDIA AI Foundation Models Community License Agreement](https://developer.nvidia.com/downloads/nv-ai-foundation-models-license) |
+| [nemotron-3-8b-chat-4k-rlhf](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-rlhf) | Best out-of-the-box chat model performance| Text Generation | 4096 | No | [NVIDIA AI Foundation Models Community License Agreement](https://developer.nvidia.com/downloads/nv-ai-foundation-models-license) |
 
-This AI Workflow includes different examples illustrating generative AI workflow. While all should be relatively easy to follow, they are targeted towards different intended audiences. For more information about the detailed components and software stacks, please refer to the guides for each workflow.
 
-- [Retrieval Augmented Generation](./RetrievalAugmentedGeneration/README.md): A reference RAG workflow to a chatbot which can answer questions off public press releases & tech blogs.
+## Integration Examples
 
-*Note::*
+## NVIDIA support
+In each of the READMEs, we indicate the level of support provided.
+
+## Feedback / Contributions
+We're posting these examples on GitHub to better support the community, facilitate feedback, as well as collect and implement contributions using GitHub Issues and pull requests. We welcome all contributions!
+
+## Known issues
+- In each of the READMEs, we indicate any known issues and encourage the community to provide feedback.
 - The datasets provided as part of this project is under a different license for research and evaluation purposes.
 - This project will download and install additional third-party open source software projects. Review the license terms of these open source projects before use.
-- The components and instructions used in the workflow are intended to be used as examples for integration, and may not be sufficiently production-ready or enterprise ready on their own as stated. The workflow should be customized and integrated into one’s own infrastructure, using the workflow as reference. For example, all of the instructions in these workflows assume a single node infrastructure, whereas production deployments should be performed in a high availability (HA) environment.
