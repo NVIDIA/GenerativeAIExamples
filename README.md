@@ -1,7 +1,7 @@
 # NVIDIA Generative AI Examples
 
 ## Introduction
-This repository provides State-of-the-Art Generative AI examples that are easy to deploy, test, and extend. All examples run on the high performance NVIDIA CUDA-X software stack and NVIDIA GPUs.
+State-of-the-art Generative AI examples that are easy to deploy, test, and extend. All examples run on the high performance NVIDIA CUDA-X software stack and NVIDIA GPUs.
 
 ## NVIDIA NGC
 Generative AI Examples uses resources from the [NVIDIA NGC AI Development Catalog](https://ngc.nvidia.com).
@@ -16,12 +16,11 @@ Sign up for a [free NGC developer account](https://ngc.nvidia.com/signin) to acc
 
 ## Retrieval Augmented Generation (RAG)
 
-A RAG pipeline embeds multimodal data --  such as documents, images, and video -- into a database connected to a Large Language Model.  RAG lets users to chat with their own data. 
+A RAG pipeline embeds multimodal data --  such as documents, images, and video -- into a database connected to a Large Language Model.  RAG lets users chat with their own data. 
 
 | Name                                                                                                                 | LLM   | Framework  | Multi-GPU | Multi-Node | Embedding | TRT-LLM | Triton                                                                                                    | VectorDB  | K8s                                                                                                                                          |
 |------------------------------------------------------------------------------------------------------------------------|-------------|------|-----------|------------|----------|------|-----------------------------------------------------------------------------------------------------------|------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| [Developer RAG](https://github.com/NVIDIA/GenerativeAIExamples/tree/main/RetrievalAugmentedGeneration)                       | llama2-13b     | Langchain  | Yes       | No        | e5large-v2| Yes    | Yes    | Milvus  | No                                                                                                                                           |
-| [Developer RAG](https://github.com/NVIDIA/GenerativeAIExamples/tree/main/RetrievalAugmentedGeneration)                       | llama2-13b     | Llama Index  | Yes       | No        | e5large-v2| Yes    | Yes    | Milvus  | No                                                                                                                                           |
+| [Developer RAG](https://github.com/NVIDIA/GenerativeAIExamples/tree/main/RetrievalAugmentedGeneration)                       | llama2-13b     | Langchain + Llama Index  | Yes       | No        | e5-large-v2| Yes    | Yes    | Milvus  | No                                                                                                                                           |
  
 
 ## Large Language Models
@@ -38,3 +37,7 @@ We're posting these examples on GitHub to better support the community, facilita
 
 ## Known issues
 In each of the network READMEs, we indicate any known issues and encourage the community to provide feedback.
+
+*Note::*
+- The datasets provided as part of this project is under a different license for research and evaluation purposes.
+- This project will download and install additional third-party open source software projects. Review the license terms of these open source projects before use.
