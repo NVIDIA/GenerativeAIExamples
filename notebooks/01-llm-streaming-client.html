@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLM Streaming Client &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/omni-style.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+        <script src="../_static/version.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Q&amp;A with LangChain" href="02_langchain_simple.html" />
+    <link rel="prev" title="Basics: Prompt, Client, and Responses" href="00-llm-non-streaming-nemotron.html" />
+ 
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+<a href="../index.html">
+  <img src="../_static/nvidia-logo-white.png" class="logo" alt="Logo"/>
+</a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">RAG Pipelines for Developers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">About the RAG Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../support-matrix.html">Support Matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../local-gpu.html">Local GPUs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multi-gpu.html">Multi-GPU for Inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../query-decomposition.html">Query Decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quantized-llm-model.html">Quantized Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../structured-data.html">Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multimodal-data.html">Multimodal Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multi-turn.html">Multi-turn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../using-sample-web-application.html">Sample Chat Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vector-database.html">Alternative Vector Database</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../observability.html">Observability</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00-llm-non-streaming-nemotron.html">Basics: Prompt, Client, and Responses</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">LLM Streaming Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_langchain_simple.html">Q&amp;A with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_dataloader.html">Press Release Chat Bot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../llm-inference-server.html">NeMo Framework Inference Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../frontend.html">RAG Playground Web Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../jupyter-server.html">Jupyter Notebook Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../chain-server.html">Chain Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration.html">Software Component Configuration</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">NVIDIA Generative AI Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>LLM Streaming Client</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="llm-streaming-client">
+<h1>LLM Streaming Client<a class="headerlink" href="#llm-streaming-client" title="Permalink to this headline"></a></h1>
+<p>This notebook demonstrates how to stream responses from the LLM.</p>
+<section id="triton-inference-server">
+<h2>Triton Inference Server<a class="headerlink" href="#triton-inference-server" title="Permalink to this headline"></a></h2>
+<p>The LLM has been deployed to <a class="reference external" href="https://developer.nvidia.com/triton-inference-server">NVIDIA Triton Inference Server</a> and leverages NVIDIA TensorRT-LLM (TRT-LLM), so it’s optimized for low latency and high throughput inference.</p>
+<p>The <strong>Triton client</strong> is used to communicate with the inference server hosting the LLM and is available in <a class="reference external" href="https://github.com/langchain-ai/langchain/tree/master/libs/partners/nvidia-trt">Langchain</a>.</p>
+</section>
+<section id="streaming-llm-responses">
+<h2>Streaming LLM Responses<a class="headerlink" href="#streaming-llm-responses" title="Permalink to this headline"></a></h2>
+<p>TRT-LLM on its own can provide drastic improvements to LLM response latency, but streaming can take the user-experience to the next level. Instead of waiting for an entire response to be returned from the LLM, chunks of it can be processed as soon as they are available. This helps reduce the perceived latency by the user.</p>
+</section>
+<section id="step-1-structure-the-query-in-a-prompt-template">
+<h2>Step 1: Structure the Query in a Prompt Template<a class="headerlink" href="#step-1-structure-the-query-in-a-prompt-template" title="Permalink to this headline"></a></h2>
+<p>A <a class="reference external" href="https://gpt-index.readthedocs.io/en/stable/api_reference/prompts.html"><strong>prompt template</strong></a> is a common paradigm in LLM development.</p>
+<p>They are a pre-defined set of instructions provided to the LLM and guide the output produced by the model. They can contain few shot examples and guidance and are a quick way to engineer the responses from the LLM. Llama 2 accepts the <a class="reference external" href="https://huggingface.co/blog/llama2#how-to-prompt-llama-2">prompt format</a> shown in <code class="docutils literal notranslate"><span class="pre">LLAMA_PROMPT_TEMPLATE</span></code>, which we modify to be constructed with:</p>
+<ul class="simple">
+<li><p>The system prompt</p></li>
+<li><p>The context</p></li>
+<li><p>The user’s question</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">LLAMA_PROMPT_TEMPLATE</span> <span class="o">=</span> <span class="p">(</span>
+ <span class="s2">&quot;&lt;s&gt;[INST] &lt;&lt;SYS&gt;&gt;&quot;</span>
+ <span class="s2">&quot;</span><span class="si">{system_prompt}</span><span class="s2">&quot;</span>
+ <span class="s2">&quot;&lt;&lt;/SYS&gt;&gt;&quot;</span>
+ <span class="s2">&quot;[/INST] </span><span class="si">{context}</span><span class="s2"> &lt;/s&gt;&lt;s&gt;[INST] </span><span class="si">{question}</span><span class="s2"> [/INST]&quot;</span>
+<span class="p">)</span>
+<span class="n">system_prompt</span> <span class="o">=</span> <span class="s2">&quot;You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Please ensure that your responses are positive in nature.&quot;</span>
+<span class="n">context</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+<span class="n">question</span><span class="o">=</span><span class="s1">&#39;What is the fastest land animal?&#39;</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="n">LLAMA_PROMPT_TEMPLATE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">system_prompt</span><span class="o">=</span><span class="n">system_prompt</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-2-create-the-triton-client">
+<h2>Step 2: Create the Triton Client<a class="headerlink" href="#step-2-create-the-triton-client" title="Permalink to this headline"></a></h2>
+<div class="alert alert-block alert-warning">
+<b>WARNING!</b> Be sure to replace `triton_url` with the address and port that Triton is running on. 
+</div>
+<p>Use the address and port that the Triton is available on; for example <code class="docutils literal notranslate"><span class="pre">localhost:8001</span></code>.</p>
+<p><strong>If you are running this notebook as part of the AI workflow, you dont have to replace the url</strong>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">langchain_nvidia_trt.llms</span> <span class="kn">import</span> <span class="n">TritonTensorRTLLM</span>
+
+<span class="n">triton_url</span> <span class="o">=</span> <span class="s2">&quot;llm:8001&quot;</span>
+<span class="n">pload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;tokens&#39;</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span>
+            <span class="s1">&#39;server_url&#39;</span><span class="p">:</span> <span class="n">triton_url</span><span class="p">,</span>
+            <span class="s1">&#39;model_name&#39;</span><span class="p">:</span> <span class="s2">&quot;ensemble&quot;</span><span class="p">,</span>
+            <span class="s1">&#39;temperature&#39;</span><span class="p">:</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="s1">&#39;top_k&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+            <span class="s1">&#39;top_p&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;beam_width&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+            <span class="s1">&#39;repetition_penalty&#39;</span><span class="p">:</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="s1">&#39;length_penalty&#39;</span><span class="p">:</span><span class="mf">1.0</span>
+<span class="p">}</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">TritonTensorRTLLM</span><span class="p">(</span><span class="o">**</span><span class="n">pload</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Additional inputs to the LLM can be modified:</p>
+<ul class="simple">
+<li><p>tokens: the maximum number of tokens (words/sub-words) generated</p></li>
+<li><p>temperature: [0,1] – higher values produce more diverse outputs</p></li>
+<li><p><a class="reference external" href="https://docs.cohere.com/docs/controlling-generation-with-top-k-top-p">top_k</a>: sample from the k most likely next tokens at each step; lower value will concentrate sampling on the highest probability tokens for each step (reduces variety)</p></li>
+<li><p><a class="reference external" href="https://docs.cohere.com/docs/controlling-generation-with-top-k-top-p">top_p</a>: [0, 1] – cumulative probability cutoff for token selection; lower values mean sampling from a smaller nucleus sample (reduces variety)</p></li>
+<li><p>repetition_penalty: [1, 2] – penalize repeated tokens</p></li>
+<li><p>length_penalty: 1 means no penalty for length of generation</p></li>
+</ul>
+</section>
+<section id="step-3-load-the-model-and-stream-responses">
+<h2>Step 3: Load the Model and Stream Responses<a class="headerlink" href="#step-3-load-the-model-and-stream-responses" title="Permalink to this headline"></a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">tokens_generated</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
+    <span class="n">tokens_generated</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">total_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- Generated </span><span class="si">{</span><span class="n">tokens_generated</span><span class="si">}</span><span class="s2"> tokens in </span><span class="si">{</span><span class="n">total_time</span><span class="si">}</span><span class="s2"> seconds ---&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;--- </span><span class="si">{</span><span class="n">tokens_generated</span><span class="o">/</span><span class="n">total_time</span><span class="si">}</span><span class="s2"> tokens/sec&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="00-llm-non-streaming-nemotron.html" class="btn btn-neutral float-left" title="Basics: Prompt, Client, and Responses" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="02_langchain_simple.html" class="btn btn-neutral float-right" title="Q&amp;A with LangChain" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+
+
+
+</body>
+</html>

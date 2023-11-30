@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Observability Tool &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/omni-style.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+        <script src="_static/version.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Basics: Prompt, Client, and Responses" href="notebooks/00-llm-non-streaming-nemotron.html" />
+    <link rel="prev" title="Evaluation Tool" href="evaluation.html" />
+ 
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+<a href="index.html">
+  <img src="_static/nvidia-logo-white.png" class="logo" alt="Logo"/>
+</a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">RAG Pipelines for Developers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release-notes.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quantized-llm-model.html">Quantized Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structured-data.html">Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multimodal-data.html">Multimodal Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi-turn.html">Multi-turn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using-sample-web-application.html">Sample Chat Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vector-database.html">Alternative Vector Database</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tools</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Observability</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/00-llm-non-streaming-nemotron.html">Basics: Prompt, Client, and Responses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/01-llm-streaming-client.html">LLM Streaming Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/02_langchain_simple.html">Q&amp;A with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="llm-inference-server.html">NeMo Framework Inference Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frontend.html">RAG Playground Web Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jupyter-server.html">Jupyter Notebook Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chain-server.html">Chain Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Software Component Configuration</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">NVIDIA Generative AI Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Observability Tool</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <!--
+  SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+  SPDX-License-Identifier: Apache-2.0
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<section id="observability-tool">
+<h1>Observability Tool<a class="headerlink" href="#observability-tool" title="Permalink to this headline"></a></h1>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#introduction" id="id1">Introduction</a></p></li>
+<li><p><a class="reference internal" href="#key-terms" id="id2">Key terms</a></p></li>
+<li><p><a class="reference internal" href="#prerequisites" id="id3">Prerequisites</a></p></li>
+<li><p><a class="reference internal" href="#build-and-start-the-containers" id="id4">Build and Start the Containers</a></p></li>
+<li><p><a class="reference internal" href="#example-traces" id="id5">Example Traces</a></p></li>
+<li><p><a class="reference internal" href="#implementation-details" id="id6">Implementation Details</a></p>
+<ul>
+<li><p><a class="reference internal" href="#rag-playground" id="id7">RAG Playground</a></p></li>
+<li><p><a class="reference internal" href="#chain-server" id="id8">Chain Server</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline"></a></h2>
+<p>Observability is a crucial aspect that facilitates the monitoring and comprehension of the internal state and behavior of a system or application.
+Applications based on RAG are intricate systems that encompass the interaction of numerous components.
+To enhance the performance of these RAG-based applications, observability is an efficient mechanism for both monitoring and debugging.</p>
+<p>The following diagram shows high-level overview of how traces are captured.</p>
+<p><img alt="RAG with Observability" src="_images/image9.png" /></p>
+<p>The observability stack adds following containers on top of the RAG app containers:</p>
+<ul class="simple">
+<li><p>OpenTelemetry Collector: Receives, processes, and exports the traces.</p></li>
+<li><p>Jaeger: Acts as an OpenTelemetry backend that provides storage, query service, and visualizer.
+You can configure any other OTLP-compatible backend such as <a class="reference external" href="https://zipkin.io/">Zipkin</a>, <a class="reference external" href="https://prometheus.io/">Prometheus</a>, and so on.
+To configure an alternative backend, refer to <a class="reference external" href="https://opentelemetry.io/docs/collector/configuration/">Configuration</a> in the OpenTelemetry documentation.</p></li>
+<li><p>Cassandra: Provides persistent storage for traces.
+Jaeger supports many other <a class="reference external" href="https://www.jaegertracing.io/docs/1.18/deployment/#storage-backends">storage backends</a> such as ElasticSearch, Kafka, and Badger.
+For a large scale, production deployment, the Jaeger team recommends ElasticSearch over Cassandra.</p></li>
+</ul>
+</section>
+<section id="key-terms">
+<h2>Key terms<a class="headerlink" href="#key-terms" title="Permalink to this headline"></a></h2>
+<dl class="simple myst">
+<dt>Span</dt><dd><p>A unit of work within a system, encapsulating information about a specific operation (Eg. LLM call, embedding generation etc).</p>
+</dd>
+<dt>Traces</dt><dd><p>The recording of a request as it goes through a system, tracking every service the request comes in contact with.
+Multiple spans make a trace logically bound by parent-child relationship.</p>
+</dd>
+<dt>Root Span</dt><dd><p>The first span in a trace, denoting the beginning and end of the entire operation.</p>
+</dd>
+<dt>Span Attributes</dt><dd><p>Key-value pairs a Span may consist of to provide additional context or metadata.</p>
+</dd>
+<dt>Collectors</dt><dd><p>Components that process and export telemetry data from instrumented applications.</p>
+</dd>
+<dt>Context</dt><dd><p>Signifies current location within the trace hierarchy.
+The context determines whether a new span initiates a trace or connects to an existing parent span.</p>
+</dd>
+<dt>Services</dt><dd><p>Microservices that generates telemetry data.</p>
+</dd>
+</dl>
+<p>The following diagram shows a typical trace for query that uses a knowledge base and identifies the spans and root span.</p>
+<p><img alt="Trace for query from knowledge base" src="_images/image10.png" /></p>
+</section>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
+<ul>
+<li><p>Clone the Generative AI examples Git repository using Git LFS:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>sudo<span class="w"> </span>apt<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>git-lfs
+<span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:NVIDIA/GenerativeAIExamples.git
+<span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>GenerativeAIExamples/
+<span class="gp">$ </span>git<span class="w"> </span>lfs<span class="w"> </span>pull
+</pre></div>
+</div>
+</li>
+<li><p>A host with an NVIDIA A100, H100, or L40S GPU.</p></li>
+<li><p>Verify NVIDIA GPU driver version 535 or later is installed and that the GPU is in compute mode:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>nvidia-smi<span class="w"> </span>-q<span class="w"> </span>-d<span class="w"> </span>compute
+</pre></div>
+</div>
+<p><em>Example Output</em></p>
+<div class="highlight-output notranslate"><div class="highlight"><pre><span></span><span class="go">==============NVSMI LOG==============</span>
+
+<span class="go">Timestamp                                 : Sun Nov 26 21:17:25 2023</span>
+<span class="hll"><span class="go">Driver Version                            : 535.129.03</span>
+</span><span class="go">CUDA Version                              : 12.2</span>
+
+<span class="go">Attached GPUs                             : 1</span>
+<span class="go">GPU 00000000:CA:00.0</span>
+<span class="hll"><span class="go">    Compute Mode                          : Default</span>
+</span></pre></div>
+</div>
+<p>If the driver is not installed or below version 535, refer to the <a class="reference external" href="https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html"><em>NVIDIA Driver Installation Quickstart Guide</em></a>.</p>
+</li>
+<li><p>Install Docker Engine and Docker Compose.
+Refer to the instructions for <a class="reference external" href="https://docs.docker.com/engine/install/ubuntu/">Ubuntu</a>.</p></li>
+<li><p>Install the NVIDIA Container Toolkit.</p>
+<ol class="arabic">
+<li><p>Refer to the <a class="reference external" href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html">installation documentation</a>.</p></li>
+<li><p>When you configure the runtime, set the NVIDIA runtime as the default:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>sudo<span class="w"> </span>nvidia-ctk<span class="w"> </span>runtime<span class="w"> </span>configure<span class="w"> </span>--runtime<span class="o">=</span>docker<span class="w"> </span>--set-as-default
+</pre></div>
+</div>
+<p>If you did not set the runtime as the default, you can reconfigure the runtime by running the preceding command.</p>
+</li>
+<li><p>Verify the NVIDIA container toolkit is installed and configured as the default container runtime:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>cat<span class="w"> </span>/etc/docker/daemon.json
+</pre></div>
+</div>
+<p><em>Example Output</em></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;default-runtime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nvidia&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;runtimes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;nvidia&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">            </span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nvidia-container-runtime&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>Run the <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code> command in a container to verify the configuration:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>sudo<span class="w"> </span>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>--runtime<span class="o">=</span>nvidia<span class="w"> </span>--gpus<span class="w"> </span>all<span class="w"> </span>ubuntu<span class="w"> </span>nvidia-smi<span class="w"> </span>-L
+</pre></div>
+</div>
+<p><em>Example Output</em></p>
+<div class="highlight-output notranslate"><div class="highlight"><pre><span></span><span class="go">GPU 0: NVIDIA A100 80GB PCIe (UUID: GPU-d8ce95c1-12f7-3174-6395-e573163a2ace)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</li>
+</ul>
+</section>
+<section id="build-and-start-the-containers">
+<h2>Build and Start the Containers<a class="headerlink" href="#build-and-start-the-containers" title="Permalink to this headline"></a></h2>
+<ol class="arabic">
+<li><p>In the Generative AI Examples repository, edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/configs/otel-collector-config.yaml</span></code>
+and <code class="docutils literal notranslate"><span class="pre">deploy/compose/configs/jaeger.yaml</span></code> files.</p>
+<p>Refer to <a class="reference external" href="https://opentelemetry.io/docs/collector/configuration/">configuration</a> in the OpenTelemetry documentation
+and the <a class="reference external" href="https://www.jaegertracing.io/docs/1.52/cli/#jaeger-all-in-one-cassandra">Jaeger all-in-one with Cassandra</a>
+reference in the Jaeger documentation.</p>
+</li>
+<li><p>Edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/rag-app-text-chatbot.yaml</span></code> file.
+For the rag-playground and chain-server services, set the following environment variables:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">OTEL_EXPORTER_OTLP_ENDPOINT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://otel-collector:4317</span>
+<span class="w">  </span><span class="nt">OTEL_EXPORTER_OTLP_PROTOCOL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">grpc</span>
+<span class="w">  </span><span class="nt">ENABLE_TRACING</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+</li>
+<li><p>Deploy the developer RAG example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/rag-app-text-chatbot.yaml<span class="w"> </span>build
+<span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/rag-app-text-chatbot.yaml<span class="w"> </span>up<span class="w"> </span>-d
+</pre></div>
+</div>
+</li>
+<li><p>Start the Milvus vector database:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/docker-compose-vectordb.yaml<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>milvus
+</pre></div>
+</div>
+</li>
+<li><p>Deploy the observability services:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/docker-compose-observability.yaml<span class="w"> </span>build
+<span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/docker-compose-observability.yaml<span class="w"> </span>up<span class="w"> </span>-d
+</pre></div>
+</div>
+<p><em>Example Output</em></p>
+<div class="highlight-output notranslate"><div class="highlight"><pre><span></span><span class="go">✔ Container otel-collector              Started</span>
+<span class="go">✔ Container cassandra                   Started</span>
+<span class="go">✔ Container compose-cassandra-schema-1  Started</span>
+<span class="go">✔ Container jaeger                      Started</span>
+</pre></div>
+</div>
+</li>
+<li><p>Optional: Confirm the services are started:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.ID}}\t{{.Names}}\t{{.Status}}&quot;</span>
+</pre></div>
+</div>
+<p><em>Example Output</em></p>
+<div class="highlight-output notranslate"><div class="highlight"><pre><span></span><span class="go">CONTAINER ID   NAMES               STATUS</span>
+<span class="go">beb1582320d6   jaeger              Up 5 minutes</span>
+<span class="go">674c7bbb367e   cassandra           Up 6 minutes</span>
+<span class="go">d11e35ee69f4   rag-playground      Up 5 minutes</span>
+<span class="go">68f22b3842cb   chain-server        Up 5 minutes</span>
+<span class="go">751dd4fd80ec   milvus-standalone   Up 5 minutes (healthy)</span>
+<span class="go">b435006c95c1   milvus-minio        Up 6 minutes (healthy)</span>
+<span class="go">9108253d058d   notebook-server     Up 6 minutes</span>
+<span class="go">5315a9dc9eb4   milvus-etcd         Up 6 minutes (healthy)</span>
+<span class="go">d314a43074c8   otel-collector      Up 6 minutes</span>
+</pre></div>
+</div>
+</li>
+<li><p>Access the Jaeger web interface at <code class="docutils literal notranslate"><span class="pre">http://host-ip:16686</span></code> from your web browser.</p></li>
+</ol>
+</section>
+<section id="example-traces">
+<h2>Example Traces<a class="headerlink" href="#example-traces" title="Permalink to this headline"></a></h2>
+<p>The following screenshots show traces from the Jaeger web interface.</p>
+<ul class="simple">
+<li><p>Upload document trace
+<img alt="upload document trace" src="_images/image11.png" /></p></li>
+<li><p>User query using knowledge base trace
+<img alt="user query using knowledge base" src="_images/image12.png" /></p></li>
+</ul>
+</section>
+<section id="implementation-details">
+<h2>Implementation Details<a class="headerlink" href="#implementation-details" title="Permalink to this headline"></a></h2>
+<p>The user interface web application, named the RAG playground, and the chain server, are instrumented.</p>
+<section id="rag-playground">
+<h3>RAG Playground<a class="headerlink" href="#rag-playground" title="Permalink to this headline"></a></h3>
+<p>The <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/main/RetrievalAugmentedGeneration/frontend/frontend/tracing.py">tracing.py</a> module in the frontend application code performs the instrumentation.
+At high level, the code performs the following:</p>
+<ul class="simple">
+<li><p>Sets up the OpenTelemetry configurations for resource name, frontend, span processor, and context propagator.</p></li>
+<li><p>Provides instrumentation decorator functions, <code class="docutils literal notranslate"><span class="pre">instrumentation_wrapper</span></code> and <code class="docutils literal notranslate"><span class="pre">predict_instrumentation_wrapper</span></code>, for managing trace context across different services.
+This decorator function is used with the API functions in <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/main/RetrievalAugmentedGeneration/frontend/frontend/chat_client.py">chat_client.py</a> to create new span contexts.
+The span contexts can then be injected in the headers of the request made to the chain server.
+The code also logs span attributes that are extracted from the API request.</p></li>
+</ul>
+</section>
+<section id="chain-server">
+<h3>Chain Server<a class="headerlink" href="#chain-server" title="Permalink to this headline"></a></h3>
+<p>The <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/main/RetrievalAugmentedGeneration/common/tracing.py">tracing.py</a> module in the chain server application code is responsible for instrumentation.
+At high level, the code performs the following:</p>
+<ul class="simple">
+<li><p>Sets up the OpenTelemetry configurations for resource name, chain-server, span processor, and context propagator.</p></li>
+<li><p>Initializes the <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/main/tools/observability/llamaindex/opentelemetry_callback.py">LlamaIndex OpenTelemetry callback handler</a>.
+The callback handler uses <a class="reference external" href="https://docs.llamaindex.ai/en/stable/module_guides/observability/callbacks/root.html">LlamaIndex callbacks</a> to track various events such as LLM calls, chunking, embedding, and so on.</p></li>
+<li><p>Provides an instrumentation decorator function, <code class="docutils literal notranslate"><span class="pre">instrumentation_wrapper</span></code>, for managing trace context across different services.
+This decorator function is used with the API functions in <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/main/RetrievalAugmentedGeneration/common/server.py">server.py</a> to extract the trace context that is present in requests from the frontend service and attach it in the new span created by the chain-server.</p></li>
+</ul>
+<p>The instrumentation decorator function, <code class="docutils literal notranslate"><span class="pre">instrumentation_wrapper</span></code>, can be used to instrument any LlamaIndex application as long as LlamaIndex OpenTelemetry callback handler, <code class="docutils literal notranslate"><span class="pre">opentelemetry_callback.py</span></code>, is set as global handler in the application.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="evaluation.html" class="btn btn-neutral float-left" title="Evaluation Tool" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="notebooks/00-llm-non-streaming-nemotron.html" class="btn btn-neutral float-right" title="Basics: Prompt, Client, and Responses" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+
+
+
+</body>
+</html>
