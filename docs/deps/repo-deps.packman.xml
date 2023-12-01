@@ -1,0 +1,10 @@
+<project toolsVersion="5.0">
+  <!-- required: the core library for repo suite of tools -->
+  <dependency name="repo_man" linkPath="../_repo/deps/repo_man">
+    <package name="repo_man" version="1.46.2" />
+  </dependency>
+  <!-- optional: tool for building and publishing great looking documentation -->
+  <dependency name="repo_docs" linkPath="../_repo/deps/repo_docs">
+    <package name="repo_docs" version="0.39.2" />
+  </dependency>
+</project>
