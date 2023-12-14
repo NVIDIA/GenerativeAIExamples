@@ -48,11 +48,19 @@ class ChatClient:
             "looking up documents - %s", str({"server_url": url, "post_data": data})
         )
 
-        with requests.post(url, headers=headers, json=data, timeout=30) as req:
-            response = req.json()
+        try:
+            with requests.post(url, headers=headers, json=data, timeout=30) as req:
+                    req.raise_for_status()
+                    response = req.json()
+                    return typing.cast(
+                        typing.List[typing.Dict[str, typing.Union[str, float]]], response
+                    )
+        except Exception as e:
+            _LOGGER.error(f"Failed to get response from /documentSearch endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")
             return typing.cast(
-                typing.List[typing.Dict[str, typing.Union[str, float]]], response
+                typing.List[typing.Dict[str, typing.Union[str, float]]], []
             )
+
 
     def predict(
         self, query: str, use_knowledge_base: bool, num_tokens: int
@@ -69,9 +77,15 @@ class ChatClient:
             "making inference request - %s", str({"server_url": url, "post_data": data})
         )
 
-        with requests.post(url, stream=True, json=data, timeout=10) as req:
-            for chunk in req.iter_content(16):
-                yield chunk.decode("UTF-8")
+        try:
+            with requests.post(url, stream=True, json=data, timeout=10) as req:
+
+                    req.raise_for_status()
+                    for chunk in req.iter_content(16):
+                        yield chunk.decode("UTF-8")
+        except Exception as e:
+            _LOGGER.error(f"Failed to get response from /generate endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")
+            yield str("Failed to get response from /generate endpoint of chain-server. Check if the fastapi server in chain-server is up. Refer to chain-server logs for details.")
 
     def upload_documents(self, file_paths: typing.List[str]) -> None:
         """Upload documents to the kb."""
@@ -80,16 +94,19 @@ class ChatClient:
             "accept": "application/json",
         }
 
-        for fpath in file_paths:
-            mime_type, _ = mimetypes.guess_type(fpath)
-            # pylint: disable-next=consider-using-with # with pattern is not intuitive here
-            files = {"file": (fpath, open(fpath, "rb"), mime_type)}
+        try:
+            for fpath in file_paths:
+                mime_type, _ = mimetypes.guess_type(fpath)
+                # pylint: disable-next=consider-using-with # with pattern is not intuitive here
+                files = {"file": (fpath, open(fpath, "rb"), mime_type)}
 
-            _LOGGER.debug(
-                "uploading file - %s",
-                str({"server_url": url, "file": fpath}),
-            )
+                _LOGGER.debug(
+                    "uploading file - %s",
+                    str({"server_url": url, "file": fpath}),
+                )
 
-            _ = requests.post(
-                url, headers=headers, files=files, timeout=30  # type: ignore [arg-type]
-            )
+                _ = requests.post(
+                    url, headers=headers, files=files, timeout=600  # type: ignore [arg-type]
+                )
+        except Exception as e:
+            _LOGGER.error(f"Failed to get response from /uploadDocument endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")

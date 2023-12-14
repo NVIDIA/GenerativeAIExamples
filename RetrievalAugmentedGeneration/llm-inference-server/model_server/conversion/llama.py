@@ -27,12 +27,21 @@ from . import ConversionOptions
 _CONVERSION_SCRIPTS = "/opt/conversion_scripts/llama"
 
 _CHECKPOINT_ARGS_FLAGS = {"PYTORCH": "--meta_ckpt_dir", "HUGGINGFACE": "--model_dir"}
+_QUANTIZATIONS = ["int4_awq"]
+
 _LOGGER = logging.getLogger(__name__)
 
+def find_pt_file(directory):
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith(".pt"):
+                return os.path.join(root, file)
+    return None
 
 def convert(model: Model, opts: ConversionOptions) -> None:
     """Convert a llama model."""
     _LOGGER.debug("Running Llama model conversion.")
+    _LOGGER.info(f"Model Format: {model.format.name}")
 
     # construct builder executable path
     cwd = _CONVERSION_SCRIPTS
@@ -67,9 +76,29 @@ def convert(model: Model, opts: ConversionOptions) -> None:
             str(opts.pipline_parallelism),
             "--vocab_size",
             str(opts.vocab_size),
-            _CHECKPOINT_ARGS_FLAGS[model.format.name],
-            model.model_dir,
         ]
+
+        if opts.quantization == "int4_awq" and model.format.name == "PYTORCH":
+            ckpt_dir = find_pt_file(model.model_dir)
+            raw_args.extend([
+                "--use_weight_only",
+                "--weight_only_precision",
+                "int4_awq",
+                "--per_group",
+                "--quant_ckpt_path",
+                str(ckpt_dir),
+            ])
+        elif opts.quantization == "None":
+            raw_args.extend([
+                _CHECKPOINT_ARGS_FLAGS[model.format.name],
+                model.model_dir,
+            ])
+        else:
+            raise Exception(
+                "Unsupported quantization or model format, " \
+                + f"supported quantizations: {_QUANTIZATIONS}, " \
+                + "with format: PYTORCH"
+            )
     except KeyError as err:
         raise UnsupportedFormatException(
             model.format.name, ["PyTorch", "Hugging Face"]
