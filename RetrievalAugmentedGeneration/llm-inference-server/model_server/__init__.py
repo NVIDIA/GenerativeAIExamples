@@ -20,7 +20,7 @@ import os
 
 from .conversion import ConversionOptions, convert
 from .errors import ModelServerException
-from .model import Model
+from .model import Model, ModelFormats
 from .server import ModelServer
 
 _LOGGER = logging.getLogger(__name__)
@@ -91,6 +91,14 @@ def main(args: argparse.Namespace) -> int:
     _LOGGER.info("Reading the model directory.")
     model = Model(model_type=args.type, world_size=args.world_size)
 
+    if model._format == ModelFormats.UNKNOWN:
+        raise ModelServerException(
+            f"""No known model formats detected in the provided MODEL_DIRECTORY.
+            Supported formats are Pytorch(.pth or .pt), Huggingface (.bin) and Onnx (.onnx).
+            Please check if the absolute path provided with the help of environment variable
+            MODEL_DIRECTORY in compose.env file is correct and has been set properly."""
+        )
+
     # calculate the default parallism parameters
     if not args.tensor_parallelism:
         args.tensor_parallelism = max(
@@ -106,12 +114,14 @@ def main(args: argparse.Namespace) -> int:
         max_output_length=args.max_output_length,
         tensor_parallelism=args.tensor_parallelism,
         pipline_parallelism=args.pipeline_parallelism,
+        quantization = args.quantization,
     )
 
     # print discovered model parameters
     _LOGGER.info("Model file format: %s", model.format.name)
     _LOGGER.info("World Size: %d", model.world_size)
     _LOGGER.info("Compute Capability: %s", model.compute_cap)
+    _LOGGER.info("Quantization: %s", conversion_opts.quantization)
 
     # convert model
     if _should_convert(args, model):

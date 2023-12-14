@@ -113,6 +113,7 @@ def _stream_predict(
 ) -> Any:
     """Make a prediction of the response to the prompt."""
     chunks = ""
+    chat_history = chat_history or []
     _LOGGER.info(
         "processing inference request - %s",
         str({"prompt": question, "use_knowledge_base": use_knowledge_base}),
