@@ -103,6 +103,13 @@ def parse_args() -> argparse.Namespace:
         help="number of pipeline parallism divisions (default: 1)",
     )
 
+    parser.add_argument(
+        "--quantization",
+        type=str,
+        required=False,
+        help="Quantization type to be used for LLMs",
+    )
+
     # server customization
     parser.add_argument(
         "--http",
