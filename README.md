@@ -6,7 +6,7 @@ State-of-the-art Generative AI examples that are easy to deploy, test, and exten
 ## NVIDIA NGC
 Generative AI Examples uses resources from the [NVIDIA NGC AI Development Catalog](https://ngc.nvidia.com).
 
-Sign up for a [free NGC developer account](https://ngc.nvidia.com/signin) to access: 
+Sign up for a [free NGC developer account](https://ngc.nvidia.com/signin) to access:
 
 - The GPU-optimized NVIDIA containers, models, scripts, and tools used in these examples
 - The latest NVIDIA upstream contributions to the respective programming frameworks
@@ -16,7 +16,7 @@ Sign up for a [free NGC developer account](https://ngc.nvidia.com/signin) to acc
 
 ## Retrieval Augmented Generation (RAG)
 
-A RAG pipeline embeds multimodal data --  such as documents, images, and video -- into a database connected to a Large Language Model.  RAG lets users use an LLM to chat with their own data. 
+A RAG pipeline embeds multimodal data --  such as documents, images, and video -- into a database connected to a Large Language Model.  RAG lets users use an LLM to chat with their own data.
 
 | Name          | Description           | LLM        | Framework               | Multi-GPU | Multi-node | Embedding   | TRT-LLM | Triton | VectorDB | K8s |
 |---------------|-----------------------|------------|-------------------------|-----------|------------|-------------|---------|--------|----------|-----|

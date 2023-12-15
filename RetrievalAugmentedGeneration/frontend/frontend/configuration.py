@@ -29,7 +29,7 @@ class AppConfig(ConfigWizard):
 
     server_url: str = configfield(
         "serverUrl",
-        default="http://10.110.17.73",
+        default="http://localhost",
         help_txt="The location of the chat server.",
     )
     server_port: str = configfield(

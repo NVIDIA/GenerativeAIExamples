@@ -1,5 +1,5 @@
-ARG BASE_IMAGE_URL=nvcr.io/ea-bignlp/ga-participants/nemofw-inference
-ARG BASE_IMAGE_TAG=23.10
+ARG BASE_IMAGE_URL=nvcr.io/nvidia/nemo/nemofw-inference
+ARG BASE_IMAGE_TAG=23.10-for-rag
 
 FROM ${BASE_IMAGE_URL}:${BASE_IMAGE_TAG}
 

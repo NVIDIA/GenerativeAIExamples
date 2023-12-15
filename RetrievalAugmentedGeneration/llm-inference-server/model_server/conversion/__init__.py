@@ -30,6 +30,7 @@ class ConversionOptions:
     pipline_parallelism: int
     tensor_parallelism: int
     vocab_size: Optional[int] = None
+    quantization: Optional[str] = ""
 
 
 def convert(model: Model, opts: ConversionOptions) -> None:

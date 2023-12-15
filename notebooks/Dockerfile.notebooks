@@ -1,0 +1,31 @@
+# Use a base image with Python
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+#COPY notebooks
+COPY ./notebooks/*.ipynb .
+
+RUN mkdir -p /app/imgs
+
+COPY ./notebooks/dataset.zip .
+
+COPY ./notebooks/imgs/* imgs/
+
+COPY ./integrations/langchain/llms/triton_trt_llm.py .
+
+COPY ./integrations/langchain/llms/nv_aiplay.py .
+
+COPY ./notebooks/requirements.txt .
+
+# Run pip dependencies
+RUN pip3 install -r requirements.txt
+
+RUN apt-get update && apt-get install -y unzip wget git libgl1-mesa-glx libglib2.0-0
+
+# Expose port 8888 for JupyterLab
+EXPOSE 8888
+
+# Start JupyterLab when the container runs
+CMD ["jupyter", "lab", "--allow-root", "--ip=0.0.0.0","--NotebookApp.token=''", "--port=8888"]
