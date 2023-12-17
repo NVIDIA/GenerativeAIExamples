@@ -10,17 +10,6 @@ This example deploys a developer RAG pipeline for chat QA and serves inferencing
 
 Developers get free credits for 10K requests to any of the available models.
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-6ydv{background-color:#efefef;border-color:#c0c0c0;color:#000000;
-  font-family:"Comic Sans MS", cursive, sans-serif !important;font-size:x-small;text-align:left;vertical-align:top}
-.tg .tg-knyo{background-color:#ffffff;border-color:#c0c0c0;color:#000000;
-  font-family:"Comic Sans MS", cursive, sans-serif !important;font-size:x-small;text-align:left;vertical-align:top}
-</style>
 <table class="tg">
 <thead>
   <tr>
@@ -58,17 +47,6 @@ Follow [these instructions](https://github.com/NVIDIA/GenerativeAIExamples/blob/
 
 This example deploys a developer RAG pipeline for chat QA and serves inferencing via the NeMo Framework inference container.
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-6ydv{background-color:#efefef;border-color:#c0c0c0;color:#000000;
-  font-family:"Comic Sans MS", cursive, sans-serif !important;font-size:x-small;text-align:left;vertical-align:top}
-.tg .tg-knyo{background-color:#ffffff;border-color:#c0c0c0;color:#000000;
-  font-family:"Comic Sans MS", cursive, sans-serif !important;font-size:x-small;text-align:left;vertical-align:top}
-</style>
 <table class="tg">
 <thead>
   <tr>
@@ -265,17 +243,6 @@ $ docker compose ps -q
 
 This example deploys a developer RAG pipeline for chat QA and serves inference via the NeMo Framework inference container across multiple GPUs.
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-6ydv{background-color:#efefef;border-color:#c0c0c0;color:#000000;
-  font-family:"Comic Sans MS", cursive, sans-serif !important;font-size:x-small;text-align:left;vertical-align:top}
-.tg .tg-knyo{background-color:#ffffff;border-color:#c0c0c0;color:#000000;
-  font-family:"Comic Sans MS", cursive, sans-serif !important;font-size:x-small;text-align:left;vertical-align:top}
-</style>
 <table class="tg">
 <thead>
   <tr>
