@@ -8,39 +8,69 @@ Generative AI Examples uses resources from the [NVIDIA NGC AI Development Catalo
 
 Sign up for a [free NGC developer account](https://ngc.nvidia.com/signin) to access:
 
-- The GPU-optimized NVIDIA containers, models, scripts, and tools used in these examples
-- The latest NVIDIA upstream contributions to the respective programming frameworks
-- The latest NVIDIA Deep Learning and LLM software libraries
-- Release notes for each of the NVIDIA optimized containers
-- Links to developer documentation
+- GPU-optimized containers used in these examples
+- Release notes and developer documentation
 
 ## Retrieval Augmented Generation (RAG)
 
-A RAG pipeline embeds multimodal data --  such as documents, images, and video -- into a database connected to a Large Language Model.  RAG lets users use an LLM to chat with their own data.
+A RAG pipeline embeds multimodal data --  such as documents, images, and video -- into a database connected to a LLM.  RAG lets users chat with their data!
 
-| Name          | Description           | LLM        | Framework               | Multi-GPU | Multi-node | Embedding   | TRT-LLM | Triton | VectorDB | K8s |
-|---------------|-----------------------|------------|-------------------------|-----------|------------|-------------|---------|--------|----------|-----|
-| [Linux developer RAG](https://github.com/NVIDIA/GenerativeAIExamples/tree/main/RetrievalAugmentedGeneration) | Single VM, single GPU | llama2-13b | Langchain + Llama Index | No        | No         | e5-large-v2 | Yes     | Yes    | Milvus   | No  |
-| [Windows developer RAG](https://github.com/NVIDIA/trt-llm-rag-windows) | RAG on Windows | llama2-13b | Llama Index | No        | No         | NA | Yes     | No    | FAISS   | NA  |
+### Developer RAG Examples -- No GPU Required!
 
+The developer RAG examples run on a single VM. They demonstrate how to combine NVIDIA GPU acceleration with popular LLM programming frameworks using NVIDIA's [open source connectors](#open-source-integrations). The examples are easy to deploy via [Docker Compose](https://docs.docker.com/compose/) or [Ansible](https://www.ansible.com/). 
 
-## Large Language Models
-NVIDIA LLMs are optimized for building enterprise generative AI applications.
+Examples support local and remote inference endpoints. If you have a GPU, you can inference locally via [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). If you don't have a GPU, you can inference remotely via [NVIDIA AI Foundations endpoints](https://www.nvidia.com/en-us/ai-data-science/foundation-models/). 
 
-| Name          | Description           | Type       | Context Length | Example | License |
-|---------------|-----------------------|------------|----------------|---------|---------|
-| [nemotron-3-8b-qa-4k](https://huggingface.co/nvidia/nemotron-3-8b-qa-4k) | Q&A LLM customized on knowledge bases | Text Generation | 4096 | No | [NVIDIA AI Foundation Models Community License Agreement](https://developer.nvidia.com/downloads/nv-ai-foundation-models-license) |
-| [nemotron-3-8b-chat-4k-steerlm](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-steerlm) | Best out-of-the-box chat model with flexible alignment at inference | Text Generation | 4096 | No | [NVIDIA AI Foundation Models Community License Agreement](https://developer.nvidia.com/downloads/nv-ai-foundation-models-license) |
-| [nemotron-3-8b-chat-4k-rlhf](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-rlhf) | Best out-of-the-box chat model performance| Text Generation | 4096 | No | [NVIDIA AI Foundation Models Community License Agreement](https://developer.nvidia.com/downloads/nv-ai-foundation-models-license) |
+| Model         | Embedding           | Framework        | Description               | Multi-GPU | TRT-LLM | NVIDIA AI Foundation | Triton | Vector Database |
+|---------------|-----------------------|------------|-------------------------|-----------|------------|-------------|---------|--------|
+| llama-2 | e5-large-v2 | Llamaindex | QA Chatbot  | Yes        | Yes         | Yes | Yes     | Milvus|
+| llama-2 | all-MiniLM-L6-v2 | Llama Index | QA Chatbot, GeForce, Windows | No        | [Yes](https://github.com/NVIDIA/trt-llm-rag-windows/tree/release/1.0)         | No | No     | FAISS |
 
 
-## Integration Examples
+### Enterprise RAG Examples
+
+The enterprise RAG examples run as microservies distributed across multiple VMs and GPUs. They show how RAG pipelines can be orchestrated with [Kubernetes](https://kubernetes.io/) and deployed with [Helm](https://helm.sh/).
+
+Enterprise RAG examples include a [Kubernetes operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/) for LLM lifecycle management. It is compatible with the [NVIDIA GPU operator](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/gpu-operator) that automates GPU discovery and lifecycle management in a Kubernetes cluster.
+
+Enterprise RAG examples also support local and remote inference via [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) and [NVIDIA AI Foundations endpoints](https://www.nvidia.com/en-us/ai-data-science/foundation-models/). 
+
+| Model         | Embedding           | Framework        | Description               | Multi-GPU | Multi-node | TRT-LLM | NVIDIA AI Foundation | Triton | Vector Database |
+|---------------|-----------------------|------------|--------|-------------------------|-----------|------------|-------------|---------|--------|
+| llama-2 | e5-large-v2 | Llamaindex | QA Chatbot  | Yes        | Yes |Yes         | No | Yes     | Milvus|
+
+## NVIDIA Large Language Models
+NVIDIA LLMs are optimized for building enterprise generative AI applications. All NVIDIA models are ready for commercial use, export compliant, and shared under the [NVIDIA AI Foundation Models Community License Agreement](https://developer.nvidia.com/downloads/nv-ai-foundation-models-license).
+
+| Name          | Description           | Type       | Context Length | Example |
+|---------------|-----------------------|------------|----------------|---------|
+| [nemotron-3-8b-qa-4k](https://huggingface.co/nvidia/nemotron-3-8b-qa-4k) | Q&A LLM customized on knowledge bases | Text Generation | 4096 | No |  |
+| [nemotron-3-8b-chat-4k-steerlm](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-steerlm) | Best out-of-the-box chat model with flexible alignment at inference | Text Generation | 4096 | No |
+| [nemotron-3-8b-chat-4k-rlhf](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-rlhf) | Best out-of-the-box chat model performance| Text Generation | 4096 | No | 
+
+
+## Tools
+
+Example tools and tutorials to enhance LLM development and productivity when using NVIDIA RAG pipelines.
+
+| Name | Description | Deployment | Tutorial |
+|------|-------------|------|--------|
+| Evaluation | Example open source RAG eval tool that uses synthetic data generation and LLM-as-a-judge |  [Docker file](https://github.com/NVIDIA/GenerativeAIExamples/tree/v0.2.0/evaluation) | [Jupyter Notebooks](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.2.0/evaluation/01_synthetic_data_generation.ipynb) |]
+
+## Open Source Integrations
+
+These are open source connectors for NVIDIA-hosted and self-hosted API endpoints. These open source connectors are maintained and tested by NVIDIA engineers.
+
+| Name | Framework | Chat | Text Embedding | Python | Description |
+|------|-----------|------|-----------|--------|-------------|
+|[NVIDIA AI Foundation Endpoints](https://python.langchain.com/docs/integrations/providers/nvidia) | [Langchain](https://www.langchain.com/) |[Yes](https://python.langchain.com/docs/integrations/chat/nvidia_ai_endpoints)|[Yes](https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints)|[Yes](https://pypi.org/project/langchain-nvidia-ai-endpoints/)|Easy access to NVIDIA hosted models. Supports chat, embedding, code generation, steerLM, multimodal, and RAG.|
+
 
 ## NVIDIA support
-In each of the READMEs, we indicate the level of support provided.
+In each example README we indicate the level of support provided.
 
 ## Feedback / Contributions
-We're posting these examples on GitHub to better support the community, facilitate feedback, as well as collect and implement contributions using GitHub Issues and pull requests. We welcome all contributions!
+We're posting these examples on GitHub to support the NVIDIA LLM community, facilitate feedback. We invite contributions via GitHub Issues or pull requests!
 
 ## Known issues
 - In each of the READMEs, we indicate any known issues and encourage the community to provide feedback.
