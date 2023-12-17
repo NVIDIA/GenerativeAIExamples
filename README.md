@@ -23,8 +23,8 @@ Examples support local and remote inference endpoints. If you have a GPU, you ca
 
 | Model         | Embedding           | Framework        | Description               | Multi-GPU | TRT-LLM | NVIDIA AI Foundation | Triton | Vector Database |
 |---------------|-----------------------|------------|-------------------------|-----------|------------|-------------|---------|--------|
-| llama-2 | e5-large-v2 | Llamaindex | QA Chatbot  | Yes        | Yes         | Yes | Yes     | Milvus|
-| llama-2 | all-MiniLM-L6-v2 | Llama Index | QA Chatbot, GeForce, Windows | No        | [Yes](https://github.com/NVIDIA/trt-llm-rag-windows/tree/release/1.0)         | No | No     | FAISS |
+| llama-2 | e5-large-v2 | Llamaindex | QA Chatbot  | [YES](RetrievalAugmentedGeneration/README.md#03-multi-gpu----a100h100l40s)        | [YES](RetrievalAugmentedGeneration/README.md##02-qa-chatbot----a100h100l40s-gpu)       | [YES](RetrievalAugmentedGeneration/README.md#01-qa-chatbot----no-gpu) | YES     | Milvus|
+| llama-2 | all-MiniLM-L6-v2 | Llama Index | QA Chatbot, GeForce, Windows | NO        | [YES](https://github.com/NVIDIA/trt-llm-rag-windows/tree/release/1.0)         | NO | NO     | FAISS |
 
 
 ### Enterprise RAG Examples
@@ -37,16 +37,16 @@ Enterprise RAG examples also support local and remote inference via [TensorRT-LL
 
 | Model         | Embedding           | Framework        | Description               | Multi-GPU | Multi-node | TRT-LLM | NVIDIA AI Foundation | Triton | Vector Database |
 |---------------|-----------------------|------------|--------|-------------------------|-----------|------------|-------------|---------|--------|
-| llama-2 | e5-large-v2 | Llamaindex | QA Chatbot  | Yes        | Yes |Yes         | No | Yes     | Milvus|
+| llama-2 | e5-large-v2 | Llamaindex | QA Chatbot  | YES        | YES |YES         | NO | YES     | Milvus|
 
 ## NVIDIA Large Language Models
 NVIDIA LLMs are optimized for building enterprise generative AI applications. All NVIDIA models are ready for commercial use, export compliant, and shared under the [NVIDIA AI Foundation Models Community License Agreement](https://developer.nvidia.com/downloads/nv-ai-foundation-models-license).
 
 | Name          | Description           | Type       | Context Length | Example |
 |---------------|-----------------------|------------|----------------|---------|
-| [nemotron-3-8b-qa-4k](https://huggingface.co/nvidia/nemotron-3-8b-qa-4k) | Q&A LLM customized on knowledge bases | Text Generation | 4096 | No |  |
-| [nemotron-3-8b-chat-4k-steerlm](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-steerlm) | Best out-of-the-box chat model with flexible alignment at inference | Text Generation | 4096 | No |
-| [nemotron-3-8b-chat-4k-rlhf](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-rlhf) | Best out-of-the-box chat model performance| Text Generation | 4096 | No | 
+| [nemotron-3-8b-qa-4k](https://huggingface.co/nvidia/nemotron-3-8b-qa-4k) | Q&A LLM customized on knowledge bases | Text Generation | 4096 | NO |  |
+| [nemotron-3-8b-chat-4k-steerlm](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-steerlm) | Best out-of-the-box chat model with flexible alignment at inference | Text Generation | 4096 | NO |
+| [nemotron-3-8b-chat-4k-rlhf](https://huggingface.co/nvidia/nemotron-3-8b-chat-4k-rlhf) | Best out-of-the-box chat model performance| Text Generation | 4096 | NO | 
 
 
 ## Tools
@@ -63,7 +63,7 @@ These are open source connectors for NVIDIA-hosted and self-hosted API endpoints
 
 | Name | Framework | Chat | Text Embedding | Python | Description |
 |------|-----------|------|-----------|--------|-------------|
-|[NVIDIA AI Foundation Endpoints](https://python.langchain.com/docs/integrations/providers/nvidia) | [Langchain](https://www.langchain.com/) |[Yes](https://python.langchain.com/docs/integrations/chat/nvidia_ai_endpoints)|[Yes](https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints)|[Yes](https://pypi.org/project/langchain-nvidia-ai-endpoints/)|Easy access to NVIDIA hosted models. Supports chat, embedding, code generation, steerLM, multimodal, and RAG.|
+|[NVIDIA AI Foundation Endpoints](https://python.langchain.com/docs/integrations/providers/nvidia) | [Langchain](https://www.langchain.com/) |[YES](https://python.langchain.com/docs/integrations/chat/nvidia_ai_endpoints)|[YES](https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints)|[YES](https://pypi.org/project/langchain-nvidia-ai-endpoints/)|Easy access to NVIDIA hosted models. Supports chat, embedding, code generation, steerLM, multimodal, and RAG.|
 
 
 ## NVIDIA support

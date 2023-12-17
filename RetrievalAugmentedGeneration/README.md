@@ -4,6 +4,12 @@ Retrieval Augmented Generation (RAG) generates up-to-date and domain-specific an
 
 ## Developer RAG Examples
 
+1. [QA Chatbot -- No GPU](#01-qa-chatbot----no-gpu)
+2. [QA Chatbot -- A100/H100/L40S](#02-qa-chatbot----a100h100l40s-gpu)
+3. [QA Chatbot -- Multi-GPU](#03-multi-gpu----a100h100l40s)
+
+<hr>
+
 ### 01: QA Chatbot -- no GPU
 
 This example deploys a developer RAG pipeline for chat QA and serves inferencing via the NVIDIA AI Foundation endpoint.
@@ -39,9 +45,11 @@ Developers get free credits for 10K requests to any of the available models.
 </tbody>
 </table>
 
-#### Deploy
+#### 01 Deploy
 
 Follow [these instructions](https://github.com/NVIDIA/GenerativeAIExamples/blob/main/docs/rag/aiplayground.md) to sign up for an NVIDIA AI Foundation developer account and deploy this  example.
+
+<hr>
 
 ### 02: QA Chatbot -- A100/H100/L40S GPU
 
@@ -77,7 +85,7 @@ This example deploys a developer RAG pipeline for chat QA and serves inferencing
 </table>
 
 
-#### Prepare the environment
+#### 02 Prepare the environment
 
 1. Verify NVIDIA GPU driver version 535 or later is installed.
 
@@ -132,7 +140,7 @@ Reference:
 - [Docker installation instructions (Ubuntu)](https://docs.docker.com/engine/install/ubuntu/)
 - [NVIDIA Container Toolkit Installation instructions](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
-#### Deploy
+#### 02 Deploy
 
 1. Clone the Llama Github.
 
@@ -201,7 +209,7 @@ Reference:
 - [Meta Llama README](https://github.com/facebookresearch/llama/blob/main/README.md)
 - [Meta Llama request access form](https://ai.meta.com/resources/models-and-libraries/llama-downloads/)
 
-#### Test
+#### 02 Test
 
 1. Connect to the sample web application at ``http://host-ip:8090``.
 
@@ -227,7 +235,7 @@ Execute the Jupyter notebooks to explore optional features.
 - [Advanced Document QA with LlamaIndex](../notebooks/04_llamaindex_hier_node_parser.ipynb)
 - [Document QA via REST FastAPI Server](../notebooks/05_dataloader.ipynb)
 
-#### Uninstall
+#### 02 Uninstall
 
 To uninstall, stop and remove the running containers.
 
@@ -238,6 +246,8 @@ $ docker compose stop
 $ docker compose rm
 $ docker compose ps -q
 ```
+
+<hr>
 
 ### 03: Multi-GPU -- A100/H100/L40S
 
@@ -272,13 +282,13 @@ This example deploys a developer RAG pipeline for chat QA and serves inference v
 </tbody>
 </table>
 
-#### Prepare the environment
+#### 03 Prepare the environment
 
-1. Follow steps 1 - 3 in section XX
+1. Follow steps 1 - 3 in the ["Prepare the environment" section of example 02](#02-prepare-the-environment).
 
-#### Deploy
+#### 03 Deploy
 
-1.  Follow steps 1 - 4 in section XX to stage the model weights.
+1.  Follow steps 1 - 4 in the ["Deploy" section of example 02](#02-deploy) to stage the model weights.
 
 2. Find the GPU device ID.
 
@@ -295,17 +305,19 @@ This example deploys a developer RAG pipeline for chat QA and serves inference v
               capabilities: [gpu]
 ```
 
-4. Follow step 6 in section XX to deploy via Docker compose.
+4. Follow step 6 in the ["Deploy" section of example 02](#02-deploy) to deploy via Docker compose.
 
-#### Test
+#### 03 Test
 
-1. Follow steps 1 - 5 in section XX
+1. Follow steps 1 - 5 in the ["Test" section of example 02](#02-test).
 
 2. Verify the correct GPU is serving the model.
 
-#### Uninstall
+#### 03 Uninstall
 
-1. To unintstall, follow the steps in section
+1. To unintstall, follow the ["Uninstall" steps in example 02"](#02-uninstall).
+
+<hr>
 
 ### Additional Developer RAG Resources
 
@@ -317,6 +329,8 @@ This example deploys a developer RAG pipeline for chat QA and serves inference v
    4. [Sample frontend](../docs/rag/frontend.md)
 3. Developer RAG [Configuration Guide](../docs/rag/configuration.md)
 4. Developer RAG [Support Matrix](../docs/rag/support_matrix.md)
+
+<hr>
 
 ## Enterprise RAG Examples
 
