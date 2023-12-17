@@ -249,7 +249,7 @@ $ docker compose ps -q
 
 <hr>
 
-### 03: Multi-GPU -- A100/H100/L40S
+### 03: QA Chatbot Multi-GPU -- A100/H100/L40S
 
 This example deploys a developer RAG pipeline for chat QA and serves inference via the NeMo Framework inference container across multiple GPUs.
 
