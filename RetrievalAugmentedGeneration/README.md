@@ -10,7 +10,7 @@ Retrieval Augmented Generation (RAG) generates up-to-date and domain-specific an
 
 <hr>
 
-### 01: QA Chatbot -- no GPU
+### 01: QA Chatbot -- NVIDIA AI Foundation inference endpoint
 
 This example deploys a developer RAG pipeline for chat QA and serves inferencing via the NVIDIA AI Foundation endpoint.
 
@@ -44,6 +44,12 @@ Developers get free credits for 10K requests to any of the available models.
   </tr>
 </tbody>
 </table>
+
+#### 01 Prepare the environment
+
+This example uses NVIDIA AI Foundation inference endpoint. A GPU is still needed for local embeddings.
+
+1. Follow steps 1 - 3 in the ["Prepare the environment" section of example 02](#02-prepare-the-environment).
 
 #### 01 Deploy
 

@@ -19,7 +19,7 @@ A RAG pipeline embeds multimodal data --  such as documents, images, and video -
 
 The developer RAG examples run on a single VM. They demonstrate how to combine NVIDIA GPU acceleration with popular LLM programming frameworks using NVIDIA's [open source connectors](#open-source-integrations). The examples are easy to deploy via [Docker Compose](https://docs.docker.com/compose/) or [Ansible](https://www.ansible.com/). 
 
-Examples support local and remote inference endpoints. If you have a GPU, you can inference locally via [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). If you don't have a GPU, you can inference remotely via [NVIDIA AI Foundations endpoints](https://www.nvidia.com/en-us/ai-data-science/foundation-models/). 
+Examples support local and remote inference endpoints. If you have a GPU, you can inference locally via [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). If you don't have a GPU, you can inference and embed remotely via [NVIDIA AI Foundations endpoints](https://www.nvidia.com/en-us/ai-data-science/foundation-models/). 
 
 | Model         | Embedding           | Framework        | Description               | Multi-GPU | TRT-LLM | NVIDIA AI Foundation | Triton | Vector Database |
 |---------------|-----------------------|------------|-------------------------|-----------|------------|-------------|---------|--------|
