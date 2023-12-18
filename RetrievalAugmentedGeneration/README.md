@@ -215,7 +215,9 @@ Reference:
 
 2. In the <B>Converse</B> tab, type "How many cores are on the Nvidia Grace superchip?" iin the chat box and press <B>Submit</B>.
 
-3.  Upload the sample data set to the <B>KNowledge Base</B> tab.
+![Grace query failure](../notebooks/imgs/grace_noanswer.png)
+
+3.  Upload the sample data set to the <B>Knowledge Base</B> tab.
 
 > ⚠️ **NOTE**: ``dataset.zip`` is located in the ``notebooks`` directory. Unzip the archive and upload the PDFs.
 
