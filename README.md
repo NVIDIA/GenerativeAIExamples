@@ -15,7 +15,7 @@ Sign up for a [free NGC developer account](https://ngc.nvidia.com/signin) to acc
 
 A RAG pipeline embeds multimodal data --  such as documents, images, and video -- into a database connected to a LLM.  RAG lets users chat with their data!
 
-### Developer RAG Examples -- No GPU Required!
+### Developer RAG Examples
 
 The developer RAG examples run on a single VM. They demonstrate how to combine NVIDIA GPU acceleration with popular LLM programming frameworks using NVIDIA's [open source connectors](#open-source-integrations). The examples are easy to deploy via [Docker Compose](https://docs.docker.com/compose/) or [Ansible](https://www.ansible.com/). 
 
