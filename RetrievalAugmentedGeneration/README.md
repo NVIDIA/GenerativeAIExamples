@@ -4,7 +4,7 @@ Retrieval Augmented Generation (RAG) generates up-to-date and domain-specific an
 
 ## Developer RAG Examples
 
-1. [QA Chatbot -- No GPU](#01-qa-chatbot----no-gpu)
+1. [QA Chatbot -- NVIDIA AI Foundation Inference endpoint](#01-qa-chatbot----nvidia-ai-foundation-inference-endpoint)
 2. [QA Chatbot -- A100/H100/L40S](#02-qa-chatbot----a100h100l40s-gpu)
 3. [QA Chatbot -- Multi-GPU](#03-multi-gpu----a100h100l40s)
 
@@ -49,7 +49,7 @@ Developers get free credits for 10K requests to any of the available models.
 
 This example uses NVIDIA AI Foundation inference endpoint. A GPU is still needed for local embeddings.
 
-1. Follow steps 1 - 3 in the ["Prepare the environment" section of example 02](#02-prepare-the-environment).
+1. Follow steps 1 - 5 in the ["Prepare the environment" section of example 02](#02-prepare-the-environment).
 
 #### 01 Deploy
 
@@ -125,7 +125,9 @@ $ git clone git@github.com:NVIDIA/GenerativeAIExamples.git
 Cloning into 'GenerativeAIExamples'...
 ```
 
-3. Verify the NVIDIA container toolkit is installed and configured as the default container runtime.
+3. Install [Docker Engine and Docker Compose.](https://docs.docker.com/engine/install/ubuntu/)
+
+4. Verify the NVIDIA container toolkit is installed and configured as the default container runtime.
 
 ```
 $ cat /etc/docker/daemon.json
@@ -142,6 +144,17 @@ $ cat /etc/docker/daemon.json
 $ sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi -L
 GPU 0: NVIDIA A100 80GB PCIe (UUID: GPU-d8ce95c1-12f7-3174-6395-e573163a2ace)
 ```
+
+5. Create an NGC Account and API Key.
+
+Please refer to [instructions](https://docs.nvidia.com/ngc/gpu-cloud/ngc-overview/index.html) to create account and generate NGC API key.
+
+Login to `nvcr.io` using the following command:
+
+```
+$ docker login nvcr.io
+```
+
 Reference:
 - [Docker installation instructions (Ubuntu)](https://docs.docker.com/engine/install/ubuntu/)
 - [NVIDIA Container Toolkit Installation instructions](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)

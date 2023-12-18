@@ -23,7 +23,7 @@ Examples support local and remote inference endpoints. If you have a GPU, you ca
 
 | Model         | Embedding           | Framework        | Description               | Multi-GPU | TRT-LLM | NVIDIA AI Foundation | Triton | Vector Database |
 |---------------|-----------------------|------------|-------------------------|-----------|------------|-------------|---------|--------|
-| llama-2 | e5-large-v2 | Llamaindex | QA Chatbot  | [YES](RetrievalAugmentedGeneration/README.md#03-qa-chatbot-multi-gpu----a100h100l40s)        | [YES](RetrievalAugmentedGeneration/README.md#02-qa-chatbot----a100h100l40s-gpu)       | [YES](RetrievalAugmentedGeneration/README.md#01-qa-chatbot----no-gpu) | YES     | Milvus|
+| llama-2 | e5-large-v2 | Llamaindex | QA Chatbot  | [YES](RetrievalAugmentedGeneration/README.md#03-qa-chatbot-multi-gpu----a100h100l40s)        | [YES](RetrievalAugmentedGeneration/README.md#02-qa-chatbot----a100h100l40s-gpu)       | [YES](RetrievalAugmentedGeneration/README.md#01-qa-chatbot----nvidia-ai-foundation-inference-endpoint) | YES     | Milvus|
 | llama-2 | all-MiniLM-L6-v2 | Llama Index | QA Chatbot, GeForce, Windows | NO        | [YES](https://github.com/NVIDIA/trt-llm-rag-windows/tree/release/1.0)         | NO | NO     | FAISS |
 
 
