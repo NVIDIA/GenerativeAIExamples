@@ -40,9 +40,9 @@ $ grep AI deploy/compose/compose.env
 3. Deploy the developer RAG example via Docker compose.
 
 ```
-$ source deploy/compose/compose.env;  docker compose -f deploy/compose/docker-compose.yaml build
+$ source deploy/compose/compose.env;  docker compose -f deploy/compose/docker-compose-playground.yaml build
 
-$ docker compose -f deploy/compose/docker-compose.yaml up -d
+$ docker compose -f deploy/compose/docker-compose-palyground.yaml up -d
 
 $ docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 CONTAINER ID   NAMES               STATUS

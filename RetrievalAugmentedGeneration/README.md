@@ -177,9 +177,9 @@ checklist.chk  consolidated.00.pth  consolidated.01.pth  params.json  tokenizer.
 5. Set the absolute path to the model location in <i>compose.env</i>.
 
 ```
-$ cd ~/git/GenerativeAIExamples/deploy/compose
+$ cd ~/git/GenerativeAIExamples
 
-$ grep MODEL compose.env | grep -v \# 
+$ grep MODEL deploy/compose/compose.env | grep -v \# 
 export MODEL_DIRECTORY="/home/nvidia/git/llama/llama-2-13b-chat/"
 export MODEL_ARCHITECTURE="llama"
 export MODEL_NAME="Llama-2-13b-chat"
@@ -190,9 +190,9 @@ export MODEL_NAME="Llama-2-13b-chat"
 > ⚠️ **NOTE**: It may take up to 5 minutes for the Triton server to start. The `-d` flag starts the services in the background. 
 
 ```
-$ source compose.env; docker compose build
+$ source deploy/compose/compose.env;  docker compose -f deploy/compose/docker-compose.yaml build
 
-$ source compose.env; docker compose up -d
+$ docker compose -f deploy/compose/docker-compose.yaml up -d
 
 $ docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 CONTAINER ID   NAMES                     STATUS
