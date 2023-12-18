@@ -42,7 +42,7 @@ $ grep AI deploy/compose/compose.env
 ```
 $ source deploy/compose/compose.env;  docker compose -f deploy/compose/docker-compose-playground.yaml build
 
-$ docker compose -f deploy/compose/docker-compose-palyground.yaml up -d
+$ docker compose -f deploy/compose/docker-compose-playground.yaml up -d
 
 $ docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 CONTAINER ID   NAMES               STATUS
