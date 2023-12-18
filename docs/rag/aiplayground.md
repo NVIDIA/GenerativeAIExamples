@@ -6,7 +6,7 @@
 
 1.  Navigate to https://catalog.ngc.nvidia.com/ai-foundation-models.
 
-2. Select any model and click ``Learn More``.
+2. Find the <i>Llama 2 13B</i> model icon and click ``Learn More``.
 
 ![Diagram](./images/image5.png)
 
@@ -29,32 +29,39 @@ $ git clone git@github.com:NVIDIA/GenerativeAIExamples.git
 Cloning into 'GenerativeAIExamples'...
 ```
 
-2. Configure <i>compose.env</i> to use the NVIDIA endpoint.
+2. Add your NGC API key to <i>compose.env</i> to use the NVIDIA endpoint.
 
 ```
-  export AI_PLAYGROUND_API_KEY="nvapi-*"
+$ cd GenerativeAIExamples
+ 
+$ grep AI deploy/compose/compose.env
+ export AI_PLAYGROUND_API_KEY="nvapi-*"
 ```
 3. Deploy the developer RAG example via Docker compose.
 
 ```
-$ source compose.env; docker compose build
+$ source deploy/compose/compose.env;  docker compose -f deploy/compose/docker-compose.yaml build
 
-$ source compose.env; docker compose up -d
+$ docker compose -f deploy/compose/docker-compose.yaml up -d
 
 $ docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
-CONTAINER ID   NAMES                     STATUS
-853b74f11e65   llm-playground            Up 15 minutes
-9964f1a797a3   query-router              Up 15 minutes
-e3e3d4871f1a   jupyter-notebook-server   Up 15 minutes
-09150764b74a   triton-inference-server   Up 15 minutes (unhealthy)
-2285b01dbe0c   milvus-standalone         Up 40 minutes (healthy)
-2c96084539ce   milvus-minio              Up 40 minutes (healthy)
-a839261973b8   milvus-etcd               Up 40 minutes (healthy)
+CONTAINER ID   NAMES               STATUS
+4cae4d242d12   llm-playground      Up 4 minutes
+1c8383b10866   chain-server        Up 4 minutes
+26c3d00367e4   milvus-standalone   Up 4 minutes (healthy)
+3a0a0d719d09   milvus-minio        Up 4 minutes (healthy)
+8e29db31f0de   notebook-server     Up 4 minutes
+a9711883dc50   evaluation          Up 4 minutes
+f2bee65460d0   milvus-etcd         Up 4 minutes (healthy)
 ```
 
 ## Test
 
-- Interact with the pipeline using UI as as mentioned [here.](../../RetrievalAugmentedGeneration/README.md#step-4-run-the-sample-web-application)
+1. Follow steps 1 - 5 in the ["Test" section of example 02](../../RetrievalAugmentedGeneration/README.md#02-test).
 
-- Example [notebook 6](../../notebooks/06_AI_playground.ipynb) showcases the usage of AI Playground based LLM. You can access the notebook server at `http://host-ip:8888` from your web browser.
+## Learn more
+
+Example [notebook 6](../../notebooks/06_AI_playground.ipynb) showcases the usage of AI Playground based LLM. 
+
+1. Access the notebook server at `http://host-ip:8888` from your web browser.
 

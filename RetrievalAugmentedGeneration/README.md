@@ -177,7 +177,7 @@ checklist.chk  consolidated.00.pth  consolidated.01.pth  params.json  tokenizer.
 5. Set the absolute path to the model location in <i>compose.env</i>.
 
 ```
-$ cd ~/git/GenerativeAIExamples/RetrievalAugmentedGeneration/deploy
+$ cd ~/git/GenerativeAIExamples/deploy/compose
 
 $ grep MODEL compose.env | grep -v \# 
 export MODEL_DIRECTORY="/home/nvidia/git/llama/llama-2-13b-chat/"
