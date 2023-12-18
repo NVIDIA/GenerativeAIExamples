@@ -213,13 +213,17 @@ Reference:
 
 1. Connect to the sample web application at ``http://host-ip:8090``.
 
-2. In the chat window, type "How many cores are on the Nvidia Grace superchip?"
+2. In the <B>Converse</B> tab, type "How many cores are on the Nvidia Grace superchip?" iin the chat box and press <B>Submit</B>.
 
-3.  Upload the sample data set to the knowledge base.
+3.  Upload the sample data set to the <B>KNowledge Base</B> tab.
+
+> ⚠️ **NOTE**: ``dataset.zip`` is located in the ``notebooks`` directory. Unzip the archive and upload the PDFs.
 
 4. Return to **Converse** tab and check **[X] Use knowledge base**.
 
 5. Retype the question:  "How many cores are on the Nvidia Grace superchip?"
+
+![Grace query success](../notebooks/imgs/grace_answer.png)
 
 #### Learn More
 
