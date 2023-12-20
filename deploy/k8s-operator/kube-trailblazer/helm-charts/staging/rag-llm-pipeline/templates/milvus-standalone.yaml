@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  milvus-standalone
+  labels:
+    app.kubernetes.io/name: milvus-standalone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: milvus-standalone
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: milvus-standalone
+    spec:
+      containers:
+      - name:  milvus-standalone
+        image:  milvusdb/milvus:v2.3.1-gpu
+        command:
+        - /tini 
+        - --
+        - milvus
+        - run
+        - standalone
+        env:  
+        - name: ETCD_ENDPOINTS
+          value: milvus-etcd:2379
+        - name: KNOWHERE_GPU_MEM_POOL_SIZE
+          value: 2048:4096
+        - name: MINIO_ADDRESS
+          value: milvus-minio:9000
+        ports:  
+        - containerPort: 19530
+        - containerPort: 9091
+        readinessProbe:
+          exec:
+            command:
+            - curl
+            - -f 
+            -  http://localhost:9091/healthz
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        resources:
+          limits:
+            {{ .Values.milvus.gpu.type }}: {{ .Values.milvus.gpu.count }} 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:  milvus
+spec:
+  selector:
+    app.kubernetes.io/name: milvus-standalone
+  ports:
+    - protocol: TCP
+      port: 19530
+      targetPort: 19530
