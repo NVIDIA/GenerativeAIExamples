@@ -1,0 +1,12 @@
+apiVersion: package.nvidia.com/v1alpha1
+kind: HelmPipeline
+metadata:
+  labels:
+    app.kubernetes.io/name: helmpipeline
+    app.kubernetes.io/instance: helmpipeline-sample
+    app.kubernetes.io/part-of: kube-trailblazer
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: kube-trailblazer
+  name: helmpipeline-sample
+spec:
+  # TODO(user): Add fields here

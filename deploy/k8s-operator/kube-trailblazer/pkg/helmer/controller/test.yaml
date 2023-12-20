@@ -1,0 +1,38 @@
+
+  - repoEntry:
+      name: "zvonkok"
+      url: "https://zvonkok.github.io/helm-charts/"
+      #username: "zvonkok"
+      #password: "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"
+      #pass_credentials_all: true
+      #insecure_skip_tls_verify: true
+    chartSpec:
+      release:   "flannel"
+      chart:     "zvonkok/flannel"
+      namespace: "flannel"
+      version:   "v0.23.0"
+  
+  - repoEntry:
+      name: "nfd"
+      url: "https://kubernetes-sigs.github.io/node-feature-discovery/charts"
+    chartSpec:
+      release:   "node-feature-discovery"
+      chart:     "nfd/node-feature-discovery"
+      namespace: "node-feature-discovery"
+      version:   "0.14.3"
+    chartValues:
+      kernelVersion: "{{ tpl .Values.runtime.kernelVersiosn }}" # {{ tpl .Values.chartValues.kernelVersion . }}
+  
+  - repoEntry:
+      name: "nvidia"
+      url: "https://helm.ngc.nvidia.com/nvidia"
+    chartSpec:
+      release:   "gpu-operator"
+      chart:     "nvidia/gpu-operator"
+      namespace: "gpu-operator"
+      version:   "v23.9.0"
+    chartValues:
+      nfd:
+        enabled: false
+      mig:
+        strategy: "single"

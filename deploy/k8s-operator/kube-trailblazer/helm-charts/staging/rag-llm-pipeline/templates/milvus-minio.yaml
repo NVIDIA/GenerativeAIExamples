@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  milvus-minio
+  labels:
+    app.kubernetes.io/name: milvus-minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: milvus-minio
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: milvus-minio
+    spec:
+      containers:
+      - name: milvus-minio
+        image:  minio/minio:RELEASE.2023-03-20T20-16-18Z
+        command:
+        - minio
+        - server
+        - /minio_data
+        - --console-address
+        - :9001
+        env:  
+        - name: MINIO_ACCESS_KEY
+          value: minioadmin
+        - name: MINIO_SECRET_KEY
+          value: minioadmin
+        ports:
+        - containerPort: 9001
+        - containerPort: 9000
+        volumeMounts:
+        - mountPath: /minio_data
+          name: minio-data
+        readinessProbe:
+          exec:
+            command:
+            - curl
+            - -f 
+            - http://localhost:9000/minio/health/live
+          initialDelaySeconds: 20
+          periodSeconds: 5
+      volumes:
+      - name: minio-data
+        hostPath:
+          path: /minio_data
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:  milvus-minio
+spec:
+  selector:
+    app.kubernetes.io/name: milvus-minio
+  ports:
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000 
+

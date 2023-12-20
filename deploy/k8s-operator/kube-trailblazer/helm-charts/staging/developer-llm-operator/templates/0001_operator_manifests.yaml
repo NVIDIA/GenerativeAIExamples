@@ -1,0 +1,201 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: helmpipelines.package.nvidia.com
+spec:
+  group: package.nvidia.com
+  names:
+    kind: HelmPipeline
+    listKind: HelmPipelineList
+    plural: helmpipelines
+    singular: helmpipeline
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: HelmPipeline is the Schema for the helmpipelines API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: HelmPipelineSpec defines the desired state of HelmPipeline
+            properties:
+              managementState:
+                pattern: ^(Managed|Unmanaged|Force|Removed)$
+                type: string
+              pipeline:
+                description: 'Orchard: A planned and managed group of Helm trees.'
+                items:
+                  description: A shelter of vines or branches or of latticework covered with climbing shrubs or vines, also latin for tree
+                  properties:
+                    chartSpec:
+                      properties:
+                        atomic:
+                          description: Atomic indicates whether to install resources atomically. 'Wait' will automatically be set to true when using Atomic.
+                          type: boolean
+                        chart:
+                          type: string
+                        cleanupOnFail:
+                          description: CleanupOnFail indicates whether to cleanup the release on failure.
+                          type: boolean
+                        createNamespace:
+                          description: CreateNamespace indicates whether to create the namespace if it does not exist.
+                          type: boolean
+                        dependencyUpdate:
+                          description: DependencyUpdate indicates whether to update the chart release if the dependencies have changed.
+                          type: boolean
+                        description:
+                          description: Description specifies a custom description for the uninstalled release
+                          type: string
+                        disableHooks:
+                          description: DisableHooks indicates whether to disable hooks.
+                          type: boolean
+                        dryRun:
+                          description: DryRun indicates whether to perform a dry run.
+                          type: boolean
+                        force:
+                          description: Force indicates whether to force the operation.
+                          type: boolean
+                        generateName:
+                          description: GenerateName indicates that the release name should be generated.
+                          type: boolean
+                        keepHistory:
+                          description: KeepHistory indicates whether to retain or purge the release history during uninstall
+                          type: boolean
+                        maxHistory:
+                          description: MaxHistory limits the maximum number of revisions saved per release.
+                          type: integer
+                        nameTemplate:
+                          description: NameTemplate is the template used to generate the release name if GenerateName is configured.
+                          type: string
+                        namespace:
+                          description: Namespace where the chart release is deployed. Note that helmclient.Options.Namespace should ideally match the namespace configured here.
+                          type: string
+                        recreate:
+                          description: Recreate indicates whether to recreate the release if it already exists.
+                          type: boolean
+                        release:
+                          type: string
+                        replace:
+                          description: Replace indicates whether to replace the chart release if it already exists.
+                          type: boolean
+                        resetValues:
+                          description: ResetValues indicates whether to reset the values.yaml file during installation.
+                          type: boolean
+                        reuseValues:
+                          description: ReuseValues indicates whether to reuse the values.yaml file during installation.
+                          type: boolean
+                        skipCRDs:
+                          description: SkipCRDs indicates whether to skip CRDs during installation.
+                          type: boolean
+                        subNotes:
+                          description: SubNotes indicates whether to print sub-notes.
+                          type: boolean
+                        timeout:
+                          description: Timeout configures the time to wait for any individual Kubernetes operation (like Jobs for hooks).
+                          format: int64
+                          type: integer
+                        upgradeCRDs:
+                          description: Upgrade indicates whether to perform a CRD upgrade during installation.
+                          type: boolean
+                        valuesOptions:
+                          description: Specify values similar to the cli
+                          properties:
+                            JSONValues:
+                              items:
+                                type: string
+                              type: array
+                            fileValues:
+                              items:
+                                type: string
+                              type: array
+                            strinValues:
+                              items:
+                                type: string
+                              type: array
+                            valueFiles:
+                              items:
+                                type: string
+                              type: array
+                            values:
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - JSONValues
+                          - fileValues
+                          - strinValues
+                          - valueFiles
+                          - values
+                          type: object
+                        valuesYaml:
+                          description: ValuesYaml is the values.yaml content. use string instead of map[string]interface{} https://github.com/kubernetes-sigs/kubebuilder/issues/528#issuecomment-466449483 and https://github.com/kubernetes-sigs/controller-tools/pull/317
+                          type: string
+                        version:
+                          description: Version of the chart release.
+                          type: string
+                        wait:
+                          description: Wait indicates whether to wait for the release to be deployed or not.
+                          type: boolean
+                        waitForJobs:
+                          description: WaitForJobs indicates whether to wait for completion of release Jobs before marking the release as successful. 'Wait' has to be specified for this to take effect. The timeout may be specified via the 'Timeout' field.
+                          type: boolean
+                      required:
+                      - chart
+                      type: object
+                    chartValues:
+                      description: TODO ChartValues json.RawMessage `json:"chartValues"`
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    releaseName:
+                      type: string
+                    repoEntry:
+                      description: Entry represents a collection of parameters for chart repository, since we cannot annotate the internal helm struct we're doing it here
+                      properties:
+                        caFile:
+                          type: string
+                        certFile:
+                          type: string
+                        insecure_skip_tls_verify:
+                          type: boolean
+                        keyFile:
+                          type: string
+                        name:
+                          type: string
+                        pass_credentials_all:
+                          type: boolean
+                        password:
+                          type: string
+                        url:
+                          type: string
+                        username:
+                          type: string
+                      required:
+                      - url
+                      type: object
+                  required:
+                  - chartSpec
+                  - repoEntry
+                  type: object
+                type: array
+            required:
+            - pipeline
+            type: object
+          status:
+            description: HelmPipelineStatus defines the observed state of HelmPipeline
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
