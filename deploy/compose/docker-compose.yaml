@@ -151,11 +151,11 @@ services:
       APP_LLM_MODELENGINE: triton-trt-llm
       APP_CONFIG_FILE: ${APP_CONFIG_FILE}
       NVAPI_KEY: ${AI_PLAYGROUND_API_KEY}
-      APP_PGVECTOR_HOST: "pgvector.com"
+      APP_PGVECTOR_HOST: "mypgvectorhost.com"
       APP_PGVECTOR_PORT: "5432"
-      APP_PGVECTOR_DATABASE: "postgres"
-      APP_PGVECTOR_USER: "mypgvector"
-      APP_PGVECTOR_PASSWORD: "Admin123"
+      APP_PGVECTOR_DATABASE: "mypostgresdb"
+      APP_PGVECTOR_USER: "myUserName"
+      APP_PGVECTOR_PASSWORD: "myPassword"
       APP_PGVECTOR_TABLE_NAME: "rag-test"
     volumes:
       - ${APP_CONFIG_FILE}:${APP_CONFIG_FILE}
