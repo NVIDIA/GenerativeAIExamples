@@ -30,6 +30,40 @@ class MilvusConfig(ConfigWizard):
         help_txt="The host of the machine running Milvus DB",
     )
 
+@configclass
+class PGVectorStoreConfig(ConfigWizard):
+    """Configuration class for the PGVectorStore connection."""
+
+    database: str = configfield(
+        "database",
+        default="api",
+        help_txt="The name of the database",
+    )
+    host: str = configfield(
+        "host",
+        default="pgvector",
+        help_txt="The host of the machine running Milvus DB",
+    )
+    password: str = configfield(
+        "password",
+        default="mypd",
+        help_txt="The password for accessing the database",
+    )
+    port: str = configfield(
+        "port",
+        default=5432,
+        help_txt="The port number for database connection",
+    )
+    user: str = configfield(
+        "user",
+        default="myuser",
+        help_txt="The username for accessing the database",
+    )
+    table_name: str = configfield(
+        "table_name",
+        default="test",
+        help_txt="The name of the table in the database",
+    )
 
 @configclass
 class LLMConfig(ConfigWizard):
@@ -155,6 +189,12 @@ class AppConfig(ConfigWizard):
         env=False,
         help_txt="The configuration of the Milvus connection.",
         default=MilvusConfig(),
+    )
+    pgvector: PGVectorStoreConfig = configfield(
+        "pgvector", 
+        env=False, 
+        help_txt="The configuration of the PGVector connection.",
+        default=PGVectorStoreConfig(),
     )
     llm: LLMConfig = configfield(
         "llm",
