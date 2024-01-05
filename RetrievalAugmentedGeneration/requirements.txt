@@ -10,3 +10,6 @@ pymilvus==2.3.1
 dataclass-wizard==0.22.2
 opencv-python==4.8.0.74
 minio==7.2.0
+pgvector==0.2.4
+psycopg2-binary==2.9.9
+asyncpg==0.29.0

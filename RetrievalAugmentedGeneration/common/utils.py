@@ -25,6 +25,7 @@ from llama_index.postprocessor.types import BaseNodePostprocessor
 from llama_index.schema import MetadataMode
 from llama_index.utils import globals_helper
 from llama_index.vector_stores import MilvusVectorStore
+from llama_index.vector_stores import PGVectorStore
 from llama_index import VectorStoreIndex, ServiceContext, set_global_service_context
 from llama_index.llms import LangChainLLM
 from llama_index.embeddings import LangchainEmbedding
@@ -95,7 +96,14 @@ def get_config() -> "ConfigWizard":
 def get_vector_index() -> VectorStoreIndex:
     """Create the vector db index."""
     config = get_config()
-    vector_store = MilvusVectorStore(uri=config.milvus.url, dim=config.embeddings.dimensions, overwrite=False)
+    vector_store = PGVectorStore.from_params(database=config.pgvector.database,
+                                            host=config.pgvector.host,
+                                            port=config.pgvector.port,
+                                            user=config.pgvector.user,
+                                            password=config.pgvector.password,
+                                            table_name=config.pgvector.table_name,
+                                            embed_dim=1024)
+    # vector_store = MilvusVectorStore(uri=config.milvus.url, dim=config.embeddings.dimensions, overwrite=False)
     return VectorStoreIndex.from_vector_store(vector_store)
 
 
