@@ -1,5 +1,5 @@
 dataclass_wizard==0.22.2
-gradio==3.39.0
+gradio==4.11.0
 jinja2==3.1.2
 numpy==1.25.2
 protobuf==3.20.3
