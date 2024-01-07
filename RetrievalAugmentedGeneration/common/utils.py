@@ -129,7 +129,7 @@ def get_llm() -> LangChainLLM:
         )
         return LangChainLLM(llm=aipl_llm)
     else:
-        raise RuntimeError("Unable to find any supported Large Language Model server. Supported engines are triton-trt-llm and nemo-infer.")
+        raise RuntimeError("Unable to find any supported Large Language Model server. Supported engines are triton-trt-llm and ai-playground.")
 
 
 @lru_cache
