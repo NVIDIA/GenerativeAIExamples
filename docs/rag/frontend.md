@@ -1,7 +1,7 @@
 # Web Frontend
 ------------
 The web frontend provides a UI on top of the [RAG chat server APIs](./chat_server.md).
-- Users can chat with the LLM and see responses streamed back.
+- Users can chat with the LLM and see responses streamed back for different examples.
 - By selecting “Use knowledge base,” the chatbot returns responses augmented with the data that’s been stored in the vector database.
 - To store content in the vector database, change the window to “Knowledge Base” in the upper right corner and upload documents.
 

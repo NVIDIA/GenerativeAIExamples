@@ -47,6 +47,8 @@ class ModelServer:
     @property
     def _allow_http(self) -> str:
         """Indicate if Triton should allow http connections."""
+        if self._model.format == ModelFormats.NEMO:
+            return "true"
         return "true" if self._http else "false"
 
     @property

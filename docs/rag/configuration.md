@@ -2,14 +2,16 @@
 
 ### Chain Server Configuration
 
-In this section, we explore the configurations for the [Chain Server](./chat_server.md). Chain server interaction with other components can be controlled by config. Chain Server interacts with components such as the `milvus` vector store and `triton` server, which hosts the Large Language Model (LLM). Additionally, we'll delve into customization options to fine-tune the behavior of the query server. These options include settings for the embedding model, chunk size, and prompts for generating responses.
+In this section, we explore the configurations for the [Chain Server](./chat_server.md) used for the default canonical developer rag example.
+
+Chain server interaction with other components can be controlled by config. Chain Server interacts with components such as the `milvus` vector store and `triton` server, which hosts the Large Language Model (LLM). Additionally, we'll delve into customization options to fine-tune the behavior of the query server. These options include settings for the embedding model, chunk size, and prompts for generating responses.
 
 You can refer to [sample config](../../deploy/compose/config.yaml) to see the structure.
 
-#### Milvus Configuration
-`Milvus` serves as a vector database for storing embeddings.
+#### Vector Database Configuration
+The configuration of the solution which serves as a vector database for storing embeddings.
 
-    url: Configure the HTTP URI where the Milvus server is hosted.
+    url: Configure the HTTP URI where the vector database server is hosted.
 
 #### LLM server Configuration
 LLM Inference server hosts the Large Language Model (LLM) with triton backend.
@@ -21,7 +23,7 @@ LLM Inference server hosts the Large Language Model (LLM) with triton backend.
 
     model_engine: An enum specifying the backend name hosting the model. Options currently supported are:
     1. `triton-trt-llm` for using locally deployed LLM models. Follow steps [here](../../RetrievalAugmentedGeneration/README.md#local-llm-setup) to understand how to deploy and use on-prem deployed models.
-    2. `ai-playground` for using NV AI Playground based models. Follow steps [here](../../RetrievalAugmentedGeneration/README.md#using-nvdia-cloud-based-llm) to understand how to deploy and use TRT-LLM optimized playground models from cloud.
+    2. `nv-ai-foundation` for using NV AI Playground based models. Follow steps [here](../../RetrievalAugmentedGeneration/README.md#1-qa-chatbot----nvidia-ai-foundation-inference-endpoint) to understand how to deploy and use TRT-LLM optimized playground models from cloud.
 
 #### Text Splitter Configuration
 This section covers the settings for the Text Splitter component.
@@ -34,7 +36,7 @@ This section covers the settings for the Text Splitter component.
 The Embeddings section contains information required for generating embeddings.
 
     model_name: Indicate the name of the model used to generate embeddings.
-    model_engine: An enum specifying the backend name hosting the model, Currently huggingface and ai-playground are supported.
+    model_engine: An enum specifying the backend name hosting the model, Currently huggingface and nv-ai-foundation are supported.
     dimensions: Integer value specifying the dimensions of the embedding search model from huggingface.
     Note: Any change in `model_name`` may also necessitate changes in the model's `dimensions`, which can be adjusted using this field.
 
@@ -46,8 +48,8 @@ Customize prompts used for generating responses.
 
 You set path to use this config file to be used by chain server using enviornment variable `APP_CONFIG_FILE`. You can do the same in [compose.env](../../deploy/compose/compose.env) and source the file.
 
-### Configuring docker compose file
-In this section, we will look into the environment variables and parameters that can be configured within the [Docker Compose](../../deploy/compose/docker-compose.yaml) YAML file. Our system comprises multiple microservices that interact harmoniously to generate responses. These microservices include LLM Inference Server, Jupyter Server, Milvus, Query/chain server, and Frontend.
+### Configuring docker compose file for default RAG example
+In this section, we will look into the environment variables and parameters that can be configured within the [Docker Compose](../../deploy/compose/docker-compose.yaml) YAML file for the default canonical example. Our system comprises multiple microservices that interact harmoniously to generate responses. These microservices include LLM Inference Server, Jupyter Server, Milvus, Query/chain server, and Frontend.
 
 #### LLM server Configurations
 The LLM Inference Server is used for hosting the Large Language Model (LLM) with triton backend. You can configure the model information using the [compose.env](../../deploy/compose/compose.env) file or by setting the corresponding environment variables. Here is a list of environment variables utilized by the llm inference server:
@@ -72,7 +74,7 @@ The Query service is the core component responsible for interacting with the llm
     APP_LLM_MODELNAME: The model name used by the Triton server.
     APP_LLM_MODELENGINE: An enum specifying the backend name hosting the model. Options currently supported are:
     1. `triton-trt-llm` if you are using locally deployed LLM models.
-    2. `ai-playground` if you are using NV AI Playground based models.
+    2. `nv-ai-foundation` if you are using NV AI Playground based models.
     APP_CONFIG_FILE: Provides the path to the configuration file used by the Chain Server or this container. Defaults to /dev/null
 
 #### Frontend

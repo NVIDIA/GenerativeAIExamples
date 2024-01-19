@@ -120,6 +120,8 @@ def main(args: argparse.Namespace) -> int:
     # print discovered model parameters
     _LOGGER.info("Model file format: %s", model.format.name)
     _LOGGER.info("World Size: %d", model.world_size)
+    _LOGGER.info("Max input length: %s", args.max_input_length)
+    _LOGGER.info("Max output length: %s", args.max_output_length)
     _LOGGER.info("Compute Capability: %s", model.compute_cap)
     _LOGGER.info("Quantization: %s", conversion_opts.quantization)
 

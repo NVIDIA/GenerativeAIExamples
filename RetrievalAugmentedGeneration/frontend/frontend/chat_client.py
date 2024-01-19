@@ -20,6 +20,8 @@ import typing
 
 import requests
 
+from frontend import tracing
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -37,12 +39,16 @@ class ChatClient:
         """Return the friendly model name."""
         return self._model_name
 
+    @tracing.instrumentation_wrapper
     def search(
-        self, prompt: str
+        self, carrier, prompt: str
     ) -> typing.List[typing.Dict[str, typing.Union[str, float]]]:
         """Search for relevant documents and return json data."""
         data = {"content": prompt, "num_docs": 4}
-        headers = {"accept": "application/json", "Content-Type": "application/json"}
+        headers = {
+            **carrier,
+            "accept": "application/json", "Content-Type": "application/json"
+        }
         url = f"{self.server_url}/documentSearch"
         _LOGGER.debug(
             "looking up documents - %s", str({"server_url": url, "post_data": data})
@@ -62,8 +68,9 @@ class ChatClient:
             )
 
 
+    @tracing.predict_instrumentation_wrapper
     def predict(
-        self, query: str, use_knowledge_base: bool, num_tokens: int
+        self, carrier, query: str, use_knowledge_base: bool, num_tokens: int
     ) -> typing.Generator[str, None, None]:
         """Make a model prediction."""
         data = {
@@ -78,8 +85,7 @@ class ChatClient:
         )
 
         try:
-            with requests.post(url, stream=True, json=data, timeout=10) as req:
-
+            with requests.post(url, stream=True, json=data, timeout=30, headers=carrier) as req:
                     req.raise_for_status()
                     for chunk in req.iter_content(16):
                         yield chunk.decode("UTF-8")
@@ -87,10 +93,16 @@ class ChatClient:
             _LOGGER.error(f"Failed to get response from /generate endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")
             yield str("Failed to get response from /generate endpoint of chain-server. Check if the fastapi server in chain-server is up. Refer to chain-server logs for details.")
 
-    def upload_documents(self, file_paths: typing.List[str]) -> None:
+        # Send None to indicate end of response
+        yield None
+
+
+    @tracing.instrumentation_wrapper
+    def upload_documents(self, carrier, file_paths: typing.List[str]) -> None:
         """Upload documents to the kb."""
         url = f"{self.server_url}/uploadDocument"
         headers = {
+            **carrier,
             "accept": "application/json",
         }
 
@@ -105,8 +117,11 @@ class ChatClient:
                     str({"server_url": url, "file": fpath}),
                 )
 
-                _ = requests.post(
+                resp = requests.post(
                     url, headers=headers, files=files, timeout=600  # type: ignore [arg-type]
                 )
+                if resp.status_code == 500:
+                     raise ValueError(f"{resp.json().get('message', 'Failed to upload document')}")
         except Exception as e:
             _LOGGER.error(f"Failed to get response from /uploadDocument endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")
+            raise ValueError(f"{e}")

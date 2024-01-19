@@ -18,24 +18,40 @@ from RetrievalAugmentedGeneration.common.configuration_wizard import ConfigWizar
 
 
 @configclass
-class MilvusConfig(ConfigWizard):
-    """Configuration class for the Weaviate connection.
+class VectorStoreConfig(ConfigWizard):
+    """Configuration class for the Vector Store connection.
 
-    :cvar url: URL of Milvus DB
+    :cvar name: Name of vector store
+    :cvar url: URL of Vector Store
     """
 
+    name: str = configfield(
+        "name",
+        default="milvus", # supports pgvector, milvus
+        help_txt="The name of vector store",
+    )
     url: str = configfield(
         "url",
-        default="http://localhost:19530",
-        help_txt="The host of the machine running Milvus DB",
+        default="http://milvus:19530", # for pgvector `pgvector:5432`
+        help_txt="The host of the machine running Vector Store DB",
+    )
+    nlist: int = configfield(
+        "nlist",
+        default=64, # IVF Flat milvus
+        help_txt="Number of cluster units",
+    )
+    nprobe: int = configfield(
+        "nprobe",
+        default=16, # IVF Flat milvus
+        help_txt="Number of units to query",
     )
 
 
 @configclass
 class LLMConfig(ConfigWizard):
-    """Configuration class for the Triton connection.
+    """Configuration class for the llm connection.
 
-    :cvar server_url: The location of the Triton server hosting the llm model.
+    :cvar server_url: The location of the llm server hosting the model.
     :cvar model_name: The name of the hosted model.
     """
 
@@ -60,7 +76,7 @@ class LLMConfig(ConfigWizard):
 class TextSplitterConfig(ConfigWizard):
     """Configuration class for the Text Splitter.
 
-    :cvar chunk_size: Chunk size for text splitter.
+    :cvar chunk_size: Chunk size for text splitter. Tokens per chunk in token-based splitters.
     :cvar chunk_overlap: Text overlap in text splitter.
     """
 
@@ -138,10 +154,10 @@ class PromptsConfig(ConfigWizard):
 class AppConfig(ConfigWizard):
     """Configuration class for the application.
 
-    :cvar milvus: The configuration of the Milvus vector db connection.
-    :type milvus: MilvusConfig
-    :cvar triton: The configuration of the backend Triton server.
-    :type triton: TritonConfig
+    :cvar vector_store: The configuration of the vector db connection.
+    :type vector_store: VectorStoreConfig
+    :cvar llm: The configuration of the backend llm server.
+    :type llm: LLMConfig
     :cvar text_splitter: The configuration for text splitter
     :type text_splitter: TextSplitterConfig
     :cvar embeddings: The configuration for huggingface embeddings
@@ -150,11 +166,11 @@ class AppConfig(ConfigWizard):
     :type prompts: PromptsConfig
     """
 
-    milvus: MilvusConfig = configfield(
-        "milvus",
+    vector_store: VectorStoreConfig = configfield(
+        "vector_store",
         env=False,
-        help_txt="The configuration of the Milvus connection.",
-        default=MilvusConfig(),
+        help_txt="The configuration of the vector db connection.",
+        default=VectorStoreConfig(),
     )
     llm: LLMConfig = configfield(
         "llm",
