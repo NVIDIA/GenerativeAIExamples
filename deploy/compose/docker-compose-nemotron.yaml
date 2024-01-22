@@ -1,0 +1,190 @@
+services:
+
+  llm:
+    container_name: llm-inference-server
+    image: llm-inference-server:latest
+    build:
+      context: ../.././RetrievalAugmentedGeneration/llm-inference-server/
+      dockerfile: Dockerfile
+    volumes:
+    - ${MODEL_DIRECTORY:?please update the env file and source it before running}:/model
+    command: ${MODEL_ARCHITECTURE:?please update the env file and source it before running} --http --max-input-length ${MODEL_MAX_INPUT_LENGTH:-3000} --max-output-length ${MODEL_MAX_OUTPUT_LENGTH:-512} --quantization ${QUANTIZATION:-None}
+    ports:
+    - "8000:8000"
+    - "8001:8001"
+    - "8002:8002"
+    expose:
+      - "8000"
+      - "8001"
+      - "8002"
+    shm_size: 20gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0", "1"]
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 10m
+
+  jupyter-server:
+    container_name: notebook-server
+    image: notebook-server:latest
+    build:
+      context: ../../
+      dockerfile: ./notebooks/Dockerfile.notebooks
+    ports:
+    - "8888:8888"
+    expose:
+    - "8888"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    depends_on:
+      - "llm"
+
+  etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.5
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/etcd:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "9011:9011"
+      - "9010:9010"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/minio:/minio_data
+    command: minio server /minio_data --console-address ":9011" --address ":9010"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9010/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.3.1-gpu
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9010
+      KNOWHERE_GPU_MEM_POOL_SIZE: 2048:4096
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - "etcd"
+      - "minio"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: ["gpu"]
+              count: 1
+
+  query:
+    container_name: chain-server
+    image: chain-server:latest
+    build:
+      context: ../../
+      dockerfile: ./RetrievalAugmentedGeneration/Dockerfile
+      args:
+        EXAMPLE_NAME: ${RAG_EXAMPLE}
+    command: --port 8081 --host 0.0.0.0
+    environment:
+      APP_VECTORSTORE_URL: "http://milvus:19530"
+      APP_VECTORSTORE_NAME: "milvus"
+      APP_LLM_SERVERURL: "llm:8001"
+      APP_LLM_MODELNAME: ensemble
+      APP_LLM_MODELENGINE: triton-trt-llm
+      APP_CONFIG_FILE: ${APP_CONFIG_FILE}
+      NVAPI_KEY: ${AI_PLAYGROUND_API_KEY}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      ENABLE_TRACING: false
+    volumes:
+      - ${APP_CONFIG_FILE}:${APP_CONFIG_FILE}
+    ports:
+    - "8081:8081"
+    expose:
+    - "8081"
+    shm_size: 5gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+    #   interval: 30s
+    #   timeout: 20s
+    #   retries: 3
+    depends_on:
+      - "milvus"
+      - "llm"
+
+  frontend:
+    container_name: llm-playground
+    image: llm-playground:latest
+    build:
+      context: ../.././RetrievalAugmentedGeneration/frontend/
+      dockerfile: Dockerfile
+    command: --port 8090
+    environment:
+      APP_SERVERURL: http://query
+      APP_SERVERPORT: 8081
+      APP_MODELNAME: ${MODEL_NAME:-${MODEL_ARCHITECTURE}}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      ENABLE_TRACING: false
+      RIVA_API_URI: ${RIVA_API_URI}
+      RIVA_API_KEY: ${RIVA_API_KEY}
+      RIVA_FUNCTION_ID: ${RIVA_FUNCTION_ID}
+      TTS_SAMPLE_RATE: ${TTS_SAMPLE_RATE}
+    ports:
+    - "8090:8090"
+    expose:
+    - "8090"
+    depends_on:
+      - query
+
+networks:
+  default:
+    name: nvidia-llm

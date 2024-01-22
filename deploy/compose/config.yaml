@@ -1,28 +1,33 @@
-milvus:
-  # The configuration of the Milvus connection.
+vector_store:
+  # The configuration of the Vector Store connection.
+
+  name: milvus
+  # The name of vector store db. Can be pgvector or milvus.
+  # Type: str
+  # ENV Variable: APP_VECTORSTORE_NAME
 
   url: "http://milvus:19530"
-  # The location of the Milvus Server.
+  # The location of the VectorStore DB.
   # Type: str
-  # ENV Variable: APP_MILVUS_URL
+  # ENV Variable: APP_VECTORSTORE_URL
 
 llm:
   # The configuration for the server hosting the Large Language models.
 
   model_engine: "triton-trt-llm"
-  # The backend name hosting the model. Options currently supported are: triton-trt-llm, ai-playground 
+  # The backend name hosting the model. Options currently supported are: triton-trt-llm, nv-ai-foundation
   # Type: str
   # ENV Variable: APP_LLM_MODELENGINE
 
   server_url: "llm:8001"
-  # The location of the server hosting the large language model. Use this option when model engine is 
-  # set to triton-trt-llm, ignore this option if model_engine is set to "ai-playground"
+  # The location of the server hosting the large language model. Use this option when model engine is
+  # set to triton-trt-llm, ignore this option if model_engine is set to "nv-ai-foundation"
   # Type: str
   # ENV Variable: APP_LLM_SERVERURL
 
   model_name: "ensemble"
   # if model_engine is "triton-trt-llm" set this to "ensemble"
-  # if model_engine is "ai-plaground" options are "llama2_13b", "llama2_70b", "mistral_7b" 
+  # if model_engine is "ai-plaground" options are "llama2_13b", "llama2_70b", "mistral_7b"
   # The name of the hosted model.
   # Type: str
   # ENV Variable: APP_LLM_MODELNAME
@@ -32,6 +37,7 @@ text_splitter:
 
   chunk_size: 510
   # Chunk size for text splitting.
+  # When using a token-based text splitter, this is the number of 'tokens per chunk'
   # Type: int
 
   chunk_overlap: 200
@@ -42,7 +48,7 @@ embeddings:
   # The configuration embedding models.
 
   model_name: intfloat/e5-large-v2
-  # The name embedding search model from huggingface or ai-playground.
+  # The name embedding search model from huggingface or nv-ai-foundation.
   # Type: str
 
   dimensions: 1024
@@ -50,7 +56,7 @@ embeddings:
   # Type: int
 
   model_engine: huggingface
-  # The backend name hosting the model, huggingface and ai-playground are supported.
+  # The backend name hosting the model, huggingface and nv-ai-foundation are supported.
   # Type: str
 
 prompts:

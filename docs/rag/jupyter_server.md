@@ -1,7 +1,7 @@
 # Jupyter Notebooks
 For development and experimentation purposes, the Jupyter notebooks provide guidance to building knowledge augmented chatbots.
 
-The following Jupyter notebooks are provided with the AI workflow:
+The following Jupyter notebooks are provided with the AI workflow for the default canonical RAG example:
 
 1. [**LLM Streaming Client**](../../notebooks/01-llm-streaming-client.ipynb)
 

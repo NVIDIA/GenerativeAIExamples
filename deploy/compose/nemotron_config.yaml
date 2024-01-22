@@ -29,6 +29,7 @@ text_splitter:
 
   chunk_size: 510
   # Chunk size for text splitting.
+  # When using a token-based text splitter, this is the number of 'tokens per chunk'
   # Type: int
 
   chunk_overlap: 200

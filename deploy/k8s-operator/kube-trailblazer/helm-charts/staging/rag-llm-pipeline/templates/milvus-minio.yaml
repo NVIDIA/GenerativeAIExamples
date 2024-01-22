@@ -22,15 +22,15 @@ spec:
         - server
         - /minio_data
         - --console-address
-        - :9001
-        env:  
+        - :9011
+        env:
         - name: MINIO_ACCESS_KEY
           value: minioadmin
         - name: MINIO_SECRET_KEY
           value: minioadmin
         ports:
-        - containerPort: 9001
-        - containerPort: 9000
+        - containerPort: 9011
+        - containerPort: 9010
         volumeMounts:
         - mountPath: /minio_data
           name: minio-data
@@ -38,8 +38,8 @@ spec:
           exec:
             command:
             - curl
-            - -f 
-            - http://localhost:9000/minio/health/live
+            - -f
+            - http://localhost:9010/minio/health/live
           initialDelaySeconds: 20
           periodSeconds: 5
       volumes:
@@ -57,6 +57,6 @@ spec:
     app.kubernetes.io/name: milvus-minio
   ports:
     - protocol: TCP
-      port: 9000
-      targetPort: 9000 
+      port: 9010
+      targetPort: 9010
 
