@@ -18,32 +18,32 @@ spec:
       - name:  milvus-standalone
         image:  milvusdb/milvus:v2.3.1-gpu
         command:
-        - /tini 
+        - /tini
         - --
         - milvus
         - run
         - standalone
-        env:  
+        env:
         - name: ETCD_ENDPOINTS
           value: milvus-etcd:2379
         - name: KNOWHERE_GPU_MEM_POOL_SIZE
           value: 2048:4096
         - name: MINIO_ADDRESS
-          value: milvus-minio:9000
-        ports:  
+          value: milvus-minio:9010
+        ports:
         - containerPort: 19530
         - containerPort: 9091
         readinessProbe:
           exec:
             command:
             - curl
-            - -f 
+            - -f
             -  http://localhost:9091/healthz
           initialDelaySeconds: 20
           periodSeconds: 5
         resources:
           limits:
-            {{ .Values.milvus.gpu.type }}: {{ .Values.milvus.gpu.count }} 
+            {{ .Values.milvus.gpu.type }}: {{ .Values.milvus.gpu.count }}
 ---
 apiVersion: v1
 kind: Service

@@ -62,16 +62,19 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
 
 def upload_file(files: List[Path], client: chat_client.ChatClient) -> List[str]:
     """Use the client to upload a file to the knowledge base."""
-    file_paths = [file.name for file in files]
-    client.upload_documents(file_paths)
+    try:
+        file_paths = [file.name for file in files]
+        client.upload_documents(file_paths = file_paths)
 
-  # Save the uploaded file names to the state file
-    with open(STATE_FILE, 'a') as file:
-        for file_path in file_paths:
-            file_path = os.path.basename(file_path)
-            file.write(file_path + '\n')
+        # Save the uploaded file names to the state file
+        with open(STATE_FILE, 'a') as file:
+            for file_path in file_paths:
+                file_path = os.path.basename(file_path)
+                file.write(file_path + '\n')
 
-    return file_paths
+        return file_paths
+    except Exception as e:
+        raise gr.Error(f"{e}")
 
 def get_uploaded_files():
     """Load previously uploaded files if the file exists"""

@@ -20,28 +20,54 @@ import logging
 from functools import lru_cache
 from typing import TYPE_CHECKING, List, Optional
 
-import torch
-from llama_index.postprocessor.types import BaseNodePostprocessor
-from llama_index.schema import MetadataMode
-from llama_index.utils import globals_helper
-from llama_index.vector_stores import MilvusVectorStore
-from llama_index import VectorStoreIndex, ServiceContext, set_global_service_context
-from llama_index.llms import LangChainLLM
-from llama_index.embeddings import LangchainEmbedding
-from langchain.text_splitter import SentenceTransformersTokenTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
+logger = logging.getLogger(__name__)
+
+try:
+    import torch
+except Exception as e:
+    logger.error(f"torch import failed with error: {e}")
+
+try:
+    import psycopg2
+except Exception as e:
+    logger.error(f"psycogp2 import failed with error: {e}")
+
+try:
+    from sqlalchemy import make_url
+except Exception as e:
+    logger.error(f"SQLalchemy import failed with error: {e}")
+
+try:
+    from llama_index.postprocessor.types import BaseNodePostprocessor
+    from llama_index.schema import MetadataMode
+    from llama_index.utils import globals_helper, get_tokenizer
+    from llama_index.vector_stores import MilvusVectorStore, PGVectorStore
+    from llama_index import VectorStoreIndex, ServiceContext, set_global_service_context
+    from llama_index.llms import LangChainLLM
+    from llama_index.embeddings import LangchainEmbedding
+    if TYPE_CHECKING:
+        from llama_index.indices.base_retriever import BaseRetriever
+        from llama_index.indices.query.schema import QueryBundle
+        from llama_index.schema import NodeWithScore
+except Exception as e:
+    logger.error(f"Llamaindex import failed with error: {e}")
+
+try:
+    from langchain.text_splitter import SentenceTransformersTokenTextSplitter
+    from langchain.embeddings import HuggingFaceEmbeddings
+except Exception as e:
+    logger.error(f"Langchain import failed with error: {e}")
+
+try:
+    from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
+except Exception as e:
+    logger.error(f"NVIDIA AI connector import failed with error: {e}")
+
 from integrations.langchain.llms.triton_trt_llm import TensorRTLLM
-from integrations.langchain.llms.nv_aiplay import GeneralLLM
-from integrations.langchain.embeddings.nv_aiplay import NVAIPlayEmbeddings
 from RetrievalAugmentedGeneration.common import configuration
 
 if TYPE_CHECKING:
-    from llama_index.indices.base_retriever import BaseRetriever
-    from llama_index.indices.query.schema import QueryBundle
-    from llama_index.schema import NodeWithScore
     from RetrievalAugmentedGeneration.common.configuration_wizard import ConfigWizard
-
-logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_CONTEXT = 1500
 DEFAULT_NUM_TOKENS = 150
@@ -58,11 +84,12 @@ class LimitRetrievedNodesLength(BaseNodePostprocessor):
         included_nodes = []
         current_length = 0
         limit = DEFAULT_MAX_CONTEXT
+        tokenizer = get_tokenizer()
 
         for node in nodes:
             current_length += len(
-                globals_helper.tokenizer(
-                    node.node.get_content(metadata_mode=MetadataMode.LLM)
+                tokenizer(
+                    node.get_content(metadata_mode=MetadataMode.LLM)
                 )
             )
             if current_length > limit:
@@ -95,7 +122,42 @@ def get_config() -> "ConfigWizard":
 def get_vector_index() -> VectorStoreIndex:
     """Create the vector db index."""
     config = get_config()
-    vector_store = MilvusVectorStore(uri=config.milvus.url, dim=config.embeddings.dimensions, overwrite=False)
+    vector_store = None
+
+    logger.info(f"Using {config.vector_store.name} as vector store")
+    if config.vector_store.name == "pgvector":
+        connection_string = f"postgresql://{os.getenv('POSTGRES_USER', '')}:{os.getenv('POSTGRES_PASSWORD', '')}@{config.vector_store.url}"
+        db_name = "vector_db"
+
+        conn = psycopg2.connect(connection_string)
+        conn.autocommit = True
+
+        with conn.cursor() as c:
+            # Check for database existence first
+            c.execute(f"SELECT 1 FROM pg_database WHERE datname = '{db_name}'")
+            if not c.fetchone():  # Database doesn't exist
+                c.execute(f"CREATE DATABASE {db_name}")
+
+        url = make_url(connection_string)
+
+        vector_store = PGVectorStore.from_params(
+            database=db_name,
+            host=url.host,
+            password=url.password,
+            port=url.port,
+            user=url.username,
+            table_name="document_store",
+            embed_dim=config.embeddings.dimensions,
+        )
+    elif config.vector_store.name == "milvus":
+        vector_store = MilvusVectorStore(uri=config.vector_store.url,
+            dim=config.embeddings.dimensions,
+            collection_name="document_store_ivfflat",
+            index_config={"index_type": "IVF_FLAT", "nlist": config.vector_store.nlist},
+            search_config={"nprobe": config.vector_store.nprobe},
+            overwrite=False)
+    else:
+        raise RuntimeError("Unable to find any supported Vector Store DB. Supported engines are milvus and pgvector.")
     return VectorStoreIndex.from_vector_store(vector_store)
 
 
@@ -111,7 +173,7 @@ def get_llm() -> LangChainLLM:
     """Create the LLM connection."""
     settings = get_config()
 
-    logger.info(f"Using {settings.llm.model_engine} as model engine for llm")
+    logger.info(f"Using {settings.llm.model_engine} as model engine for llm. Model name: {settings.llm.model_name}")
     if settings.llm.model_engine == "triton-trt-llm":
         trtllm = TensorRTLLM(  # type: ignore
             server_url=settings.llm.server_url,
@@ -119,17 +181,10 @@ def get_llm() -> LangChainLLM:
             tokens=DEFAULT_NUM_TOKENS,
         )
         return LangChainLLM(llm=trtllm)
-    elif settings.llm.model_engine == "ai-playground":
-        if os.getenv('NVAPI_KEY') is None:
-            raise RuntimeError("AI PLayground key is not set")
-        aipl_llm = GeneralLLM(
-                model=settings.llm.model_name,
-                max_tokens=DEFAULT_NUM_TOKENS,
-                streaming=True
-        )
-        return LangChainLLM(llm=aipl_llm)
+    elif settings.llm.model_engine == "nv-ai-foundation":
+        return ChatNVIDIA(model=settings.llm.model_name)
     else:
-        raise RuntimeError("Unable to find any supported Large Language Model server. Supported engines are triton-trt-llm and ai-playground.")
+        raise RuntimeError("Unable to find any supported Large Language Model server. Supported engines are triton-trt-llm and nv-ai-foundation.")
 
 
 @lru_cache
@@ -151,11 +206,8 @@ def get_embedding_model() -> LangchainEmbedding:
         )
         # Load in a specific embedding model
         return LangchainEmbedding(hf_embeddings)
-    elif settings.embeddings.model_engine == "ai-playground":
-        if os.getenv('NVAPI_KEY') is None:
-            raise RuntimeError("AI PLayground key is not set")
-        embedding = NVAIPlayEmbeddings(model=settings.embeddings.model_name)
-        return LangchainEmbedding(embedding)
+    elif settings.embeddings.model_engine == "nv-ai-foundation":
+        return NVIDIAEmbeddings(model=settings.embeddings.model_name, model_type="passage")
     else:
         raise RuntimeError("Unable to find any supported embedding model. Supported engine is huggingface.")
 
@@ -179,6 +231,6 @@ def get_text_splitter() -> SentenceTransformersTokenTextSplitter:
     """Return the token text splitter instance from langchain."""
     return SentenceTransformersTokenTextSplitter(
         model_name=TEXT_SPLITTER_EMBEDDING_MODEL,
-        chunk_size=get_config().text_splitter.chunk_size,
+        tokens_per_chunk=get_config().text_splitter.chunk_size,
         chunk_overlap=get_config().text_splitter.chunk_overlap,
     )

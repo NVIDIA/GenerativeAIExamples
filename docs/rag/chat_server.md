@@ -1,7 +1,7 @@
 
 # Chat Server
 A sample fastapi based server is provided in the workflow so that you can test the chat system in an interactive manner.
-This server wraps calls made to different components and orchestrates the entire flow.
+This server wraps calls made to different components and orchestrates the entire flow for all the provided examples.
 
 This API endpoint allows for several actions:
 - [Chat Server](#chat-server)

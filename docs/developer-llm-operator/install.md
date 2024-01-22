@@ -55,15 +55,15 @@ NVIDIA container runtime on the Kubernetes node.
 
    ```console
    $ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia \
-    && helm repo update
+      && helm repo update
    ```
 
 1. Install the Operator:
 
    ```console
    $ helm install --wait --generate-name \
-    -n gpu-operator --create-namespace \
-    nvidia/gpu-operator
+      -n gpu-operator --create-namespace \
+      nvidia/gpu-operator
    ```
 
 1. Optional: Configure GPU time-slicing if you have fewer than four GPUs.
@@ -106,14 +106,12 @@ NVIDIA container runtime on the Kubernetes node.
    - Verify that at least `4` GPUs are allocatable:
 
      ```console
-     $ kubectl get nodes -l nvidia.com/gpu.present -o json |   jq '.items[0].status.allocatable |
-         with_entries(select(.key | startswith("nvidia.com/"))) |
-         with_entries(select(.value != "0"))'
+     $ kubectl get nodes -l nvidia.com/gpu.present -o json | jq '.items[0].status.allocatable | with_entries(select(.key | startswith("nvidia.com/"))) | with_entries(select(.value != "0"))'
      ```
 
      *Example Output*
 
-     ```output
+     ```json
      {
        "nvidia.com/gpu": "4"
      }
@@ -242,8 +240,7 @@ in the NVIDIA GPU Operator documentation.
    - View the logs from the Operator controller pod:
 
      ```console
-     $ kubectl logs -n kube-trailblazer-system \
-        $(kubectl get pod -n kube-trailblazer-system -o=jsonpath='{.items[0].metadata.name}')
+     $ kubectl logs -n kube-trailblazer-system $(kubectl get pod -n kube-trailblazer-system -o=jsonpath='{.items[0].metadata.name}')
      ```
 
    - View the pods in the pipeline namespace:
@@ -280,7 +277,7 @@ in the NVIDIA GPU Operator documentation.
    llm                        ClusterIP   10.107.213.112   <none>        8001/TCP         22h
    milvus                     ClusterIP   10.102.86.183    <none>        19530/TCP        22h
    milvus-etcd                ClusterIP   10.109.74.142    <none>        2379/TCP         22h
-   milvus-minio               ClusterIP   10.103.238.28    <none>        9000/TCP         22h
+   milvus-minio               ClusterIP   10.103.238.28    <none>        9010/TCP         22h
    query                      ClusterIP   10.110.199.69    <none>        8081/TCP         22h
    ```
 

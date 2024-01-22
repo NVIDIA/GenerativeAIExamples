@@ -10,7 +10,10 @@ Generative AI starts with foundational models trained on vast quantities of unla
 
 To create true business value from LLMs, these foundational models need to be tailored to your enterprise use case. In this workflow, we  use [RAG](https://blog.langchain.dev/tutorial-chatgpt-over-your-data/) with [Llama2](https://github.com/facebookresearch/llama/), an open source model from Meta, to achieve this. Augmenting an existing AI foundational model provides an advanced starting point and a low-cost solution that enterprises can leverage to generate accurate and clear responses to their specific use case.
 
-This RAG-based reference chatbot workflow contains:
+> ⚠️ **NOTE**:
+This repository contains multiple examples. The architecture for the default canonical developer rag example is described below.
+
+This RAG-based reference default chatbot workflow contains:
 
    - [NVIDIA NeMo framework](https://docs.nvidia.com/nemo-framework/user-guide/latest/index.html) - part of NVIDIA AI Enterprise solution
    - [NVIDIA TensorRT-LLM](https://developer.nvidia.com/tensorrt) - for low latency and high throughput inference for LLMs
