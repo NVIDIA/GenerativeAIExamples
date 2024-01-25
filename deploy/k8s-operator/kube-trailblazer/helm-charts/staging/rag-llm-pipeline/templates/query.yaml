@@ -16,7 +16,7 @@ spec:
     spec:
 
       imagePullSecrets:
-        - name:   nvcrio
+        - name: {{ .Values.images.registry.ImagePullSecret.name }}
       volumes:
       - name: dshm
         emptyDir:
@@ -32,7 +32,7 @@ spec:
         - "8081"
         - --host
         - 0.0.0.0
-        env: 
+        env:
         - name: APP_MILVUS_URL
           value: http://milvus:19530
         - name: APP_LLM_SERVERURL
@@ -43,14 +43,14 @@ spec:
           value: triton-trt-llm
 #        - name: APP_CONFIG_FILE # THIS SHOULD BE A CONFIGMAP
 #         value: ""
-        ports:  
+        ports:
         - containerPort: 8081
         volumeMounts:
           - mountPath: /dev/shm
             name: dshm
         resources:
           limits:
-            {{ .Values.query.gpu.type }}: {{ .Values.query.gpu.count }} 
+            {{ .Values.query.gpu.type }}: {{ .Values.query.gpu.count }}
 ---
 apiVersion: v1
 kind: Service

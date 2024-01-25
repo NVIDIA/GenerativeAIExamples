@@ -33,7 +33,7 @@ spec:
           value: "4294967296"
         - name: ETCD_SNAPSHOT_COUNT
           value: "50000"
-        ports:  
+        ports:
         - containerPort: 2379
         readinessProbe:
           exec:
@@ -48,9 +48,21 @@ spec:
           name: etcd-data
       volumes:
       - name: etcd-data
-        hostPath:
-          path: /etcd
-          type: DirectoryOrCreate
+        persistentVolumeClaim:
+          claimName: {{ .Values.milvus.etcd.pvcName }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.milvus.etcd.pvcName }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.milvus.etcd.pvcSize }}
+      
 ---
 apiVersion: v1
 kind: Service
@@ -62,4 +74,4 @@ spec:
   ports:
     - protocol: TCP
       port: 2379
-      targetPort: 2379 
+      targetPort: 2379

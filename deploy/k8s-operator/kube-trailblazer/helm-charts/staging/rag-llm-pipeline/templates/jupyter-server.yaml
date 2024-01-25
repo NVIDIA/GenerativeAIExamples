@@ -15,7 +15,7 @@ spec:
         app.kubernetes.io/name: jupyter-notebook-server
     spec:
       imagePullSecrets:
-        - name:   nvcrio
+        - name: {{ .Values.images.registry.ImagePullSecret.name }}
       containers:
       - name: jupyter-notebook-server
         imagePullPolicy: IfNotPresent
@@ -24,7 +24,7 @@ spec:
         - containerPort: 8888
         resources:
           limits:
-            {{ .Values.jupyter.gpu.type }}: {{ .Values.jupyter.gpu.count }} 
+            {{ .Values.jupyter.gpu.type }}: {{ .Values.jupyter.gpu.count }}
 ---
 apiVersion: v1
 kind: Service
@@ -38,4 +38,4 @@ spec:
   ports:
     - protocol: TCP
       port: 8888
-      nodePort: 30000 
+      nodePort: 30000

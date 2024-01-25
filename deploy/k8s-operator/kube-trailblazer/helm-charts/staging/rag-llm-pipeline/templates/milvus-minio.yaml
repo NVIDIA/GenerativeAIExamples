@@ -44,9 +44,21 @@ spec:
           periodSeconds: 5
       volumes:
       - name: minio-data
-        hostPath:
-          path: /minio_data
-          type: DirectoryOrCreate
+        persistentVolumeClaim:
+          claimName: {{ .Values.milvus.minio.pvcName }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.milvus.minio.pvcName }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.milvus.minio.pvcSize }}
+
 ---
 apiVersion: v1
 kind: Service
@@ -59,4 +71,3 @@ spec:
     - protocol: TCP
       port: 9010
       targetPort: 9010
-
