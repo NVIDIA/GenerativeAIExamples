@@ -56,7 +56,7 @@ services:
         EXAMPLE_NAME: ${RAG_EXAMPLE}
     command: --port 8081 --host 0.0.0.0
     environment:
-      APP_VECTORSTORE_URL: "pgvector:5432"
+      APP_VECTORSTORE_URL: "${POSTGRES_HOST_IP:-pgvector}:${POSTGRES_PORT_NUMBER:-5432}"
       APP_VECTORSTORE_NAME: "pgvector"
       APP_LLM_SERVERURL: "llm:8001"
       APP_LLM_MODELNAME: "ensemble"
