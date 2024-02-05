@@ -1,4 +1,4 @@
-fastapi==0.104.1
+fastapi==0.109.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 langchain==0.0.352
