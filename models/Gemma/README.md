@@ -1,7 +1,7 @@
 # Gemma
 
 [Gemma](https://ai.google.dev/gemma/docs) is a family of decoder-only, text-to-text large language models for English language, built from the same research and technology used to create the [Gemini models](https://blog.google/technology/ai/google-gemini-ai/). Gemma models have open weights and offer pre-trained variants and instruction-tuned variants. These models are well-suited for a variety of text generation tasks, including question answering, summarization, and reasoning. Their relatively small size makes it possible to deploy them in environments with limited resources such as a laptop, desktop, or your own cloud infrastructure, democratizing access to state-of-the-art AI models and helping foster innovation for everyone.
-For more details, refer the the [Gemma model card](https://ai.google.com/gemma/docs/model_card) released by Google.
+For more details, refer the the [Gemma model card](https://ai.google.dev/gemma/docs/model_card) released by Google.
 
 
 ## Customizing Gemma with NeMo Framework
@@ -53,7 +53,11 @@ docker pull nvcr.io/nvidia/nemo:24.01.gemma
 The best way to run this notebook is from within the container. You can do that by launching the container with the following command
 
 ```bash
-docker run -it --rm --gpus all --network host -v $(pwd):/workspace nvcr.io/nvidia/nemo:24.01.gemma
+docker run -it --rm --gpus all --ipc host --network host -v $(pwd):/workspace nvcr.io/nvidia/nemo:24.01.gemma
 ```
 
 Then, from within the container, start the jupyter server with
+
+```bash
+jupyter lab --no-browser --port=8080 --allow-root --ip 0.0.0.0
+```
