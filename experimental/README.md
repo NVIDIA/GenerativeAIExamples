@@ -23,9 +23,9 @@ Experimental examples are sample code and deployments for RAG pipelines that are
 
 ## Inventory
 
-* [NVIDIA Retail Product Advisor AI Workflow](./product-advisor)
+* [NVIDIA RAG Streaming Document Ingestion Pipeline](./streaming_ingest_rag)
 
-  This example ingests product catalog data, determines how to respond or which tools to use, retrieves appropriate products, and answer questions about the products.
+  This example demonstrate the construction of a performance-oriented pipeline that accepts a stream of heterogenous documents, divides the documents into smaller segments or chunks, computes the embedding vector for each of these chunks, and uploads the text chunks along with their associated embeddings to a Vector Database. This pipeline builds on the [Morpheus SDK](https://docs.nvidia.com/morpheus/index.html) to take advantage of end-to-end asynchronous processing. This pipeline showcases pipeline parallelism (including CPU and GPU-accelerated nodes), as well as, a mechanism to horizontally scale out data ingestion workers.
 
 * [NVIDIA Multimodal RAG Assistant](./multimodal_assistant)
 
@@ -35,5 +35,3 @@ Experimental examples are sample code and deployments for RAG pipelines that are
 
   This example shows the configuration changes to using Docker containers and local GPUs that are required
   to run the RAG-LLM pipelines in Azure Machine Learning.
-
-
