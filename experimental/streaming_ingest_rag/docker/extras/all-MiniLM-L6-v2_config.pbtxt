@@ -1,0 +1,45 @@
+name: "all-MiniLM-L6-v2"
+platform: "onnxruntime_onnx"
+max_batch_size: 256
+input {
+  name: "input_ids"
+  data_type: TYPE_INT32
+  dims: 512
+}
+input {
+  name: "attention_mask"
+  data_type: TYPE_INT32
+  dims: 512
+}
+output {
+  name: "output"
+  data_type: TYPE_FP32
+  dims: 384
+}
+dynamic_batching {
+  preferred_batch_size: 1
+  preferred_batch_size: 2
+  preferred_batch_size: 4
+  preferred_batch_size: 8
+  preferred_batch_size: 16
+  preferred_batch_size: 32
+  preferred_batch_size: 64
+  preferred_batch_size: 128
+  preferred_batch_size: 256
+  max_queue_delay_microseconds: 50000
+}
+optimization {
+  execution_accelerators {
+    gpu_execution_accelerator {
+      name: "tensorrt"
+      parameters {
+        key: "max_workspace_size_bytes"
+        value: "2147483648"
+      }
+      parameters {
+        key: "precision_mode"
+        value: "FP16"
+      }
+    }
+  }
+}

@@ -1,0 +1,60 @@
+# Copyright (c) 2023-2024, NVIDIA CORPORATION.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+ARG MORPHEUS_CONTAINER=nvcr.io/nvidia/morpheus/morpheus
+ARG MORPHEUS_CONTAINER_VERSION=24.03-runtime
+
+FROM ${MORPHEUS_CONTAINER}:${MORPHEUS_CONTAINER_VERSION} as base
+
+# # Fix the entrypoint to work with different WORKDIR
+ENTRYPOINT [ "/opt/conda/bin/tini", "--", "/workspace/docker/entrypoint.sh" ]
+
+SHELL ["/bin/bash", "-c"]
+
+# Copy the conda_env file
+COPY ./conda/environments/conda_env.yaml ./conda/environments/conda_env.yaml
+
+# Install dependencies
+RUN source activate morpheus \
+  && conda env update --solver=libmamba -n morpheus --file ./conda/environments/conda_env.yaml \
+  && conda clean -afy
+
+# Install additional packages
+RUN apt update && apt install curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+
+# ===== Setup for running unattended =====
+FROM base as runtime
+
+# Launch morpheus
+CMD ["/bin/bash"]
+
+# ===== Setup for running Jupyter =====
+FROM base as jupyter
+
+# Install the jupyter specific requirements
+RUN source activate morpheus &&\
+    mamba install -y -c conda-forge \
+        ipywidgets \
+        nb_conda_kernels \
+        jupyter_contrib_nbextensions \
+        # notebook v7 is incompatible with jupyter_contrib_nbextensions
+        notebook=6 &&\
+    jupyter contrib nbextension install --user &&\
+    pip install jupyterlab_nvdashboard==0.9
+
+# Launch jupyter
+CMD ["jupyter-lab", "--allow-root", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--NotebookApp.token=''"]
