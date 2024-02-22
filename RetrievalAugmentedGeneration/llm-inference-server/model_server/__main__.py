@@ -106,7 +106,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--quantization",
         type=str,
-        required=False,
+        default=None,
         help="Quantization type to be used for LLMs",
     )
 

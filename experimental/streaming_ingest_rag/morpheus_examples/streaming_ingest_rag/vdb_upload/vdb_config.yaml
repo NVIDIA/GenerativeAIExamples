@@ -1,0 +1,302 @@
+# Copyright (c) 2023-2024, NVIDIA CORPORATION.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+vdb_pipeline:
+  embeddings:
+    isolate_embeddings: false
+    model_kwargs:
+      force_convert_inputs: true
+      model_name: "all-MiniLM-L6-v2"
+      server_url: "http://localhost:8001"
+      use_shared_memory: true
+
+  pipeline:
+    edge_buffer_size: 128
+    feature_length: 512
+    max_batch_size: 256
+    num_threads: 10
+    pipeline_batch_size: 128
+
+  sources:
+    - type: rss
+      name: "rss_cve"
+      config:
+        batch_size: 128 # Number of rss feeds per batch
+        cache_dir: "./.cache/http"
+        cooldown_interval_sec: 600
+        enable_cache: False
+        enable_monitor: True
+        feed_input:
+          - "https://www.theregister.com/security/headlines.atom"
+          - "https://isc.sans.edu/dailypodcast.xml"
+          - "https://threatpost.com/feed/"
+          - "http://feeds.feedburner.com/TheHackersNews?format=xml"
+          - "https://www.bleepingcomputer.com/feed/"
+          - "https://therecord.media/feed/"
+          - "https://blog.badsectorlabs.com/feeds/all.atom.xml"
+          - "https://krebsonsecurity.com/feed/"
+          - "https://www.darkreading.com/rss_simple.asp"
+          - "https://blog.malwarebytes.com/feed/"
+          - "https://msrc.microsoft.com/blog/feed"
+          - "https://securelist.com/feed"
+          - "https://www.crowdstrike.com/blog/feed/"
+          - "https://threatconnect.com/blog/rss/"
+          - "https://news.sophos.com/en-us/feed/"
+          - "https://www.us-cert.gov/ncas/current-activity.xml"
+          - "https://www.csoonline.com/feed"
+          - "https://www.cyberscoop.com/feed"
+          - "https://research.checkpoint.com/feed"
+          - "https://feeds.fortinet.com/fortinet/blog/threat-research"
+          - "https://www.mcafee.com/blogs/rss"
+          - "https://www.digitalshadows.com/blog-and-research/rss.xml"
+          - "https://www.nist.gov/news-events/cybersecurity/rss.xml"
+          - "https://www.sentinelone.com/blog/rss/"
+          - "https://www.bitdefender.com/blog/api/rss/labs/"
+          - "https://www.welivesecurity.com/feed/"
+          - "https://unit42.paloaltonetworks.com/feed/"
+          - "https://mandiant.com/resources/blog/rss.xml"
+          - "https://www.wired.com/feed/category/security/latest/rss"
+          - "https://www.wired.com/feed/tag/ai/latest/rss"
+          - "https://blog.google/threat-analysis-group/rss/"
+          - "https://intezer.com/feed/"
+        interval_sec: 600
+        output_batch_size: 2048 # Number of chunked documents per output batch
+        request_timeout_sec: 2.0
+        run_indefinitely: true
+        stop_after_sec: 0
+        web_scraper_config:
+          chunk_overlap: 51
+          chunk_size: 512
+          enable_cache: false
+        vdb_resource_name: "vdb_rss"
+
+    - type: filesystem
+      name: "filesystem_pdf_source"
+      config:
+        batch_size: 1024
+        extractor_config:
+          chunk_size: 512
+          num_threads: 10
+          chunk_overlap: 51
+        enable_monitor: True
+        filenames:
+          - "./morpheus/data/randomly_generated_cybersecurity_text.txt" # will need to supply
+        vdb_resource_name: "vdb_pdf"
+        watch: false
+
+    - type: filesystem
+      name: "filesystem_csv_source"
+      config:
+        batch_size: 1024
+        chunk_overlap: 51
+        chunk_size: 512
+        converters_meta:
+          csv:
+            chunk_overlap: 51
+            chunk_size: 1024
+            text_column_names: # For CSV files, the data from each text_column_name will be concatenated together.
+              - "raw"  # Requires same schema for all CSV files.
+              - "request_header_referer"
+        enable_monitor: True
+        filenames:
+          - "./models/datasets/training-data/log-parsing-training-data.csv"
+        vdb_resource_name: "vdb_csv"
+        watch: false
+
+    - type: custom
+      name: "custom_source_text"
+      config:
+        batch_size: 1024
+        enable_monitor: True
+        extractor_config:
+          chunk_size: 512
+          chunk_overlap: 51
+        config_name_mapping: "file_source_config"
+        filenames:
+          - "./morpheus/data/*.txt"
+        module_id: "file_source_pipe"
+        module_output_id: "output"
+        namespace: "morpheus_examples_llm"
+        vdb_resource_name: "VDBGENERAL"
+        watch: false
+
+  tokenizer:
+    model_kwargs:
+      add_special_tokens: false
+      column: "content"
+      do_lower_case: true
+      truncation: true
+      vocab_hash_file: "data/bert-base-uncased-hash.txt"
+    model_name: "bert-base-uncased-hash"
+
+  vdb:
+    batch_size: 5120
+    resource_name: "VDBGENERAL"  # Identifier for the resource in the vector database
+    embedding_size: 384
+    recreate: True  # Whether to recreate the resource if it already exists
+    service: "milvus"  # Specify the type of vector database
+    uri: "http://localhost:19530"  # URI for connecting to the Vector Database server
+    resource_schemas:
+      VDBGENERAL:
+        index_conf:
+          field_name: "embedding"
+          metric_type: "L2"
+          index_type: "HNSW"
+          params:
+            M: 8
+            efConstruction: 64
+
+        schema_conf:
+          enable_dynamic_field: true
+          schema_fields:
+            - name: id
+              dtype: INT64
+              description: Primary key for the collection
+              is_primary: true
+              auto_id: true
+            - name: title
+              dtype: VARCHAR
+              description: Title or heading of the data entry
+              max_length: 65_535
+            - name: source
+              dtype: VARCHAR
+              description: Source or origin of the data entry
+              max_length: 65_535
+            - name: summary
+              dtype: VARCHAR
+              description: Brief summary or abstract of the data content
+              max_length: 65_535
+            - name: content
+              dtype: VARCHAR
+              description: Main content or body of the data entry
+              max_length: 65_535
+            - name: embedding
+              dtype: FLOAT_VECTOR
+              description: Embedding vectors representing the data entry
+              dim: 384 # Size of the embeddings to store in the vector database
+          description: Collection schema for diverse data sources
+      vdb_pdf:
+        index_conf:
+          field_name: embedding
+          metric_type: L2
+          index_type: HNSW
+          params:
+            M: 8
+            efConstruction: 64
+
+        schema_conf:
+          enable_dynamic_field: true
+          schema_fields:
+            - name: id
+              dtype: INT64
+              description: Primary key for the collection
+              is_primary: true
+              auto_id: true
+            - name: title
+              dtype: VARCHAR
+              description: Title or heading of the data entry
+              max_length: 65_535
+            - name: source
+              dtype: VARCHAR
+              description: Source or origin of the data entry
+              max_length: 65_535
+            - name: summary
+              dtype: VARCHAR
+              description: Brief summary or abstract of the data content
+              max_length: 65_535
+            - name: content
+              dtype: VARCHAR
+              description: Main content or body of the data entry
+              max_length: 65_535
+            - name: embedding
+              dtype: FLOAT_VECTOR
+              description: Embedding vectors representing the data entry
+              dim: 384 # Size of the embeddings to store in the vector database
+          description: Collection schema for diverse data sources
+      vdb_csv:
+        index_conf:
+          field_name: embedding
+          metric_type: L2
+          index_type: HNSW
+          params:
+            M: 8
+            efConstruction: 64
+
+        schema_conf:
+          enable_dynamic_field: true
+          schema_fields:
+            - name: id
+              dtype: INT64
+              description: Primary key for the collection
+              is_primary: true
+              auto_id: true
+            - name: title
+              dtype: VARCHAR
+              description: Title or heading of the data entry
+              max_length: 65_535
+            - name: source
+              dtype: VARCHAR
+              description: Source or origin of the data entry
+              max_length: 65_535
+            - name: summary
+              dtype: VARCHAR
+              description: Brief summary or abstract of the data content
+              max_length: 65_535
+            - name: content
+              dtype: VARCHAR
+              description: Main content or body of the data entry
+              max_length: 65_535
+            - name: embedding
+              dtype: FLOAT_VECTOR
+              description: Embedding vectors representing the data entry
+              dim: 384 # Size of the embeddings to store in the vector database
+          description: Collection schema for diverse data sources
+      vdb_rss:
+        index_conf:
+          field_name: embedding
+          metric_type: L2
+          index_type: HNSW
+          params:
+            M: 8
+            efConstruction: 64
+
+        schema_conf:
+          enable_dynamic_field: true
+          schema_fields:
+            - name: id
+              dtype: INT64
+              description: Primary key for the collection
+              is_primary: true
+              auto_id: true
+            - name: title
+              dtype: VARCHAR
+              description: Title or heading of the data entry
+              max_length: 65_535
+            - name: source
+              dtype: VARCHAR
+              description: Source or origin of the data entry
+              max_length: 65_535
+            - name: summary
+              dtype: VARCHAR
+              description: Brief summary or abstract of the data content
+              max_length: 65_535
+            - name: content
+              dtype: VARCHAR
+              description: Main content or body of the data entry
+              max_length: 65_535
+            - name: embedding
+              dtype: FLOAT_VECTOR
+              description: Embedding vectors representing the data entry
+              dim: 384 # Size of the embeddings to store in the vector database
+          description: Collection schema for diverse data sources

@@ -31,10 +31,10 @@ class VectorClient(ABC, BaseModel):
     @abstractmethod
     def connect(self):
         ...
-    
+
     def disconnect(self):
         ...
-        
+
     @abstractmethod
     def search(self, query_vectors, limit=5):
         ...
@@ -45,7 +45,7 @@ class VectorClient(ABC, BaseModel):
 
 
 class MilvusVectorClient(VectorClient):
-    
+
     hostname : str = "localhost"
     port : str = "19530"
     metric_type : str = "L2"
@@ -62,14 +62,14 @@ class MilvusVectorClient(VectorClient):
         self.vector_db.load()
 
     def _create_index(self, metric_type, index_type, field_name, nlist=100):
-     
+
         index_params = {
             "metric_type": metric_type,  # or "IP" depending on your requirement
             "index_type": index_type,  # You can choose other types like IVF_PQ based on your need
             "params": {"nlist": nlist}  # Adjust the nlist parameter as per your requirements
         }
         self.vector_db.create_index(field_name=field_name, index_params=index_params)
-        
+
     def connect(self, collection_name, hostname, port, alias="default"):
         connections.connect(alias, host=hostname, port=port)
         try:
@@ -85,7 +85,7 @@ class MilvusVectorClient(VectorClient):
 
     def search(self, query_vectors, limit=5):
         search_params = {
-            "metric_type": self.metric_type, 
+            "metric_type": self.metric_type,
             "params": {"nprobe": self.nprobe}
         }
 
@@ -147,7 +147,7 @@ class MilvusVectorClient(VectorClient):
     def create_collection(self, collection_name, embedding_size):
         if utility.has_collection(collection_name):
             utility.drop_collection(collection_name)
-        
+
         schema = self.get_schema(embedding_size)
         self.vector_db = Collection(name=collection_name, schema=schema)
 
@@ -160,13 +160,13 @@ class QdrantVectorClient(VectorClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.vector_db = self.connect(self.hostname, self.port)
-        
+
     def connect(self, hostname, port):
         client = QdrantClient(host=hostname, port=port)
         return client
-    
+
     def search(self, query_vectors, limit=5):
-        
+
         search_results = self.vector_db.search(
             collection_name=self.collection_name,
             query_vector=query_vectors,

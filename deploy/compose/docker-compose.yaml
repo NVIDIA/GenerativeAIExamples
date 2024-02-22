@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     volumes:
     - ${MODEL_DIRECTORY:?please update the env file and source it before running}:/model
-    command: ${MODEL_ARCHITECTURE:?please update the env file and source it before running} --max-input-length ${MODEL_MAX_INPUT_LENGTH:-3000} --max-output-length ${MODEL_MAX_OUTPUT_LENGTH:-512} --quantization ${QUANTIZATION:-None}
+    command: ${MODEL_ARCHITECTURE:?please update the env file and source it before running} --max-input-length ${MODEL_MAX_INPUT_LENGTH:-3000} --max-output-length ${MODEL_MAX_OUTPUT_LENGTH:-512} ${QUANTIZATION:+--quantization $QUANTIZATION}
     ports:
     - "8000:8000"
     - "8001:8001"
@@ -25,19 +25,13 @@ services:
             - driver: nvidia
               count: ${INFERENCE_GPU_COUNT:-all}
               capabilities: [gpu]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-      start_period: 10m
 
   jupyter-server:
     container_name: notebook-server
     image: notebook-server:latest
     build:
       context: ../../
-      dockerfile: ./notebooks/Dockerfile.notebooks
+      dockerfile: ./notebooks/Dockerfile.notebooks # replace GPU enabled Dockerfile ./notebooks/Dockerfile.gpu_notebook
     ports:
     - "8888:8888"
     expose:
@@ -49,8 +43,6 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-    depends_on:
-      - "llm"
 
   etcd:
     container_name: milvus-etcd
@@ -89,12 +81,12 @@ services:
 
   milvus:
     container_name: milvus-standalone
-    image: milvusdb/milvus:v2.3.1-gpu
+    image: milvusdb/milvus:v2.4.0.1-gpu-beta
     command: ["milvus", "run", "standalone"]
     environment:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9010
-      KNOWHERE_GPU_MEM_POOL_SIZE: 2048:4096
+      KNOWHERE_GPU_MEM_POOL_SIZE: 2048;4096
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
     healthcheck:
@@ -129,11 +121,11 @@ services:
     environment:
       APP_VECTORSTORE_URL: "http://milvus:19530"
       APP_VECTORSTORE_NAME: "milvus"
+      COLLECTION_NAME: ${RAG_EXAMPLE}
       APP_LLM_SERVERURL: "llm:8001"
       APP_LLM_MODELNAME: ensemble
       APP_LLM_MODELENGINE: triton-trt-llm
       APP_CONFIG_FILE: ${APP_CONFIG_FILE}
-      NVAPI_KEY: ${AI_PLAYGROUND_API_KEY}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       ENABLE_TRACING: false

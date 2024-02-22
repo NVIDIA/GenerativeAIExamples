@@ -1,0 +1,38 @@
+# Python Exclusions
+.venv
+**__pycache__**
+
+# Helm Exclusions
+**/charts/*.tgz
+
+# project temp files
+deploy/*.log
+deploy/*.txt
+
+# Docker Compose exclusions
+volumes/
+uploaded_files/
+
+# Visual Studio Code
+.vscode
+
+# Node modules
+**/node_modules
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# ignore container volumes
+**/docker/volumes
+
+# ignore extenal repos
+**/docker/morpheus
+**/docker/attu
+
+# misc
+.docker
+.gitconfig
+
+# ignore misc directories
+**/.data
+**/.depr

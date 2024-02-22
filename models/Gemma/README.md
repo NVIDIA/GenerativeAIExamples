@@ -6,7 +6,7 @@ For more details, refer the the [Gemma model card](https://ai.google.dev/gemma/d
 
 ## Customizing Gemma with NeMo Framework
 
-Gemma models are compatiable with [NeMo Framework](https://docs.nvidia.com/nemo-framework/user-guide/latest/index.html). In this repository we have two notebooks that covert different ways of customizing Gemma.
+Gemma models are compatible with [NeMo Framework](https://docs.nvidia.com/nemo-framework/user-guide/latest/index.html). In this repository we have two notebooks that covert different ways of customizing Gemma.
 
 ### Paramater Efficient Fine-Tuning with LoRA
 

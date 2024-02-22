@@ -25,7 +25,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
 from RetrievalAugmentedGeneration.common.base import BaseExample
-from RetrievalAugmentedGeneration.common.utils import get_config, get_llm, get_embedding_model
+from RetrievalAugmentedGeneration.common.utils import get_config, get_llm, get_embedding_model, get_vectorstore_langchain
 
 logger = logging.getLogger(__name__)
 DOCS_DIR = os.path.abspath("./uploaded_files")
@@ -38,7 +38,6 @@ settings = get_config()
 class NvidiaAIFoundation(BaseExample):
     def ingest_docs(self, file_name: str, filename: str):
         """Ingest documents to the VectorDB."""
-
         try:
             # TODO: Load embedding created in older conversation, memory persistance
             # We initialize class in every call therefore it should be global
@@ -54,8 +53,7 @@ class NvidiaAIFoundation(BaseExample):
                 if vectorstore:
                     vectorstore.add_documents(documents)
                 else:
-                    vectorstore = FAISS.from_documents(documents, document_embedder)
-                logger.info("Vector store created and saved.")
+                    vectorstore = get_vectorstore_langchain(documents, document_embedder)
             else:
                 logger.warning("No documents available to process!")
         except Exception as e:
@@ -106,8 +104,14 @@ class NvidiaAIFoundation(BaseExample):
 
         try:
             if vectorstore != None:
-                retriever = vectorstore.as_retriever()
-                docs = retriever.get_relevant_documents(prompt)
+                try:
+                    retriever = vectorstore.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold": 0.25})
+                    docs = retriever.get_relevant_documents(prompt)
+                except NotImplementedError:
+                    # Some retriever like milvus don't have similarity score threshold implemented
+                    retriever = vectorstore.as_retriever()
+                    docs = retriever.get_relevant_documents(prompt)
+
 
                 context = ""
                 for doc in docs:
@@ -134,8 +138,14 @@ class NvidiaAIFoundation(BaseExample):
 
         try:
             if vectorstore != None:
-                retriever = vectorstore.as_retriever()
-                docs = retriever.get_relevant_documents(content)
+                try:
+                    retriever = vectorstore.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold": 0.25})
+                    docs = retriever.get_relevant_documents(content)
+                except NotImplementedError:
+                    # Some retriever like milvus don't have similarity score threshold implemented
+                    retriever = vectorstore.as_retriever()
+                    docs = retriever.get_relevant_documents(content)
+
                 result = []
                 for doc in docs:
                     result.append(

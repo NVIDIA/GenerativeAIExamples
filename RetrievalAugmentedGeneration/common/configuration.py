@@ -114,6 +114,11 @@ class EmbeddingConfig(ConfigWizard):
         default=1024,
         help_txt="The required dimensions of the embedding model. Currently utilized for vector DB indexing.",
     )
+    server_url: str = configfield(
+        "server_url",
+        default="localhost:9080",
+        help_txt="The url of the server hosting nemo embedding model",
+    )
 
 
 @configclass

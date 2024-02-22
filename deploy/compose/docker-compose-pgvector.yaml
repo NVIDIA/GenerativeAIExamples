@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     volumes:
     - ${MODEL_DIRECTORY:?please update the env file and source it before running}:/model
-    command: ${MODEL_ARCHITECTURE:?please update the env file and source it before running} --max-input-length ${MODEL_MAX_INPUT_LENGTH:-3000} --max-output-length ${MODEL_MAX_OUTPUT_LENGTH:-512} --quantization ${QUANTIZATION:-None}
+    command: ${MODEL_ARCHITECTURE:?please update the env file and source it before running} --max-input-length ${MODEL_MAX_INPUT_LENGTH:-3000} --max-output-length ${MODEL_MAX_OUTPUT_LENGTH:-512} ${QUANTIZATION:+--quantization $QUANTIZATION}
     ports:
     - "8000:8000"
     - "8001:8001"
@@ -25,12 +25,6 @@ services:
             - driver: nvidia
               count: ${INFERENCE_GPU_COUNT:-all}
               capabilities: [gpu]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-      start_period: 10m
 
   pgvector:
     container_name: pgvector
@@ -62,10 +56,10 @@ services:
       APP_LLM_MODELNAME: "ensemble"
       APP_LLM_MODELENGINE: "triton-trt-llm"
       APP_CONFIG_FILE: ${APP_CONFIG_FILE}
-      NVAPI_KEY: ${AI_PLAYGROUND_API_KEY}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-api}
+      COLLECTION_NAME: ${RAG_EXAMPLE}
     volumes:
       - ${APP_CONFIG_FILE}:${APP_CONFIG_FILE}
     ports:
