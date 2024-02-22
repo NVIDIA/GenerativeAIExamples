@@ -3,6 +3,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2024-02-23
+
+### Added
+
+- [New dedicated notebooks](./docs/rag/jupyter_server.md) showcasing usage of cloud based Nvidia AI Playground based models using Langchain connectors as well as local model deployment using Huggingface.
+- Upgraded milvus container version to enable GPU accelerated vector search.
+- Added support to interact with models behind NeMo Inference Microservices using new model engines `nemo-embed` and `nemo-infer`.
+- Added support to provide example specific collection name for vector databases using an environment variable named `COLLECTION_NAME`.
+- Added `faiss` as a generic vector database solution behind `utils.py`.
+
+### Changed
+
+- Upgraded and changed base containers for all components to pytorch `23.12-py3`.
+- Added langchain specific vector database connector in `utils.py`.
+- Changed speech support to use single channel for Riva ASR and TTS.
+- Changed `get_llm` utility in `utils.py` to return Langchain wrapper instead of Llmaindex wrappers.
+
+### Fixed
+
+- Fixed a bug causing empty rating in evaluation notebook
+- Fixed document search implementation of query decomposition example.
+
 ## [0.3.0] - 2024-01-22
 
 ### Added
