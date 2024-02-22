@@ -23,8 +23,46 @@ This notebook demonstrates how to use LlamaIndex to build a more complex retriev
 
 This notebook demonstrates how to use the REST FastAPI server to upload the knowledge base and then ask a question without and with the knowledge base.
 
+6. [**Nvidia AI Endpoint Integration with langchain**](../../notebooks/07_Option(1)_NVIDIA_AI_endpoint_simple.ipynb)
+This notebook demonstrates how to build a Retrieval Augmented Generation (RAG) example using the NVIDIA AI endpoint integrated with Langchain, with FAISS as the vector store.
+
+7. [**RAG with langchain and local LLM model from**](../../notebooks/07_Option(2)_minimalistic_RAG_with_langchain_local_HF_LLM.ipynb)
+This notebook demonstrates how to plug in a local llm from HuggingFace Hub and build a simple RAG app using langchain.
+
+8. [**Nvidia AI Endpoint with llamaIndex and Langchain**](../../notebooks/08_Option(1)_llama_index_with_NVIDIA_AI_endpoint.ipynb)
+This notebook demonstrates how to plug in a NVIDIA AI Endpoint mixtral_8x7b and embedding nvolveqa_40k, bind these into LlamaIndex with these customizations.
+
+9. [**Locally deployed model from Hugginface integration with llamaIndex and Langchain**](../../notebooks/08_Option(2)_llama_index_with_HF_local_LLM.ipynb)
+This notebook demonstrates how to plug in a local llm from HuggingFace Hub Llama-2-13b-chat-hf and all-MiniLM-L6-v2 embedding from Huggingface, bind these to into LlamaIndex with these customizations.
+
+10. [**Langchain agent with tools plug in multiple models from  NVIDIA AI Endpoint**](../../notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.ipynb)
+This notebook demonstrates how to use multiple NVIDIA's AI endpoint's model like `mixtral_8*7b`, `Deplot` and `Neva`.
+
 # Running the notebooks
-If a JupyterLab server needs to be compiled and stood up manually for development purposes, run the following commands:
+If a JupyterLab server needs to be compiled and stood up manually for development purposes, follow the following commands:
+
+- [Optional] Notebook `7 to 9` require GPUs. If you have a GPU and are trying out notebooks `7-9` update the jupyter-server service in the [docker-compose.yaml](../../deploy/compose/docker-compose.yaml) file to use `./notebooks/Dockerfile.gpu_notebook` as the Dockerfile
+```
+  jupyter-server:
+    container_name: notebook-server
+    image: notebook-server:latest
+    build:
+      context: ../../
+      dockerfile: ./notebooks/Dockerfile.gpu_notebook
+```
+
+- [Optional] Notebook from `7-9` may need multiple GPUs. Update [docker-compose.yaml](../../deploy/compose/docker-compose.yaml) to use multiple gpu ids in `device_ids` field below or set `count: all`
+```
+  jupyter-server:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0', '1']
+              capabilities: [gpu]
+```
+
 - Build the container
 ```
   source deploy/compose/compose.env

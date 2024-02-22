@@ -20,6 +20,8 @@ services:
       APP_PROMPTS_RAGTEMPLATE: "You are a helpful AI assistant named Envie. You will reply to questions only based on the context that you are provided. If something is out of context, you will refrain from replying and politely decline to respond to the user."
       NVIDIA_API_KEY: ${NVIDIA_API_KEY}
       APP_CONFIG_FILE: ${APP_CONFIG_FILE}
+      APP_VECTORSTORE_NAME: "faiss"
+      COLLECTION_NAME: ${RAG_EXAMPLE}
     volumes:
       - ${APP_CONFIG_FILE}:${APP_CONFIG_FILE}
     ports:

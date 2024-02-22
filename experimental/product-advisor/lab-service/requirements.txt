@@ -1,0 +1,17 @@
+faiss-cpu
+infinopy
+langchain
+langchain-nvidia-ai-endpoints
+matplotlib
+nemollm
+openai
+openai-function-calling
+plotly
+pymilvus
+pymongo
+python-dotenv
+sentence_transformers
+simsimd
+termcolor
+tiktoken
+transformers

@@ -27,7 +27,7 @@ spec:
         - name: ETCD_ENDPOINTS
           value: milvus-etcd:2379
         - name: KNOWHERE_GPU_MEM_POOL_SIZE
-          value: 2048:4096
+          value: 2048;4096
         - name: MINIO_ADDRESS
           value: milvus-minio:9010
         ports:
