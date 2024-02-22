@@ -12,9 +12,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added support to interact with models behind NeMo Inference Microservices using new model engines `nemo-embed` and `nemo-infer`.
 - Added support to provide example specific collection name for vector databases using an environment variable named `COLLECTION_NAME`.
 - Added `faiss` as a generic vector database solution behind `utils.py`.
-- New notebook for [Google Gemma](./models/Gemma)
-- Added experimental example of [RAG streaming document ingestion pipeline](./experimental/streaming_ingest_rag)
-- Added experimental example of [Multimodal RAG Assistant](./experimental/multimodal_assistant)
 
 ### Changed
 
