@@ -24,6 +24,8 @@ from llama_index import Prompt, download_loader
 from llama_index.query_engine import RetrieverQueryEngine
 from llama_index.response.schema import StreamingResponse
 from llama_index.node_parser import LangchainNodeParser
+from llama_index.llms import LangChainLLM
+from llama_index.embeddings import LangchainEmbedding
 
 from RetrievalAugmentedGeneration.common.utils import (
     LimitRetrievedNodesLength,
@@ -91,7 +93,8 @@ class QAChatbot(BaseExample):
         )
 
         logger.info(f"Prompt used for response generation: {prompt}")
-        response = get_llm().stream_complete(prompt, tokens=num_tokens)
+        llm = LangChainLLM(get_llm())
+        response = llm.stream_complete(prompt, tokens=num_tokens)
         gen_response = (resp.delta for resp in response)
         return gen_response
 
@@ -101,10 +104,16 @@ class QAChatbot(BaseExample):
         logger.info("Using rag to generate response from document")
 
         set_service_context()
-        if get_config().llm.model_engine == "triton-trt-llm":
-            get_llm().llm.tokens = num_tokens  # type: ignore
-        else:
-            get_llm().llm.max_tokens = num_tokens
+        llm = LangChainLLM(get_llm())
+
+        try:
+            if get_config().llm.model_engine == "triton-trt-llm" or get_config().llm.model_engine == "nemo-infer":
+                llm.llm.tokens = num_tokens  # type: ignore
+            else:
+                llm.llm.max_tokens = num_tokens
+        except Exception as e:
+            logger.error(f"Exception in setting llm tokens: {e}")
+
         retriever = get_doc_retriever(num_nodes=4)
         qa_template = Prompt(get_config().prompts.rag_template)
 

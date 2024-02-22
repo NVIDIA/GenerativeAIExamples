@@ -85,7 +85,7 @@ class ChatClient:
         )
 
         try:
-            with requests.post(url, stream=True, json=data, timeout=30, headers=carrier) as req:
+            with requests.post(url, stream=True, json=data, timeout=50, headers=carrier) as req:
                     req.raise_for_status()
                     for chunk in req.iter_content(16):
                         yield chunk.decode("UTF-8")

@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023-2024, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - arxiv=1.4
+  - onnx # required for triton model export
+  - pip
+  - pypdf=3.16
+  - newspaper3k=0.2
+  - requests-cache=1.1
+
+  ####### Pip Transitive Dependencies (keep sorted!) #######
+  # These are dependencies that are available on conda, but are required by the pip packages listed below. Its much
+  # better to install them with conda than pip to allow for better dependency resolution.
+  - environs=9.5
+  - minio=7.1
+  - pydantic=2.4
+  - python-dotenv=1.0
+  - ujson=5.8
+
+  ####### Pip Dependencies (keep sorted!) #######
+  - pip:
+    - farm-haystack[file-conversion]
+    - grpcio-status==1.58 # To keep in sync with 1.58 grpcio which is installed for Morpheus
+    - langchain==0.0.310
+    - pymilvus==2.3.2 # The conda package is woefully out of date and incorrect
+    - sentence_transformers==2.3.0
+    - PyMuPDF==1.23.21

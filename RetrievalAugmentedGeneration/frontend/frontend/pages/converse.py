@@ -16,7 +16,9 @@
 """This module contains the frontend gui for having a conversation."""
 import functools
 import logging
+import os
 from typing import Any, Dict, List, Tuple, Union
+import riva.client
 
 import gradio as gr
 
@@ -36,10 +38,36 @@ _LOCAL_CSS = """
 }
 """
 
+# Extract environmental variables
+RIVA_API_URI = os.getenv("RIVA_API_URI", None)
+RIVA_API_KEY = os.getenv("RIVA_API_KEY", None)
+RIVA_FUNCTION_ID = os.getenv("RIVA_FUNCTION_ID", None)
+
+# Establish a connection to the Riva server
+try:
+    use_ssl = False
+    metadata = []
+    if RIVA_API_KEY:
+        use_ssl = True
+        metadata.append(("authorization", "Bearer " + RIVA_API_KEY))
+    if RIVA_FUNCTION_ID:
+        use_ssl = True
+        metadata.append(("function-id", RIVA_FUNCTION_ID))
+    auth = riva.client.Auth(
+        None, use_ssl=use_ssl,
+        uri=RIVA_API_URI,
+        metadata_args=metadata
+    )
+    _LOGGER.info('Created riva.client.Auth success')
+except:
+    _LOGGER.info('Error creating riva.client.Auth')
 
 def build_page(client: chat_client.ChatClient) -> gr.Blocks:
     """Build the gradio page to be mounted in the frame."""
     kui_theme, kui_styles = assets.load_theme("kaizen")
+
+    asr_utils.asr_init(auth)
+    tts_utils.tts_init(auth)
 
     with gr.Blocks(title=TITLE, theme=kui_theme, css=kui_styles + _LOCAL_CSS) as page:
 
@@ -82,7 +110,7 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
                 tts_checkbox = gr.Checkbox(
                     label="Enable TTS output", info="", value=False
                 )
-        
+
         # dropdowns
         with gr.Accordion("ASR and TTS Settings"):
             with gr.Row():
@@ -102,7 +130,7 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
                 try:
                     for model in tts_utils.TTS_MODELS:
                         all_voices.extend(tts_utils.TTS_MODELS[model]['voices'])
-                    default_voice = tts_utils.TTS_MODELS[tts_language_list[0]]['voices'][0]                    
+                    default_voice = tts_utils.TTS_MODELS[tts_language_list[0]]['voices'][0]
                 except:
                     all_voices.append("No TTS voices available")
                     default_voice = "No TTS voices available"
@@ -173,9 +201,9 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
         )
 
         tts_language_dropdown.change(
-            tts_utils.update_voice_dropdown, 
-            [tts_language_dropdown], 
-            [tts_voice_dropdown], 
+            tts_utils.update_voice_dropdown,
+            [tts_language_dropdown],
+            [tts_voice_dropdown],
             api_name=False
         )
 

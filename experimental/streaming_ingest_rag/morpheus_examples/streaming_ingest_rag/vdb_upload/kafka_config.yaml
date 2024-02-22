@@ -1,0 +1,197 @@
+# Copyright (c) 2023-2024, NVIDIA CORPORATION.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+vdb_pipeline:
+  embeddings:
+    isolate_embeddings: false
+    model_kwargs:
+      force_convert_inputs: true
+      model_name: "all-MiniLM-L6-v2"
+      server_url: "triton:8001"
+      use_shared_memory: false
+
+  pipeline:
+    edge_buffer_size: 128
+    feature_length: 512
+    max_batch_size: 64
+    embedding_size: 384
+
+  sources:
+    - type: kafka
+      name: "web_scrape"
+      config:
+        stage_config:
+          enable_monitor: true
+          namespace: "morpheus_examples_llm"
+          module_id: "kafka_source_pipe"
+          module_output_id: "output"
+          transform_type: web_scraper
+        deserialize_config:
+          output_batch_size: 2048 # Number of chunked documents per output batch
+        kafka_config:
+          max_batch_size: 64
+          bootstrap_servers: "kafka:19092"
+          input_topic: "scrape_queue"
+          group_id: "morpheus"
+          poll_interval: "10millis"
+          disable_commit: false
+          disable_pre_filtering: false
+          auto_offset_reset: "latest"
+          stop_after: 0
+          async_commits: true
+        web_scraper_config:
+          chunk_overlap: 51
+          chunk_size: 512
+          enable_cache: false
+          cache_path: "./.cache/llm/html/WebScrapeModule.sqlite"
+          cache_dir: "./.cache/llm/html"
+          link_column: "payload"
+        vdb_config:
+          vdb_resource_name: "vdb_kafka_scrape"
+
+    - type: kafka
+      name: "raw_chunk"
+      config:
+        stage_config:
+          enable_monitor: true
+          run_indefinitely: true # TODO map to kafka source
+          namespace: "morpheus_examples_llm"
+          module_id: "kafka_source_pipe"
+          module_output_id: "output"
+          transform_type: raw_chunker
+        deserialize_config:
+          output_batch_size: 2048 # Number of chunked documents per output batch
+        kafka_config:
+          max_batch_size: 256
+          bootstrap_servers: "kafka:19092"
+          input_topic: "raw_queue"
+          group_id: "morpheus"
+          poll_interval: "10millis"
+          disable_commit: false
+          disable_pre_filtering: false
+          auto_offset_reset: "latest"
+          stop_after: 0
+          async_commits: true
+        raw_chunker_config:
+          chunk_overlap: 51
+          chunk_size: 512
+          payload_column: "payload"
+        vdb_config:
+          vdb_resource_name: "vdb_kafka_raw"          
+
+  tokenizer:
+    model_kwargs:
+      add_special_tokens: false
+      column: "content"
+      do_lower_case: true
+      truncation: true
+      vocab_hash_file: "data/bert-base-uncased-hash.txt"
+    model_name: "bert-base-uncased-hash"
+
+  vdb:
+    batch_size: 16384 # Vector DB max batch size
+    resource_name: "vdb_kafka_raw"  # Identifier for the resource in the vector database
+    embedding_size: 384
+    write_time_interval: 20 # Max time between successive uploads
+    recreate: False  # Whether to recreate the resource if it already exists
+    service: "milvus"  # Specify the type of vector database
+    uri: "http://milvus:19530"  # URI for connecting to the Vector Database server
+    resource_schemas:
+      vdb_kafka_scrape:
+        index_conf:
+          field_name: embedding
+          metric_type: L2
+          index_type: HNSW
+          params:
+            M: 8
+            efConstruction: 64
+
+      vdb_kafka_raw:
+        index_conf:
+          field_name: embedding
+          metric_type: L2
+          index_type: HNSW
+          params:
+            M: 8
+            efConstruction: 64
+
+        schema_conf:
+          enable_dynamic_field: true
+          schema_fields:
+            - name: id
+              dtype: INT64
+              description: Primary key for the collection
+              is_primary: true
+              auto_id: true
+            - name: title
+              dtype: VARCHAR
+              description: Title or heading of the data entry
+              max_length: 65_535
+            - name: source
+              dtype: VARCHAR
+              description: Source or origin of the data entry
+              max_length: 65_535
+            - name: summary
+              dtype: VARCHAR
+              description: Brief summary or abstract of the data content
+              max_length: 65_535
+            - name: content
+              dtype: VARCHAR
+              description: Main content or body of the data entry
+              max_length: 65_535
+            - name: embedding
+              dtype: FLOAT_VECTOR
+              description: Embedding vectors representing the data entry
+              dim: 384 # Size of the embeddings to store in the vector database
+          description: Collection schema for diverse data sources            
+
+      vdb_kafka_scrape:
+        index_conf:
+          field_name: embedding
+          metric_type: L2
+          index_type: HNSW
+          params:
+            M: 8
+            efConstruction: 64
+
+        schema_conf:
+          enable_dynamic_field: true
+          schema_fields:
+            - name: id
+              dtype: INT64
+              description: Primary key for the collection
+              is_primary: true
+              auto_id: true
+            - name: title
+              dtype: VARCHAR
+              description: Title or heading of the data entry
+              max_length: 65_535
+            - name: source
+              dtype: VARCHAR
+              description: Source or origin of the data entry
+              max_length: 65_535
+            - name: summary
+              dtype: VARCHAR
+              description: Brief summary or abstract of the data content
+              max_length: 65_535
+            - name: content
+              dtype: VARCHAR
+              description: Main content or body of the data entry
+              max_length: 65_535
+            - name: embedding
+              dtype: FLOAT_VECTOR
+              description: Embedding vectors representing the data entry
+              dim: 384 # Size of the embeddings to store in the vector database
+          description: Collection schema for diverse data sources
+               
