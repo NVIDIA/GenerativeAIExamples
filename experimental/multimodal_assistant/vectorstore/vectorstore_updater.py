@@ -64,21 +64,21 @@ def split_text(documents):
 def update_vectorstore(folder, vector_client, embedder, config_name, status=None):
     """Generates word embeddings for documents and updates the Milvus collection."""
     # Attempt to create collection, catch exception if it already exists
-    status.update(label="[Step 1/4] Creating/loading vector store")
+    print("[Step 1/4] Creating/loading vector store")
     
     # Create collection if it doesn't exist
-    st.write("Creating collection...")
+    print("Creating collection...")
     # get embedding size
     embedding_size = embedder.get_embedding_size()
     vector_client.create_collection(config_name, embedding_size)
 
-    status.update(label="[Step 2/4] Processing and splitting documents")
+    print("[Step 2/4] Processing and splitting documents")
     # load and split documents
     raw_documents = load_documents(folder, status)
     documents = split_text(raw_documents)
     
     print("Loading data to the vector index store...")
-    status.update(label="[Step 3/4] Inserting documents into the vector store...")
+    print("[Step 3/4] Inserting documents into the vector store...")
     # Extracting the page content from each document
     document_contents = [doc.page_content for doc in documents]
 
@@ -87,4 +87,4 @@ def update_vectorstore(folder, vector_client, embedder, config_name, status=None
 
     # Batch insert into Milvus collection
     vector_client.update(documents, document_embeddings, config_name)
-    status.update(label="[Step 4/4] Saved vector store!", state="complete", expanded=False)
+    print("[Step 4/4] Saved vector store!")
