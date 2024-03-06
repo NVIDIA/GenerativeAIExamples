@@ -25,27 +25,26 @@ from vectorstore.custom_pdf_parser import get_pdf_documents
 
 CUSTOM_PROCESSING = True
 
-def load_documents(folder, status=None):
+def load_documents(folder):
     """Load documents from the specified folder."""
     raw_documents = []
-    with st.spinner():
-        for file in os.listdir(folder):
-            st.write("Loading document: ", file)
-            file_path = os.path.join(folder, file)
+    for file in os.listdir(folder):
+        print("Loading document: ", file)
+        file_path = os.path.join(folder, file)
 
-            if file.endswith("pdf") and CUSTOM_PROCESSING:
-                # Process each PDF document and add them individually to the list
-                pdf_docs = get_pdf_documents(file_path)
-                for each_page in pdf_docs:
-                    raw_documents.extend(each_page)
-            elif file.endswith("ppt") or file.endswith("pptx"):
-                pptx_docs = process_ppt_file(file_path)
-                raw_documents.extend(pptx_docs)
-            else:
-                # Load unstructured files and add them individually
-                loader = UnstructuredFileLoader(file_path)
-                unstructured_docs = loader.load()
-                raw_documents.extend(unstructured_docs)  # 'extend' is used here to add elements of the list individually
+        if file.endswith("pdf") and CUSTOM_PROCESSING:
+            # Process each PDF document and add them individually to the list
+            pdf_docs = get_pdf_documents(file_path)
+            for each_page in pdf_docs:
+                raw_documents.extend(each_page)
+        elif file.endswith("ppt") or file.endswith("pptx"):
+            pptx_docs = process_ppt_file(file_path)
+            raw_documents.extend(pptx_docs)
+        else:
+            # Load unstructured files and add them individually
+            loader = UnstructuredFileLoader(file_path)
+            unstructured_docs = loader.load()
+            raw_documents.extend(unstructured_docs)  # 'extend' is used here to add elements of the list individually
     return raw_documents
 
 def split_text(documents):
@@ -60,23 +59,22 @@ def split_text(documents):
     split_docs = text_splitter.split_documents(documents)
     return split_docs
 
+def update_vectorstore(folder, vector_client, embedder, config_name):
 
-def update_vectorstore(folder, vector_client, embedder, config_name, status=None):
-    """Generates word embeddings for documents and updates the Milvus collection."""
-    # Attempt to create collection, catch exception if it already exists
     print("[Step 1/4] Creating/loading vector store")
-    
-    # Create collection if it doesn't exist
-    print("Creating collection...")
-    # get embedding size
+
+    # Get embedding size from your embedder
     embedding_size = embedder.get_embedding_size()
+
+    # Check if the collection exists
+    print("Creating collection...")
     vector_client.create_collection(config_name, embedding_size)
 
     print("[Step 2/4] Processing and splitting documents")
     # load and split documents
-    raw_documents = load_documents(folder, status)
+    raw_documents = load_documents(folder)
     documents = split_text(raw_documents)
-    
+
     print("Loading data to the vector index store...")
     print("[Step 3/4] Inserting documents into the vector store...")
     # Extracting the page content from each document

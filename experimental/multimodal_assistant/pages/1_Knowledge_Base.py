@@ -82,7 +82,7 @@ st.subheader("Re-train {} to use the new information you uploaded".format(config
 st.write("This section will rerun the information chunking and vector storage algorithms on all documents again. ONLY run if you have uploaded new documents! Note that this can take a minute or more, depending on the number of documents and the sizes.")
 if st.button("Re-train {}".format(config["name"])):
     with st.status("[Step 1/4] Loading documents. Expand to see current status", expanded=False) as status:
-        update_vectorstore(DOCS_DIR, vector_client, document_embedder, config["core_docs_directory_name"], status)
+        update_vectorstore(DOCS_DIR, vector_client, document_embedder, config["core_docs_directory_name"])
     st.success("Completed re-training. Now {} will use the updated documentation to answer questions!".format(config["name"]))
     st.rerun()
 st.divider()

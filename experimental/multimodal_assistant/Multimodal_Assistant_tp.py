@@ -21,11 +21,8 @@ import pandas as pd
 from PIL import Image
 from io import BytesIO
 
-# import streamlit as st
-# import streamlit_analytics
-# from streamlit_feedback import streamlit_feedback
 import taipy.gui.builder as tgb
-from taipy.gui import Gui, notify, State
+from taipy.gui import Gui, notify, State, invoke_long_callback, get_state_id
 
 from bot_config.utils import get_config
 from utils.memory import init_memory, get_summary, add_history_to_memory
@@ -43,241 +40,184 @@ from pages.Knowledge_Base_tp import *
 
 llm_client = LLMClient("mixtral_8x7b")
 
-# Start the analytics service (using browser.usageStats)
-# streamlit_analytics.start_tracking()
-
-
-
-
-image_files = []
-messages = [{"role": "assistant", "content": "Ask me a question!"}]
-sources = []
+image_path = None
+messages = [{"role": "assistant", "style": "assistant_message", "content": "Hi, what can I help you with?"}]
+sources = {}
 image_query = ""
-queried = False
 current_user_message = ""
+summary = ""
+messages_dict = {}
+logs = ""
+progress_for_logs = {}
 
-try:
-    vector_client = MilvusVectorClient(hostname="localhost", port="19530", collection_name=config["core_docs_directory_name"])
-except Exception as e:
-    vector_client = None
-    raise(Exception(f"Failed to connect to Milvus vector DB, exception: {e}. Please follow steps to initialize the vector DB, or upload documents to the knowledge base and add them to the vector DB."))
-
+vector_client = MilvusVectorClient(hostname="localhost", port="19530", collection_name=config["core_docs_directory_name"])
 memory = init_memory(llm_client.llm, config['summary_prompt'])
 query_embedder = NVIDIAEmbedders(name="nvolveqa_40k", type="query")
-
 retriever = Retriever(embedder=query_embedder , vector_client=vector_client)
 
-prompt_value = "Hi, what can you help me with?"
 
-
-
-def change_config(state):
-    state.config = get_config(os.path.join("bot_config", state.cfg_name+".config"))
-    notify(state, "success", "Config successfuly changed!")
-
-    state.vector_client = MilvusVectorClient(hostname="localhost", port="19530", collection_name=state.config["core_docs_directory_name"])
-    notify(state, "success", "Vector database changed!")
-
-    state.query_embedder = NVIDIAEmbedders(name="nvolveqa_40k", type="query")
-    notify(state, "success", "Query embedder updated!")
-
-    state.retriever = Retriever(embedder=state.query_embedder , vector_client=state.vector_client)
-    notify(state, "success", "Retriever updated!")
-
-
-def on_images_upload(state):
-    notify(state, "s", "Image loaded for multimodal RAG Q&A.")
-    state.image_query = os.path.join("/tmp/", state.image_file.name)
-    with open(state.image_query,"wb") as f:
-        f.write(state.image_file.read())
-        
+def on_image_upload(state):
+    notify(state, "s", "Image loaded for multimodal RAG Q&A.") 
     neva = LLMClient("neva_22b")
-    image = Image.open(state.image_query).convert("RGB")
+    image = Image.open(state.image_path).convert("RGB")
     buffered = BytesIO()
     image.save(buffered, format="JPEG", quality=20) # Quality = 20 is a workaround (WAR)
     b64_string = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    notify(state, "i", "Getting image description using NeVA...")
     res = neva.multimodal_invoke(b64_string, creativity = 0, quality = 9, complexity = 0, verbosity = 9)
+    notify(state, "s", "Image description received!")
     state.image_query = res.content
 
 
+def send_message_asynchronous(retriever, current_user_message, messages, state_id):   
+    global progress_for_logs
+    progress_for_logs[state_id] = {'message_logs': []}
 
-def update_context(state: State) -> None:
-    """
-    Update the context with the user's message and the AI's response.
-
-    Args:
-        - state: The current state of the app.
-    """
-    state.context += f"Human: \n {state.current_user_message}\n\n AI:"
-    answer = ...#request(state, state.context).replace("\n", "")
-    state.context += answer
-    state.selected_row = [len(state.conversation["Conversation"]) + 1]
-    return answer
-
-
-def send_message(state: State) -> None:
-    """
-    Send the user's message to the API and update the context.
-
-    Args:
-        - state: The current state of the app.
-    """
-
-    if state.image_query:
-        state.current_user_message = f"\nI have uploaded an image with the following description: {state.image_query}" + "Here is the question: " + state.current_user_message
-    notify(state, "info", "Sending message...")
-    transformed_query = {"text": state.current_user_message}
-    state.messages.append({"role": "user", "content": transformed_query["text"]})
-    
+    progress_for_logs[state_id]['message_logs'].append("Sending message...")
     BASE_DIR = os.path.abspath("vectorstore")
     CORE_DIR = os.path.join(BASE_DIR, config["core_docs_directory_name"])
-    context, state.sources = retriever.get_relevant_docs(transformed_query["text"])
-    augmented_prompt = "Relevant documents:" + context + "\n\n[[QUESTION]]\n\n" + transformed_query["text"] #+ "\n" + config["footer"]
+    progress_for_logs[state_id]['message_logs'].append("Getting relevant documents...")
+    context, sources = retriever.get_relevant_docs(current_user_message)
+    augmented_prompt = "Relevant documents:" + context + "\n\n[[QUESTION]]\n\n" + current_user_message #+ "\n" + config["footer"]
     system_prompt = config["header"]
 
+    progress_for_logs[state_id]['message_logs'].append("Responding based on documents...")
     response = llm_client.chat_with_prompt(system_prompt, augmented_prompt)
-    full_response = ""
-    for chunk in response:
-        full_response += chunk
-    add_history_to_memory(memory, transformed_query["text"], full_response)
-
-
+    full_response = "".join(response)
+    add_history_to_memory(memory, current_user_message, full_response)
+    messages.append({"role": "assistant", "style": "assistant_message", "content": full_response})
+    messages.append({"role": "assistant", "style": "assistant_info_message", "content": "Fact Check result:" })
     full_response += "\n\nFact Check result: " 
-    res = fact_check(context, transformed_query["text"], full_response)
-    for response in res:
-            full_response += response
+    progress_for_logs[state_id]['message_logs'].append("Running fact checking/guardrails...")
+    res = fact_check(context, current_user_message, full_response)
+    progress_for_logs[state_id]['message_logs'].append("Fact Check done!")
+    fact_check_response = "".join(res)
 
-    messages.append(
-                {"role": "assistant", "content": full_response}
-        )
+    right_or_wrong = fact_check_response.split(' ')[0]
+    messages.append({"role": "assistant", "style": right_or_wrong.replace('\\', ''), "content": fact_check_response.replace(right_or_wrong, '')})
 
+    progress_for_logs[state_id]['message_logs'].append("Getting summary...")
+    summary = get_summary(memory)
+    progress_for_logs[state_id]['message_logs'].append("Summary done!")
+    return messages, summary, sources
 
-    state.summary = get_summary(memory)
-    ##
-    conv = state.conversation._dict.copy()
-    conv["Conversation"] += [state.current_user_message, full_response]
+def when_chat_answers(state, status, res):
+    global progress_for_logs
+    state.logs = "\n".join(progress_for_logs[get_state_id(state)]['message_logs'])
+    
+    if isinstance(status, bool):
+        state.messages, state.summary, state.sources = res
+        state.current_user_message = ""
+        state.image_query = ""
+        state.image_path = None
+        state.logs = None
+        state.conv.update_content(state, create_conv(state))
+        notify(state, "success", "Response received!")
+
+def send_message(state: State) -> None:
+    notify(state, "info", "Sending message...")
+    current_user_message = state.current_user_message
     state.current_user_message = ""
-    state.conversation = conv
-    notify(state, "success", "Response received!")
+
+    if state.image_query:
+        current_user_message = f"\nI have uploaded an image with the following description: {state.image_query}" + "Here is the question: " + current_user_message
+
+    state.messages.append({"role": "user", "style":"user_message", "content": current_user_message})
+    state.conv.update_content(state, create_conv(state))
+
+    invoke_long_callback(state, 
+                         send_message_asynchronous, [state.retriever, current_user_message, state.messages, get_state_id(state)],
+                         when_chat_answers, [],
+                         period=5000
+                         )
+
 
 
 def style_conv(state: State, idx: int, row: int) -> str:
-    """
-    Apply a style to the conversation table depending on the message's author.
-
-    Args:
-        - state: The current state of the app.
-        - idx: The index of the message in the table.
-        - row: The row of the message in the table.
-
-    Returns:
-        The style to apply to the message.
-    """
-    if idx is None:
-        return None
-    elif idx % 2 == 0:
-        return "user_message"
-    else:
-        return "gpt_message"
+    return row['style']
 
 
 with tgb.Page() as multimodal_assistant:
-    with tgb.layout("3 7"):
+    tgb.navbar()
+    with tgb.layout("2 8", gap="50px"):
         with tgb.part("sidebar"):
-            tgb.selector(value="{mode}", lov=["multimodal"], dropdown=True, class_name="fullwidth", on_change=change_config)
+            tgb.text("Assistant mode", class_name="h3")
+            tgb.text("Select a configuration/type of bot")
+            tgb.selector(value="{mode}", lov=["multimodal"], dropdown=True, class_name="fullwidth", on_change=change_config, label="Mode")
+            
+            tgb.html("br")
+            tgb.html("hr")
+            tgb.html("br")
+                     
+            
             tgb.text("Image Input Query", class_name="h2")
-            tgb.file_selector(content="{image_file}", on_action=on_images_upload, multiple=True, label="Upload an image with a text input:")
+            tgb.text("Upload an image (JPG/JPEG/PNG) along with a text input:")
+            # TODO: Allow multiple images
+            tgb.file_selector(content="{image_path}", on_action=on_image_upload,
+                              extensions='.jpg,.jpeg,.png', 
+                              label="Upload an image")
+
+            tgb.html("br")
+            tgb.html("hr")
+            tgb.html("br")
+
+            tgb.image('{image_path}', width="100%")
+
+            with tgb.part(render='{image_query}'):
+                tgb.text('Image Description', class_name="h4")
+                tgb.text('{image_query}')
 
         with tgb.part():
-            tgb.text("{config['page_title']}")
+            tgb.text("{config['page_title']}", class_name="h1")
             tgb.text("{config.instructions}", mode="md")
 
-            with tgb.part(class_name="p2 align-item-bottom table"): # UX concerns
-                tgb.table("{conversation}", style=style_conv, show_all=True, rebuild=True)
+            with tgb.part(class_name="p1"): # UX concerns
+                tgb.part(partial="{conv}", height="600px", class_name="card card_chat")
+
+                tgb.text("{logs}", mode="pre")
+
                 with tgb.part("card mt1"): # UX concerns
                     tgb.input("{current_user_message}", label="Write your message:", on_action=send_message, class_name="fullwidth")
 
-            tgb.text("Summary: {summary}")
+            with tgb.part(render="{len(summary)>0}"):
+                with tgb.expandable(value="Summary", expanded="{True}"):
+                    tgb.text("{summary}", mode="md")
 
+
+
+def create_conv(state):
+    messages_dict = {}
+    document_paths_to_download = list(state.sources.keys())
+    # Get all the names of the files present in these paths
+    document_names_to_download = [os.path.basename(document_path) for document_path in document_paths_to_download]
+    with tgb.Page() as new_partial:
+        for i, m in enumerate(state.messages):
+            text = m["content"].replace("<br>", "\n")
+            text = text.replace('"', "'")
+            messages_dict[f"message_{i}"] = text
+            tgb.text("{messages_dict['"+f"message_{i}"+"']}", class_name=m["style"], mode="md")
+        with tgb.layout("1 1 1 1 1"):
+            for i, document_path in enumerate(document_paths_to_download):
+                tgb.file_download(content=document_path, name=document_names_to_download[i], label=document_names_to_download[i])
+        
+
+    state.messages_dict = messages_dict
+
+    return new_partial
 
 pages = {
-    "/":"<|navbar|>",
     "Multimodal_Assistant": multimodal_assistant,
     "Knowledge_Base": knowledge_base
 }
 
-Gui(pages=pages).run()
 
+def on_init(state):
+    state.conv.update_content(state, create_conv(state))
 
-
-
-"""
-for n, msg in enumerate(messages):
-    st.chat_message(msg["role"]).write(msg["content"])
-    if msg["role"] == "assistant" and n > 1:
-        with st.chat_message("assistant"):
-            ctr = 0
-            for key in st.session_state.sources.keys():
-                ctr += 1
-                with st.expander(os.path.basename(key)):
-                    source = st.session_state.sources[key]
-                    if "source" in source["doc_metadata"]:
-                        source_str = source["doc_metadata"]["source"]
-                        if "page" in source_str and "block" in source_str:
-                            download_path = source_str.split("page")[0].strip("-")+".pdf"
-                            file_name = os.path.basename(download_path)
-                            try:
-                                f = open(download_path, 'rb').read()
-                                st.download_button("Download now", f, key=download_path+str(n)+str(ctr), file_name=file_name)
-                            except:
-                                st.write("failed to provide download for this file: ", file_name)
-                        elif "ppt" in source_str:
-                            ppt_path = os.path.basename(source_str).replace('.pptx', '.pdf').replace('.ppt', '.pdf')
-                            download_path = os.path.join("vectorstore/ppt_references", ppt_path)
-                            file_name = os.path.basename(download_path)
-                            f = open(download_path, "rb").read()
-                            st.download_button("Download now", f, key=download_path+str(n)+str(ctr), file_name=file_name)
-                        else:
-                            download_path = source["doc_metadata"]["image"]
-                            file_name = os.path.basename(download_path)
-                            try:
-                                f = open(download_path, 'rb').read()
-                                st.download_button("Download now", f, key=download_path+str(n)+str(ctr), file_name=file_name)
-                            except Exception as e:
-                                print("failed to provide download for ", file_name)
-                                print(f"Exception: {e}")
-                    if "type" in source["doc_metadata"]:
-                        if source["doc_metadata"]["type"] == "table":
-                            # get the pandas table and show in Streamlit
-                            df = pd.read_excel(source["doc_metadata"]["dataframe"])
-                            st.write(df)
-                            image = Image.open(source["doc_metadata"]["image"])
-                            st.image(image, caption = os.path.basename(source["doc_metadata"]["source"]))
-                        elif source["doc_metadata"]["type"] == "image":
-                            image = Image.open(source["doc_metadata"]["image"])
-                            st.image(image, caption = os.path.basename(source["doc_metadata"]["source"]))
-                        else: 
-                            st.write(source["doc_content"])
-                    else:
-                        st.write(source["doc_content"])
-
-        # feedback_key = f"feedback_{int(n/2)}"
-
-        # if feedback_key not in st.session_state:
-        #     st.session_state[feedback_key] = None
-        # col1, col2 = st.columns(2)
-        # with col1:
-        #     st.write("**Please provide feedback by clicking one of these icons:**")
-        # with col2:
-        #     streamlit_feedback(**feedback_kwargs, args=[messages[-2]["content"].strip(), messages[-1]["content"].strip()], key=feedback_key, align="flex-start")
-"""
-
-
-
-
-
-
-
-
-
-# streamlit_analytics.stop_tracking()
+if __name__ == "__main__":
+    gui = Gui(pages=pages)
+    conv = gui.add_partial("")
+    gui.run(title="Multimodal Assistant",
+            dark_mode=False,
+            debug=True,
+            host='0.0.0.0')

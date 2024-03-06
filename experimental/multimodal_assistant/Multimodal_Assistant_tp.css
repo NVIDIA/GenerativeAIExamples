@@ -1,36 +1,3 @@
-body {
-    overflow: hidden;
-  }
-
-.gpt_message td  {
-    margin-left: 30px;
-    margin-bottom: 20px;
-    margin-top: 20px;
-    position: relative;
-    display: inline-block;
-    padding: 20px;
-    background-color: #ff462b;
-    border-radius: 20px;
-    max-width: 80%;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-    font-size: large;
-}
-
-.user_message td  {
-    margin-right: 30px;
-    margin-bottom: 20px;
-    margin-top: 20px;
-    position: relative;
-    display: inline-block;
-    padding: 20px;
-    background-color: #140a1e;
-    border-radius: 20px;
-    max-width: 80%;
-    float: right;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-    font-size: large;
-}
-
 :root {
     --element-padding: 1.5rem;
 }
@@ -42,22 +9,85 @@ main {
     flex: 0 0 100%;
 }
 
-/**** PASSED PROMPT LIST ****/
-
-.past_prompts_list .MuiPaper-root {
-    background-color: var(--color-background);
+/* --------------------------------------------- */
+.card_chat{
+    display: flex;
+    flex-direction: column-reverse;
+    overflow-y: auto;
 }
 
-.past_prompts_list li + li {
-    border-top: 1px solid var(--color-paper);
+.assistant_message   {
+    margin-left: 30px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    position: relative;
+    display: inline-block;
+    padding: 20px;
+    background-color: #ff462b;
+    border-radius: 20px;
+    max-width: 80%;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    font-size: large;
+    color: white;
 }
 
-.past_prompts_list .MuiTreeItem-content {
-    font-style: italic;
-    padding: var(--spacing-half);
-    user-select: text !important;
-    cursor: pointer;
+.assistant_info_message   {
+    margin-left: 30px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    position: relative;
+    display: inline-block;
+    padding: 20;
+    background-color: #969595;
+    border-radius: 20px;
+    max-width: 80%;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    font-size: large;
+    color: white;
 }
-.past_prompts_list .MuiTreeItem-iconContainer {
-    display: none;
+
+.assistant_right_message   {
+    margin-left: 30px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    position: relative;
+    display: inline-block;
+    padding: 20px;
+    background-color: #039a08;
+    border-radius: 20px;
+    max-width: 80%;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    font-size: large;
+    color: white;
+}
+
+.assistant_wrong_message   {
+    margin-left: 30px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    position: relative;
+    display: inline-block;
+    padding: 20px;
+    background-color: #e10000;
+    border-radius: 20px;
+    max-width: 80%;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    font-size: large;
+    color: white;
+}
+
+.user_message   {
+    margin-right: 30px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    position: relative;
+    display: inline-block;
+    padding: 20px;
+    background-color: #218aff;	
+    border-radius: 20px;
+    max-width: 80%;
+    float: right;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    font-size: large;
+    color: white;
 }
