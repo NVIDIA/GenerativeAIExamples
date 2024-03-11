@@ -1,13 +1,12 @@
-import random
+
 import os
 import base64
-import datetime
 import pandas as pd
 from PIL import Image
 from io import BytesIO
 
 import taipy.gui.builder as tgb
-from taipy.gui import Gui, notify, State, invoke_long_callback, get_state_id
+from taipy.gui import notify, State, invoke_long_callback, get_state_id
 
 from bot_config.utils import get_config
 from utils.memory import init_memory, get_summary, add_history_to_memory
@@ -16,9 +15,6 @@ from llm.llm_client import LLMClient
 from retriever.embedder import NVIDIAEmbedders, HuggingFaceEmbeders
 from retriever.vector import MilvusVectorClient, QdrantClient
 from retriever.retriever import Retriever
-
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_core.messages import HumanMessage
 
 from pages.knowledge_base import progress_for_logs, config, change_config, knowledge_base, mode, uploaded_file_paths
 
@@ -32,7 +28,6 @@ current_user_message = ""
 summary = "No summary yet."
 messages_dict = {}
 logs_for_messages = ""
-logs_for_retraining = ""
 
 vector_client = MilvusVectorClient(hostname="localhost", port="19530", collection_name=config["core_docs_directory_name"])
 memory = init_memory(llm_client.llm, config['summary_prompt'])
@@ -150,7 +145,9 @@ with tgb.Page() as multimodal_assistant:
                 tgb.text("{logs_for_messages}", mode="pre")
 
                 with tgb.part("card mt1"): # UX concerns
-                    tgb.input("{current_user_message}", on_action=send_message, change_delay=-1, label="Write your message:", class_name="fullwidth")
+                    tgb.input("{current_user_message}", on_action=send_message, change_delay=-1, label="Write your message:",  class_name="fullwidth")
+
+            tgb.html("hr")
 
             tgb.text("Summary: {summary}", mode="md")
 
@@ -173,21 +170,3 @@ def create_conv(state):
         
     state.messages_dict = messages_dict
     return new_partial
-
-
-def on_init(state):
-    state.conv.update_content(state, create_conv(state))
-
-pages = {
-    "Multimodal_Assistant": multimodal_assistant,
-    "Knowledge_Base": knowledge_base
-}
-
-if __name__ == "__main__":
-    gui = Gui(pages=pages)
-    conv = gui.add_partial("")
-    gui.run(title="Multimodal Assistant",
-            dark_mode=False,
-            debug=True,
-            host='0.0.0.0',
-            margin="0px")

@@ -5,7 +5,6 @@ Create a simple example to showcase multimodal RAG. It should be easy to adapt, 
 - [RAG in 5 minutes Chatbot Video](https://youtu.be/N_OOfkEWcOk) Setup with NVIDIA AI Playground components
 - Source references with options to download the source document
 - Analytics through Streamlit at ```/?analytics=on```
-- Added user feedback and integrated with Google Sheets or other database
 - Add fact-check verification of results through a second LLM API call
 - Multimodal parsing of documents - images, tables, text through multimodal LLM APIs
 - Added simple conversational history with memory and summarization
@@ -35,9 +34,7 @@ The following describes how you can have this chatbot up-and-running in less tha
 
 5. If you want to use the PowerPoint parsing feature, you will need LibreOffice. On Ubuntu Linux systems, use the command ```sudo apt install libreoffice``` to install it.
 
-6. Note that if you would like to use the "Feedback" feature, you will need a service account for Google Sheets. Save the service account credentials file as service.json in the multimodal_assistant folder.
-
-7. Go to the folder with this code and then run the example using streamlit
+6. Go to the folder with this code and then run the example using streamlit
 ```
 cd GenerativeAIExamples/experimental/multimodal_assistant && streamlit run Multimodal_Assistant.py
 ```

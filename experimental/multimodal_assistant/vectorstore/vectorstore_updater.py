@@ -22,7 +22,7 @@ from langchain_community.document_loaders import UnstructuredFileLoader
 from vectorstore.custom_powerpoint_parser import process_ppt_file
 from vectorstore.custom_pdf_parser import get_pdf_documents
 
-
+progress_for_logs = {}
 CUSTOM_PROCESSING = True
 
 def load_documents(folder):
@@ -59,24 +59,25 @@ def split_text(documents):
     split_docs = text_splitter.split_documents(documents)
     return split_docs
 
-def update_vectorstore(folder, vector_client, embedder, config_name):
-
-    print("[Step 1/4] Creating/loading vector store")
+def update_vectorstore(folder, vector_client, embedder, config_name, state_id):
+    global progress_for_logs
+    progress_for_logs[state_id] = {'retraining_logs' : []}
+    progress_for_logs[state_id]['retraining_logs'].append("[Step 1/4] Creating/loading vector store")
 
     # Get embedding size from your embedder
     embedding_size = embedder.get_embedding_size()
 
     # Check if the collection exists
-    print("Creating collection...")
+    progress_for_logs[state_id]['retraining_logs'].append("Creating collection...")
     vector_client.create_collection(config_name, embedding_size)
 
-    print("[Step 2/4] Processing and splitting documents")
+    progress_for_logs[state_id]['retraining_logs'].append("[Step 2/4] Processing and splitting documents")
     # load and split documents
     raw_documents = load_documents(folder)
     documents = split_text(raw_documents)
 
-    print("Loading data to the vector index store...")
-    print("[Step 3/4] Inserting documents into the vector store...")
+    progress_for_logs[state_id]['retraining_logs'].append("Loading data to the vector index store...")
+    progress_for_logs[state_id]['retraining_logs'].append("[Step 3/4] Inserting documents into the vector store...")
     # Extracting the page content from each document
     document_contents = [doc.page_content for doc in documents]
 
@@ -85,4 +86,4 @@ def update_vectorstore(folder, vector_client, embedder, config_name):
 
     # Batch insert into Milvus collection
     vector_client.update(documents, document_embeddings, config_name)
-    print("[Step 4/4] Saved vector store!")
+    progress_for_logs[state_id]['retraining_logs'].append("[Step 4/4] Saved vector store!")
