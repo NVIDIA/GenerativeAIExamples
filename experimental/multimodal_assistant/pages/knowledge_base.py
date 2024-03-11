@@ -83,9 +83,9 @@ def change_config(state):
 
 def on_files_upload(state):
     for uploaded_path in list(state.uploaded_file_paths):
-        name = os.path.basename(uploaded_path)
+        name = str(os.path.basename(uploaded_path))
         # Generate a unique name
-        name = f"{time.time()}-{name}" if os.path.exists(os.path.join(DOCS_DIR, name)) else name
+        name = f"{int(time.time()*1000)}_{name}" if os.path.exists(os.path.join(DOCS_DIR, name)) else name
         shutil.move(uploaded_path, os.path.join(DOCS_DIR, name))
         notify(state, "s", f"{name} written!")
     state.filelist = [file for root, dirs, files in os.walk(DOCS_DIR) for file in files]
@@ -95,10 +95,11 @@ def when_retrain(state, status):
 
     state.logs_for_retraining = "\n".join(progress_for_logs[get_state_id(state)]['retraining_logs'])
     if isinstance(status, bool):
-        state.logs_for_retraining = None
+        state.logs_for_retraining = "" 
         change_config(state)
 
 def retrain(state):
+    notify(state, "info", "Retraining...")
     invoke_long_callback(state,
                          update_vectorstore, [DOCS_DIR,  state.vector_client, state.document_embedder, state.config["core_docs_directory_name"], get_state_id(state)],
                          when_retrain, [],
@@ -112,10 +113,10 @@ def delete_file(state):
 
 
 with tgb.Page() as knowledge_base:
-    with tgb.layout("2 8", gap="50px"):
+    with tgb.layout("2 8", columns__mobile="2 8", gap="50px"):
         with tgb.part("sidebar"):
             tgb.text("Assistant mode", class_name="h4")
-            tgb.text("Select a configuration/type of bot")
+            tgb.text("Select a configuration of bot")
             tgb.selector(value="{mode}", lov=["multimodal"], on_change=change_config, dropdown=True, class_name="fullwidth", label="Mode")
 
         with tgb.part():
@@ -143,7 +144,7 @@ with tgb.Page() as knowledge_base:
             tgb.html("hr")
 
             tgb.text("View/Modify the current Knowledge Base", class_name="h2")
-            tgb.text("The following files/documents are ingested and used as part of Multimodal Assistant's knowledge base. Select to download if you wish")
+            tgb.text("The following files/documents are ingested and used as part of Multimodal Assistant's knowledge base.")
             tgb.selector(value="{selected_file}", lov="{filelist}", label="Files in Knowledge Base", class_name="fullwidth")
 
             with tgb.layout("1 1 1fr"):

@@ -111,7 +111,7 @@ def send_message(state: State) -> None:
 
 
 with tgb.Page() as multimodal_assistant:
-    with tgb.layout("2 8", gap="50px"):
+    with tgb.layout("2 8", columns__mobile="2 8", gap="50px"):
         with tgb.part("sidebar"):
             tgb.text("Assistant mode", class_name="h4")
             tgb.text("Select a configuration/type of bot")

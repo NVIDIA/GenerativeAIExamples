@@ -1,10 +1,16 @@
 from pages.knowledge_base import knowledge_base
 from pages.multimodel_assistant import multimodal_assistant, create_conv, query_embedder, retriever
-from taipy.gui import Gui 
+from taipy.gui import Gui, State, notify
 
 
 def on_init(state):
+    """Called when the user first opens the page"""
     state.conv.update_content(state, create_conv(state))
+
+def on_exception(state: State, function_name: str, ex: Exception):
+    """Called when an exception is raised in a function"""
+    notify(state, "e", f"A problem occured in {function_name}")
+    print(f"Exception in {function_name}:\n{ex}")
 
 pages = {
     "Multimodal_Assistant": multimodal_assistant,
@@ -13,7 +19,7 @@ pages = {
 
 if __name__ == "__main__":
     gui = Gui(pages=pages)
-    conv = gui.add_partial("")
+    conv = gui.add_partial("") # conv is chat between the assistant and the user
     gui.run(title="Multimodal Assistant",
             dark_mode=False,
             debug=True,
