@@ -4,7 +4,6 @@ Create a simple example to showcase multimodal RAG. It should be easy to adapt, 
 # Implemented Features
 - [RAG in 5 minutes Chatbot Video](https://youtu.be/N_OOfkEWcOk) Setup with NVIDIA AI Playground components
 - Source references with options to download the source document
-- Analytics through Streamlit at ```/?analytics=on```
 - Add fact-check verification of results through a second LLM API call
 - Multimodal parsing of documents - images, tables, text through multimodal LLM APIs
 - Added simple conversational history with memory and summarization
@@ -36,10 +35,10 @@ The following describes how you can have this chatbot up-and-running in less tha
 
 6. Go to the folder with this code and then run the example using streamlit
 ```
-cd GenerativeAIExamples/experimental/multimodal_assistant && streamlit run Multimodal_Assistant.py
+cd GenerativeAIExamples/experimental/multimodal_assistant && taipy run app.py
 ```
 
-8. Finally to test the deployed example, goto the URL `http://<host_ip>:8501` in a web browser. Click on `browse files` and select your knowledge source. After selecting click on `Upload!` button to complete the ingestion process.
+8. Finally to test the deployed example, goto the URL `http://<host_ip>:5000` in a web browser. Click on `browse files` and select your knowledge source. After selecting click on `Upload!` button to complete the ingestion process.
 
 9. You are all set now! Try out queries pertinent to the knowledge base using text from the UI.
 
