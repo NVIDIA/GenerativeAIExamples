@@ -67,7 +67,8 @@ def change_config(state):
     notify(state, "success", "Retriever updated!")
 
 def on_files_upload(state):
-    for uploaded_path in list(state.uploaded_file_paths):
+    state.uploaded_file_paths = [state.uploaded_file_paths] if not isinstance(state.uploaded_file_paths, list) else state.uploaded_file_paths
+    for uploaded_path in state.uploaded_file_paths:
         name = str(os.path.basename(uploaded_path))
         # Generate a unique name
         name = f"{int(time.time()*1000)}_{name}" if os.path.exists(os.path.join(DOCS_DIR, name)) else name
@@ -130,7 +131,7 @@ with tgb.Page() as knowledge_base:
 
             tgb.text("View/Modify the current Knowledge Base", class_name="h2")
             tgb.text("The following files/documents are ingested and used as part of Multimodal Assistant's knowledge base.")
-            tgb.selector(value="{selected_file}", lov="{filelist}", label="Files in Knowledge Base", class_name="fullwidth")
+            tgb.selector(value="{selected_file}", lov="{filelist}", dropdown=True, label="Files in Knowledge Base", class_name="fullwidth")
 
             with tgb.layout("1 1 1fr"):
                 tgb.file_download("{os.path.join(DOCS_DIR, selected_file)}", active='{len(filelist)>0}', label="Download file")

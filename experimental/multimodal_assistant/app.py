@@ -1,10 +1,11 @@
-from pages.knowledge_base import knowledge_base
+from pages.knowledge_base import knowledge_base, uploaded_file_paths
 from pages.multimodel_assistant import multimodal_assistant, create_conv, query_embedder, retriever
 from taipy.gui import Gui, State, notify
 
 
 def on_init(state):
     """Called when the user first opens the page"""
+    state['Multimodal_Assistant'].messages = [{"role": "assistant", "style": "assistant_message", "content": "Hi, what can I help you with?"}]
     state.conv.update_content(state, create_conv(state))
 
 def on_exception(state: State, function_name: str, ex: Exception):

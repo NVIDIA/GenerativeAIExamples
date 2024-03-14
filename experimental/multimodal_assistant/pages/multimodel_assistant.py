@@ -4,6 +4,7 @@ import base64
 import pandas as pd
 from PIL import Image
 from io import BytesIO
+import textwrap
 
 import taipy.gui.builder as tgb
 from taipy.gui import notify, State, invoke_long_callback, get_state_id
@@ -21,7 +22,7 @@ from pages.knowledge_base import progress_for_logs, config, change_config, knowl
 llm_client = LLMClient("mixtral_8x7b")
 
 image_path = None
-messages = [{"role": "assistant", "style": "assistant_message", "content": "Hi, what can I help you with?"}]
+messages = []
 sources = {}
 image_query = ""
 current_user_message = ""
@@ -47,9 +48,12 @@ def on_image_upload(state):
     notify(state, "s", "Image description received!")
     state.image_query = res.content
 
+def response_to_text(response):
+    full_response = "".join(response) if not isinstance(response, str) else response
+    return "\n".join([textwrap.fill(line, width=150) for line in full_response.split("\n")])
 
 def send_message_asynchronous(retriever, current_user_message, messages, state_id):   
-    global progress_for_logs
+    global progress_for_logs # to provide logs in the UI
     progress_for_logs[state_id] = {'message_logs': []}
 
     progress_for_logs[state_id]['message_logs'].append("Step 1/5: Sending message and getting relevant documents...")
@@ -63,7 +67,7 @@ def send_message_asynchronous(retriever, current_user_message, messages, state_i
 
     progress_for_logs[state_id]['message_logs'].append("Step 3/5: Adding message to memory...")
     add_history_to_memory(memory, current_user_message, full_response)
-    messages.append({"role": "assistant", "style": "assistant_message", "content": full_response})
+    messages.append({"role": "assistant", "style": "assistant_message", "content": response_to_text(full_response)})
     messages.append({"role": "assistant", "style": "assistant_info_message", "content": "Fact Check result:" })
     full_response += "\n\nFact Check result: "
 
@@ -72,8 +76,8 @@ def send_message_asynchronous(retriever, current_user_message, messages, state_i
     fact_check_response = "".join(res)
     right_or_wrong = fact_check_response.split(' ')[0]
     messages.append({"role": "assistant", 
-                     "style": right_or_wrong.replace('\\', ''), 
-                     "content": fact_check_response.replace(right_or_wrong, '')})
+                     "style": right_or_wrong.replace('|', ''), 
+                     "content": response_to_text(fact_check_response.replace(right_or_wrong, ''))})
 
     progress_for_logs[state_id]['message_logs'].append("Step 5/5: Getting summary...")
     summary = get_summary(memory)
@@ -95,7 +99,7 @@ def when_chat_answers(state, status, res):
 def send_message(state: State) -> None:
     notify(state, "info", "Sending message...")
     current_user_message = state.current_user_message
-    state.messages.append({"role": "user", "style":"user_message", "content": current_user_message})
+    state.messages.append({"role": "user", "style":"user_message", "content": response_to_text(current_user_message)})
     state.current_user_message = ""
 
     if state.image_query:
@@ -147,9 +151,9 @@ with tgb.Page() as multimodal_assistant:
                 with tgb.part("card mt1"): # UX concerns
                     tgb.input("{current_user_message}", on_action=send_message, change_delay=-1, label="Write your message:",  class_name="fullwidth")
 
-            tgb.html("hr")
 
-            tgb.text("Summary: {summary}", mode="md")
+            with tgb.expandable(title="Summary", expanded=False):
+                tgb.text("{summary}", mode="md")
 
 
 
@@ -163,9 +167,11 @@ def create_conv(state):
         for i, message in enumerate(state.messages):
             text = message["content"].replace("<br>", "\n").replace('"', "'")
             messages_dict[f"message_{i}"] = text
-            tgb.text("{messages_dict['"+f"message_{i}"+"']}", class_name=message["style"], mode="md")
+            with tgb.part(class_name="fullwidth"):
+                tgb.text("{messages_dict['"+f"message_{i}"+"']}", class_name=f"message_base {message['style']}", mode="pre")
         with tgb.layout("1 1 1 1 1"):
             for i, document_path in enumerate(document_paths):
+                # find out if it is an image
                 tgb.file_download(content=document_path, name=document_names_to_download[i], label=document_names_to_download[i])
         
     state.messages_dict = messages_dict
