@@ -2,7 +2,7 @@ pymupdf==1.23.15
 gspread==6.0.0
 langchain==0.1.4
 langchain_community==0.0.16
-langchain_core==0.1.16
+langchain_core==0.1.30
 langchain_nvidia_ai_endpoints==0.0.1
 pandas==2.2.0
 Pillow==10.2.0
