@@ -167,8 +167,7 @@ def create_conv(state):
         for i, message in enumerate(state.messages):
             text = message["content"].replace("<br>", "\n").replace('"', "'")
             messages_dict[f"message_{i}"] = text
-            with tgb.part(class_name="fullwidth"):
-                tgb.text("{messages_dict['"+f"message_{i}"+"']}", class_name=f"message_base {message['style']}", mode="pre")
+            tgb.text("{messages_dict['"+f"message_{i}"+"']}", class_name=f"message_base {message['style']}", mode="pre")
         with tgb.layout("1 1 1 1 1"):
             for i, document_path in enumerate(document_paths):
                 # find out if it is an image
