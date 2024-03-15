@@ -50,7 +50,7 @@ def on_image_upload(state):
 
 def response_to_text(response):
     full_response = "".join(response) if not isinstance(response, str) else response
-    return "\n".join([textwrap.fill(line, width=150) for line in full_response.split("\n")])
+    return "\n".join([textwrap.fill(line, width=130) for line in full_response.split("\n")])
 
 def send_message_asynchronous(retriever, current_user_message, messages, state_id):   
     global progress_for_logs # to provide logs in the UI
