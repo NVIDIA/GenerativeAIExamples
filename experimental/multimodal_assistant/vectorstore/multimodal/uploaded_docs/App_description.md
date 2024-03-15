@@ -42,7 +42,7 @@ cd GenerativeAIExamples/experimental/multimodal_assistant && taipy run app.py
 
 9. You are all set now! Try out queries pertinent to the knowledge base using text from the UI.
 
-The resulting server will launch on a specified port, like localhost:5000. If your machine has ports being forwarded on the public IP, it can be accessed by other people who can use `<IP_ADDR>:<PORT>` to access the chatbot.
+The resulting server will launch on a specified port, like localhost:8501. If your machine has ports being forwarded on the public IP, it can be accessed by other people who can use `<IP_ADDR>:<PORT>` to access the chatbot.
 
 To do port forwarding from a remote machine:
 ```
@@ -56,7 +56,7 @@ ssh -L PORT:IP_ADDR:PORT localhost
 
 ## Known Limitations
 
-The LLM might hallucinate some information.
+Once you add documents and re-create the vector database, it will show that it has successfully completed and you can now use it to answer questions. Since the chatbot needs to connect to the newly created connection, you may have to refresh the page, or else you will see a Milvus connection error. Once you refresh it should be able to connect to the collection.
 
 ## Architecture Diagram
 
@@ -78,7 +78,7 @@ H --> C
 All components are designed to be swappable, meaning that it should be easy to replace with something more complex. Here are some options for the same (this repository may not support these, but we can point you to resources if it is something that would be useful for you):
 
 ### Frontend
-- **taipy:** this is the current implementation of the chatbot, which makes it very easy to interact with via a WebUI. However, it requires direct access to the machine via the port on which it is streaming.
+- **Streamlit:** this is the current implementation of the chatbot, which makes it very easy to interact with via a WebUI. However, it requires direct access to the machine via the port on which it is streaming.
 
 ### Retrieval
 This uses the NVIDIA NeMo Retriever model through NVIDIA AI Playground. This is a fine-tuned version of the E5-large-v2 embedding model, and it is commercially viable for use. This maps every user query into a 1024-dim embedding and uses cosine similarity to provide relevant matches. This can be swapped out for various types of retrieval models that can map to different sorts of embeddings, depending on the use case. They can also be fine-tuned further for the specific data being used.

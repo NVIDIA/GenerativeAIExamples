@@ -94,6 +94,7 @@ def when_chat_answers(state, status, res):
         state.image_path = None
         state.logs_for_messages = None
         state.conv.update_content(state, create_conv(state))
+        state.document_section.update_content(state, create_document_section(state))
         notify(state, "success", "Response received!")
 
 def send_message(state: State) -> None:
@@ -147,6 +148,8 @@ with tgb.Page() as multimodal_assistant:
                 tgb.part(partial="{conv}", height="600px", class_name="card card_chat")
 
                 tgb.text("{logs_for_messages}", mode="pre")
+                
+                tgb.part(partial="{document_section}")
 
                 with tgb.part("card mt1"): # UX concerns
                     tgb.input("{current_user_message}", on_action=send_message, change_delay=-1, label="Write your message:",  class_name="fullwidth")
@@ -156,22 +159,68 @@ with tgb.Page() as multimodal_assistant:
                 tgb.text("{summary}", mode="md")
 
 
+def create_document_section(state):
+    sources = state.sources._dict
+    with tgb.Page() as document_section:
+        try:
+            # This will create a section to download all the files
+            with tgb.expandable(title="Documents", expanded=False, id="download_section"):
+                for key in sources:
+                    source = sources[key]
+                    if "source" in source["doc_metadata"]:
+                        source_str = source["doc_metadata"]["source"]
+                        if "page" in source_str and "block" in source_str:
+                            download_path = source_str.split("page")[0].strip("-")+".pdf"
+                            file_name = os.path.basename(download_path)
+                            try:
+                                tgb.text("Document: "+file_name, class_name="h3 p1")
+                                tgb.text("Page: "+source_str.split("page")[1].strip("block").strip("-"), class_name="h4 p1")
+                                tgb.file_download(content=download_path, label=file_name)
+                            except:
+                                print("failed to provide download for ", file_name)
+                        elif "ppt" in source_str:
+                            ppt_path = os.path.basename(source_str).replace('.pptx', '.pdf').replace('.ppt', '.pdf')
+                            download_path = os.path.join("vectorstore/ppt_references", ppt_path)
+                            file_name = os.path.basename(download_path)
+                            tgb.file_download(label=file_name, content=download_path)
+                        else:
+                            download_path = source["doc_metadata"]["image"]
+                            file_name = os.path.basename(download_path)
+                            try:
+                                tgb.file_download(content=download_path, label=file_name)
+                            except Exception as e:
+                                print("failed to provide download for ", file_name)
+                                print(f"Exception: {e}")
+                    if "type" in source["doc_metadata"]:
+                        if source["doc_metadata"]["type"] == "table":
+                            # get the pandas table and show in Taipy
+                            path_to_df = source["doc_metadata"]["dataframe"]
+                            with tgb.expandable(title="Dataframe", expanded=False):
+                                tgb.table("{pd.read_excel('"+path_to_df+"')}")
+                            image_path = source["doc_metadata"]["image"]
+                            tgb.image(image_path)
+                        elif source["doc_metadata"]["type"] == "image":
+                            image_path = source["doc_metadata"]["image"]
+                            tgb.image(image_path)
+                        else:
+                            tgb.text("Content", class_name="h4 p1")
+                            tgb.text(source["doc_content"], mode="pre")
+                    tgb.html('hr')
+        except Exception as e:
+            print("Exception: ", e)
+
+    return document_section
+
 
 def create_conv(state):
     messages_dict = {}
-
-    document_paths = list(state.sources.keys())
     # Get all the names of the files present in these paths
-    document_names_to_download = [os.path.basename(document_path) for document_path in document_paths]
-    with tgb.Page() as new_partial:
+    with tgb.Page() as conversation:
+        # This will create a section for the chat
         for i, message in enumerate(state.messages):
             text = message["content"].replace("<br>", "\n").replace('"', "'")
             messages_dict[f"message_{i}"] = text
             tgb.text("{messages_dict['"+f"message_{i}"+"'] if '"+f"message_{i}"+"' in messages_dict else ''}", class_name=f"message_base {message['style']}", mode="pre")
-        with tgb.layout("1 1 1 1 1"):
-            for i, document_path in enumerate(document_paths):
-                # find out if it is an image
-                tgb.file_download(content=document_path, name=document_names_to_download[i], label=document_names_to_download[i])
-        
+
     state.messages_dict = messages_dict
-    return new_partial
+    return conversation
