@@ -101,6 +101,7 @@ def delete_file(state):
 with tgb.Page() as knowledge_base:
     with tgb.layout("2 8", columns__mobile="2 8", gap="50px"):
         with tgb.part("sidebar"):
+            tgb.text("Powered by Taipy and NVIDEA")
             tgb.text("Assistant mode", class_name="h4")
             tgb.text("Select a configuration of bot")
             tgb.selector(value="{mode}", lov=["multimodal"], on_change=change_config, dropdown=True, class_name="fullwidth", label="Mode")
