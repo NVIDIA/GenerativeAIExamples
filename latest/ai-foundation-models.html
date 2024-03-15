@@ -26,7 +26,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Using Local GPUs for a Q&amp;A Chatbot" href="local-gpu.html" />
-    <link rel="prev" title="Release Notes" href="release-notes.html" />
+    <link rel="prev" title="Support Matrix" href="support-matrix.html" />
  
 
 
@@ -54,7 +54,6 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="release-notes.html">Release Notes</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">AI Foundation Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
@@ -84,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -247,12 +247,9 @@ You can use different model API endpoints with the same API key.</p>
 <section id="build-and-start-the-containers">
 <h2>Build and Start the Containers<a class="headerlink" href="#build-and-start-the-containers" title="Permalink to this headline"></a></h2>
 <ol class="arabic">
-<li><p>In the Generative AI examples repository, edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/compose.env</span></code> file.</p>
+<li><p>In the Generative AI examples repository, export this variable in terminal.</p>
 <p>Add the API for the model endpoint:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>...
-# Fill this out if you dont have a GPU. Leave this empty if you have a local GPU
-export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
-...
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
 </pre></div>
 </div>
 </li>
@@ -315,7 +312,7 @@ Refer to <a class="reference internal" href="using-sample-web-application.html">
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="release-notes.html" class="btn btn-neutral float-left" title="Release Notes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="support-matrix.html" class="btn btn-neutral float-left" title="Support Matrix" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="local-gpu.html" class="btn btn-neutral float-right" title="Using Local GPUs for a Q&amp;A Chatbot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

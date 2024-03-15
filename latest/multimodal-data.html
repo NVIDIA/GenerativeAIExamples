@@ -54,7 +54,6 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="release-notes.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
@@ -84,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -139,10 +139,11 @@
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#example-features" id="id1">Example Features</a></p></li>
-<li><p><a class="reference internal" href="#prerequisites" id="id2">Prerequisites</a></p></li>
-<li><p><a class="reference internal" href="#get-an-api-key-for-the-mixtral-8x7b-instruct-api-endpoint" id="id3">Get an API Key for the Mixtral 8x7B Instruct API Endpoint</a></p></li>
-<li><p><a class="reference internal" href="#build-and-start-the-containers" id="id4">Build and Start the Containers</a></p></li>
-<li><p><a class="reference internal" href="#next-steps" id="id5">Next Steps</a></p></li>
+<li><p><a class="reference internal" href="#limitations" id="id2">Limitations</a></p></li>
+<li><p><a class="reference internal" href="#prerequisites" id="id3">Prerequisites</a></p></li>
+<li><p><a class="reference internal" href="#get-an-api-key-for-the-mixtral-8x7b-instruct-api-endpoint" id="id4">Get an API Key for the Mixtral 8x7B Instruct API Endpoint</a></p></li>
+<li><p><a class="reference internal" href="#build-and-start-the-containers" id="id5">Build and Start the Containers</a></p></li>
+<li><p><a class="reference internal" href="#next-steps" id="id6">Next Steps</a></p></li>
 </ul>
 </div>
 <section id="example-features">
@@ -200,6 +201,12 @@ The chain server sends inference requests to an NVIDIA AI Foundation Models endp
 your questions and use text-to-speech to speak the answers aloud.</p></li>
 </ul>
 <p><img alt="Using NVIDIA AI Foundation Models endpoints for inference instead of local components." src="_images/ai-foundations-topology.png" /></p>
+</section>
+<section id="limitations">
+<h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline"></a></h2>
+<p>Although the AI Foundation Models endpoint uses the Neva_22B model for processing images, this example
+supports uploading images that are part of PDF files only.
+For example, after deploying the services, you cannot upload a PNG, JPEG, TIFF, or any other image format file.</p>
 </section>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
