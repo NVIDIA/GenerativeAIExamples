@@ -6,8 +6,10 @@ from taipy.gui import Gui, State, notify
 def on_init(state):
     """Called when the user first opens the page"""
     state.conv.update_content(state, "")
-    state['Multimodal_Assistant'].messages = [{"role": "assistant", "style": "assistant_message", "content": "Hi, what can I help you with?"}]
-    state.conv.update_content(state, create_conv(state))
+    with state:
+        state['Multimodal_Assistant'].messages_dict = {}
+        state['Multimodal_Assistant'].messages = [{"role": "assistant", "style": "assistant_message", "content": "Hi, what can I help you with?"}]
+        state.conv.update_content(state, create_conv(state))
 
 def on_exception(state: State, function_name: str, ex: Exception):
     """Called when an exception is raised in a function"""
