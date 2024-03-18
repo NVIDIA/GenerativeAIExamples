@@ -19,6 +19,7 @@ from retriever.retriever import Retriever
 
 from pages.knowledge_base import progress_for_logs, config, change_config, knowledge_base, mode, uploaded_file_paths
 
+# Initialization of variables (this will only be executed when the code is first executed)
 llm_client = LLMClient("mixtral_8x7b")
 
 image_path = None
@@ -37,6 +38,8 @@ retriever = Retriever(embedder=query_embedder , vector_client=vector_client)
 
 
 def on_image_upload(state):
+    """Called when the user uploads an image. The image is translated to a query and will be
+    be used when interacting with the chat."""
     notify(state, "s", "Image loaded for multimodal RAG Q&A.") 
     neva = LLMClient("neva_22b")
     image = Image.open(state.image_path).convert("RGB")
@@ -49,10 +52,12 @@ def on_image_upload(state):
     state.image_query = res.content
 
 def response_to_text(response):
+    """Convert the response to text"""
     full_response = "".join(response) if not isinstance(response, str) else response
     return "\n".join([textwrap.fill(line, width=130) for line in full_response.split("\n")])
 
-def send_message_asynchronous(retriever, current_user_message, messages, state_id):   
+def send_message_asynchronous(retriever, current_user_message, messages, state_id):
+    """The asynchronous part of sending a message. Getting relevant documents and responding based on them"""
     global progress_for_logs # to provide logs in the UI
     progress_for_logs[state_id] = {'message_logs': []}
 
@@ -84,6 +89,7 @@ def send_message_asynchronous(retriever, current_user_message, messages, state_i
     return messages, summary, sources
 
 def when_chat_answers(state, status, res):
+    """Updates the logs periodically and when the chat answers are ready, update the UI"""
     global progress_for_logs
     state.logs_for_messages = "\n".join(progress_for_logs[get_state_id(state)]['message_logs'])
     
@@ -98,6 +104,7 @@ def when_chat_answers(state, status, res):
         notify(state, "success", "Response received!")
 
 def send_message(state: State) -> None:
+    """Send a message and get an answer asynchronously"""
     notify(state, "info", "Sending message...")
     current_user_message = state.current_user_message
     state.messages.append({"role": "user", "style":"user_message", "content": response_to_text(current_user_message)})
@@ -108,6 +115,7 @@ def send_message(state: State) -> None:
 
     state.conv.update_content(state, create_conv(state))
 
+    # Asynchronous call to create the answers
     invoke_long_callback(state, 
                          send_message_asynchronous, [state.retriever, current_user_message, state.messages, get_state_id(state)],
                          when_chat_answers, [],
@@ -118,7 +126,7 @@ def send_message(state: State) -> None:
 with tgb.Page() as multimodal_assistant:
     with tgb.layout("2 8", columns__mobile="2 8", gap="50px"):
         with tgb.part("sidebar"):
-            tgb.text("Powered by Taipy and NVIDEA")
+            tgb.text("Powered by Taipy and NVIDIA")
             tgb.text("Assistant mode", class_name="h4")
             tgb.text("Select a configuration/type of bot")
             tgb.selector(value="{mode}", lov=["multimodal"], dropdown=True, class_name="fullwidth", on_change=change_config, label="Mode")

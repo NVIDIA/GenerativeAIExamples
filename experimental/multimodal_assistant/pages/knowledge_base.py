@@ -23,6 +23,7 @@ def load_config(cfg_arg):
         return None
 
 
+# Initialization of variables (this will only be executed when the code is first executed)
 # get the config from the command line, or set a default
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', help = "Provide a chatbot config to run the deployment")
@@ -54,6 +55,9 @@ filelist = [file for root, dirs, files in os.walk(DOCS_DIR) for file in files]
 
 
 def change_config(state):
+    """
+    This function is called when the user wants to change the configuration or when he retrains the vector DB.
+    """
     state.config = get_config(os.path.join("bot_config", state.mode+".config"))
     notify(state, "success", "Config successfuly changed!")
 
@@ -67,6 +71,10 @@ def change_config(state):
     notify(state, "success", "Retriever updated!")
 
 def on_files_upload(state):
+    """
+    This function is called when the user uploads a file or a list of files. 
+    The files are moved to the DOCS_DIR and the filelist is updated.
+    """
     state.uploaded_file_paths = [state.uploaded_file_paths] if not isinstance(state.uploaded_file_paths, list) else state.uploaded_file_paths
     for uploaded_path in state.uploaded_file_paths:
         name = str(os.path.basename(uploaded_path))
@@ -77,14 +85,23 @@ def on_files_upload(state):
     state.filelist = [file for root, dirs, files in os.walk(DOCS_DIR) for file in files]
 
 def when_retrain(state, status):
+    """
+    This function is called periodically when the retraining is being done. 
+    The UI is updated when it is finished.
+    """
     global progress_for_logs
 
     state.logs_for_retraining = "\n".join(progress_for_logs[get_state_id(state)]['retraining_logs'])
+
+    # if the retraining is finished
     if isinstance(status, bool):
         state.logs_for_retraining = "" 
         change_config(state)
 
 def retrain(state):
+    """
+    This function is called when the user clicks on the "Re-train" button.
+    """
     notify(state, "info", "Retraining...")
     invoke_long_callback(state,
                          update_vectorstore, [DOCS_DIR,  state.vector_client, state.document_embedder, state.config["core_docs_directory_name"], get_state_id(state)],
@@ -92,6 +109,9 @@ def retrain(state):
                          period=5000)
 
 def delete_file(state):
+    """
+    This function is called when the user clicks on the "Delete" button.
+    """
     file_path = os.path.join(DOCS_DIR, state.selected_file)
     os.remove(file_path)
     notify(state, "s", "Deleted Successfully!")
@@ -101,7 +121,7 @@ def delete_file(state):
 with tgb.Page() as knowledge_base:
     with tgb.layout("2 8", columns__mobile="2 8", gap="50px"):
         with tgb.part("sidebar"):
-            tgb.text("Powered by Taipy and NVIDEA")
+            tgb.text("Powered by Taipy and NVIDIA")
             tgb.text("Assistant mode", class_name="h4")
             tgb.text("Select a configuration of bot")
             tgb.selector(value="{mode}", lov=["multimodal"], on_change=change_config, dropdown=True, class_name="fullwidth", label="Mode")
