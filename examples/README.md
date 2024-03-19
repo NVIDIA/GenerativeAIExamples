@@ -22,7 +22,7 @@ This example leverages a simple [Streamlit](https://streamlit.io/) based UI and 
    pip install -r examples/5_mins_rag_no_gpu/requirements.txt
    ```
 
-3. Set your NVIDIA_API_KEY. Follow the steps 1-4 mentioned [here](../docs/rag/aiplayground.md#prepare-the-environment) to get this.
+3. Set your NVIDIA_API_KEY. Follow the steps mentioned [here](../docs/ai-foundation-models.md#get-an-api-key-for-the-mixtral-8x7b-instruct-api-endpoint) to get this.
    ```
    export NVIDIA_API_KEY="provide_your_key"
    ```
@@ -32,6 +32,6 @@ This example leverages a simple [Streamlit](https://streamlit.io/) based UI and 
 streamlit run examples/5_mins_rag_no_gpu/main.py
 ```
 
-5. Finally to test the deployed example, goto the URL `http://<host_ip>:8501` in a web browser. Click on `browse files` and select your knowledge source. After selecting click on `Upload!` button to complete the ingestion process.
+1. Finally to test the deployed example, goto the URL `http://<host_ip>:8501` in a web browser. Click on `browse files` and select your knowledge source. After selecting click on `Upload!` button to complete the ingestion process.
 
-6. You are all set now! Try out queries pertinent to the knowledge base using text from the UI.
+2. You are all set now! Try out queries pertinent to the knowledge base using text from the UI.

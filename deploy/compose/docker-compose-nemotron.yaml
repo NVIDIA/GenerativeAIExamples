@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     volumes:
     - ${MODEL_DIRECTORY:?please update the env file and source it before running}:/model
-    command: ${MODEL_ARCHITECTURE:?please update the env file and source it before running} --http --max-input-length ${MODEL_MAX_INPUT_LENGTH:-3000} --max-output-length ${MODEL_MAX_OUTPUT_LENGTH:-512} ${QUANTIZATION:+--quantization $QUANTIZATION}
+    command: ${MODEL_ARCHITECTURE:?please update the env file and source it before running} --http --max-input-length ${MODEL_MAX_INPUT_LENGTH:-3000} ${QUANTIZATION:+--quantization $QUANTIZATION}
     ports:
     - "8000:8000"
     - "8001:8001"
@@ -111,7 +111,7 @@ services:
               capabilities: ["gpu"]
               count: 1
 
-  query:
+  chain-server:
     container_name: chain-server
     image: chain-server:latest
     build:
@@ -128,12 +128,11 @@ services:
       APP_LLM_SERVERURL: "llm:8001"
       APP_LLM_MODELNAME: ensemble
       APP_LLM_MODELENGINE: triton-trt-llm
-      APP_CONFIG_FILE: ${APP_CONFIG_FILE}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       ENABLE_TRACING: false
-    volumes:
-      - ${APP_CONFIG_FILE}:${APP_CONFIG_FILE}
+      APP_RETRIEVER_TOPK: 4
+      APP_RETRIEVER_SCORETHRESHOLD: 0.25
     ports:
     - "8081:8081"
     expose:
@@ -155,30 +154,30 @@ services:
       - "milvus"
       - "llm"
 
-  frontend:
-    container_name: llm-playground
-    image: llm-playground:latest
+  rag-playground:
+    container_name: rag-playground
+    image: rag-playground:latest
     build:
       context: ../.././RetrievalAugmentedGeneration/frontend/
       dockerfile: Dockerfile
     command: --port 8090
     environment:
-      APP_SERVERURL: http://query
+      APP_SERVERURL: http://chain-server
       APP_SERVERPORT: 8081
       APP_MODELNAME: ${MODEL_NAME:-${MODEL_ARCHITECTURE}}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       ENABLE_TRACING: false
-      RIVA_API_URI: ${RIVA_API_URI}
-      RIVA_API_KEY: ${RIVA_API_KEY}
-      RIVA_FUNCTION_ID: ${RIVA_FUNCTION_ID}
-      TTS_SAMPLE_RATE: ${TTS_SAMPLE_RATE}
+      RIVA_API_URI: ${RIVA_API_URI:-}
+      RIVA_API_KEY: ${RIVA_API_KEY:-}
+      RIVA_FUNCTION_ID: ${RIVA_FUNCTION_ID:-}
+      TTS_SAMPLE_RATE: ${TTS_SAMPLE_RATE:-48000}
     ports:
     - "8090:8090"
     expose:
     - "8090"
     depends_on:
-      - query
+      - chain-server
 
 networks:
   default:
