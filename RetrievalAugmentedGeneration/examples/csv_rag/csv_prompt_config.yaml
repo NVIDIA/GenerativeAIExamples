@@ -1,0 +1,53 @@
+prompts:
+
+  csv_data_retrieval_template: |
+    Provide a functional and accurate code based on the provided dataframe for the user's query.
+
+    You have to mainly write python code that uses pandas library for extracting and processing information from the dataframe.
+
+    The data you are provided contains information about: {description}
+
+    Instructions:
+    - CSV file is already parsed, don't add any code for parsing csv.
+    - dfs is a list containing df a pandas dataframe. Always use the first entry from the list like df = dfs[0].
+    {instructions}
+
+
+  csv_response_template: |
+    Provide a respone to user's queries based on the given Data point. \
+    You are provided with the required data value and your job is just to form a natural language response based on the query and the data. \
+
+    Do not add anything extra in the response apart from the data.
+
+    A simplest response can start with :
+        Here is what I found based on the data
+
+    Althought this is a very basic response, you need to enhance it a bit.
+
+    Query:
+    {query}
+
+    Data:
+    {data}
+
+    Response:
+
+  csv_prompts:
+    - name: PdM_machines
+      description: Model type & age of the Machines
+      instructions: |
+        - If any column time period like hours, days, months or years, extract the numeric value for processing like sorting or calulating mean:
+          - For example if there is a age column with values like 7 months, 14 months etc, numeric value can be extracted like
+            df['age'] = df['age'].str.extract('(\d+)').astype(int)
+    - name: PdM_errors
+      description: These are errors encountered by the machines while in operating condition. Since, these errors don't shut down the machines, these are not considered as failures. The error date and times are rounded to the closest hour since the telemetry data is collected at an hourly rate.
+      instructions: |
+        - Convert the datetime column to pandas datetime like df['datetime'] = pd.to_datetime(df['datetime'])
+        - Use pandas datatime only for filtering date time columns based on date or time. Like df['datetime'].dt.day
+        - If year is not mentioned explicitly in queries containing dates, then consider the year to be 2015 by default.
+    - name: PdM_failures
+      description: Each record represents replacement of a component due to failure. This data is a subset of Maintenance data. This data is rounded to the closest hour since the telemetry data is collected at an hourly rate.
+      instructions: |
+        - Convert the datetime column to pandas datetime like df['datetime'] = pd.to_datetime(df['datetime'])
+        - Use pandas datatime only for filtering date time columns based on date or time. Like df['datetime'].dt.day
+        - If year is not mentioned explicitly in queries containing dates, then consider the year to be 2015 by default.

@@ -1,0 +1,39 @@
+model_repo_path: "/model-store/"
+use_ensemble: false
+model_type: "MISTRAL"
+backend: "trt_llm"
+base_model_id: "ensemble"
+prompt_timer: 60
+gateway_ip: "gateway-api"
+server_port_internal: 9009
+customization_cache_capacity: 10000
+logging_level: "INFO"
+enable_chat: true
+pipeline:
+  model_name: "ensemble"
+  num_instances: 4
+preprocessor:
+  prompt_templates:
+    chat: "{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'].strip() + '\n\n' %}{% else %}{% set loop_messages = messages %}{% set system_message = '' %}{% endif %}{{ '<s>' }}{% for message in loop_messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if loop.index0 == 0 %}{% set content = system_message + message['content'] %}{% else %}{% set content = message['content'] %}{% endif %}{% if message['role'] == 'user' %}{{ '[INST] ' + content.strip() + ' [/INST]' }}{% elif message['role'] == 'assistant' %}{{ ' '  + content.strip() + ' ' + '</s>' }}{% endif %}{% endfor %}"
+    stop_words: [</s>]
+trt_llm:
+  use: true
+  ckpt_type: "hf"
+  model_name: "trt_llm"
+  backend: "python"
+  num_gpus: 1
+  model_path: /huggingface-dir
+  max_queue_delay_microseconds: 10000
+  model_type: "llama"
+  max_batch_size: 1
+  max_input_len: 3072
+  max_output_len: 1024
+  max_beam_width: 1
+  tensor_para_size: 1
+  pipeline_para_size: 1
+  data_type: "float16"
+  int8_mode: 0
+  enable_custom_all_reduce: 0
+  per_column_scaling: false
+  kv_cache_free_gpu_mem_fraction: 0.3
+  max_tokens_in_paged_kv_cache: "12288"

@@ -3,7 +3,48 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2024-02-22
+## [0.5.0] - 2024-03-19
+
+This release adds new dedicated RAG examples showcasing state of the art usecases, switches to the latest [API catalog endpoints from NVIDIA](https://build.nvidia.com/explore/discover) and also refactors the API interface of chain-server. This release also improves the developer experience by adding github pages based documentation and streamlining the example deployment flow using dedicated compose files.
+
+### Added
+
+- Github pages based documentation.
+- New examples showcasing
+  - [Multi-turn RAG](./RetrievalAugmentedGeneration/examples/multi_turn_rag/)
+  - [Multi-modal RAG](./RetrievalAugmentedGeneration//examples/multimodal_rag/)
+  - [Structured data CSV RAG](./RetrievalAugmentedGeneration/examples/csv_rag/)
+- Support for [delete and list APIs](./docs/api_reference/openapi_schema.json) in chain-server component
+- Streamlined RAG example deployment
+  - Dedicated new [docker compose files](./deploy/compose/) for every examples.
+  - Dedicated [docker compose files](./deploy/compose/docker-compose-vectordb.yaml) for launching vector DB solutions.
+- New configurations to control top k and confidence score of retrieval pipeline.
+- Added [a notebook](./models/NeMo/slm/README.md) which covers how to train SLMs with various techniques using NeMo Framework.
+- Added more [experimental examples](./experimental/README.md) showcasing new usecases.
+  - [NVIDIA ORAN chatbot multimodal Assistant](./experimental/oran-chatbot-multimodal/)
+  - [NVIDIA Retrieval Customization](./experimental/synthetic-data-retriever-customization/)
+  - [NVIDIA RAG Streaming Document Ingestion Pipeline](./experimental/streaming_ingest_rag/)
+  - [NVIDIA Live FM Radio ASR RAG](./experimental/fm-asr-streaming-rag/)
+- [New dedicated notebook](./notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.ipynb) showcasing a RAG pipeline using web pages.
+
+
+### Changed
+
+- Switched from NVIDIA AI Foundation to [NVIDIA API Catalog endpoints](https://build.nvidia.com/explore/discover) for accessing cloud hosted LLM models.
+- Refactored [API schema of chain-server component](./docs/api_reference/openapi_schema.json) to support runtime allocation of llm parameters like temperature, max tokens, chat history etc.
+- Renamed `llm-playground` service in compose files to `rag-playground`.
+- Switched base containers for all components to ubuntu instead of pytorch and optimized container build time as well as container size.
+- Deprecated yaml based configuration to avoid confusion, all configurations are now environment variable based.
+- Removed requirement of hardcoding `NVIDIA_API_KEY` in `compose.env` file.
+- Upgraded all python dependencies for chain-server and rag-playground services.
+
+### Fixed
+
+- Fixed a bug causing hallucinated answer when retriever fails to return any documents.
+- Fixed some accuracy issues for all the examples.
+
+
+## [0.4.0] - 2024-02-23
 
 ### Added
 

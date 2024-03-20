@@ -1,6 +1,9 @@
 # NVIDIA Generative AI Examples
 
+[![documentation](https://img.shields.io/badge/documentation-blue.svg)](https://nvidia.github.io/GenerativeAIExamples/latest)
+
 ## Introduction
+
 State-of-the-art Generative AI examples that are easy to deploy, test, and extend. All examples run on the high performance NVIDIA CUDA-X software stack and NVIDIA GPUs.
 
 ## NVIDIA NGC
@@ -24,7 +27,7 @@ Examples support local and remote inference endpoints. If you have a GPU, you ca
 | Model         | Embedding           | Framework        | Description               | Multi-GPU | TRT-LLM | NVIDIA AI Foundation | Triton | Vector Database |
 |---------------|-----------------------|------------|-------------------------|-----------|------------|-------------|---------|--------|
 | llama-2 | e5-large-v2 | Llamaindex | Canonical QA Chatbot | [YES](RetrievalAugmentedGeneration/README.md#3-qa-chatbot-multi-gpu----a100h100l40s)        | [YES](RetrievalAugmentedGeneration/README.md#2-qa-chatbot----a100h100l40s-gpu)       | No | YES     | Milvus/[PGVector]((RetrievalAugmentedGeneration/README.md#2-qa-chatbot----a100h100l40s-gpu))|
-| mixtral_8x7b | nvolveqa_40k | Langchain | [Nvidia AI foundation based QA Chatbot](RetrievalAugmentedGeneration/README.md#1-qa-chatbot----nvidia-ai-foundation-inference-endpoint)  | No        | No       | YES | YES     | FAISS|
+| mixtral_8x7b | nvolveqa_40k | Langchain | [Nvidia AI foundation based QA Chatbot](RetrievalAugmentedGeneration/README.md#1-qa-chatbot----nvidia-ai-foundation-inference-endpoint)  | No        | No       | YES | YES     | Milvus|
 | llama-2 | all-MiniLM-L6-v2 | Llama Index | [QA Chatbot, GeForce, Windows](https://github.com/NVIDIA/trt-llm-rag-windows/tree/release/1.0)  | NO        | YES        | NO | NO     | FAISS |
 | llama-2 | nvolveqa_40k | Langchain | [QA Chatbot, Task Decomposition Agent](./RetrievalAugmentedGeneration/README.md#5-qa-chatbot-with-task-decomposition-example----a100h100l40s) | No | No | YES | YES | FAISS
 | mixtral_8x7b | nvolveqa_40k | Langchain | [Minimilastic example showcasing RAG using Nvidia AI foundation models](./examples/README.md#rag-in-5-minutes-example)  | No        | No       | YES | YES     | FAISS|
@@ -41,7 +44,7 @@ Enterprise RAG examples also support local and remote inference via [TensorRT-LL
 
 | Model         | Embedding           | Framework        | Description               | Multi-GPU | Multi-node | TRT-LLM | NVIDIA AI Foundation | Triton | Vector Database |
 |---------------|-----------------------|------------|--------|-------------------------|-----------|------------|-------------|---------|--------|
-| llama-2 | NV-Embed-QA-003 | Llamaindex | QA Chatbot, Helm, k8s  | NO        | NO | [YES](./docs/developer-llm-operator/)         | NO | YES     | Milvus|
+| llama-2 | NV-Embed-QA | Llamaindex | QA Chatbot, Helm, k8s  | NO        | NO | [YES](./docs/developer-llm-operator/)         | NO | YES     | Milvus|
 
 ## Tools
 
@@ -59,7 +62,7 @@ These are open source connectors for NVIDIA-hosted and self-hosted API endpoints
 | Name | Framework | Chat | Text Embedding | Python | Description |
 |------|-----------|------|-----------|--------|-------------|
 |[NVIDIA AI Foundation Endpoints](https://python.langchain.com/docs/integrations/providers/nvidia) | [Langchain](https://www.langchain.com/) |[YES](https://python.langchain.com/docs/integrations/chat/nvidia_ai_endpoints)|[YES](https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints)|[YES](https://pypi.org/project/langchain-nvidia-ai-endpoints/)|Easy access to NVIDIA hosted models. Supports chat, embedding, code generation, steerLM, multimodal, and RAG.|
-|[NVIDIA Triton + TensorRT-LLM](https://github.com/langchain-ai/langchain/tree/master/libs/partners/nvidia-trt) | [Langchain](https://www.langchain.com/) |[YES](https://github.com/langchain-ai/langchain/blob/master/libs/partners/nvidia-trt/docs/llms.ipynb)|[YES](https://github.com/langchain-ai/langchain/blob/master/libs/partners/nvidia-trt/docs/llms.ipynb)|[YES](https://pypi.org/project/langchain-nvidia-trt/)|This connector allows Langchain to remotely interact with a Triton inference server over GRPC or HTTP tfor optimized LLM inference.|
+|[NVIDIA Triton + TensorRT-LLM](https://github.com/langchain-ai/langchain/tree/master/libs/partners/nvidia-trt) | [Langchain](https://www.langchain.com/) |[YES](https://github.com/langchain-ai/langchain-nvidia/blob/main/libs/trt/docs/llms.ipynb)|[YES](https://github.com/langchain-ai/langchain-nvidia/blob/main/libs/trt/docs/llms.ipynb)|[YES](https://pypi.org/project/langchain-nvidia-trt/)|This connector allows Langchain to remotely interact with a Triton inference server over GRPC or HTTP tfor optimized LLM inference.|
 |[NVIDIA Triton Inference Server](https://docs.llamaindex.ai/en/stable/examples/llm/nvidia_triton.html) | [LlamaIndex](https://www.llamaindex.ai/) |YES|YES|NO|Triton inference server provides API access to hosted LLM models over gRPC. |
 |[NVIDIA TensorRT-LLM](https://docs.llamaindex.ai/en/stable/examples/llm/nvidia_tensorrt.html) | [LlamaIndex](https://www.llamaindex.ai/) |YES|YES|NO|TensorRT-LLM provides a Python API to build TensorRT engines with state-of-the-art optimizations for LLM inference on NVIDIA GPUs. |
 

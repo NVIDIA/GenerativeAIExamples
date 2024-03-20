@@ -36,7 +36,7 @@ class NemoInfer(LLM):
     tokens: (int) The maximum number of tokens to generate.
     """
     model: str = "llama"
-    temperature: float = 1
+    temperature: Optional[float] = 1
     stop: Optional[List[str]] = ["</s>", "<extra_id_1>"]
     n: Optional[int] = 1
     top_p: Optional[float] = 0.01

@@ -44,4 +44,4 @@ services:
 
 networks:
   default:
-    name: nvidia-llm
+    name: nvidia-rag

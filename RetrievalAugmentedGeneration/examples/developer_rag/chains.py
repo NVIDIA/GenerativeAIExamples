@@ -46,8 +46,10 @@ set_service_context()
 
 
 logger = logging.getLogger(__name__)
+text_splitter = None
 
 class QAChatbot(BaseExample):
+
     def ingest_docs(self, data_dir: str, filename: str):
         """Ingest documents to the VectorDB."""
 
@@ -73,9 +75,14 @@ class QAChatbot(BaseExample):
 
             for document in documents:
                 document.metadata = {"filename": encoded_filename}
+                document.excluded_embed_metadata_keys = ["filename", "page_label"]
 
             index = get_vector_index()
-            node_parser = LangchainNodeParser(get_text_splitter())
+
+            global text_splitter
+            if not text_splitter:
+                text_splitter = get_text_splitter()
+            node_parser = LangchainNodeParser(text_splitter)
             nodes = node_parser.get_nodes_from_documents(documents)
             index.insert_nodes(nodes)
             logger.info(f"Document {filename} ingested successfully")
@@ -83,48 +90,57 @@ class QAChatbot(BaseExample):
             logger.error(f"Failed to ingest document due to exception {e}")
             raise ValueError("Failed to upload document. Please upload an unstructured text document.")
 
-    def llm_chain(self, context: str, question: str, num_tokens: int) -> Generator[str, None, None]:
+    def get_documents(self):
+        """Retrieves filenames stored in the vector store."""
+        logger.warning("get documents is not supported in developer rag")
+        return []
+
+    def delete_documents(self, filenames: List[str]):
+        """Delete documents from the vector index."""
+        logger.warning("Delete documents is not supported in developer rag")
+
+    def llm_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
         """Execute a simple LLM chain using the components defined above."""
 
         logger.info("Using llm to generate response directly without knowledge base.")
-        set_service_context()
+        set_service_context(**kwargs)
+        # TODO Include chat_history
         prompt = get_config().prompts.chat_template.format(
-            context_str=context, query_str=question
+            context_str="", query_str=query
         )
 
         logger.info(f"Prompt used for response generation: {prompt}")
-        llm = LangChainLLM(get_llm())
-        response = llm.stream_complete(prompt, tokens=num_tokens)
+        llm = LangChainLLM(get_llm(**kwargs))
+        response = llm.stream_complete(prompt, tokens=kwargs.get('max_tokens', None))
         gen_response = (resp.delta for resp in response)
         return gen_response
 
-    def rag_chain(self, prompt: str, num_tokens: int) -> Generator[str, None, None]:
+    def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
         """Execute a Retrieval Augmented Generation chain using the components defined above."""
 
         logger.info("Using rag to generate response from document")
 
-        set_service_context()
-        llm = LangChainLLM(get_llm())
+        set_service_context(**kwargs)
 
-        try:
-            if get_config().llm.model_engine == "triton-trt-llm" or get_config().llm.model_engine == "nemo-infer":
-                llm.llm.tokens = num_tokens  # type: ignore
-            else:
-                llm.llm.max_tokens = num_tokens
-        except Exception as e:
-            logger.error(f"Exception in setting llm tokens: {e}")
-
-        retriever = get_doc_retriever(num_nodes=4)
+        retriever = get_doc_retriever(num_nodes=get_config().retriever.top_k)
         qa_template = Prompt(get_config().prompts.rag_template)
-
+        
         logger.info(f"Prompt used for response generation: {qa_template}")
+
+        # Handling Retrieval failure
+        nodes = retriever.retrieve(query)
+        if not nodes:
+            logger.warning("Retrieval failed to get any relevant context")
+            return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
+
+        # TODO Include chat_history
         query_engine = RetrieverQueryEngine.from_args(
             retriever,
             text_qa_template=qa_template,
             node_postprocessors=[LimitRetrievedNodesLength()],
             streaming=True,
         )
-        response = query_engine.query(prompt)
+        response = query_engine.query(query)
 
         # Properly handle an empty response
         if isinstance(response, StreamingResponse):
@@ -137,7 +153,7 @@ class QAChatbot(BaseExample):
         """Search for the most relevant documents for the given search parameters."""
 
         try:
-            retriever = get_doc_retriever(num_nodes=num_docs)
+            retriever = get_doc_retriever(num_nodes=get_config().retriever.top_k)
             nodes = retriever.retrieve(content)
             output = []
             for node in nodes:

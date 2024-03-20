@@ -1,0 +1,114 @@
+services:
+  llm:
+    container_name: llm-inference-server
+    image: llm-inference-server:latest
+    build:
+      context: ../.././RetrievalAugmentedGeneration/llm-inference-server/
+      dockerfile: Dockerfile
+    volumes:
+    - ${MODEL_DIRECTORY:?please update the env file and source it before running}:/model
+    command: ${MODEL_ARCHITECTURE:?please update the env file and source it before running} --max-input-length ${MODEL_MAX_INPUT_LENGTH:-3000} ${QUANTIZATION:+--quantization $QUANTIZATION}
+    ports:
+    - "8000:8000"
+    - "8001:8001"
+    - "8002:8002"
+    expose:
+      - "8000"
+      - "8001"
+      - "8002"
+    shm_size: 20gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${INFERENCE_GPU_COUNT:-all}
+              capabilities: [gpu]
+
+  jupyter-server:
+    container_name: notebook-server
+    image: notebook-server:latest
+    build:
+      context: ../../
+      dockerfile: ./notebooks/Dockerfile.notebooks # replace GPU enabled Dockerfile ./notebooks/Dockerfile.gpu_notebook
+    ports:
+    - "8888:8888"
+    expose:
+    - "8888"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  chain-server:
+    container_name: chain-server
+    image: chain-server:latest
+    build:
+      context: ../../
+      dockerfile: ./RetrievalAugmentedGeneration/Dockerfile
+      args:
+        EXAMPLE_NAME: developer_rag
+    command: --port 8081 --host 0.0.0.0
+    environment:
+      APP_VECTORSTORE_URL: "http://milvus:19530"
+      APP_VECTORSTORE_NAME: "milvus"
+      APP_LLM_SERVERURL: "llm:8001"
+      APP_LLM_MODELNAME: ensemble
+      APP_LLM_MODELENGINE: triton-trt-llm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-api}
+      COLLECTION_NAME: developer_rag
+      APP_RETRIEVER_TOPK: 4
+      APP_RETRIEVER_SCORETHRESHOLD: 0.25
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      ENABLE_TRACING: false
+      APP_TEXTSPLITTER_CHUNKSIZE: 510
+      APP_TEXTSPLITTER_CHUNKOVERLAP: 200
+    ports:
+    - "8081:8081"
+    expose:
+    - "8081"
+    shm_size: 5gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    depends_on:
+      - "llm"
+
+  rag-playground:
+    container_name: rag-playground
+    image: rag-playground:latest
+    build:
+      context: ../.././RetrievalAugmentedGeneration/frontend/
+      dockerfile: Dockerfile
+    command: --port 8090
+    environment:
+      APP_SERVERURL: http://chain-server
+      APP_SERVERPORT: 8081
+      APP_MODELNAME: ${MODEL_NAME:-${MODEL_ARCHITECTURE}}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      ENABLE_TRACING: false
+      RIVA_API_URI: ${RIVA_API_URI:-}
+      RIVA_API_KEY: ${RIVA_API_KEY:-}
+      RIVA_FUNCTION_ID: ${RIVA_FUNCTION_ID:-}
+      TTS_SAMPLE_RATE: ${TTS_SAMPLE_RATE:-48000}
+    ports:
+    - "8090:8090"
+    expose:
+    - "8090"
+    depends_on:
+      - chain-server
+
+networks:
+  default:
+    name: nvidia-rag
