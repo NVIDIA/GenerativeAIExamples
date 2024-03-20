@@ -54,8 +54,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">Release Notes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../query-decomposition.html">Query Decomposition</a></li>
@@ -84,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -120,7 +120,7 @@
              
   <section id="q-a-with-llamaindex">
 <h1>Q&amp;A with LlamaIndex<a class="headerlink" href="#q-a-with-llamaindex" title="Permalink to this headline"></a></h1>
-<p>This notebook demonstrates how to use <a class="reference external" href="https://gpt-index.readthedocs.io/en/stable/">LlamaIndex</a> to build a chatbot that references a custom knowledge base.</p>
+<p>This notebook demonstrates how to use <a class="reference external" href="https://docs.llamaindex.ai/en/stable/">LlamaIndex</a> to build a chatbot that references a custom knowledge base.</p>
 <p>Suppose you have some text documents (PDF, blog, Notion pages, etc.) and want to ask questions related to the contents of those documents. LLMs, given their proficiency in understanding text, are a great tool for this.</p>
 <div class="alert alert-block alert-info">
 <p>⚠️ The notebook before this one, <code class="docutils literal notranslate"><span class="pre">02_langchain_index_simple.ipynb</span></code>, contains the same functionality as this notebook but uses some LangChain components instead of LlamaIndex components.</p>
@@ -128,11 +128,11 @@
 <p>Ultimately, we recommend reading about LangChain vs. LlamaIndex and picking the software/components of the software that makes the most sense to you. This is discussed a bit further below.</p>
 </div>
 <section id="llamaindex">
-<h2><a class="reference external" href="https://gpt-index.readthedocs.io/en/stable/">LlamaIndex</a><a class="headerlink" href="#llamaindex" title="Permalink to this headline"></a></h2>
-<p><a class="reference external" href="https://gpt-index.readthedocs.io/en/stable/"><strong>LlamaIndex</strong></a> is a data framework for LLM applications to ingest, structure, and access private or domain-specific data. Since LLMs are both only trained up to a fixed point in time and do not contain knowledge that is proprietary to an Enterprise, they can’t answer questions about new or proprietary knowledge. LlamaIndex helps solve this problem by providing data connectors to ingest data, indices to structure data for storage, and engines to communicate with data.</p>
+<h2><a class="reference external" href="https://docs.llamaindex.ai/en/stable/">LlamaIndex</a><a class="headerlink" href="#llamaindex" title="Permalink to this headline"></a></h2>
+<p><a class="reference external" href="https://docs.llamaindex.ai/en/stable/"><strong>LlamaIndex</strong></a> is a data framework for LLM applications to ingest, structure, and access private or domain-specific data. Since LLMs are both only trained up to a fixed point in time and do not contain knowledge that is proprietary to an Enterprise, they can’t answer questions about new or proprietary knowledge. LlamaIndex helps solve this problem by providing data connectors to ingest data, indices to structure data for storage, and engines to communicate with data.</p>
 </section>
 <section id="llamaindex-or-langchain">
-<h2><a class="reference external" href="https://gpt-index.readthedocs.io/en/stable/">LlamaIndex</a> or <a class="reference external" href="https://python.langchain.com/docs/get_started/introduction">LangChain</a>?<a class="headerlink" href="#llamaindex-or-langchain" title="Permalink to this headline"></a></h2>
+<h2><a class="reference external" href="https://docs.llamaindex.ai/en/stable/">LlamaIndex</a> or <a class="reference external" href="https://python.langchain.com/docs/get_started/introduction">LangChain</a>?<a class="headerlink" href="#llamaindex-or-langchain" title="Permalink to this headline"></a></h2>
 <p>It’s recommended to read more about the unique strengths of both LlamaIndex and LangChain. At a high level, LangChain is a more general framework for building applications with LLMs. LangChain is (currently) more mature when it comes to multi-step chains and some other chat functionality such as conversational memory. LlamaIndex has plenty of overlap with LangChain, but is particularly strong for loading data from a wide variety of sources and indexing/querying tasks.</p>
 <p>Since LlamaIndex can be used <em>with</em> LangChain, the frameworks’ unique capabilities can be leveraged together; the combination of the two is demonstrated in this notebook.</p>
 </section>
@@ -141,7 +141,7 @@
 <section id="customized-langchain-llm-in-llamaindex">
 <h3>Customized LangChain LLM in LlamaIndex<a class="headerlink" href="#customized-langchain-llm-in-llamaindex" title="Permalink to this headline"></a></h3>
 <p>Langchain allows you to create custom wrappers for your LLM in case you want to use your own LLM or a different wrapper than the one that is supported in LangChain. Since we are using LlamaIndex, we have written a custom langchain wrapper compatible with LlamaIndex.</p>
-<p>We can easily take a custom LLM that has been wrapped for LangChain and plug it into <a class="reference external" href="https://docs.llamaindex.ai/en/stable/understanding/using_llms/using_llms.html#using-llms">LlamaIndex as an LLM</a>! We use the <a class="reference external" href="https://gpt-index.readthedocs.io/en/latest/api_reference/llms/langchain.html">LlamaIndex LangChainLLM library</a> so the LangChain LLM can be used in LlamaIndex.</p>
+<p>We can easily take a custom LLM that has been wrapped for LangChain and plug it into <a class="reference external" href="https://docs.llamaindex.ai/en/stable/understanding/using_llms/using_llms.html#using-llms">LlamaIndex as an LLM</a>! We use the <a class="reference external" href="https://docs.llamaindex.ai/en/v0.9.48/api_reference/llms/langchain.html">LlamaIndex LangChainLLM library</a> so the LangChain LLM can be used in LlamaIndex.</p>
 <div class="alert alert-block alert-warning">
 <p><b>WARNING!</b> Be sure to replace <code class="docutils literal notranslate"><span class="pre">server_url</span></code> with the address and port that Triton is running on.</p>
 </div>
@@ -160,7 +160,7 @@
 </section>
 <section id="step-2-create-a-prompt-template">
 <h2>Step 2: Create a Prompt Template<a class="headerlink" href="#step-2-create-a-prompt-template" title="Permalink to this headline"></a></h2>
-<p>A <a class="reference external" href="https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/prompts.html"><strong>prompt template</strong></a> is a common paradigm in LLM development.</p>
+<p>A <a class="reference external" href="https://docs.llamaindex.ai/en/stable/module_guides/models/prompts.html"><strong>prompt template</strong></a> is a common paradigm in LLM development.</p>
 <p>They are a pre-defined set of instructions provided to the LLM and guide the output produced by the model. They can contain few shot examples and guidance and are a quick way to engineer the responses from the LLM. Llama 2 accepts the <a class="reference external" href="https://huggingface.co/blog/llama2#how-to-prompt-llama-2">prompt format</a> shown in <code class="docutils literal notranslate"><span class="pre">LLAMA_PROMPT_TEMPLATE</span></code>, which we manipulate to be constructed with:</p>
 <ul class="simple">
 <li><p>The system prompt</p></li>
@@ -190,9 +190,15 @@
 <div>
 <img src="./imgs/llama_hub.png" width="500"/>
 </div>
-<p>LlamaIndex provides <a class="reference external" href="https://docs.llamaindex.ai/en/stable/module_guides/loading/connector/root.html#data-connectors-llamahub"><strong>data loaders</strong></a> through <a class="reference external" href="https://llamahub.ai/">Llama Hub</a>. These allow for custom data sources to be connected to your LLM via plugins. So, for example, plugins are available to load documents from <a class="reference external" href="https://llamahub.ai/l/jira">Jira</a>, <a class="reference external" href="https://llamahub.ai/l/outlook_localcalendar">Outlook Calendar</a>, <a class="reference external" href="https://llamahub.ai/l/slack">Slack</a>, <a class="reference external" href="https://llamahub.ai/l/trello">Trello</a>, and many other applications.</p>
+<p>LlamaIndex provides <a class="reference external" href="https://docs.llamaindex.ai/en/stable/module_guides/loading/connector/root.html#data-connectors-llamahub"><strong>data loaders</strong></a> through Llama Hub.
+These allow for custom data sources to be connected to your LLM using integrations.
+For example, integrations are available to load documents from
+Jira,
+Outlook Calendar,
+Slack,
+Trello, and many other applications.</p>
 <p>At the core of each data loader is a <code class="docutils literal notranslate"><span class="pre">download_loader</span></code> function which downloads the loader file into a module that you can use in your application. Once the loader is downloaded, data is ingested through the loader. The output of this ingestion is data formatted as a LlamaIndex <a class="reference external" href="https://docs.llamaindex.ai/en/stable/module_guides/loading/documents_and_nodes/root.html#documents-nodes"><strong>Document</strong></a> (text and metadata).</p>
-<p>Similar to the previous notebook with LangChain, an <a class="reference external" href="https://llamahub.ai/l/file-unstructured"><code class="docutils literal notranslate"><span class="pre">UnstructuredReader</span></code></a> is used in this example. However, this time it’s from from <a class="reference external" href="https://llamahub.ai/">Llama Hub</a> (LlamaIndex). Again, we load a research paper about Llama2 from Meta.</p>
+<p>Similar to the previous notebook with LangChain, an <a class="reference external" href="https://llamahub.ai/l/readers/llama-index-readers-file"><code class="docutils literal notranslate"><span class="pre">UnstructuredReader</span></code></a> is used in this example. However, this time it’s from from <a class="reference external" href="https://llamahub.ai/">Llama Hub</a> (LlamaIndex). Again, we load a research paper about Llama2 from Meta.</p>
 <p><a class="reference external" href="https://python.langchain.com/docs/integrations/document_loaders">Here</a> are some of the other document loaders available from LangChain.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -235,7 +241,7 @@
 <section id="a-generate-embeddings">
 <h3>a) Generate Embeddings<a class="headerlink" href="#a-generate-embeddings" title="Permalink to this headline"></a></h3>
 <p>Once documents have been loaded, they are often transformed. One method of transformation is known as <strong>chunking</strong>, which breaks down large pieces of text, for example, a long document, into smaller segments. This technique is valuable because it helps <a class="reference external" href="https://www.pinecone.io/learn/chunking-strategies/">optimize the relevance of the content returned from the vector database</a>.</p>
-<p>This is the same process as the previous notebook; again, we use a LangChain text splitter. In this example, we use a <a class="reference external" href="https://api.python.langchain.com/en/latest/text_splitter/langchain.text_splitter.SentenceTransformersTokenTextSplitter.html#langchain.text_splitter.SentenceTransformersTokenTextSplitter"><code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code></a>. The <code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code> is a specialized text splitter for use with the sentence-transformer models. The default behavior is to split the text into chunks that fit the token window of the sentence transformer model that you would like to use. This sentence transformer model is used to generate the embeddings from documents.</p>
+<p>This is the same process as the previous notebook; again, we use a LangChain text splitter. In this example, we use a <a class="reference external" href="https://api.python.langchain.com/en/latest/sentence_transformers/langchain_text_splitters.sentence_transformers.SentenceTransformersTokenTextSplitter.html"><code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code></a>. The <code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code> is a specialized text splitter for use with the sentence-transformer models. The default behavior is to split the text into chunks that fit the token window of the sentence transformer model that you would like to use. This sentence transformer model is used to generate the embeddings from documents.</p>
 <p>There are some nuanced complexities to text splitting since semantically related text, in theory, should be kept together.</p>
 <p>To use the Langchain’s <code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code> with LlamaIndex we use the <a class="reference external" href="https://docs.llamaindex.ai/en/stable/module_guides/loading/node_parsers/modules.html#langchainnodeparser"><strong>Langchain node parser</strong></a> on top of the text splitter from LangChain. This is not required, but since LlamaIndex provides a <a class="reference external" href="https://docs.llamaindex.ai/en/stable/module_guides/loading/documents_and_nodes/root.html#documents-nodes"><strong>node structure</strong></a>, we choose to use this functionality to level up our storage of documents.</p>
 <p><strong>Nodes</strong> represent chunks of source documents, but they also contain metadata and relationship information with other nodes and index structures. Since nodes provide these additional forms of hierarchy and connections across the data, they can help generate more accurate answers upon retrieval.</p>
@@ -266,7 +272,7 @@
 </div>
 </div>
 </div>
-<p>Additionally, we use a LlamaIndex <a class="reference external" href="https://gpt-index.readthedocs.io/en/latest/api_reference/service_context/prompt_helper.html"><code class="docutils literal notranslate"><span class="pre">PromptHelper</span></code></a> to help deal with LLM context window token limitations. It calculates available context size to the LLM by taking the initial context token length and subtracting out reserved token space for the prompt template and output. It provides a utility for re-packing text chunks from the index to maximally use the context window to minimize requests sent to the LLM.</p>
+<p>Additionally, we use a LlamaIndex <a class="reference external" href="https://docs.llamaindex.ai/en/stable/api_reference/service_context/prompt_helper.html"><code class="docutils literal notranslate"><span class="pre">PromptHelper</span></code></a> to help deal with LLM context window token limitations. It calculates available context size to the LLM by taking the initial context token length and subtracting out reserved token space for the prompt template and output. It provides a utility for re-packing text chunks from the index to maximally use the context window to minimize requests sent to the LLM.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">context_window</span></code>: context window for the LLM – the context length for Llama2 is 4k tokens</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">num_ouptut</span></code>: number of output tokens for the LLM</p></li>
@@ -320,7 +326,7 @@
 </section>
 <section id="b-store-embeddings">
 <h3>b) Store Embeddings<a class="headerlink" href="#b-store-embeddings" title="Permalink to this headline"></a></h3>
-<p>LlamaIndex provides a supporting module, <a class="reference external" href="https://docs.llamaindex.ai/en/stable/module_guides/supporting_modules/service_context.html#servicecontext"><code class="docutils literal notranslate"><span class="pre">ServiceContext</span></code></a>, to bundle commonly used resources during the indexing and querying stage. In this example, we bundle resources we’ve built: the LLM, the embedding model, the node parser, and the prompt helper.</p>
+<p>LlamaIndex provides a supporting module, <a class="reference external" href="https://docs.llamaindex.ai/en/v0.10.19/api_reference/service_context.html"><code class="docutils literal notranslate"><span class="pre">ServiceContext</span></code></a>, to bundle commonly used resources during the indexing and querying stage. In this example, we bundle resources we’ve built: the LLM, the embedding model, the node parser, and the prompt helper.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">ServiceContext</span>

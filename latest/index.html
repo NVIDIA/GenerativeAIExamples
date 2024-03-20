@@ -53,7 +53,7 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
@@ -149,7 +149,7 @@ run Retrieval Augmented Generation (RAG) Large Language Model (LLM) pipelines.</
 The chat bot also supports uploading documents to create a knowledge base.</p>
 <section id="developer-rag-examples">
 <h2>Developer RAG Examples<a class="headerlink" href="#developer-rag-examples" title="Permalink to this headline"></a></h2>
-<table class="colwidths-given docutils align-default">
+<table class="docutils align-default">
 <colgroup>
 <col style="width: 11%" />
 <col style="width: 11%" />
@@ -187,10 +187,8 @@ The chat bot also supports uploading documents to create a knowledge base.</p>
 </div>
 </th>
 <th class="head"><div class="line-block">
-<div class="line">NVIDIA AI</div>
-<div class="line">Foundation</div>
-<div class="line">Models and</div>
-<div class="line">Endpoints</div>
+<div class="line">Model</div>
+<div class="line">Location</div>
 </div>
 </th>
 <th class="head"><div class="line-block">
@@ -207,13 +205,13 @@ The chat bot also supports uploading documents to create a knowledge base.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>mixtral_8x7b</p></td>
+<tr class="row-even"><td><p>ai-mixtral-8x7b-instruct</p></td>
 <td><p>nvolveqa_40k</p></td>
 <td><p>LangChain</p></td>
-<td><p><a class="reference internal" href="ai-foundation-models.html"><span class="doc">Using the NVIDIA AI Foundation Models</span></a></p></td>
+<td><p><a class="reference internal" href="api-catalog.html"><span class="doc">Using the NVIDIA API Catalog</span></a></p></td>
 <td><p>NO</p></td>
 <td><p>NO</p></td>
-<td><p>YES</p></td>
+<td><p>API Catalog</p></td>
 <td><p>NO</p></td>
 <td><p>Milvus or pgvector</p></td>
 </tr>
@@ -223,7 +221,7 @@ The chat bot also supports uploading documents to create a knowledge base.</p>
 <td><p><a class="reference internal" href="local-gpu.html"><span class="doc">Using Local GPUs for a Q&amp;A Chatbot</span></a></p></td>
 <td><p>NO</p></td>
 <td><p>YES</p></td>
-<td><p>NO</p></td>
+<td><p>Local Model</p></td>
 <td><p>YES</p></td>
 <td><p>Milvus or pgvector</p></td>
 </tr>
@@ -233,62 +231,62 @@ The chat bot also supports uploading documents to create a knowledge base.</p>
 <td><p><a class="reference internal" href="multi-gpu.html"><span class="doc">Multi-GPU for Inference</span></a></p></td>
 <td><p>YES</p></td>
 <td><p>YES</p></td>
-<td><p>NO</p></td>
+<td><p>Local Model</p></td>
 <td><p>YES</p></td>
 <td><p>Milvus or pgvector</p></td>
 </tr>
-<tr class="row-odd"><td><p>llama2_70b</p></td>
+<tr class="row-odd"><td><p>ai-llama2-70b</p></td>
 <td><p>nvolveqa_40k</p></td>
 <td><p>LangChain</p></td>
 <td><p><a class="reference internal" href="query-decomposition.html"><span class="doc">Query Decomposition</span></a></p></td>
 <td><p>NO</p></td>
 <td><p>NO</p></td>
-<td><p>YES</p></td>
+<td><p>API Catalog</p></td>
 <td><p>NO</p></td>
 <td><p>Milvus or pgvector</p></td>
 </tr>
-<tr class="row-even"><td><p>llama2_7b</p></td>
+<tr class="row-even"><td><p>llama2-7b</p></td>
 <td><p>e5-large-v2</p></td>
 <td><p>LlamaIndex</p></td>
 <td><p><a class="reference internal" href="quantized-llm-model.html"><span class="doc">Quantized LLM Inference Model</span></a></p></td>
 <td><p>NO</p></td>
 <td><p>YES</p></td>
-<td><p>NO</p></td>
+<td><p>Local Model</p></td>
 <td><p>YES</p></td>
 <td><p>Milvus or pgvector</p></td>
 </tr>
-<tr class="row-odd"><td><p>NV-Llama2-70B-RLHF</p></td>
+<tr class="row-odd"><td><p>ai-mixtral-8x7b-instruct for response generation</p>
+<p>ai-mixtral-8x7b-instruct for PandasAI</p>
+</td>
 <td><p>Not Applicable</p></td>
 <td><p>PandasAI</p></td>
 <td><p><a class="reference internal" href="structured-data.html"><span class="doc">Structured Data</span></a></p></td>
 <td><p>NO</p></td>
 <td><p>NO</p></td>
-<td><p>YES</p></td>
+<td><p>API Catalog</p></td>
 <td><p>NO</p></td>
 <td><p>Not Applicable</p></td>
 </tr>
-<tr class="row-even"><td><div class="line-block">
-<div class="line">mixtral_8x7b for response generation,</div>
-<div class="line">deplot for graph to text conversion,</div>
-<div class="line">neva_22B for image to text conversion</div>
-</div>
+<tr class="row-even"><td><p>ai-mixtral-8x7b-instruct for response generation</p>
+<p>ai-google-Deplot for graph to text conversion</p>
+<p>ai-Neva-22B for image to text conversion</p>
 </td>
 <td><p>nvolveqa_40k</p></td>
 <td><p>Custom Python</p></td>
 <td><p><a class="reference internal" href="multimodal-data.html"><span class="doc">Multimodal Data</span></a></p></td>
 <td><p>NO</p></td>
 <td><p>NO</p></td>
-<td><p>YES</p></td>
+<td><p>API Catalog</p></td>
 <td><p>NO</p></td>
 <td><p>Milvus or pgvector</p></td>
 </tr>
-<tr class="row-odd"><td><p>mixtral_8x7b</p></td>
+<tr class="row-odd"><td><p>ai-llama2-70b</p></td>
 <td><p>nvolveqa_40k</p></td>
 <td><p>LangChain</p></td>
 <td><p><a class="reference internal" href="multi-turn.html"><span class="doc">Multi-Turn Conversational Chat Bot</span></a></p></td>
 <td><p>NO</p></td>
 <td><p>NO</p></td>
-<td><p>YES</p></td>
+<td><p>API Catalog</p></td>
 <td><p>NO</p></td>
 <td><p>Milvus or pgvector</p></td>
 </tr>

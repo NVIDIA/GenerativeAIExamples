@@ -26,7 +26,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Multi-GPU for Inference" href="multi-gpu.html" />
-    <link rel="prev" title="Using the NVIDIA AI Foundation Models" href="ai-foundation-models.html" />
+    <link rel="prev" title="Using the NVIDIA API Catalog" href="api-catalog.html" />
  
 
 
@@ -54,8 +54,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="release-notes.html">Release Notes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
@@ -84,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -173,7 +173,7 @@
 <th class="head"><p>Description</p></th>
 <th class="head"><p>Multi-GPU</p></th>
 <th class="head"><p>TRT-LLM</p></th>
-<th class="head"><p>NVIDIA AI Foundation</p></th>
+<th class="head"><p>Model Location</p></th>
 <th class="head"><p>Triton</p></th>
 <th class="head"><p>Vector Database</p></th>
 </tr>
@@ -185,7 +185,7 @@
 <td><p>QA chatbot</p></td>
 <td><p>NO</p></td>
 <td><p>YES</p></td>
-<td><p>NO</p></td>
+<td><p>Local Model</p></td>
 <td><p>YES</p></td>
 <td><p>Milvus</p></td>
 </tr>
@@ -195,7 +195,7 @@
 <td><p>QA chatbot</p></td>
 <td><p>NO</p></td>
 <td><p>YES</p></td>
-<td><p>NO</p></td>
+<td><p>Local Model</p></td>
 <td><p>YES</p></td>
 <td><p>pgvector</p></td>
 </tr>
@@ -355,9 +355,6 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
 
 <span class="c1"># the name of the model being used - only for displaying on frontend</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="s2">&quot;Llama-2-13b-chat&quot;</span>
-
-<span class="c1"># the name of the RAG example being used</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">RAG_EXAMPLE</span><span class="o">=</span><span class="s2">&quot;developer_rag&quot;</span>
 ...
 </pre></div>
 </div>
@@ -446,7 +443,7 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="ai-foundation-models.html" class="btn btn-neutral float-left" title="Using the NVIDIA AI Foundation Models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api-catalog.html" class="btn btn-neutral float-left" title="Using the NVIDIA API Catalog" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="multi-gpu.html" class="btn btn-neutral float-right" title="Multi-GPU for Inference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

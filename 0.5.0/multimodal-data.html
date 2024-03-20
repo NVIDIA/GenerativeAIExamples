@@ -54,8 +54,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="release-notes.html">Release Notes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
@@ -84,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -139,20 +139,21 @@
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#example-features" id="id1">Example Features</a></p></li>
-<li><p><a class="reference internal" href="#prerequisites" id="id2">Prerequisites</a></p></li>
-<li><p><a class="reference internal" href="#get-an-api-key-for-the-mixtral-8x7b-instruct-api-endpoint" id="id3">Get an API Key for the Mixtral 8x7B Instruct API Endpoint</a></p></li>
-<li><p><a class="reference internal" href="#build-and-start-the-containers" id="id4">Build and Start the Containers</a></p></li>
-<li><p><a class="reference internal" href="#next-steps" id="id5">Next Steps</a></p></li>
+<li><p><a class="reference internal" href="#limitations" id="id2">Limitations</a></p></li>
+<li><p><a class="reference internal" href="#prerequisites" id="id3">Prerequisites</a></p></li>
+<li><p><a class="reference internal" href="#get-an-api-key-for-the-mixtral-8x7b-instruct-api-endpoint" id="id4">Get an API Key for the Mixtral 8x7B Instruct API Endpoint</a></p></li>
+<li><p><a class="reference internal" href="#build-and-start-the-containers" id="id5">Build and Start the Containers</a></p></li>
+<li><p><a class="reference internal" href="#next-steps" id="id6">Next Steps</a></p></li>
 </ul>
 </div>
 <section id="example-features">
 <h2>Example Features<a class="headerlink" href="#example-features" title="Permalink to this headline"></a></h2>
-<p>This example deploys a developer RAG pipeline for chat Q&amp;A and serves inferencing from an NVIDIA AI Foundation Models endpoint
+<p>This example deploys a developer RAG pipeline for chat Q&amp;A and serves inferencing from NVIDIA API Catalog endpoints
 instead of NVIDIA Triton Inference Server, a local Llama 2 model, or local GPUs.</p>
 <p>Developers get free credits for 10K requests to any of the available models.</p>
-<p>The key difference from <a class="reference internal" href="ai-foundation-models.html"><span class="doc std std-doc">Using the NVIDIA AI Foundation Models</span></a> example is that the example demonstrates how work with multimodal data.
+<p>The key difference from the <a class="reference internal" href="api-catalog.html"><span class="doc std std-doc">Using the NVIDIA API Catalog</span></a> example is that this example demonstrates how work with multimodal data.
 The model works with any kind of image in PDF, such as graphs and plots, as well as text and tables.</p>
-<p>This example uses models from the NVIDIA AI Foundation Models and Endpoints.</p>
+<p>This example uses models from the NVIDIA API Catalog.</p>
 <table class="colwidths-given docutils align-default">
 <colgroup>
 <col style="width: 27%" />
@@ -172,21 +173,22 @@ The model works with any kind of image in PDF, such as graphs and plots, as well
 <th class="head"><p>Description</p></th>
 <th class="head"><p>Multi-GPU</p></th>
 <th class="head"><p>TRT-LLM</p></th>
-<th class="head"><p>NVIDIA AI Foundation</p></th>
+<th class="head"><p>Model Location</p></th>
 <th class="head"><p>Triton</p></th>
 <th class="head"><p>Vector Database</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Mixtral_8x7b for response generation,
-Deplot for graph to text conversion,
-Neva_22B for image to text conversion</p></td>
+<tr class="row-even"><td><p>ai-mixtral-8x7b-instruct for response generation</p>
+<p>ai-google-Deplot for graph to text conversion</p>
+<p>ai-Neva-22B for image to text conversion</p>
+</td>
 <td><p>nvolveqa_40k</p></td>
 <td><p>Custom Python</p></td>
 <td><p>QA chatbot</p></td>
 <td><p>NO</p></td>
 <td><p>NO</p></td>
-<td><p>YES</p></td>
+<td><p>API Catalog</p></td>
 <td><p>NO</p></td>
 <td><p>Milvus</p></td>
 </tr>
@@ -195,11 +197,17 @@ Neva_22B for image to text conversion</p></td>
 <p>The following figure shows the sample topology:</p>
 <ul class="simple">
 <li><p>The sample chat bot web application communicates with the chain server.
-The chain server sends inference requests to an NVIDIA AI Foundation Models endpoint.</p></li>
+The chain server sends inference requests to NVIDIA API Catalog endpoints.</p></li>
 <li><p>Optionally, you can deploy NVIDIA Riva. Riva can use automatic speech recognition to transcribe
 your questions and use text-to-speech to speak the answers aloud.</p></li>
 </ul>
-<p><img alt="Using NVIDIA AI Foundation Models endpoints for inference instead of local components." src="_images/ai-foundations-topology.png" /></p>
+<p><img alt="Using NVIDIA API Catalog endpoints for inference instead of local components." src="_images/catalog-and-vector-db.png" /></p>
+</section>
+<section id="limitations">
+<h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline"></a></h2>
+<p>Although the AI Foundation Models endpoint uses the Neva_22B model for processing images, this example
+supports uploading images that are part of PDF files only.
+For example, after deploying the services, you cannot upload a PNG, JPEG, TIFF, or any other image format file.</p>
 </section>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
@@ -239,25 +247,28 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
 <p>Perform the following steps if you do not already have an API key.
 You can use different model API endpoints with the same API key.</p>
 <ol class="arabic">
-<li><p>Navigate to <a class="reference external" href="https://catalog.ngc.nvidia.com/ai-foundation-models">https://catalog.ngc.nvidia.com/ai-foundation-models</a>.</p></li>
-<li><p>Find the <strong>Mixtral 8x7B Instruct</strong> card and click <strong>Learn More</strong>.</p>
+<li><p>Navigate to <a class="reference external" href="https://build.nvidia.com/explore/discover">https://build.nvidia.com/explore/discover</a>.</p></li>
+<li><p>Find the <strong>Mixtral 8x7B Instruct</strong> card and click the card.</p>
 <p><img alt="Mixtral 8x7B Instruct model card" src="_images/mixtral-8x7b-instruct.png" /></p>
 </li>
-<li><p>Click the <strong>API</strong> button and then click <strong>Generate Key</strong>.</p>
-<p><img alt="API section of the playground tab." src="_images/image8.png" /></p>
+<li><p>Click <strong>Get API Key</strong>.</p>
+<p><img alt="API section of the model page." src="_images/image8.png" /></p>
 </li>
-<li><p>Save the generated API key.</p></li>
+<li><p>Click <strong>Generate Key</strong>.</p>
+<p><img alt="Generate key window." src="_images/api-catalog-generate-api-key.png" /></p>
+</li>
+<li><p>Click <strong>Copy Key</strong> and then save the API key.
+The key begins with the letters nvapi-.</p>
+<p><img alt="Key Generated widnow." src="_images/key-generated.png" /></p>
+</li>
 </ol>
 </section>
 <section id="build-and-start-the-containers">
 <h2>Build and Start the Containers<a class="headerlink" href="#build-and-start-the-containers" title="Permalink to this headline"></a></h2>
 <ol class="arabic">
 <li><p>In the Generative AI examples repository, edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/compose.env</span></code> file.</p>
-<p>Add the API for the model endpoint:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>...
-# Fill this out if you dont have a GPU. Leave this empty if you have a local GPU
-export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
-...
+<p>Add the API key for the model endpoint:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>export NVIDIA_API_KEY=&quot;nvapi-...&quot;
 </pre></div>
 </div>
 </li>

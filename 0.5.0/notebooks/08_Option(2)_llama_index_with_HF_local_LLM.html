@@ -54,8 +54,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">Release Notes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../query-decomposition.html">Query Decomposition</a></li>
@@ -84,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -137,7 +137,7 @@
 <li><p>docker and <a class="reference external" href="https://github.com/NVIDIA/nvidia-container-toolkit">nvidia-docker</a> installed</p></li>
 <li><p>Registered <a class="reference external" href="https://www.nvidia.com/en-us/gpu-cloud/">NVIDIA NGC</a> and can pull and run NGC pytorch containers</p></li>
 <li><p>install necesary python dependencies :
-Note: if you are using the <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/main/notebooks/Dockerfile.gpu_notebooks">Dockerfile.gpu_notebook</a>, it should already prepare the environment for you. Otherwise please refer to the Dockerfile for environment building.</p></li>
+Note: if you are using the <a class="reference external" href="https://raw.githubusercontent.com/NVIDIA/GenerativeAIExamples/main/notebooks/Dockerfile.gpu_notebook">Dockerfile.gpu_notebook</a>, it should already prepare the environment for you. Otherwise please refer to the Dockerfile for environment building.</p></li>
 </ol>
 <p>In this notebook, we will cover the following custom plug-in components -</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>- LLM locally load from [HuggingFace Hub Llama-2-13b-chat-hf](https://huggingface.co/meta-llama/Llama-2-13b-chat-hf) and warp this into llama-index 

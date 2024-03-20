@@ -227,6 +227,7 @@
 								"$ref": "#/components/schemas/Message"
 							}
 						],
+						"title": "Message",
 						"default": {
 							"role": "assistant",
 							"content": ""
@@ -403,7 +404,7 @@
 					},
 					"max_tokens": {
 						"type": "integer",
-						"maximum": 131072,
+						"maximum": 1024,
 						"minimum": 0,
 						"title": "Max Tokens",
 						"description": "The maximum number of tokens to generate in any given call. Note that the model is not aware of this value, and generation will simply stop at the number of tokens specified.",

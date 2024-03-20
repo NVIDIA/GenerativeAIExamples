@@ -53,8 +53,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="release-notes.html">Release Notes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
@@ -83,6 +82,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul class="current">
@@ -166,14 +166,11 @@
 <dt class="field-odd">MODEL_MAX_INPUT_LENGTH</dt>
 <dd class="field-odd"><p>Maximum allowed input length, with a default value of 3000.</p>
 </dd>
-<dt class="field-even">MODEL_MAX_OUTPUT_LENGTH</dt>
-<dd class="field-even"><p>Maximum allowed output lenght, with a default of 512.</p>
+<dt class="field-even">QUANTIZATION</dt>
+<dd class="field-even"><p>Specifies to enable activation-aware quantization for the LLM. By default, quantization is not enabled.</p>
 </dd>
-<dt class="field-odd">QUANTIZATION</dt>
-<dd class="field-odd"><p>Specifies to enable activation-aware quantization for the LLM. By default, quantization is not enabled.</p>
-</dd>
-<dt class="field-even">INFERENCE_GPU_COUNT</dt>
-<dd class="field-even"><p>Specifies the GPUs to be used by Triton for model deployment, with the default setting being “all.”</p>
+<dt class="field-odd">INFERENCE_GPU_COUNT</dt>
+<dd class="field-odd"><p>Specifies the GPUs to be used by Triton for model deployment, with the default setting being “all.”</p>
 </dd>
 </dl>
 </section>
@@ -235,12 +232,23 @@ You can configure the server using the following environment variable:</p>
 <dd class="field-even"><p>An enum that specifies the backend name hosting the model. Supported values are as follows:</p>
 <p><code class="docutils literal notranslate"><span class="pre">triton-trt-llm</span></code> to use locally deployed LLM models.</p>
 <p><code class="docutils literal notranslate"><span class="pre">nv-ai-foundation</span></code> to use models hosted from NVIDIA AI Endpoints.</p>
+<p><code class="docutils literal notranslate"><span class="pre">nv-api-catalog</span></code> to use models hosted from NVIDIA API Catalog.</p>
 </dd>
 <dt class="field-odd">APP_RETRIEVER_TOPK</dt>
 <dd class="field-odd"><p>Number of relevant results to retrieve. The default value is <code class="docutils literal notranslate"><span class="pre">4</span></code>.</p>
 </dd>
 <dt class="field-even">APP_RETRIEVER_SCORETHRESHOLD</dt>
 <dd class="field-even"><p>The minimum confidence score for the retrieved values to be considered. The default value is <code class="docutils literal notranslate"><span class="pre">0.25</span></code>.</p>
+</dd>
+<dt class="field-odd">APP_PROMPTS_CHATTEMPLATE</dt>
+<dd class="field-odd"><p>Specifies the instructions to provide to the model.
+The prompt is combined with the user-supplied query and then presented to the model.
+The chain server uses this prompt when the query does not use a knowledge base.</p>
+</dd>
+<dt class="field-even">APP_PROMPTS_RAGTEMPLATE</dt>
+<dd class="field-even"><p>Specifies the instructions to provide to the model.
+The prompt is combined with the user-supplied query and then presented to the model.
+The chain server uses this prompt when the query uses a knowledge base.</p>
 </dd>
 </dl>
 </section>

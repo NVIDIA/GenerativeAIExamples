@@ -54,8 +54,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="release-notes.html">Release Notes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
@@ -84,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -141,12 +141,13 @@
 <li><p><a class="reference internal" href="#prerequisites" id="id1">Prerequisites</a></p></li>
 <li><p><a class="reference internal" href="#access-the-web-application" id="id2">Access the Web Application</a></p></li>
 <li><p><a class="reference internal" href="#use-unstructured-documents-as-a-knowledge-base" id="id3">Use Unstructured Documents as a Knowledge Base</a></p></li>
+<li><p><a class="reference internal" href="#troubleshooting" id="id4">Troubleshooting</a></p></li>
 </ul>
 </div>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
 <ul class="simple">
-<li><p>You deployed one of the samples, such as <a class="reference internal" href="ai-foundation-models.html"><span class="doc std std-doc">Using the NVIDIA AI Foundation Models</span></a> or <a class="reference internal" href="local-gpu.html"><span class="doc std std-doc">Using Local GPUs for a Q&amp;A Chatbot</span></a>.</p></li>
+<li><p>You deployed one of the samples, such as <span class="xref myst"></span> or <a class="reference internal" href="local-gpu.html"><span class="doc std std-doc">Using Local GPUs for a Q&amp;A Chatbot</span></a>.</p></li>
 </ul>
 </section>
 <section id="access-the-web-application">
@@ -180,6 +181,21 @@
 If you use a completion model, then you must fine tune the prompts.</p>
 </div>
 </li>
+</ol>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline"></a></h2>
+<p>If you receive the following “Media devices could not be accessed” error message when you first attempt to transcribe a voice query, perform the following steps.</p>
+<p><img alt="Media device access error window." src="_images/media-device-access-error.png" /></p>
+<ol class="arabic">
+<li><p>Open another browser tab and enter <code class="docutils literal notranslate"><span class="pre">chrome://flags</span></code> in the location field.</p></li>
+<li><p>Enter <code class="docutils literal notranslate"><span class="pre">insecure</span> <span class="pre">origins</span> <span class="pre">treated</span> <span class="pre">as</span> <span class="pre">secure</span></code> in the search field.</p>
+<p><img alt="Browser viewing the chrome://flags URL." src="_images/chrome-flags-fix-media-device-access-error.png" /></p>
+</li>
+<li><p>Enter <code class="docutils literal notranslate"><span class="pre">http://&lt;host-ip&gt;:8090</span></code> in the text box and select <strong>Enabled</strong> from the menu.</p></li>
+<li><p>Click <strong>Relaunch</strong>.</p></li>
+<li><p>After the browser opens, grant <code class="docutils literal notranslate"><span class="pre">http://host-ip:8090</span></code> access to your microphone.</p></li>
+<li><p>Retry your request.</p></li>
 </ol>
 </section>
 </section>

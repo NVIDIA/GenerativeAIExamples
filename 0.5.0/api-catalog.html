@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Using the NVIDIA AI Foundation Models &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>Using the NVIDIA API Catalog &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -26,7 +26,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Using Local GPUs for a Q&amp;A Chatbot" href="local-gpu.html" />
-    <link rel="prev" title="Release Notes" href="release-notes.html" />
+    <link rel="prev" title="Support Matrix" href="support-matrix.html" />
  
 
 
@@ -54,8 +54,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="release-notes.html">Release Notes</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">AI Foundation Models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
@@ -84,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -109,7 +109,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Using the NVIDIA AI Foundation Models</li>
+      <li>Using the NVIDIA API Catalog</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -134,8 +134,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<section id="using-the-nvidia-ai-foundation-models">
-<h1>Using the NVIDIA AI Foundation Models<a class="headerlink" href="#using-the-nvidia-ai-foundation-models" title="Permalink to this headline"></a></h1>
+<section id="using-the-nvidia-api-catalog">
+<h1>Using the NVIDIA API Catalog<a class="headerlink" href="#using-the-nvidia-api-catalog" title="Permalink to this headline"></a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#example-features" id="id1">Example Features</a></p></li>
@@ -147,7 +147,7 @@
 </div>
 <section id="example-features">
 <h2>Example Features<a class="headerlink" href="#example-features" title="Permalink to this headline"></a></h2>
-<p>This example deploys a developer RAG pipeline for chat Q&amp;A and serves inferencing from an NVIDIA AI Foundation Models endpoint
+<p>This example deploys a developer RAG pipeline for chat Q&amp;A and serves inferencing from an NVIDIA API Catalog endpoint
 instead of NVIDIA Triton Inference Server, a local Llama 2 model, or local GPUs.</p>
 <p>Developers get free credits for 10K requests to any of the available models.</p>
 <table class="docutils align-default">
@@ -169,19 +169,19 @@ instead of NVIDIA Triton Inference Server, a local Llama 2 model, or local GPUs.
 <th class="head"><p>Description</p></th>
 <th class="head"><p>Multi-GPU</p></th>
 <th class="head"><p>TRT-LLM</p></th>
-<th class="head"><p>NVIDIA AI Foundation</p></th>
+<th class="head"><p>Model Location</p></th>
 <th class="head"><p>Triton</p></th>
 <th class="head"><p>Vector Database</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>mixtral_8x7b</p></td>
+<tr class="row-even"><td><p>ai-mixtral-8x7b-instruct</p></td>
 <td><p>nvolveqa_40k</p></td>
 <td><p>Langchain</p></td>
 <td><p>QA chatbot</p></td>
 <td><p>NO</p></td>
 <td><p>NO</p></td>
-<td><p>YES</p></td>
+<td><p>API Catalog</p></td>
 <td><p>NO</p></td>
 <td><p>Milvus</p></td>
 </tr>
@@ -190,11 +190,11 @@ instead of NVIDIA Triton Inference Server, a local Llama 2 model, or local GPUs.
 <p>The following figure shows the sample topology:</p>
 <ul class="simple">
 <li><p>The sample chat bot web application communicates with the chain server.
-The chain server sends inference requests to an NVIDIA AI Foundation Models endpoint.</p></li>
+The chain server sends inference requests to an NVIDIA API Catalog endpoint.</p></li>
 <li><p>Optionally, you can deploy NVIDIA Riva. Riva can use automatic speech recognition to transcribe
 your questions and use text-to-speech to speak the answers aloud.</p></li>
 </ul>
-<p><img alt="Using NVIDIA AI Foundation Models endpoints for inference instead of local components." src="_images/ai-foundations-topology.png" /></p>
+<p><img alt="Using NVIDIA API Catalog endpoints for inference instead of local components." src="_images/ai-foundations-topology.png" /></p>
 </section>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
@@ -234,35 +234,38 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
 <p>Perform the following steps if you do not already have an API key.
 You can use different model API endpoints with the same API key.</p>
 <ol class="arabic">
-<li><p>Navigate to <a class="reference external" href="https://catalog.ngc.nvidia.com/ai-foundation-models">https://catalog.ngc.nvidia.com/ai-foundation-models</a>.</p></li>
-<li><p>Find the <strong>Mixtral 8x7B Instruct</strong> card and click <strong>Learn More</strong>.</p>
+<li><p>Navigate to <a class="reference external" href="https://build.nvidia.com/explore/discover">https://build.nvidia.com/explore/discover</a>.</p></li>
+<li><p>Find the <strong>Mixtral 8x7B Instruct</strong> card and click the card.</p>
 <p><img alt="Mixtral 8x7B Instruct model card" src="_images/mixtral-8x7b-instruct.png" /></p>
 </li>
-<li><p>Click the <strong>API</strong> button and then click <strong>Generate Key</strong>.</p>
-<p><img alt="API section of the playground tab." src="_images/image8.png" /></p>
+<li><p>Click <strong>Get API Key</strong>.</p>
+<p><img alt="API section of the model page." src="_images/image8.png" /></p>
 </li>
-<li><p>Save the generated API key.</p></li>
+<li><p>Click <strong>Generate Key</strong>.</p>
+<p><img alt="Generate key window." src="_images/api-catalog-generate-api-key.png" /></p>
+</li>
+<li><p>Click <strong>Copy Key</strong> and then save the API key.
+The key begins with the letters nvapi-.</p>
+<p><img alt="Key Generated widnow." src="_images/key-generated.png" /></p>
+</li>
 </ol>
 </section>
 <section id="build-and-start-the-containers">
 <h2>Build and Start the Containers<a class="headerlink" href="#build-and-start-the-containers" title="Permalink to this headline"></a></h2>
 <ol class="arabic">
-<li><p>In the Generative AI examples repository, edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/compose.env</span></code> file.</p>
-<p>Add the API for the model endpoint:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>...
-# Fill this out if you dont have a GPU. Leave this empty if you have a local GPU
-export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
-...
+<li><p>In the Generative AI examples repository, export this variable in terminal.</p>
+<p>Add the API key for the model endpoint:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
 </pre></div>
 </div>
 </li>
 <li><p>From the root of the repository, build the containers:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/rag-app-ai-foundation-text-chatbot.yaml<span class="w"> </span>build
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/rag-app-api-catalog-text-chatbot.yaml<span class="w"> </span>build
 </pre></div>
 </div>
 </li>
 <li><p>Start the containers:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/rag-app-ai-foundation-text-chatbot.yaml<span class="w"> </span>up<span class="w"> </span>-d
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/rag-app-api-catalog-text-chatbot.yaml<span class="w"> </span>up<span class="w"> </span>-d
 </pre></div>
 </div>
 <p><em>Example Output</em></p>
@@ -305,7 +308,7 @@ export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
 <li><p>Access the web interface for the chat server.
 Refer to <a class="reference internal" href="using-sample-web-application.html"><span class="doc std std-doc">Using the Sample Chat Web Application</span></a> for information about using the web interface.</p></li>
 <li><p><a class="reference internal" href="vector-database.html"><span class="doc std std-doc">Configuring an Alternative Vector Database</span></a></p></li>
-<li><p>Stop the containers by running <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/rag-app-ai-foundation-text-chatbot.yaml</span> <span class="pre">down</span></code> and
+<li><p>Stop the containers by running <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/rag-app-api-catalog-text-chatbot.yaml</span> <span class="pre">down</span></code> and
 <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/docker-compose-vectordb.yaml</span> <span class="pre">down</span></code>.</p></li>
 </ul>
 </section>
@@ -315,7 +318,7 @@ Refer to <a class="reference internal" href="using-sample-web-application.html">
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="release-notes.html" class="btn btn-neutral float-left" title="Release Notes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="support-matrix.html" class="btn btn-neutral float-left" title="Support Matrix" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="local-gpu.html" class="btn btn-neutral float-right" title="Using Local GPUs for a Q&amp;A Chatbot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
