@@ -70,7 +70,11 @@ class LLMConfig(ConfigWizard):
         default="triton-trt-llm",
         help_txt="The server type of the hosted model. Allowed values are triton-trt-llm and nemo-infer",
     )
-
+    model_name_pandas_ai: str = configfield(
+        "model_name_pandas_ai",
+        default="ai-mixtral-8x7b-instruct",
+        help_txt="The name of the ai catalog model to be used with PandasAI agent",
+    )
 
 @configclass
 class TextSplitterConfig(ConfigWizard):
@@ -80,6 +84,11 @@ class TextSplitterConfig(ConfigWizard):
     :cvar chunk_overlap: Text overlap in text splitter.
     """
 
+    model_name: str = configfield(
+        "model_name",
+        default="intfloat/e5-large-v2",
+        help_txt="The name of Sentence Transformer model used for SentenceTransformer TextSplitter.",
+    )
     chunk_size: int = configfield(
         "chunk_size",
         default=510,
@@ -122,11 +131,32 @@ class EmbeddingConfig(ConfigWizard):
 
 
 @configclass
+class RetrieverConfig(ConfigWizard):
+    """Configuration class for the Retrieval pipeline.
+
+    :cvar top_k: Number of relevant results to retrieve.
+    :cvar score_threshold: The minimum confidence score for the retrieved values to be considered.
+    """
+
+    top_k: int = configfield(
+        "top_k",
+        default=4,
+        help_txt="Number of relevant results to retrieve",
+    )
+    score_threshold: float = configfield(
+        "score_threshold",
+        default=0.25,
+        help_txt="The minimum confidence score for the retrieved values to be considered",
+    )
+
+
+@configclass
 class PromptsConfig(ConfigWizard):
     """Configuration class for the Prompts.
 
     :cvar chat_template: Prompt template for chat.
     :cvar rag_template: Prompt template for rag.
+    :cvar multi_turn_rag_template: Prompt template for multi-turn rag.
     """
 
     chat_template: str = configfield(
@@ -150,6 +180,18 @@ class PromptsConfig(ConfigWizard):
             "<</SYS>>"
             "<s>[INST] Context: {context_str} Question: {query_str} Only return the helpful"
             " answer below and nothing else. Helpful answer:[/INST]"
+        ),
+        help_txt="Prompt template for rag.",
+    )
+    multi_turn_rag_template: str = configfield(
+        "multi_turn_rag_template",
+        default=(
+            "You are a document chatbot. Help the user as they ask questions about documents."
+            " User message just asked: {input}\n\n"
+            " For this, we have retrieved the following potentially-useful info: "
+            " Conversation History Retrieved:\n{history}\n\n"
+            " Document Retrieved:\n{context}\n\n"
+            " Answer only from retrieved data. Make your response conversational."
         ),
         help_txt="Prompt template for rag.",
     )
@@ -194,6 +236,12 @@ class AppConfig(ConfigWizard):
         env=False,
         help_txt="The configuration of embedding model.",
         default=EmbeddingConfig(),
+    )
+    retriever: RetrieverConfig = configfield(
+        "retriever",
+        env=False,
+        help_txt="The configuration of the retriever pipeline.",
+        default=RetrieverConfig(),
     )
     prompts: PromptsConfig = configfield(
         "prompts",

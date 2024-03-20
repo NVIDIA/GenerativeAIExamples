@@ -20,15 +20,16 @@ It uses OpenAI's GPT-4 model for sub-answer formation, tool prediction and math 
 Search tool is a RAG pipeline, whereas the math tool uses an LLM call to perform mathematical calculations.
 """
 
-from langchain.vectorstores import FAISS
-from langchain.document_loaders import UnstructuredFileLoader
+from langchain_community.vectorstores.faiss import FAISS
+from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain.chains import LLMChain
-from langchain.prompts import BaseChatPromptTemplate
-from langchain.schema import HumanMessage
-from langchain.agents import LLMSingleActionAgent, AgentOutputParser, AgentExecutor, Tool
+from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_core.output_parsers.string import StrOutputParser
+from langchain.chains.llm import LLMChain
+from langchain_core.prompts.chat import BaseChatPromptTemplate
+from langchain_core.messages.human import HumanMessage
+from langchain.agents.agent import LLMSingleActionAgent, AgentOutputParser, AgentExecutor
+from langchain.tools import Tool
 from langchain.schema.agent import AgentFinish, AgentAction
 from typing import List, Union, Dict, Any
 import json
@@ -45,12 +46,13 @@ from RetrievalAugmentedGeneration.common.utils import (
     get_embedding_model,
     get_doc_retriever,
     get_vectorstore_langchain,
+    get_docs_vectorstore_langchain,
+    del_docs_vectorstore_langchain,
 )
 from RetrievalAugmentedGeneration.common.base import BaseExample
 
 logger = logging.getLogger(__name__)
 
-llm = get_llm()
 DOCS_DIR = os.path.abspath("./uploaded_files")
 vector_store_path = "vectorstore.pkl"
 document_embedder = get_embedding_model()
@@ -125,6 +127,8 @@ class CustomOutputParser(AgentOutputParser):
 
         logger.info(f"LLM Response: {llm_output}")
         local_state = json.loads(llm_output)
+        if len(local_state["Generated Sub Questions"]) == 0:
+            local_state["Generated Sub Questions"].append("Nil")
         if (
             local_state["Generated Sub Questions"][0] == "Nil"
             or local_state["Tool_Request"] == "Nil"
@@ -177,52 +181,58 @@ class QueryDecompositionChatbot(BaseExample):
 
 
     def llm_chain(
-        self, context: str, question: str, num_tokens: str
+        self, query: str, chat_history: List["Message"], **kwargs
     ) -> Generator[str, None, None]:
         """Execute a simple LLM chain using the components defined above."""
 
         logger.info("Using llm to generate response directly without knowledge base.")
-        prompt_template = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    settings.prompts.chat_template,
-                ),
-                ("user", "{input}"),
-            ]
-        )
+        system_message = [("system", settings.prompts.chat_template)]
+        conversation_history = [(msg.role, msg.content) for msg in chat_history]
+        user_input = [("user", "{input}")]
 
+        # Checking if conversation_history is not None and not empty
+        prompt_template = ChatPromptTemplate.from_messages(
+            system_message + conversation_history + user_input
+        ) if conversation_history else ChatPromptTemplate.from_messages(
+            system_message + user_input
+        )
+        llm = get_llm(**kwargs)
         chain = prompt_template | llm | StrOutputParser()
         augmented_user_input = (
-            "Context: " + context + "\n\nQuestion: " + question + "\n"
+            "\n\nQuestion: " + query + "\n"
         )
         return chain.stream({"input": augmented_user_input})
 
-    def rag_chain(self, question: str, num_tokens: int) -> Generator[str, None, None]:
+    def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
         """Execute a Retrieval Augmented Generation chain using the components defined above."""
 
         logger.info("Using rag to generate response from document")
-
         set_service_context()
-        final_context = self.run_agent(question)
+        final_context = self.run_agent(query, **kwargs)
+        if not final_context:
+            logger.warning("Retrieval failed to get any relevant context")
+            return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
+        
         logger.info(f"Final Answer from agent: {final_context}")
-
+        # TODO Add chat_history
         final_prompt_template = ChatPromptTemplate.from_messages(
             [
                 ("human", final_context)
             ]
         )
+        llm = get_llm(**kwargs)
         chain = final_prompt_template | llm | StrOutputParser()
 
         return chain.stream({})
 
 
-    def create_agent(self) -> AgentExecutor:
+    def create_agent(self, **kwargs) -> AgentExecutor:
         """
         Creates the tools, chain, output parser and agent used to fetch the full context.
         """
 
         self.ledger = Ledger()
+        self.kwargs = kwargs
 
         tools = [
             Tool(name="Search tool", func=self.search, description="Searches for the answer from a given context."),
@@ -232,6 +242,7 @@ class QueryDecompositionChatbot(BaseExample):
 
         prompt = CustomPromptTemplate(template=template, tools=tools, input_variables=["question"], ledger=self.ledger)
         output_parser = CustomOutputParser(ledger=self.ledger)
+        llm = get_llm(**kwargs)
         llm_chain = LLMChain(llm=llm, prompt=prompt)
 
         recursive_decomposition_agent = LLMSingleActionAgent(
@@ -242,12 +253,12 @@ class QueryDecompositionChatbot(BaseExample):
         return agent_executor
 
 
-    def run_agent(self, question: str):
+    def run_agent(self, question: str, **kwargs):
         """
         Run question on the agent
         """
 
-        agent_executor = self.create_agent()
+        agent_executor = self.create_agent(**kwargs)
         agent_executor.invoke({"question": question})
 
         ##### LLM call to get final answer ######
@@ -269,6 +280,9 @@ class QueryDecompositionChatbot(BaseExample):
         if vectorstore is None:
             return []
 
+        logger.info(f"Skipping top k and confidence threshold for query decomposition rag")
+        # TODO: Use similarity score threshold and top k provided in config
+        # Currently it's raising an error during invoke.
         retriever = vectorstore.as_retriever()
         result = retriever.get_relevant_documents(query)
         logger.info(result)
@@ -285,7 +299,7 @@ class QueryDecompositionChatbot(BaseExample):
         for idx, chunk in enumerate(chunks):
             prompt += f"Passage {idx + 1}:\n"
             prompt += chunk + "\n"
-
+        llm = get_llm(**self.kwargs)
         answer = llm([HumanMessage(content=prompt)])
         return answer.content
 
@@ -314,6 +328,7 @@ class QueryDecompositionChatbot(BaseExample):
         prompt += "Be concise and only return the answer."
 
         logger.info(f"Performing Math LLM call with prompt: {prompt}")
+        llm = get_llm(**self.kwargs)
         sub_answer = llm([HumanMessage(content=prompt)])
         self.ledger.question_trace.append(sub_questions[0])
         self.ledger.answer_trace.append(sub_answer.content)
@@ -325,6 +340,9 @@ class QueryDecompositionChatbot(BaseExample):
 
         try:
             if vectorstore != None:
+                logger.info(f"Skipping top k and confidence threshold for query decomposition rag")
+
+                # TODO: Use top k and confidence threshold once retriever issue is resolved
                 retriever = vectorstore.as_retriever()
                 docs = retriever.get_relevant_documents(content)
 
@@ -339,5 +357,23 @@ class QueryDecompositionChatbot(BaseExample):
                 return result
             return []
         except Exception as e:
-            logger.error(f"Error from /documentSearch endpoint. Error details: {e}")
-            return []
+            logger.error(f"Error from POST /search endpoint. Error details: {e}")
+        return []
+
+    def get_documents(self) -> List[str]:
+        """Retrieves filenames stored in the vector store."""
+        try:
+            if vectorstore:
+                return get_docs_vectorstore_langchain(vectorstore)
+        except Exception as e:
+            logger.error(f"Vectorstore not initialized. Error details: {e}")
+        return []
+
+
+    def delete_documents(self, filenames: List[str]):
+        """Delete documents from the vector index."""
+        try:
+            if vectorstore:
+                return del_docs_vectorstore_langchain(vectorstore, filenames)
+        except Exception as e:
+            logger.error(f"Vectorstore not initialized. Error details: {e}")

@@ -17,6 +17,7 @@
 import logging
 import mimetypes
 import typing
+import json
 
 import requests
 
@@ -44,12 +45,12 @@ class ChatClient:
         self, carrier, prompt: str
     ) -> typing.List[typing.Dict[str, typing.Union[str, float]]]:
         """Search for relevant documents and return json data."""
-        data = {"content": prompt, "num_docs": 4}
+        data = {"query": prompt, "top_k": 4}
         headers = {
             **carrier,
             "accept": "application/json", "Content-Type": "application/json"
         }
-        url = f"{self.server_url}/documentSearch"
+        url = f"{self.server_url}/search"
         _LOGGER.debug(
             "looking up documents - %s", str({"server_url": url, "post_data": data})
         )
@@ -74,10 +75,20 @@ class ChatClient:
     ) -> typing.Generator[str, None, None]:
         """Make a model prediction."""
         data = {
-            "question": query,
-            "context": "",
-            "use_knowledge_base": use_knowledge_base,
-            "num_tokens": num_tokens,
+               "messages": [
+                        {
+                        "role": "user",
+                        "content": query
+                        }
+                    ],
+                    "use_knowledge_base": use_knowledge_base,
+                    "temperature": 0.2,
+                    "top_p": 0.7,
+                    "max_tokens": num_tokens,
+                    "seed": 42,
+                    "bad": ["string"],
+                    "stop": ["string"],
+                    "stream": True
         }
         url = f"{self.server_url}/generate"
         _LOGGER.debug(
@@ -87,8 +98,22 @@ class ChatClient:
         try:
             with requests.post(url, stream=True, json=data, timeout=50, headers=carrier) as req:
                     req.raise_for_status()
-                    for chunk in req.iter_content(16):
-                        yield chunk.decode("UTF-8")
+                    for chunk in req.iter_lines():
+                        raw_resp = chunk.decode("UTF-8")
+                        if not raw_resp:
+                            continue
+                        resp_dict = None
+                        try:
+                            resp_dict = json.loads(raw_resp[6:])
+                            resp_choices = resp_dict.get("choices", [])
+                            if len(resp_choices):
+                                resp_str = resp_choices[0].get("message", {}).get("content", "")
+                                yield resp_str
+                            else:
+                                yield ""
+                        except Exception as e:
+                            raise ValueError(f"Invalid response json: {raw_resp}") from e
+
         except Exception as e:
             _LOGGER.error(f"Failed to get response from /generate endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")
             yield str("Failed to get response from /generate endpoint of chain-server. Check if the fastapi server in chain-server is up. Refer to chain-server logs for details.")
@@ -100,7 +125,7 @@ class ChatClient:
     @tracing.instrumentation_wrapper
     def upload_documents(self, carrier, file_paths: typing.List[str]) -> None:
         """Upload documents to the kb."""
-        url = f"{self.server_url}/uploadDocument"
+        url = f"{self.server_url}/documents"
         headers = {
             **carrier,
             "accept": "application/json",

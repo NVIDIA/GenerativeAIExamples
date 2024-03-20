@@ -1,5 +1,5 @@
 # Multimodal RAG Assistant with NVIDIA NeMo
-Create a simple example to showcase multimodal RAG. It should be easy to adapt, easy to build on top of and uses NVIDIA AI Foundation Models.  
+Create a simple example to showcase multimodal RAG. It should be easy to adapt, easy to build on top of and uses NVIDIA AI Foundation Models.
 
 # Implemented Features
 - [RAG in 5 minutes Chatbot Video](https://youtu.be/N_OOfkEWcOk) Setup with NVIDIA AI Playground components
@@ -26,7 +26,7 @@ The following describes how you can have this chatbot up-and-running in less tha
    pip install -r experimental/multimodal_assistant/requirements.txt
    ```
 
-3. Set your NVIDIA_API_KEY. Follow the steps 1-4 mentioned [here](../../docs/rag/aiplayground.md#prepare-the-environment) to get this.
+3. Set your NVIDIA_API_KEY. Follow the steps mentioned [here](../../docs/ai-foundation-models.md#get-an-api-key-for-the-mixtral-8x7b-instruct-api-endpoint) to get this.
    ```
    export NVIDIA_API_KEY="provide_your_key"
    ```

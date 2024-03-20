@@ -1,0 +1,8 @@
+pymupdf==1.23.15
+gspread==6.0.0
+pandas==2.2.0
+Pillow==10.2.0
+pydantic==2.5.3
+pymilvus==2.3.5
+python_pptx==0.6.23
+Requests==2.31.0

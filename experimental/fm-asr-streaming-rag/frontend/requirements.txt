@@ -1,0 +1,12 @@
+dataclass_wizard==0.22.2
+gradio>=4.17.0
+jinja2==3.1.2
+numpy==1.25.2
+protobuf==3.20.3
+PyYAML==6.0
+tritonclient[all]==2.36.0
+uvicorn==0.22.0
+scipy==1.12.0
+psutil==5.9.8
+pynvml==11.5.0
+flask==3.0.2
