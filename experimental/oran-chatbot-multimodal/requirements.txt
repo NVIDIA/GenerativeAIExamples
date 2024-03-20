@@ -4,7 +4,7 @@ dataclass-wizard==0.22.2
 datasets
 docx2txt
 faiss-cpu
-fastapi==0.104.1
+fastapi==0.109.1
 gspread==6.0.0
 jupyterlab==4.0.8
 langchain==0.0.352
