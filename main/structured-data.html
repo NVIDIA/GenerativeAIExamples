@@ -54,7 +54,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
@@ -83,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -146,11 +147,11 @@
 </div>
 <section id="example-features">
 <h2>Example Features<a class="headerlink" href="#example-features" title="Permalink to this headline"></a></h2>
-<p>This example deploys a developer RAG pipeline for chat Q&amp;A and serves inferencing from an NVIDIA AI Foundation Models endpoint
+<p>This example deploys a developer RAG pipeline for chat Q&amp;A and serves inferencing from an NVIDIA API Catalog endpoint
 instead of NVIDIA Triton Inference Server, a local Llama 2 model, or local GPUs.</p>
 <p>Developers get free credits for 10K requests to any of the available models.</p>
-<p>The key difference from <a class="reference internal" href="ai-foundation-models.html"><span class="doc std std-doc">Using the NVIDIA AI Foundation Models</span></a> example is that the example demonstrates how to use RAG with structured CSV data.</p>
-<p>This example uses models from the NVIDIA AI Foundation Models and Endpoints.
+<p>The key difference from the <a class="reference internal" href="api-catalog.html"><span class="doc std std-doc">Using the NVIDIA API Catalog</span></a> example is that this example demonstrates how to use RAG with structured CSV data.</p>
+<p>This example uses models from the NVIDIA API Catalog.
 This approach does not require embedding models or vector database solutions.
 Instead, the example uses <a class="reference external" href="https://docs.pandas-ai.com/en/latest/">PandasAI</a> to manage the workflow.</p>
 <p>For ingestion, the query server loads the structured data from a CSV file into a Pandas dataframe.
@@ -185,19 +186,21 @@ Customization of the CSV data retrieval prompt is not supported.</p>
 <th class="head"><p>Description</p></th>
 <th class="head"><p>Multi-GPU</p></th>
 <th class="head"><p>TRT-LLM</p></th>
-<th class="head"><p>NVIDIA AI Foundation</p></th>
+<th class="head"><p>Model Location</p></th>
 <th class="head"><p>Triton</p></th>
 <th class="head"><p>Vector Database</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>NV-Llama2-70B-RLHF</p></td>
+<tr class="row-even"><td><p>ai-mixtral-8x7b-instruct for response generation</p>
+<p>ai-mixtral-8x7b-instruct for PandasAI</p>
+</td>
 <td><p>Not Applicable</p></td>
 <td><p>PandasAI</p></td>
 <td><p>QA chatbot</p></td>
 <td><p>NO</p></td>
 <td><p>NO</p></td>
-<td><p>YES</p></td>
+<td><p>API Catalog</p></td>
 <td><p>NO</p></td>
 <td><p>Not Applicable</p></td>
 </tr>
@@ -206,11 +209,11 @@ Customization of the CSV data retrieval prompt is not supported.</p>
 <p>The following figure shows the sample topology:</p>
 <ul class="simple">
 <li><p>The sample chat bot web application communicates with the chain server.
-The chain server sends inference requests to an NVIDIA AI Foundation Models endpoint.</p></li>
+The chain server sends inference requests to an NVIDIA API Catalog endpoint.</p></li>
 <li><p>Optionally, you can deploy NVIDIA Riva. Riva can use automatic speech recognition to transcribe
 your questions and use text-to-speech to speak the answers aloud.</p></li>
 </ul>
-<p><img alt="Using NVIDIA AI Foundation Models endpoints for inference instead of local components." src="_images/ai-foundations-topology.png" /></p>
+<p><img alt="Using NVIDIA API Catalog endpoints for inference instead of local components." src="_images/ai-foundations-topology.png" /></p>
 </section>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
@@ -250,25 +253,28 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
 <p>Perform the following steps if you do not already have an API key.
 You can use different model API endpoints with the same API key.</p>
 <ol class="arabic">
-<li><p>Navigate to <a class="reference external" href="https://catalog.ngc.nvidia.com/ai-foundation-models">https://catalog.ngc.nvidia.com/ai-foundation-models</a>.</p></li>
-<li><p>Find the <strong>Mixtral 8x7B Instruct</strong> card and click <strong>Learn More</strong>.</p>
+<li><p>Navigate to <a class="reference external" href="https://build.nvidia.com/explore/discover">https://build.nvidia.com/explore/discover</a>.</p></li>
+<li><p>Find the <strong>Mixtral 8x7B Instruct</strong> card and click the card.</p>
 <p><img alt="Mixtral 8x7B Instruct model card" src="_images/mixtral-8x7b-instruct.png" /></p>
 </li>
-<li><p>Click the <strong>API</strong> button and then click <strong>Generate Key</strong>.</p>
-<p><img alt="API section of the playground tab." src="_images/image8.png" /></p>
+<li><p>Click <strong>Get API Key</strong>.</p>
+<p><img alt="API section of the model page." src="_images/image8.png" /></p>
 </li>
-<li><p>Save the generated API key.</p></li>
+<li><p>Click <strong>Generate Key</strong>.</p>
+<p><img alt="Generate key window." src="_images/api-catalog-generate-api-key.png" /></p>
+</li>
+<li><p>Click <strong>Copy Key</strong> and then save the API key.
+The key begins with the letters nvapi-.</p>
+<p><img alt="Key Generated widnow." src="_images/key-generated.png" /></p>
+</li>
 </ol>
 </section>
 <section id="build-and-start-the-containers">
 <h2>Build and Start the Containers<a class="headerlink" href="#build-and-start-the-containers" title="Permalink to this headline"></a></h2>
 <ol class="arabic">
-<li><p>In the Generative AI examples repository, edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/compose.env</span></code> file.</p>
-<p>Add the API for the model endpoint:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>...
-# Fill this out if you dont have a GPU. Leave this empty if you have a local GPU
-export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
-...
+<li><p>In the Generative AI examples repository, export this variable in terminal.</p>
+<p>Add the API key for the model endpoint:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>export NVIDIA_API_KEY=&quot;nvapi-...&quot;
 </pre></div>
 </div>
 </li>
@@ -308,7 +314,6 @@ export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
 Refer to <a class="reference internal" href="using-sample-web-application.html"><span class="doc std std-doc">Using the Sample Chat Web Application</span></a> for information about using the web interface.</p></li>
 <li><p>Upload a CSV from the <code class="docutils literal notranslate"><span class="pre">RetrievalAugmentedGeneration/examples/csv_rag</span></code> directory to the knowledge base.</p></li>
 <li><p>Enable the <strong>Use knowledge base</strong> checkbox when you submit a question.</p></li>
-<li><p><a class="reference internal" href="vector-database.html"><span class="doc std std-doc">Configuring an Alternative Vector Database</span></a></p></li>
 <li><p>Stop the containers by running <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/rag-app-structured-data-chatbot.yaml</span> <span class="pre">down</span></code>.</p></li>
 </ul>
 </section>

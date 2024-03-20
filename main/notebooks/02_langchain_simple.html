@@ -54,7 +54,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../query-decomposition.html">Query Decomposition</a></li>
@@ -83,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -215,7 +216,7 @@ Langchain allows you to <a class="reference external" href="https://python.langc
 <section id="step-4-transform-documents-retrieval">
 <h2>Step 4: Transform Documents <a class="reference external" href="https://python.langchain.com/docs/modules/data_connection/"><em>(Retrieval)</em></a><a class="headerlink" href="#step-4-transform-documents-retrieval" title="Permalink to this headline"></a></h2>
 <p>Once documents have been loaded, they are often transformed. One method of transformation is known as <strong>chunking</strong>, which breaks down large pieces of text, for example, a long document, into smaller segments. This technique is valuable because it helps <a class="reference external" href="https://www.pinecone.io/learn/chunking-strategies/">optimize the relevance of the content returned from the vector database</a>.</p>
-<p>LangChain provides a <a class="reference external" href="https://python.langchain.com/docs/integrations/document_transformers/">variety of document transformers</a>, such as text splitters. In this example, we use a <a class="reference external" href="https://api.python.langchain.com/en/latest/text_splitter/langchain.text_splitter.SentenceTransformersTokenTextSplitter.html#langchain.text_splitter.SentenceTransformersTokenTextSplitter"><code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code></a>. The <code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code> is a specialized text splitter for use with the sentence-transformer models. The default behaviour is to split the text into chunks that fit the token window of the sentence transformer model that you would like to use. This sentence transformer model is used to generate the embeddings from documents.</p>
+<p>LangChain provides a <a class="reference external" href="https://python.langchain.com/docs/integrations/document_transformers/">variety of document transformers</a>, such as text splitters. In this example, we use a <a class="reference external" href="https://api.python.langchain.com/en/latest/sentence_transformers/langchain_text_splitters.sentence_transformers.SentenceTransformersTokenTextSplitter.html"><code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code></a>. The <code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code> is a specialized text splitter for use with the sentence-transformer models. The default behaviour is to split the text into chunks that fit the token window of the sentence transformer model that you would like to use. This sentence transformer model is used to generate the embeddings from documents.</p>
 <p>There are some nuanced complexities to text splitting since semantically related text, in theory, should be kept together.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">

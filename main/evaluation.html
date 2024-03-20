@@ -54,7 +54,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
@@ -83,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -278,9 +279,6 @@ You can use different model API endpoints with the same API key.</p>
 # NOTE: This should be an absolute path and not relative path
 export MODEL_DIRECTORY=&quot;/path/to/llama/llama-2-13b_chat/&quot;
 
-# Fill this out if you dont have a GPU. Leave this empty if you have a local GPU
-export NVIDIA_API_KEY=&quot;nvapi-...&quot;
-
 # the architecture of the model. eg: llama
 export MODEL_ARCHITECTURE=&quot;llama&quot;
 
@@ -290,8 +288,19 @@ export MODEL_NAME=&quot;Llama-2-13b-chat&quot;
 </pre></div>
 </div>
 </li>
+<li><p>Export the <code class="docutils literal notranslate"><span class="pre">NVIDIA_API_KEY</span></code> variable in terminal.</p>
+<p>Add the API for the model endpoint:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
+</pre></div>
+</div>
+</li>
 <li><p>From the root of the repository, build the containers:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/rag-app-text-chatbot.yaml<span class="w"> </span>build
+</pre></div>
+</div>
+</li>
+<li><p>Start the milvus container:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>deploy/compose/docker-compose-vectordb.yaml<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>milvus
 </pre></div>
 </div>
 </li>
@@ -323,7 +332,7 @@ export MODEL_NAME=&quot;Llama-2-13b-chat&quot;
 <li><p>Access the evaluation notebook server at <code class="docutils literal notranslate"><span class="pre">http://host-ip:8889</span></code> from your web browser and run the notebooks sequentially starting from <code class="docutils literal notranslate"><span class="pre">01_synthetic_data_generation.ipynb</span></code>.</p></li>
 <li><p>Stop the containers by running the following commands:</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/rag-app-query-decomposition-agent.yaml</span> <span class="pre">down</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/rag-app-text-chatbot.yaml</span> <span class="pre">down</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/docker-compose-vectordb.yaml</span> <span class="pre">down</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/docker-compose-evaluation.yaml</span> <span class="pre">down</span></code></p></li>
 </ul>

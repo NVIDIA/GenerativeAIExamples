@@ -194,6 +194,7 @@
 				"properties": {
 					"id": {
 						"type": "string",
+						"maxLength": 100000,
 						"title": "Id",
 						"default": ""
 					},
@@ -202,17 +203,9 @@
 							"$ref": "#/components/schemas/ChainResponseChoices"
 						},
 						"type": "array",
+						"maxItems": 256,
 						"title": "Choices",
-						"default": [
-							{
-								"index": 0,
-								"message": {
-									"content": "",
-									"role": "assistant"
-								},
-								"finish_reason": ""
-							}
-						]
+						"default": []
 					}
 				},
 				"type": "object",
@@ -223,6 +216,8 @@
 				"properties": {
 					"index": {
 						"type": "integer",
+						"maximum": 256,
+						"minimum": 0,
 						"title": "Index",
 						"default": 0
 					},
@@ -232,6 +227,7 @@
 								"$ref": "#/components/schemas/Message"
 							}
 						],
+						"title": "Message",
 						"default": {
 							"role": "assistant",
 							"content": ""
@@ -239,6 +235,7 @@
 					},
 					"finish_reason": {
 						"type": "string",
+						"maxLength": 4096,
 						"title": "Finish Reason",
 						"default": ""
 					}
@@ -251,11 +248,13 @@
 				"properties": {
 					"content": {
 						"type": "string",
+						"maxLength": 131072,
 						"title": "Content",
 						"description": "The content of the document chunk."
 					},
 					"filename": {
 						"type": "string",
+						"maxLength": 4096,
 						"title": "Filename",
 						"description": "The name of the file the chunk belongs to."
 					},
@@ -278,11 +277,14 @@
 				"properties": {
 					"query": {
 						"type": "string",
+						"maxLength": 131072,
 						"title": "Query",
 						"description": "The content or keywords to search for within documents."
 					},
 					"top_k": {
 						"type": "integer",
+						"maximum": 256,
+						"minimum": 0,
 						"title": "Top K",
 						"description": "The maximum number of documents to return in the response.",
 						"default": 4
@@ -302,6 +304,7 @@
 							"$ref": "#/components/schemas/DocumentChunk"
 						},
 						"type": "array",
+						"maxItems": 256,
 						"title": "Chunks",
 						"description": "List of document chunks."
 					}
@@ -317,9 +320,11 @@
 				"properties": {
 					"documents": {
 						"items": {
-							"type": "string"
+							"type": "string",
+							"maxLength": 131072
 						},
 						"type": "array",
+						"maxItems": 1000000,
 						"title": "Documents",
 						"description": "List of filenames."
 					}
@@ -348,20 +353,20 @@
 				"properties": {
 					"role": {
 						"type": "string",
+						"maxLength": 256,
 						"title": "Role",
-						"description": "Role for a message AI, User and System"
+						"description": "Role for a message AI, User and System",
+						"default": "user"
 					},
 					"content": {
 						"type": "string",
+						"maxLength": 131072,
 						"title": "Content",
-						"description": "The input query/prompt to the pipeline."
+						"description": "The input query/prompt to the pipeline.",
+						"default": "I am going to Paris, what should I see?"
 					}
 				},
 				"type": "object",
-				"required": [
-					"role",
-					"content"
-				],
 				"title": "Message",
 				"description": "Definition of the Chat Message type."
 			},
@@ -372,6 +377,7 @@
 							"$ref": "#/components/schemas/Message"
 						},
 						"type": "array",
+						"maxItems": 50000,
 						"title": "Messages",
 						"description": "A list of messages comprising the conversation so far. The roles of the messages must be alternating between user and assistant. The last input message should have role user. A message with the the system role is optional, and must be the very first message if it is present."
 					},
@@ -382,27 +388,35 @@
 					},
 					"temperature": {
 						"type": "number",
+						"maximum": 1,
+						"minimum": 0.1,
 						"title": "Temperature",
 						"description": "The sampling temperature to use for text generation. The higher the temperature value is, the less deterministic the output text will be. It is not recommended to modify both temperature and top_p in the same call.",
 						"default": 0.2
 					},
 					"top_p": {
 						"type": "number",
+						"maximum": 1,
+						"minimum": 0.1,
 						"title": "Top P",
 						"description": "The top-p sampling mass used for text generation. The top-p value determines the probability mass that is sampled at sampling time. For example, if top_p = 0.2, only the most likely tokens (summing to 0.2 cumulative probability) will be sampled. It is not recommended to modify both temperature and top_p in the same call.",
 						"default": 0.7
 					},
 					"max_tokens": {
 						"type": "integer",
+						"maximum": 1024,
+						"minimum": 0,
 						"title": "Max Tokens",
 						"description": "The maximum number of tokens to generate in any given call. Note that the model is not aware of this value, and generation will simply stop at the number of tokens specified.",
 						"default": 1024
 					},
 					"stop": {
 						"items": {
-							"type": "string"
+							"type": "string",
+							"maxLength": 256
 						},
 						"type": "array",
+						"maxItems": 256,
 						"title": "Stop",
 						"description": "A string or a list of strings where the API will stop generating further tokens. The returned text will not contain the stop sequence."
 					}

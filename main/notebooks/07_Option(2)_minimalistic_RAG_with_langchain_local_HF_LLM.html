@@ -54,7 +54,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../query-decomposition.html">Query Decomposition</a></li>
@@ -83,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -135,7 +136,7 @@
 <li><p>Registered with <a class="reference external" href="https://www.nvidia.com/en-us/gpu-cloud/">NVIDIA NGC</a> and can pull and run NGC PyTorch containers.</p></li>
 <li><p>Installed Python dependencies for this notebook, by overwriting langchain-core version:</p>
 <p>pip install langchain-core==0.1.15</p>
-<p>If you are using the <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/main/notebooks/Dockerfile.gpu_notebooks">Dockerfile.gpu_notebook</a>, the dependency is already installed for you.</p>
+<p>If you are using the <a class="reference external" href="https://raw.githubusercontent.com/NVIDIA/GenerativeAIExamples/main/notebooks/Dockerfile.gpu_notebook">Dockerfile.gpu_notebook</a>, the dependency is already installed for you.</p>
 </li>
 </ol>
 <p>The notebook will walk you through how to build an end-to-end RAG pipeline using <a class="reference external" href="https://python.langchain.com/docs/get_started/introduction">LangChain</a>, <a class="reference external" href="https://python.langchain.com/docs/integrations/vectorstores/faiss">faiss</a> as the vectorstore and a custom llm of your choice from huggingface ( more specifically, we will be using <a class="reference external" href="https://huggingface.co/meta-llama/Llama-2-13b-chat-hf">HuggingFace Llama-2-13b-chat-hf</a> in this notebook, but the process is similar for other llms from huggingface.</p>

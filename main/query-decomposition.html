@@ -54,7 +54,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ai-foundation-models.html">AI Foundation Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Query Decomposition</a></li>
@@ -83,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -147,12 +148,12 @@
 <section id="example-features">
 <h2>Example Features<a class="headerlink" href="#example-features" title="Permalink to this headline"></a></h2>
 <p>This example deploys a recursive query decomposition example for chat Q&amp;A.
-The example uses the llama2-70b chat model from the NVIDIA AI Foundation endpoint for inference.</p>
+The example uses the llama2-70b chat model from an NVIDIA API Catalog endpoint for inference.</p>
 <p>Query decomposition can perform RAG when the agent needs to access information from several different documents
 (also referred to as <em>chunks</em>) or to perform some computation on the answers.
 This example uses a custom LangChain agent that recursively breaks down the questions into subquestions.
 The agent then attempts to answer the subquestions.</p>
-<p>The agent has access to 2 tools:</p>
+<p>The agent has access to two tools:</p>
 <ul class="simple">
 <li><p>search: to perform standard RAG on a subquestion.</p></li>
 <li><p>math: to pose a math question to the LLM.</p></li>
@@ -177,19 +178,19 @@ The agent then attempts to answer the subquestions.</p>
 <th class="head"><p>Description</p></th>
 <th class="head"><p>Multi-GPU</p></th>
 <th class="head"><p>TRT-LLM</p></th>
-<th class="head"><p>NVIDIA AI Foundation</p></th>
+<th class="head"><p>Model Location</p></th>
 <th class="head"><p>Triton</p></th>
 <th class="head"><p>Vector Database</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>llama2_70b</p></td>
+<tr class="row-even"><td><p>ai-llama2-70b</p></td>
 <td><p>nvolveqa_40k</p></td>
 <td><p>LangChain</p></td>
 <td><p>QA chatbot</p></td>
 <td><p>NO</p></td>
 <td><p>NO</p></td>
-<td><p>YES</p></td>
+<td><p>API Catalog</p></td>
 <td><p>NO</p></td>
 <td><p>Milvus</p></td>
 </tr>
@@ -198,11 +199,11 @@ The agent then attempts to answer the subquestions.</p>
 <p>The following figure shows the sample topology:</p>
 <ul class="simple">
 <li><p>The sample chat bot web application communicates with the chain server.
-The chain server sends inference requests to an NVIDIA AI Foundation Models endpoint.</p></li>
+The chain server sends inference requests to an NVIDIA API Catalog endpoint.</p></li>
 <li><p>Optionally, you can deploy NVIDIA Riva. Riva can use automatic speech recognition to transcribe
 your questions and use text-to-speech to speak the answers aloud.</p></li>
 </ul>
-<p><img alt="Using NVIDIA AI Foundation Models endpoints for inference instead of local components." src="_images/ai-foundations-topology.png" /></p>
+<p><img alt="Using NVIDIA API Catalog endpoints for inference instead of local components." src="_images/ai-foundations-topology.png" /></p>
 </section>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
@@ -242,25 +243,28 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
 <p>Perform the following steps if you do not already have an API key.
 You can use different model API endpoints with the same API key.</p>
 <ol class="arabic">
-<li><p>Navigate to <a class="reference external" href="https://catalog.ngc.nvidia.com/ai-foundation-models">https://catalog.ngc.nvidia.com/ai-foundation-models</a>.</p></li>
-<li><p>Find the <strong>Llama 2 70B</strong> card and click <strong>Learn More</strong>.</p>
+<li><p>Navigate to <a class="reference external" href="https://build.ngc.nvidia.com/explore/reasoning">https://build.ngc.nvidia.com/explore/reasoning</a>.</p></li>
+<li><p>Find the <strong>Llama 2 70B</strong> card and click the card.</p>
 <p><img alt="Llama 2 70B model card" src="_images/llama-2-70b-card.png" /></p>
 </li>
-<li><p>Click the <strong>API</strong> button and then click <strong>Generate Key</strong>.</p>
-<p><img alt="API section of the playground tab." src="_images/llama-2-generate-key.png" /></p>
+<li><p>Click <strong>Get API Key</strong>.</p>
+<p><img alt="API section of the model page." src="_images/llama-2-generate-key.png" /></p>
 </li>
-<li><p>Save the generated API key.</p></li>
+<li><p>Click <strong>Generate Key</strong>.</p>
+<p><img alt="Generate key window." src="_images/api-catalog-generate-api-key.png" /></p>
+</li>
+<li><p>Click <strong>Copy Key</strong> and then save the API key.
+The key begins with the letters nvapi-.</p>
+<p><img alt="Key Generated window." src="_images/key-generated.png" /></p>
+</li>
 </ol>
 </section>
 <section id="build-and-start-the-containers">
 <h2>Build and Start the Containers<a class="headerlink" href="#build-and-start-the-containers" title="Permalink to this headline"></a></h2>
 <ol class="arabic">
-<li><p>In the Generative AI examples repository, edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/compose.env</span></code> file.</p>
+<li><p>In the Generative AI examples repository, export this variable in terminal.</p>
 <p>Add the API key for the model endpoint:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>...
-<span class="c1"># Fill this out if you dont have a GPU. Leave this empty if you have a local GPU</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">NVIDIA_API_KEY</span><span class="o">=</span><span class="s2">&quot;nvapi=...&quot;</span>
-...
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">NVIDIA_API_KEY</span><span class="o">=</span><span class="s2">&quot;nvapi=...&quot;</span>
 </pre></div>
 </div>
 </li>
