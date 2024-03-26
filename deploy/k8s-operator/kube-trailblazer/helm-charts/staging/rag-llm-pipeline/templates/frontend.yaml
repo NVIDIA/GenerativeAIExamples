@@ -16,7 +16,7 @@ spec:
     spec:
 
       imagePullSecrets:
-        - name:   nvcrio
+        - name: {{ .Values.images.registry.ImagePullSecret.name }}
       containers:
       - name: llm-playground
         imagePullPolicy: IfNotPresent
@@ -27,9 +27,9 @@ spec:
         - frontend
         - --port
         - "8090"
-        env: 
+        env:
         - name: APP_MODELNAME
-          value: {{ .Values.frontend.modelName }} 
+          value: {{ .Values.frontend.modelName }}
         - name: APP_SERVERPORT
           value: "8081"
         - name: APP_SERVERURL
@@ -49,4 +49,3 @@ spec:
     - protocol: TCP
       port: 8090
       nodePort: 30001
-    

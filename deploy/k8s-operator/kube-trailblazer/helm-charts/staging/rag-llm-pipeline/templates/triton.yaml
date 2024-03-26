@@ -7,14 +7,15 @@ data:
     #!/bin/bash -x
     set -e
 
-    rm -rf /usr/local/cuda-12.2/targets/x86_64-linux/lib/stubs/   
-    ldconfig 
-    
+    rm -rf /usr/local/cuda-12.2/targets/x86_64-linux/lib/stubs/
+    ldconfig
+
     /usr/bin/python3 -m  model_server {{ .Values.triton.modelArchitecture | quote }}  \
       --max-input-length {{ .Values.triton.modelMaxInputLength | quote}} \
-      --max-output-length {{ .Values.triton.modelMaxOutputLength | quote}}
-   
---- 
+      --max-output-length {{ .Values.triton.modelMaxOutputLength | quote}} \
+      --quantization {{ .Values.triton.quantization | quote}}
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,7 +34,7 @@ spec:
         app.kubernetes.io/name: triton-inference-server
     spec:
       imagePullSecrets:
-        - name:   nvcrio
+        - name: {{ .Values.images.registry.ImagePullSecret.name }}
       containers:
       - name: triton-inference-server
         imagePullPolicy: IfNotPresent
@@ -50,10 +51,10 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            {{ .Values.triton.gpu.type }}: {{ .Values.triton.gpu.count }} 
+            {{ .Values.triton.gpu.type }}: {{ .Values.triton.gpu.count }}
         volumeMounts:
         - mountPath: /model
-          name: model 
+          name: model
         - mountPath: /dev/shm
           name: dshm
         - name: entrypoint
@@ -62,15 +63,15 @@ spec:
           subPath: entrypoint.sh
       volumes:
       - name: model
-        hostPath:
-          path: {{ .Values.triton.modelDirectory }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.triton.modelPVC }}
       - name: dshm
         emptyDir:
           medium: Memory
       - name: entrypoint
         configMap:
           defaultMode: 0700
-          name: triton-entrypoint 
+          name: triton-entrypoint
 ---
 apiVersion: v1
 kind: Service
@@ -83,4 +84,3 @@ spec:
     - protocol: TCP
       port: 8001
       targetPort: 8001
-
