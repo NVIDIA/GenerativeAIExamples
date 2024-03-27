@@ -31,13 +31,13 @@ You can download either model from the NVIDIA NGC Catalog, using the NGC CLI. Th
 To download the model, execute one of the following commands, based on which model you want to use:
 
 ```bash
-ngc registry model download-version "nvidia/nemo/gemma_2b_base:1.0"
+ngc registry model download-version "nvidia/nemo/gemma_2b_base:1.1"
 ```
 
 or
 
 ```bash
-ngc registry model download-version "nvidia/nemo/gemma_7b_base:1.0"
+ngc registry model download-version "nvidia/nemo/gemma_7b_base:1.1"
 ```
 
 ## Getting NeMo Framework
