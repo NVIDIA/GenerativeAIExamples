@@ -12,7 +12,7 @@ minio==7.2.5
 asyncpg==0.29.0
 psycopg2-binary==2.9.9
 pgvector==0.2.5
-langchain-core==0.1.29
+langchain-core==0.1.35
 langchain-nvidia-ai-endpoints==0.0.3
 langchain-nvidia-trt==0.0.1rc0
 nemollm==0.3.4
