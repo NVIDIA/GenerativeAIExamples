@@ -15,7 +15,7 @@ llama-hub==0.0.43
 llama-index==0.9.22
 opencv-python==4.8.0.74
 pandas==2.2.0
-Pillow==10.2.0
+Pillow==10.3.0
 pydantic==2.5.3
 pymilvus==2.3.1
 pymupdf==1.23.15
