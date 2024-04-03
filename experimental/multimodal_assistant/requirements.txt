@@ -5,7 +5,7 @@ langchain_community==0.0.16
 langchain_core==0.1.16
 langchain_nvidia_ai_endpoints==0.0.1
 pandas==2.2.0
-Pillow==10.2.0
+Pillow==10.3.0
 pydantic==2.5.3
 pymilvus==2.3.5
 python_pptx==0.6.23
