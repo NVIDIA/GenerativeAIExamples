@@ -15,7 +15,7 @@ This repository is designed to make it extremely easy to set up your own retriev
 
 Before running the pipeline, please ensure that you have the following prerequisites:
 - Python version 3.10.12
-- <TODO: verify if GPU is necessary> GPU-enabled machine
+- GPU-enabled machine
 - NVIDIA API Key
 
 If you do not have a NVIDIA API Key, please follow the steps 1-4 mentioned [here](https://github.com/NVIDIA/GenerativeAIExamples/blob/main/docs/rag/aiplayground.md#prepare-the-environment) to get your key.
@@ -31,23 +31,14 @@ The following describes how you can have this chatbot up-and-running in less tha
 ### Step 2. Clone this repository to a Linux machine
 
    ```
-   git clone <TODO: PUBLIC REPO LINK>
+   git clone https://github.com/NVIDIA/GenerativeAIExamples.git && cd GenerativeAIExamples/experimental/oran-chatbot-multimodal
    ```
-   Once you have tested this on a local machine, you can [request a VM from IT](https://itss.nvidia.com/) and deploy it there so it can run all the time.
-   
-   Currently, we are using the internal gitlab repository, which can be downloaded using following command:
-   ```
-   git clone -b multimodal_oran https://gitlab-master.nvidia.com/sae-industry/telco/ai-workflows/rag/oran_chatbot.git
-   ```
-
 
 ### Step 3. Install the requirements
    Goto the root of the oran_chatbot repository, and install the requirements in the virtual environment.
    ```
    pip install -r requirements.txt
    ```
-
-<!-- #5. Follow instructions available [here](https://milvus.io/docs/install_standalone-docker.md#Install-Milvus-standalone-using-Docker-Compose). -->
 
 ### Step 4. Setup PowerPoint parsing
 If you want to use the PowerPoint parsing feature, you will need LibreOffice. On Ubuntu Linux systems, use the following command to install it.
@@ -56,28 +47,16 @@ If you want to use the PowerPoint parsing feature, you will need LibreOffice. On
    ```
 
 ### Step 5. (Optional) Setup Feedback feature
-If you would like to use the "Feedback" feature, you will need a service account for Google Sheets. 
-Save your service account credentials file as `service.json` inside the `oran_chatbot` folder.
+If you would like to use the "Feedback" feature, you will need a service account for Google Sheets.
+Save your service account credentials file as `service.json` inside the `oran-chatbot-multimodel` folder.
 
-### Step 6. Setup your NVIDIA API key 
-   <!-- <TODO: Check if these API keys are being used internally.> -->
-   <!-- We needFollow the steps 1-4 mentioned [here](https://github.com/NVIDIA/GenerativeAIExamples/blob/main/docs/rag/aiplayground.md#prepare-the-environment) to get your NVIDIA API key. -->
+### Step 6. Setup your NVIDIA API key
+
    To access NeMo services and language model, we will export the NVIDIA API key to the environment using the following command:
-   
+
    ```
    export NVIDIA_API_KEY="nvapi-b**************"
    ```
-   <!-- Now, we will generate an NVIDIA GPU Cloud (NGC) API Key for the NeMo service. You can request/get access for yourself or your team by reading instructions available [here](https://nvidia.sharepoint.com/sites/NemoService/SitePages/Team.aspx). For using this repository, you will need to export the NGC API KEY as an environment variable as shown below.
-   
-   ```
-   export NGC_API_KEY="Y2c2Nm**************"
-   ``` -->
-
-<!-- ### Step 7: Download ORAN documents
-   <!-- <TODO: Are we using google drive for this? update this section> -->
-   <!-- Download the official O-RAN documentations from [here](https://www.o-ran.org/specifications). These documents should be placed inside the `vectorstore/oran` folder. --> 
-
-   <!-- Download these documents in the `vectorstore/oran` file. -->
 
 ### Step 7. Run the chatbot using streamlit
    Go to the `oran_chatbot` folder to run the O-RAN RAG chatbot using streamlit.
@@ -96,20 +75,17 @@ Save your service account credentials file as `service.json` inside the `oran_ch
    ssh -L PORT:IP_ADDR:PORT localhost
    ```
 
-   <!-- To setup the vector database, use the `Create vector DB` button under the `Evaluation Metrics` tab.   
-   You can click on `Browse Files` and select your knowledge source. After selecting, click on `Upload!` button to complete the ingestion process. -->
-
 ### Step 8. Adding documents and creating vector database
 
    Before you can run the chatbot, we need to upload our documents to the bot and create a vector database.
 
-   The official O-RAN documentations are available [here](https://www.o-ran.org/specifications). 
+   The official O-RAN documentations are available [here](https://www.o-ran.org/specifications).
 
    To upload these documents to O-RAN bot, you can use either of the following method:
    - Using streamlit UI, you can navigate to the `Knowledge Base` tab. Select the files using the `Browse Files` button and click on `Upload!` button.
    - Alternatively, you can upload the documents through the backend using following steps:
 
-      - Make a directory named `oran` inside the vectorstore folder using command 
+      - Make a directory named `oran` inside the vectorstore folder using command
       ```mkdir vectorstore/oran```
       - Move your O-RAN documents inside this folder using `cp /path/to/oran_document /vectorstore/oran`, or `cp /path/to/oran_folder/* /vectorstore/oran`. If you are running the bot through a remote server, you can use `scp` to upload the documents from your local machine to the server.
 
@@ -119,22 +95,20 @@ Save your service account credentials file as `service.json` inside the `oran_ch
 
    #### Add or delete documents from knowledge base
 
-   All the documents in the knowledge base are shown in the drop-down menu of `Knowledge Base` tab. 
-   
+   All the documents in the knowledge base are shown in the drop-down menu of `Knowledge Base` tab.
+
    If you want to add more documents to your existing knowledge base, navigate to the `Knowledge Base` tab, select the files using the `Browse Files` button and click on `Upload!` button. Finally, click on the `Re-train Multimodal ORAN Assistant' button to complete the ingestion process.
 
    You can delete files from your knowledge base using the `Delete File` button. The default password to delete files is `avfleetengineering`, and can be changed using `1_Knowledge_Base.py` file inside `pages` folder.
-  
+
    **Warning:** The `Create vector DB` button overwrites any existing vector database, and creates a new vector database using documents available in the `vectorstore/oran` folder. To upload additional documents to your database, always use the `Re-train Multimodal ORAN Assistant` button.
 
 
 ### Step 9. Evaluating the chatbot
 
    Once our chatbot is running, we can use the evaluation scripts to test its performance.
-   
-   The `Run synthetic data generation` button in `Evaluation Metrics` tab generates a test dataset using the files in knowledge base. Once the synthetic test set is generated, click on the `Generate evaluation metrics` button to see a comprehensive evaluation report for the RAG performance.
-   <!-- <TODO: fill this. Mention about regenerating evals pkl file> -->
 
+   The `Run synthetic data generation` button in `Evaluation Metrics` tab generates a test dataset using the files in knowledge base. Once the synthetic test set is generated, click on the `Generate evaluation metrics` button to see a comprehensive evaluation report for the RAG performance.
 
 ## Architecture Diagram
 
@@ -165,7 +139,6 @@ This uses the NVIDIA NeMo Retriever model through NVIDIA AI Playground. This is 
 The vector database being used here is FAISS, a CPU-based embedding database. It can easily be swapped out for numerous other options like ChromaDB, Pinecone, Milvus and others. Some of the options are listed on the [LangChain docs here](https://python.langchain.com/docs/integrations/vectorstores/).
 
 ### Prompt Augmentation
-<!-- <TODO: We can update this section> -->
 Depending on the backend and model, you may need to modify the way in which you format your prompt and chat conversations to interact with the model. The current design considers each query independently. However, if you put the input as a set of user/assistant/user interactions, you can combine multi-turn conversations. This may also require periodic summarization of past context to ensure the chat does not exceed the context length of the model.
 
 ### Backend
@@ -174,7 +147,6 @@ Depending on the backend and model, you may need to modify the way in which you 
 
 ## Pipeline Enhancement Opportunities:
 
-<!-- <TODO: Do we want to keep this section? maybe reframe it better? maybe something like 'now that we have implemented this, you can try extending it's capabilities by xyz so that it looks more like learning opportunity for users rather than incomplete implementation> -->
 ### Multimodal Parsing:
 Upgrade the current PyMuPDF-based PDF parsing with a more sophisticated parser for improved extraction of images and tables. Employ a high-quality Multimodal Language Model (MLLM) to enhance image descriptions and implement structured data analysis techniques like text2sql or text2pandas for efficient table summarization.
 
