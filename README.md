@@ -56,6 +56,19 @@ Enterprise RAG examples also support local and remote inference with [TensorRT-L
 | ------- | ----------- | ---------- | -------------------------------------------------------------------------- | --------- | ---------- | ------- | ---------------- | ------ | --------------- |
 | llama-2 | NV-Embed-QA | LlamaIndex | Chat bot, Kubernetes deployment [[README](./docs/developer-llm-operator/)] | No        | No         | Yes     | No               | Yes    | Milvus          |
 
+
+### Generative AI Model Examples
+
+The generative AI model examples include end-to-end steps for pre-training, customizing, aligning and running inference on state-of-the-art generative AI models leveraging the [NVIDIA NeMo Framework](https://github.com/NVIDIA/NeMo)
+
+| Model   | Resources(s) | Framework | Description |
+| ------- | ----------- | ----------- | ----------- |
+| gemma | [Docs](./models/Gemma/), [LoRA](./models/Gemma/lora.ipynb), [SFT](./models/Gemma/sft.ipynb) | NeMo | Aligning and customizing Gemma, and exporting to TensorRT-LLM format for inference |
+| codegemma | [Docs](./models/Codegemma/), [LoRA](./models/Codegemma/lora.ipynb) | NeMo | Customizing Codegemma, and exporting to TensorRT-LLM format for inference |
+| starcoder-2 | [LoRA](./models/StarCoder2/lora.ipynb), [Inference](./models/StarCoder2/inference.ipynb) | NeMo | Customizing Starcoder-2 with NeMo Framework, optimizing with NVIDIA TensorRT-LLM, and deploying with NVIDIA Triton Inference Server |
+| small language models (SLMs) | [Docs](./models/NeMo/slm/), [Pre-training and SFT](./models/NeMo/slm/slm_pretraining_sft.ipynb), [Eval](./models/NeMo/slm/megatron_gpt_eval_server.ipynb) | NeMo | Training, alignment, and running evaluation on SLMs using various techniques |
+
+
 ## Tools
 
 Example tools and tutorials to enhance LLM development and productivity when using NVIDIA RAG pipelines.
