@@ -34,7 +34,7 @@ The default sample deployment contains:
 - [LangChain](https://github.com/langchain-ai/langchain/) and [LlamaIndex](https://www.llamaindex.ai/) for combining language model components and easily constructing question-answering from a company's database
 - [Sample Jupyter Notebooks](jupyter-server.md) and [chat bot web application/API calls](./frontend.md) so that you can test the chat system in an interactive manner
 - [Milvus](https://milvus.io/docs/install_standalone-docker.md) - Generated embeddings are stored in a vector database. The vector DB used in this workflow is Milvus. Milvus is an open-source vector database capable of NVIDIA GPU-accelerated vector searches.
-- [e5-large-v2 model](https://huggingface.co/embaas/sentence-transformers-e5-large-v2) from Hugging Face to generate the embeddings.
+- [UAE-Large-V1 model](https://huggingface.co/WhereIsAI/UAE-Large-V1) from Hugging Face to generate the embeddings.
 - [Llama2](https://github.com/facebookresearch/llama/), an open source model from Meta, to formulate natural responses.
 
 This sample deployment is a reference for you to build your own enterprise AI solution with minimal effort.
@@ -77,7 +77,7 @@ The following graphic describes an overview of this inference pipeline:
 
 RAG begins with a knowledge base of relevant up-to-date information.
 Because data within an enterprise is frequently updated, the ingestion of documents into a knowledge base is a recurring process and could be scheduled as a job.
-Next, content from the knowledge base is passed to an embedding model such as e5-large-v2 that the sample deployment uses.
+Next, content from the knowledge base is passed to an embedding model such as UAE-Large-V1 that the sample deployment uses.
 The embedding model converts the content to vectors, referred to as *embeddings*.
 Generating embeddings is a critical step in RAG.
 The embeddings provide dense numerical representations of textual information.
@@ -86,7 +86,7 @@ These embeddings are stored in a vector database, in this case Milvus, which is 
 ## User Query and Response Generation
 
 When a user query is sent to the inference server, it is converted to an embedding using the embedding model.
-This is the same embedding model that is used to convert the documents in the knowledge base, e5-large-v2, in the case of this sample deployment.
+This is the same embedding model that is used to convert the documents in the knowledge base, UAE-Large-V1, in the case of this sample deployment.
 The database performs a similarity/semantic search to find the vectors that most closely resemble the user’s intent and provides them to the LLM as enhanced context.
 Because Milvus is RAFT accelerated, the similarity serach is optimized on the GPU.
 Lastly, the LLM generates a full answer that is streamed to the user.
@@ -125,7 +125,7 @@ This software accelerates and maximizes inference performance on the latest LLMs
 Milvus is an open-source vector database built to power embedding similarity search and AI applications.
 The database makes unstructured data from API calls, PDFs, and other documents more accessible by storing them as embeddings.
 
-When content from the knowledge base is passed to an embedding model, e5-large-v2, the model converts the content to vectors--referred to as *embeddings*.
+When content from the knowledge base is passed to an embedding model, UAE-Large-V1, the model converts the content to vectors--referred to as *embeddings*.
 These embeddings are stored in the vector database.
 The sample deployment uses Milvus as the vector database.
 Milvus is an open-source vector database capable of NVIDIA GPU-accelerated vector searches.

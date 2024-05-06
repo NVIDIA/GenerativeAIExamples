@@ -11,10 +11,13 @@ services:
     environment:
       APP_VECTORSTORE_URL: "http://milvus:19530"
       APP_VECTORSTORE_NAME: "milvus"
-      APP_LLM_MODELNAME: ai-llama2-70b
-      APP_LLM_MODELENGINE: nv-api-catalog
-      APP_EMBEDDINGS_MODELNAME: nvolveqa_40k
-      APP_EMBEDDINGS_MODELENGINE: nv-api-catalog
+      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-ai-llama2-70b}
+      APP_LLM_MODELENGINE: nvidia-ai-endpoints
+      APP_LLM_SERVERURL: ${APP_LLM_SERVERURL:-""}
+      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-ai-embed-qa-4}
+      APP_EMBEDDINGS_MODELENGINE: nvidia-ai-endpoints
+      APP_EMBEDDINGS_SERVERURL: ${APP_EMBEDDINGS_SERVERURL:-""}
+      APP_TEXTSPLITTER_MODELNAME: WhereIsAI/UAE-Large-V1
       APP_TEXTSPLITTER_CHUNKSIZE: 510
       APP_TEXTSPLITTER_CHUNKOVERLAP: 200
       NVIDIA_API_KEY: ${NVIDIA_API_KEY}
@@ -26,6 +29,9 @@ services:
       APP_RETRIEVER_TOPK: 4
       APP_RETRIEVER_SCORETHRESHOLD: 0.25
       COLLECTION_NAME: query_decomposition
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      ENABLE_TRACING: false
     ports:
     - "8081:8081"
     expose:
@@ -49,11 +55,14 @@ services:
     environment:
       APP_SERVERURL: http://chain-server
       APP_SERVERPORT: 8081
-      APP_MODELNAME: ai-llama2-70b
+      APP_MODELNAME: ${APP_LLM_MODELNAME:-ai-llama2-70b}
       RIVA_API_URI: ${RIVA_API_URI:-}
       RIVA_API_KEY: ${RIVA_API_KEY:-}
       RIVA_FUNCTION_ID: ${RIVA_FUNCTION_ID:-}
       TTS_SAMPLE_RATE: ${TTS_SAMPLE_RATE:-48000}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      ENABLE_TRACING: false
     ports:
     - "8090:8090"
     expose:

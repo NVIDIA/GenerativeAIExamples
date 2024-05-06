@@ -22,6 +22,7 @@ from RetrievalAugmentedGeneration.common.utils import get_config
 from PIL import Image
 from io import BytesIO
 import base64
+from RetrievalAugmentedGeneration.common.tracing import langchain_instrumentation_method_wrapper
 
 def get_b64_image(image_path):
     image = Image.open(image_path).convert("RGB")
@@ -30,10 +31,11 @@ def get_b64_image(image_path):
     b64_string = base64.b64encode(buffered.getvalue()).decode("utf-8")
     return b64_string
 
-def is_graph(image_path):
+@langchain_instrumentation_method_wrapper
+def is_graph(cb_handler, image_path):
     # Placeholder function for graph detection logic
     # Implement graph detection algorithm here
-    neva = LLMClient("ai-neva-22b")
+    neva = LLMClient("ai-neva-22b", cb_handler=cb_handler)
     b64_string = get_b64_image(image_path)
     res = neva.multimodal_invoke(b64_string, creativity = 0, quality = 9, complexity = 0, verbosity = 9).content
     print(res)
@@ -42,7 +44,8 @@ def is_graph(image_path):
     else:
         return False
 
-def process_graph(image_path):
+@langchain_instrumentation_method_wrapper
+def process_graph(cb_handler, image_path):
     # Placeholder function for graph processing logic
     # Implement graph processing algorithm here
     # Call DePlot through the API
@@ -52,7 +55,7 @@ def process_graph(image_path):
     deplot_description = res.content
     # Accessing the model name environment variable
     settings = get_config()
-    mixtral = LLMClient(model_name=settings.llm.model_name)
+    mixtral = LLMClient(model_name=settings.llm.model_name, is_response_generator=True, cb_handler=cb_handler)
     response = mixtral.chat_with_prompt(system_prompt="Your responsibility is to explain charts. You are an expert in describing the responses of linearized tables into plain English text for LLMs to use.",
                              prompt="Explain the following linearized table. " + deplot_description)
     full_response = ""

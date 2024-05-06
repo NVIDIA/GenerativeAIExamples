@@ -1,3 +1,0 @@
-pandas
-pandasai==1.5.13
-numexpr

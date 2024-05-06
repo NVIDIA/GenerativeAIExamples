@@ -1,0 +1,3 @@
+pandas==1.5.3
+pandasai==2.0.28
+numexpr==2.9.0

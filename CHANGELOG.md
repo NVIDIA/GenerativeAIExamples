@@ -3,6 +3,39 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2024-05-07
+
+### Added
+- Ability to switch between [API Catalog](https://build.nvidia.com/explore/discover) models to on-prem models using [NIM-LLM](https://docs.nvidia.com/ai-enterprise/nim-llm/latest/index.html).
+- New API endpoint
+  - `/health` - Provides a health check for the chain server.
+- Containerized [evaluation application](./tools/evaluation/) for RAG pipeline accuracy measurement.
+- Observability support for langchain based examples.
+- New Notebooks
+  - Added [Chat with NVIDIA financial data](./notebooks/12_Chat_wtih_nvidia_financial_reports.ipynb) notebook.
+  - Added notebook showcasing [langgraph agent handling](./notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.ipynb).
+- A [simple rag example template](https://nvidia.github.io/GenerativeAIExamples/latest/simple-examples.html) showcasing how to build an example from scratch.
+
+### Changed
+- Renamed example `csv_rag` to [structured_data_rag](./RetrievalAugmentedGeneration/examples/structured_data_rag/)
+- Model Engine name update
+  - `nv-ai-foundation` and `nv-api-catalog` llm engine are renamed to `nvidia-ai-endpoints`
+  - `nv-ai-foundation` embedding engine is renamed to `nvidia-ai-endpoints`
+- Embedding model update
+  - `developer_rag` example uses [UAE-Large-V1](https://huggingface.co/WhereIsAI/UAE-Large-V1) embedding model.
+  - Using `ai-embed-qa-4` for api catalog examples instead of `nvolveqa_40k` as embedding model
+- Ingested data now persists across multiple sessions.
+- Updated langchain-nvidia-endpoints to version 0.0.11, enabling support for models like llama3.
+- File extension based validation to throw error for unsupported files.
+- The default output token length in the UI has been increased from 250 to 1024 for more comprehensive responses.
+- Stricter chain-server API validation support to enhance API security
+- Updated version of llama-index, pymilvus.
+- Updated pgvector container to `pgvector/pgvector:pg16`
+- LLM Model Updates
+  - [Multiturn Chatbot](./RetrievalAugmentedGeneration/examples/multi_turn_rag/) now uses `ai-mixtral-8x7b-instruct` model for response generation.
+  - [Structured data rag](./RetrievalAugmentedGeneration/examples/structured_data_rag/) now uses `ai-llama3-70b` for response and code generation.
+
+
 ## [0.5.0] - 2024-03-19
 
 This release adds new dedicated RAG examples showcasing state of the art usecases, switches to the latest [API catalog endpoints from NVIDIA](https://build.nvidia.com/explore/discover) and also refactors the API interface of chain-server. This release also improves the developer experience by adding github pages based documentation and streamlining the example deployment flow using dedicated compose files.

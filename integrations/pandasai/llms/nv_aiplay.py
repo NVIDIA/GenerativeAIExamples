@@ -15,12 +15,17 @@
 
 """A wrapper on PandasAI base LLM class to use NVIDIA Foundational Models in PandasAI Agents"""
 
+import logging
 from typing import Any, Dict, Optional
 
 from pandasai.llm.base import LLM
-from pandasai.prompts.base import AbstractPrompt
+from pandasai.prompts.base import BasePrompt
+from pandasai.pipelines.pipeline_context import PipelineContext
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 from RetrievalAugmentedGeneration.common.utils import get_config
+
+logger = logging.getLogger(__name__)
 
 class NVIDIA(LLM):
     """
@@ -37,14 +42,12 @@ class NVIDIA(LLM):
     def __init__(self, **kwargs):
         self._set_params(**kwargs)
         settings = get_config()
-        # Use nv-ai-foundaion as default
-        if settings.llm.model_engine == "nv-api-catalog":
-            from integrations.langchain.llms.nv_api_catalog import ChatNVIDIA
-            self._chat_model = ChatNVIDIA(**self._default_params)
+        if settings.llm.server_url:
+            logger.info(f"Using llm model {settings.llm.model_name} hosted at {settings.llm.server_url} in PandasAI")
+            self._chat_model = ChatNVIDIA(**self._default_params).mode("nim", base_url=f"http://{settings.llm.server_url}/v1")
         else:
-            from langchain_nvidia_ai_endpoints import ChatNVIDIA
+            logger.info(f"Using llm model {settings.llm.model_name} from api catalog in PandasAI")
             self._chat_model = ChatNVIDIA(**self._default_params)
-
         self._prompt = ""
 
     @property
@@ -84,11 +87,11 @@ class NVIDIA(LLM):
             if key in valid_params:
                 setattr(self, key, value)
 
-    def call(self, instruction: AbstractPrompt, suffix: str = "") -> str:
+    def call(self, instruction: BasePrompt, context: PipelineContext = None) -> str:
         """
         Call the NVIDIA Foundational LLMs.
         Args:
-            instruction (AbstractPrompt): A prompt object with instruction for LLM.
+            instruction (BasePrompt): A prompt object with instruction for LLM.
             suffix (str): A string representing the suffix to be truncated
                 from the generated response.
 
@@ -96,6 +99,7 @@ class NVIDIA(LLM):
             str: LLM response.
 
         """
-        self._prompt = instruction.to_string().replace("`", "'") + suffix
+
+        self._prompt = instruction.to_string()
         response = self._chat_model.invoke(self._prompt)
         return response.content

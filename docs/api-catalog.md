@@ -46,7 +46,7 @@ Developers get free credits for 10K requests to any of the available models.
   - Vector Database
 
 * - ai-mixtral-8x7b-instruct
-  - nvolveqa_40k
+  - ai-embed-qa-4
   - Langchain
   - QA chatbot
   - NO
@@ -66,6 +66,8 @@ The following figure shows the sample topology:
 ![Using NVIDIA API Catalog endpoints for inference instead of local components.](./images/ai-foundations-topology.png)
 
 ## Prerequisites
+
+% start-prerequisites
 
 - Clone the Generative AI examples Git repository using Git LFS:
 
@@ -96,6 +98,8 @@ The following figure shows the sample topology:
     export RIVA_API_KEY="<riva-api-key>"
     export RIVA_FUNCTION_ID="<riva-function-id>"
     ```
+
+% end-prerequisites
 
 ## Get an API Key for the Mixtral 8x7B Instruct API Endpoint
 

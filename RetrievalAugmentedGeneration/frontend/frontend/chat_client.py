@@ -20,6 +20,7 @@ import typing
 import json
 
 import requests
+from requests.exceptions import ConnectionError
 
 from frontend import tracing
 
@@ -146,7 +147,59 @@ class ChatClient:
                     url, headers=headers, files=files, timeout=600  # type: ignore [arg-type]
                 )
                 if resp.status_code == 500:
-                     raise ValueError(f"{resp.json().get('message', 'Failed to upload document')}")
+                    raise ValueError(f"{resp.json().get('message', 'Failed to upload document')}")
         except Exception as e:
-            _LOGGER.error(f"Failed to get response from /uploadDocument endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")
+            _LOGGER.error(f"Failed to get response from /documents endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")
             raise ValueError(f"{e}")
+
+
+    @tracing.instrumentation_wrapper
+    def delete_documents(self, carrier, file_name: str) -> str:
+        """ Delete Selected documents"""
+        headers = {
+            **carrier,
+            "accept": "application/json", "Content-Type": "application/json"
+        }
+        params = {
+            'filename': file_name
+        }
+        url = f"{self.server_url}/documents"
+
+        try:
+            _LOGGER.debug(
+                f"Delete request received for file_name: {file_name}"
+            )
+            with requests.delete(url, headers=headers, params=params, timeout=30) as req:
+                req.raise_for_status()
+                response = req.json()
+                return response
+        except Exception as e:
+            _LOGGER.error(f"Failed to delete {file_name} using /documents endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")
+            return ""
+
+
+    @tracing.instrumentation_wrapper
+    def get_uploaded_documents(self, carrier) -> typing.List[str]:
+        """Get list of Uploaded documents."""
+        url = f"{self.server_url}/documents"
+        headers = {
+            **carrier,
+            "accept": "application/json",
+        }
+        uploaded_files=[]
+        try:
+                resp = requests.get(
+                    url, headers=headers, timeout=600
+                )
+                response = json.loads(resp.content)
+                if resp.status_code == 500:
+                    raise ValueError(f"{resp.json().get('message', 'Failed to get uploaded documents')}")
+                else:
+                    uploaded_files=response['documents']
+        except ConnectionError as e:
+            # Avoid playground crash when chain server starts after rag-playground
+            _LOGGER.error(f"Failed to connect /documents endpoint of chain-server. Error details: {e}.")
+        except Exception as e:
+            _LOGGER.error(f"Failed to get response from /documents endpoint of chain-server. Error details: {e}. Refer to chain-server logs for details.")
+            raise ValueError(f"{e}")
+        return uploaded_files

@@ -25,24 +25,29 @@ from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
 from RetrievalAugmentedGeneration.common.base import BaseExample
-from RetrievalAugmentedGeneration.common.utils import get_config, get_llm, get_embedding_model, get_vectorstore_langchain, get_docs_vectorstore_langchain, del_docs_vectorstore_langchain, get_text_splitter
+from RetrievalAugmentedGeneration.common.utils import get_config, get_llm, get_embedding_model, create_vectorstore_langchain, get_docs_vectorstore_langchain, del_docs_vectorstore_langchain, get_text_splitter, get_vectorstore
+from RetrievalAugmentedGeneration.common.tracing import langchain_instrumentation_class_wrapper
 
 logger = logging.getLogger(__name__)
 DOCS_DIR = os.path.abspath("./uploaded_files")
 vector_store_path = "vectorstore.pkl"
 document_embedder = get_embedding_model()
-vectorstore = None
 text_splitter = None
 settings = get_config()
 
+try:
+    vectorstore = create_vectorstore_langchain(document_embedder=document_embedder)
+except Exception as e:
+    vectorstore = None
+    logger.info(f"Unable to connect to vector store during initialization: {e}")
 
+@langchain_instrumentation_class_wrapper
 class NvidiaAPICatalog(BaseExample):
-    def ingest_docs(self, file_name: str, filename: str):
+    def ingest_docs(self, filepath: str, filename: str):
         """Ingest documents to the VectorDB."""
+        if  not filename.endswith((".txt",".pdf",".md")):
+            raise ValueError(f"{filename} is not a valid Text, PDF or Markdown file")
         try:
-            # TODO: Load embedding created in older conversation, memory persistance
-            # We initialize class in every call therefore it should be global
-            global vectorstore
             # Load raw documents from the directory
             # Data is copied to `DOCS_DIR` in common.server:upload_document
             _path = os.path.join(DOCS_DIR, filename)
@@ -54,10 +59,8 @@ class NvidiaAPICatalog(BaseExample):
                     text_splitter = get_text_splitter()
 
                 documents = text_splitter.split_documents(raw_documents)
-                if vectorstore:
-                    vectorstore.add_documents(documents)
-                else:
-                    vectorstore = get_vectorstore_langchain(documents, document_embedder)
+                vs = get_vectorstore(vectorstore, document_embedder)
+                vs.add_documents(documents)
             else:
                 logger.warning("No documents available to process!")
         except Exception as e:
@@ -70,6 +73,8 @@ class NvidiaAPICatalog(BaseExample):
         """Execute a simple LLM chain using the components defined above."""
 
         logger.info("Using llm to generate response directly without knowledge base.")
+        # WAR: Disable chat history (UI consistency).
+        chat_history = []
         system_message = [("system", settings.prompts.chat_template)]
         conversation_history = [(msg.role, msg.content) for msg in chat_history]
         user_input = [("user", "{input}")]
@@ -87,12 +92,14 @@ class NvidiaAPICatalog(BaseExample):
         augmented_user_input = (
             "\n\nQuestion: " + query + "\n"
         )
-        return chain.stream({"input": augmented_user_input})
+        return chain.stream({"input": augmented_user_input}, config={"callbacks":[self.cb_handler]})
 
     def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
         """Execute a Retrieval Augmented Generation chain using the components defined above."""
 
         logger.info("Using rag to generate response from document")
+        # WAR: Disable chat history (UI consistency).
+        chat_history = []
         system_message = [("system", settings.prompts.rag_template)]
         conversation_history = [(msg.role, msg.content) for msg in chat_history]
         user_input = [("user", "{input}")]
@@ -109,15 +116,16 @@ class NvidiaAPICatalog(BaseExample):
         chain = prompt_template | llm | StrOutputParser()
 
         try:
-            if vectorstore != None:
+            vs = get_vectorstore(vectorstore, document_embedder)
+            if vs != None:
                 try:
                     logger.info(f"Getting retrieved top k values: {settings.retriever.top_k} with confidence threshold: {settings.retriever.score_threshold}")
-                    retriever = vectorstore.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold": settings.retriever.score_threshold, "k": settings.retriever.top_k})
-                    docs = retriever.get_relevant_documents(query)
+                    retriever = vs.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold": settings.retriever.score_threshold, "k": settings.retriever.top_k})
+                    docs = retriever.get_relevant_documents(query, callbacks=[self.cb_handler])
                 except NotImplementedError:
                     # Some retriever like milvus don't have similarity score threshold implemented
-                    retriever = vectorstore.as_retriever()
-                    docs = retriever.get_relevant_documents(query)
+                    retriever = vs.as_retriever()
+                    docs = retriever.get_relevant_documents(query, callbacks=[self.cb_handler])
 
                 if not docs:
                     logger.warning("Retrieval failed to get any relevant context")
@@ -131,7 +139,7 @@ class NvidiaAPICatalog(BaseExample):
                     "Context: " + context + "\n\nQuestion: " + query + "\n"
                 )
 
-                return chain.stream({"input": augmented_user_input})
+                return chain.stream({"input": augmented_user_input}, config={"callbacks":[self.cb_handler]})
         except Exception as e:
             logger.warning(f"Failed to generate response due to exception {e}")
         logger.warning(
@@ -147,14 +155,15 @@ class NvidiaAPICatalog(BaseExample):
         """Search for the most relevant documents for the given search parameters."""
 
         try:
-            if vectorstore != None:
+            vs = get_vectorstore(vectorstore, document_embedder)
+            if vs != None:
                 try:
-                    retriever = vectorstore.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold": settings.retriever.score_threshold, "k": settings.retriever.top_k})
-                    docs = retriever.get_relevant_documents(content)
+                    retriever = vs.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold": settings.retriever.score_threshold, "k": settings.retriever.top_k})
+                    docs = retriever.get_relevant_documents(content, callbacks=[self.cb_handler])
                 except NotImplementedError:
                     # Some retriever like milvus don't have similarity score threshold implemented
-                    retriever = vectorstore.as_retriever()
-                    docs = retriever.get_relevant_documents(content)
+                    retriever = vs.as_retriever()
+                    docs = retriever.get_relevant_documents(content, callbacks=[self.cb_handler])
 
                 result = []
                 for doc in docs:
@@ -172,8 +181,9 @@ class NvidiaAPICatalog(BaseExample):
     def get_documents(self) -> List[str]:
         """Retrieves filenames stored in the vector store."""
         try:
-            if vectorstore:
-                return get_docs_vectorstore_langchain(vectorstore)
+            vs = get_vectorstore(vectorstore, document_embedder)
+            if vs:
+                return get_docs_vectorstore_langchain(vs)
         except Exception as e:
             logger.error(f"Vectorstore not initialized. Error details: {e}")
         return []
@@ -182,7 +192,8 @@ class NvidiaAPICatalog(BaseExample):
     def delete_documents(self, filenames: List[str]):
         """Delete documents from the vector index."""
         try:
-            if vectorstore:
-                return del_docs_vectorstore_langchain(vectorstore, filenames)
+            vs = get_vectorstore(vectorstore, document_embedder)
+            if vs:
+                return del_docs_vectorstore_langchain(vs, filenames)
         except Exception as e:
             logger.error(f"Vectorstore not initialized. Error details: {e}")

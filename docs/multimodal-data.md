@@ -56,7 +56,7 @@ This example uses models from the NVIDIA API Catalog.
     ai-google-Deplot for graph to text conversion
 
     ai-Neva-22B for image to text conversion
-  - nvolveqa_40k
+  - ai-embed-qa-4
   - Custom Python
   - QA chatbot
   - NO

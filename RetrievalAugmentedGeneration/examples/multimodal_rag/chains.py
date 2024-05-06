@@ -30,6 +30,7 @@ from RetrievalAugmentedGeneration.example.retriever.vector import MilvusVectorCl
 from RetrievalAugmentedGeneration.example.retriever.retriever import Retriever
 from RetrievalAugmentedGeneration.example.vectorstore.vectorstore_updater import update_vectorstore
 from RetrievalAugmentedGeneration.common.utils import get_config
+from RetrievalAugmentedGeneration.common.tracing import langchain_instrumentation_class_wrapper 
 
 settings = get_config()
 sources = []
@@ -55,14 +56,18 @@ def get_doc_retriever(type: str = "query") -> Retriever:
 
 @utils_cache
 @lru_cache()
-def get_llm(model_name, is_response_generator=False, **kwargs):
-    return LLMClient(model_name=model_name, is_response_generator=is_response_generator, **kwargs)
+def get_llm(model_name, cb_handler, is_response_generator=False, **kwargs):
+    return LLMClient(model_name=model_name, is_response_generator=is_response_generator, cb_handler=cb_handler, **kwargs)
 
 
+@langchain_instrumentation_class_wrapper
 class MultimodalRAG(BaseExample):
 
     def ingest_docs(self, filepath: str, filename: str):
         """Ingest documents to the VectorDB."""
+
+        if not filename.endswith(".pdf"):
+            raise ValueError(f"{filename} is not a valid PDF file. Only PDF files are supported for multimodal rag. The PDF files can contain multimodal data.")
 
         try:
             embedder = get_embedder(type="passage")
@@ -80,7 +85,7 @@ class MultimodalRAG(BaseExample):
         """Execute a simple LLM chain using the components defined above."""
         # TODO integrate chat_history
         logger.info("Using llm to generate response directly without knowledge base.")
-        response = get_llm(model_name=RESPONSE_PARAPHRASING_MODEL, is_response_generator=True, **kwargs).chat_with_prompt(settings.prompts.chat_template, query)
+        response = get_llm(model_name=RESPONSE_PARAPHRASING_MODEL, cb_handler=self.cb_handler, is_response_generator=True, **kwargs).chat_with_prompt(settings.prompts.chat_template, query)
         return response
 
 
@@ -99,7 +104,7 @@ class MultimodalRAG(BaseExample):
             augmented_prompt = "Relevant documents:" + context + "\n\n[[QUESTION]]\n\n" + query
             system_prompt = settings.prompts.rag_template
             logger.info(f"Formulated prompt for RAG chain: {system_prompt}\n{augmented_prompt}")
-            response = get_llm(model_name=RESPONSE_PARAPHRASING_MODEL, is_response_generator=True, **kwargs).chat_with_prompt(settings.prompts.rag_template, augmented_prompt)
+            response = get_llm(model_name=RESPONSE_PARAPHRASING_MODEL, cb_handler=self.cb_handler, is_response_generator=True, **kwargs).chat_with_prompt(settings.prompts.rag_template, augmented_prompt)
             return response
 
         except Exception as e:
@@ -117,17 +122,27 @@ class MultimodalRAG(BaseExample):
         """Search for the most relevant documents for the given search parameters."""
 
         try:
-            logger.error("searching documents not implemented yet!")
+            retriever = get_doc_retriever(type="query")
+            context, sources = retriever.get_relevant_docs(content, limit=settings.retriever.top_k)
+            output = []
+            for every_chunk in sources.values():
+                entry = {"source": every_chunk['doc_metadata']['filename'], "content": every_chunk['doc_content']}
+                output.append(entry)
+            return output
         except Exception as e:
             logger.error(f"Error from POST /search endpoint. Error details: {e}")
         return []
 
     def get_documents(self):
         """Retrieves filenames stored in the vector store."""
-        decoded_filenames = []
-        logger.error("get documents not implemented!")
+        embedding_size = get_embedder(type="passage").get_embedding_size()
+        vector_db = get_vector_index(embedding_size)
+        decoded_filenames = vector_db.list_filenames()
         return decoded_filenames
 
     def delete_documents(self, filenames: List[str]):
         """Delete documents from the vector index."""
-        logger.error("delete_documents not implemented")
+        embedding_size = get_embedder(type="passage").get_embedding_size()
+        vector_db = get_vector_index(embedding_size)
+        for each_file in filenames:
+            vector_db.delete_by_filename(each_file)

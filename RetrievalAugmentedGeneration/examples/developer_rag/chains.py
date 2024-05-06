@@ -14,18 +14,22 @@
 # limitations under the License.
 
 """LLM Chains for executing Retrival Augmented Generation."""
-import base64
 import os
 import logging
+import nltk
 from pathlib import Path
 from typing import Generator, List, Dict, Any
 
-from llama_index import Prompt, download_loader
-from llama_index.query_engine import RetrieverQueryEngine
-from llama_index.response.schema import StreamingResponse
-from llama_index.node_parser import LangchainNodeParser
-from llama_index.llms import LangChainLLM
-from llama_index.embeddings import LangchainEmbedding
+from llama_index.core.prompts.base import Prompt
+from llama_index.core.readers import download_loader
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.base.response.schema import StreamingResponse
+from llama_index.core.node_parser import LangchainNodeParser
+from llama_index.llms.langchain import LangChainLLM
+from llama_index.embeddings.langchain import LangchainEmbedding
+
+from langchain_core.output_parsers.string import StrOutputParser
+from langchain_core.prompts.chat import ChatPromptTemplate
 
 from RetrievalAugmentedGeneration.common.utils import (
     LimitRetrievedNodesLength,
@@ -34,11 +38,18 @@ from RetrievalAugmentedGeneration.common.utils import (
     get_llm,
     get_text_splitter,
     get_vector_index,
-    is_base64_encoded,
     set_service_context,
     get_embedding_model,
+    get_docs_vectorstore_llamaindex,
+    del_docs_vectorstore_llamaindex,
 )
 from RetrievalAugmentedGeneration.common.base import BaseExample
+from RetrievalAugmentedGeneration.common.tracing import (
+    langchain_instrumentation_class_wrapper,
+)
+
+# nltk downloader
+nltk.download("averaged_perceptron_tagger")
 
 # prestage the embedding model
 _ = get_embedding_model()
@@ -48,11 +59,12 @@ set_service_context()
 logger = logging.getLogger(__name__)
 text_splitter = None
 
+
+@langchain_instrumentation_class_wrapper
 class QAChatbot(BaseExample):
 
-    def ingest_docs(self, data_dir: str, filename: str):
+    def ingest_docs(self, filepath: str, filename: str):
         """Ingest documents to the VectorDB."""
-
         try:
             logger.info(f"Ingesting {filename} in vectorDB")
             _, ext = os.path.splitext(filename)
@@ -60,21 +72,17 @@ class QAChatbot(BaseExample):
             if ext.lower() == ".pdf":
                 PDFReader = download_loader("PDFReader")
                 loader = PDFReader()
-                documents = loader.load_data(file=Path(data_dir))
+                documents = loader.load_data(file=Path(filepath))
 
             else:
                 unstruct_reader = download_loader("UnstructuredReader")
                 loader = unstruct_reader()
-                documents = loader.load_data(file=Path(data_dir), split_documents=False)
+                documents = loader.load_data(file=Path(filepath), split_documents=False)
 
-            encoded_filename = filename[:-4]
-            if not is_base64_encoded(encoded_filename):
-                encoded_filename = base64.b64encode(encoded_filename.encode("utf-8")).decode(
-                    "utf-8"
-                )
+            filename = filename[:-4]
 
             for document in documents:
-                document.metadata = {"filename": encoded_filename}
+                document.metadata = {"filename": filename, "common_field": "all"}
                 document.excluded_embed_metadata_keys = ["filename", "page_label"]
 
             index = get_vector_index()
@@ -88,18 +96,21 @@ class QAChatbot(BaseExample):
             logger.info(f"Document {filename} ingested successfully")
         except Exception as e:
             logger.error(f"Failed to ingest document due to exception {e}")
-            raise ValueError("Failed to upload document. Please upload an unstructured text document.")
+            raise ValueError(
+                "Failed to upload document. Please upload an unstructured text document."
+            )
 
     def get_documents(self):
         """Retrieves filenames stored in the vector store."""
-        logger.warning("get documents is not supported in developer rag")
-        return []
+        return get_docs_vectorstore_llamaindex()
 
     def delete_documents(self, filenames: List[str]):
         """Delete documents from the vector index."""
-        logger.warning("Delete documents is not supported in developer rag")
+        return del_docs_vectorstore_llamaindex(filenames)
 
-    def llm_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
+    def llm_chain(
+        self, query: str, chat_history: List["Message"], **kwargs
+    ) -> Generator[str, None, None]:
         """Execute a simple LLM chain using the components defined above."""
 
         logger.info("Using llm to generate response directly without knowledge base.")
@@ -110,12 +121,35 @@ class QAChatbot(BaseExample):
         )
 
         logger.info(f"Prompt used for response generation: {prompt}")
-        llm = LangChainLLM(get_llm(**kwargs))
-        response = llm.stream_complete(prompt, tokens=kwargs.get('max_tokens', None))
-        gen_response = (resp.delta for resp in response)
-        return gen_response
+        # stream_complete is returning empty response with NIM
+        # TODO: Use llama_index llm wrapper to stream response
+        if get_config().llm.model_engine == "triton-trt-llm":
+            llm = LangChainLLM(get_llm(**kwargs))
+            response = llm.stream_complete(
+                prompt,
+                tokens=kwargs.get("max_tokens", None),
+                callbacks=[self.cb_handler],
+            )
+            gen_response = (resp.delta for resp in response)
+            return gen_response
+        else:
+            # This is for get_config().llm.model_engine == "nvidia-ai-endpoints-nim"
+            user_input = [("user", get_config().prompts.chat_template)]
 
-    def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
+            prompt_template = ChatPromptTemplate.from_messages(user_input)
+
+            llm = get_llm(**kwargs)
+
+            chain = prompt_template | llm | StrOutputParser()
+            augmented_user_input = "\n\nQuestion: " + query + "\n"
+            return chain.stream(
+                {"context_str": "", "query_str": query},
+                config={"callbacks": [self.cb_handler]},
+            )
+
+    def rag_chain(
+        self, query: str, chat_history: List["Message"], **kwargs
+    ) -> Generator[str, None, None]:
         """Execute a Retrieval Augmented Generation chain using the components defined above."""
 
         logger.info("Using rag to generate response from document")
@@ -124,14 +158,18 @@ class QAChatbot(BaseExample):
 
         retriever = get_doc_retriever(num_nodes=get_config().retriever.top_k)
         qa_template = Prompt(get_config().prompts.rag_template)
-        
+
         logger.info(f"Prompt used for response generation: {qa_template}")
 
         # Handling Retrieval failure
         nodes = retriever.retrieve(query)
         if not nodes:
             logger.warning("Retrieval failed to get any relevant context")
-            return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
+            return iter(
+                [
+                    "No response generated from LLM, make sure your query is relavent to the ingested document."
+                ]
+            )
 
         # TODO Include chat_history
         query_engine = RetrieverQueryEngine.from_args(
@@ -146,7 +184,9 @@ class QAChatbot(BaseExample):
         if isinstance(response, StreamingResponse):
             return response.response_gen
 
-        logger.warning("No response generated from LLM, make sure you've ingested document.")
+        logger.warning(
+            "No response generated from LLM, make sure you've ingested document."
+        )
         return StreamingResponse(iter(["No response generated from LLM, make sure you have ingested document from the Knowledge Base Tab."])).response_gen  # type: ignore
 
     def document_search(self, content: str, num_docs: int) -> List[Dict[str, Any]]:
@@ -158,8 +198,7 @@ class QAChatbot(BaseExample):
             output = []
             for node in nodes:
                 file_name = nodes[0].metadata["filename"]
-                decoded_filename = base64.b64decode(file_name.encode("utf-8")).decode("utf-8")
-                entry = {"score": node.score, "source": decoded_filename, "content": node.text}
+                entry = {"score": node.score, "source": file_name, "content": node.text}
                 output.append(entry)
 
             return output

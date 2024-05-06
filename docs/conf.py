@@ -24,9 +24,9 @@ from datetime import date
 
 project = "NVIDIA Generative AI Examples"
 this_year = date.today().year
-copyright = f"2023-{this_year}, NVIDIA"
-author = "NVIDIA"
-release = "0.5.0"
+copyright = f"2023-{this_year}, NVIDIA Corporation"
+author = "NVIDIA Corporation"
+release = "24.4.0"
 
 extensions = [
     "sphinx_rtd_theme",
@@ -44,6 +44,7 @@ myst_linkify_fuzzy_links = False
 myst_heading_anchors = 3
 myst_enable_extensions = [
     "deflist",
+    "dollarmath",
     "fieldlist",
 ]
 nb_execution_mode = 'off'
@@ -106,4 +107,9 @@ swagger = [
 
 copydirs_additional_dirs = [
     "../notebooks/",
+    "../tools/evaluation",
 ]
+
+copydirs_file_rename = {
+    "README.md": "index.md",
+}

@@ -26,6 +26,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import NeMoEmbeddings
+import yaml
 
 def clean_source(full_path):
     return os.path.basename(full_path)
@@ -44,29 +47,41 @@ class Retriever(BaseModel):
         return concatdocs, sources
 
 def get_relevant_docs(DOCS_DIR, text, limit=None):
-        with open(os.path.join(DOCS_DIR, "vectorstore_nv.pkl"), "rb") as f:
-            vectorstore = pickle.load(f)
-        
-        retriever = vectorstore.as_retriever(search_type="similarity_score_threshold",
-                                 search_kwargs={"score_threshold": .3, 
-                                                "k": 10}) #search_type="similarity_score_threshold", 
-        print(retriever)
-        concatdocs = ""
-        sources = {}
-        srcs = ""
-        try: 
-            docs = retriever.get_relevant_documents(text)
-            
-        except UserWarning as e:
-            print(f"A UserWarning was caught: {e}")
-            pass 
+        # with open(os.path.join(DOCS_DIR, "vectorstore_nv.pkl"), "rb") as f:
+        #     vectorstore = pickle.load(f)
 
-        if(len(docs)>0):
-            for doc in docs:
-                concatdocs += doc.page_content + "\n"
-                srcs += clean_source(doc.metadata['source']) + "\n\n"   
-                sources[doc.metadata['source']] = {"doc_content": doc.page_content, "doc_metadata": doc.metadata['source']} 
-        return docs, concatdocs, sources
+    if yaml.safe_load(open('config.yaml', 'r'))['NREM']:
+        # Embeddings with NeMo Retriever Embeddings Microservice (NREM)
+        print("Generating embeddings with NREM")
+        nv_embedder = NVIDIAEmbeddings(model=yaml.safe_load(open('config.yaml', 'r'))['nrem_model_name'],
+                                            truncate = yaml.safe_load(open('config.yaml', 'r'))['nrem_truncate']).mode("nim",
+                                            base_url= yaml.safe_load(open('config.yaml', 'r'))['nrem_api_endpoint_url'])
+
+    else:
+        # Embeddings with NVIDIA AI Foundation Endpoints
+        nv_embedder = NVIDIAEmbeddings(model="ai-embed-qa-4")
+
+    vectorstore = FAISS.load_local(os.path.join(DOCS_DIR, "vectorstore_nv"), nv_embedder, allow_dangerous_deserialization=True)
+    retriever = vectorstore.as_retriever(search_type="similarity_score_threshold",
+                             search_kwargs={"score_threshold": .3,
+                                            "k": 10}) #search_type="similarity_score_threshold",
+    print(retriever)
+    concatdocs = ""
+    sources = {}
+    srcs = ""
+    try:
+        docs = retriever.get_relevant_documents(text)
+
+    except UserWarning as e:
+        print(f"A UserWarning was caught: {e}")
+        pass
+
+    if(len(docs)>0):
+        for doc in docs:
+            concatdocs += doc.page_content + "\n"
+            srcs += clean_source(doc.metadata['source']) + "\n\n"
+            sources[doc.metadata['source']] = {"doc_content": doc.page_content, "doc_metadata": doc.metadata['source']}
+    return docs, concatdocs, sources
 
 class LineList(BaseModel):
     # "lines" is the key (attribute name) of the parsed output
@@ -86,9 +101,9 @@ output_parser = LineListOutputParser()
 
 QUERY_PROMPT = PromptTemplate(
     input_variables=["question"],
-    template="""You are an ORAN standards assistant. Your task is to generate five 
+    template="""You are an ORAN standards assistant. Your task is to generate five
     different versions of the given user question relevant to ORAN from ORAN documents. By generating multiple perspectives on the user question, your goal is to help
-    the user overcome some of the limitations of the distance-based similarity search. 
+    the user overcome some of the limitations of the distance-based similarity search.
     Provide these alternative questions separated by newlines.
     Original question: {question}""",
 )
@@ -114,16 +129,16 @@ def get_relevant_docs_mq(DOCS_DIR, text):
     concatdocs = ""
     srcs = ""
     sources = {}
-    try: 
+    try:
         docs = retriever_mq.get_relevant_documents(text)
-        
+
     except UserWarning as e:
         print(f"A UserWarning was caught: {e}")
-        pass 
+        pass
 
     if(len(docs)>0):
         for doc in docs:
             concatdocs += doc.page_content + "\n"
-            srcs += clean_source(doc.metadata['source']) + "\n\n"  
-            sources[doc.metadata['source']] = {"doc_content": doc.page_content, "doc_metadata": doc.metadata['source']}   
+            srcs += clean_source(doc.metadata['source']) + "\n\n"
+            sources[doc.metadata['source']] = {"doc_content": doc.page_content, "doc_metadata": doc.metadata['source']}
     return docs, concatdocs, sources

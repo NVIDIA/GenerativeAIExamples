@@ -51,6 +51,8 @@ Alternatively, you can deploy pgvector.
     The preceding example shows the default values for the database user, password, and database.
     To override the defaults, edit the values in the Docker Compose file, or set the values in the `compose.env` file.
 
+    `Note`: If you have existing setup remove `deploy/compose/volumes` directory to avoid pgvector crash. 
+
 1. Optional: If a container for a vector database is running, stop the container:
 
    ```console

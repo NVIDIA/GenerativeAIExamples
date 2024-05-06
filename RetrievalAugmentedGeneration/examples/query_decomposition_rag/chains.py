@@ -38,6 +38,7 @@ import os
 import base64
 import logging
 from typing import Generator, List
+from RetrievalAugmentedGeneration.common.tracing import langchain_instrumentation_class_wrapper
 
 from RetrievalAugmentedGeneration.common.utils import (
     get_config,
@@ -45,9 +46,10 @@ from RetrievalAugmentedGeneration.common.utils import (
     set_service_context,
     get_embedding_model,
     get_doc_retriever,
-    get_vectorstore_langchain,
+    create_vectorstore_langchain,
     get_docs_vectorstore_langchain,
     del_docs_vectorstore_langchain,
+    get_vectorstore
 )
 from RetrievalAugmentedGeneration.common.base import BaseExample
 
@@ -56,8 +58,13 @@ logger = logging.getLogger(__name__)
 DOCS_DIR = os.path.abspath("./uploaded_files")
 vector_store_path = "vectorstore.pkl"
 document_embedder = get_embedding_model()
-vectorstore = None
 settings = get_config()
+
+try:
+    vectorstore = create_vectorstore_langchain(document_embedder=document_embedder)
+except Exception as e:
+    vectorstore = None
+    logger.info(f"Unable to connect to vector store during initialization: {e}")
 
 ##### Helper methods and tools #####
 
@@ -151,15 +158,13 @@ class CustomOutputParser(AgentOutputParser):
             )
         raise ValueError(f"Invalid Tool name: {local_state['Tool_Request']}")
 
-
+@langchain_instrumentation_class_wrapper
 class QueryDecompositionChatbot(BaseExample):
-    def ingest_docs(self, file_name: str, filename: str):
+    def ingest_docs(self, filepath: str, filename: str):
         """Ingest documents to the VectorDB."""
-
+        if  not filename.endswith((".txt",".pdf",".md")):
+            raise ValueError(f"{filename} is not a valid Text, PDF or Markdown file")
         try:
-            # TODO: Load embedding created in older conversation, memory persistance
-            # We initialize class in every call therefore it should be global
-            global vectorstore
             # Load raw documents from the directory
             # Data is copied to `DOCS_DIR` in common.server:upload_document
             _path = os.path.join(DOCS_DIR, filename)
@@ -168,10 +173,8 @@ class QueryDecompositionChatbot(BaseExample):
             if raw_documents:
                 text_splitter = CharacterTextSplitter(chunk_size=settings.text_splitter.chunk_size, chunk_overlap=settings.text_splitter.chunk_overlap)
                 documents = text_splitter.split_documents(raw_documents)
-                if vectorstore:
-                    vectorstore.add_documents(documents)
-                else:
-                    vectorstore = get_vectorstore_langchain(documents, document_embedder)
+                vs = get_vectorstore(vectorstore, document_embedder)
+                vs.add_documents(documents)
                 logger.info("Vector store created and saved.")
             else:
                 logger.warning("No documents available to process!")
@@ -186,6 +189,8 @@ class QueryDecompositionChatbot(BaseExample):
         """Execute a simple LLM chain using the components defined above."""
 
         logger.info("Using llm to generate response directly without knowledge base.")
+        # WAR: Disable chat history (UI consistency).
+        chat_history = []
         system_message = [("system", settings.prompts.chat_template)]
         conversation_history = [(msg.role, msg.content) for msg in chat_history]
         user_input = [("user", "{input}")]
@@ -201,29 +206,33 @@ class QueryDecompositionChatbot(BaseExample):
         augmented_user_input = (
             "\n\nQuestion: " + query + "\n"
         )
-        return chain.stream({"input": augmented_user_input})
+        return chain.stream({"input": augmented_user_input}, config={"callbacks":[self.cb_handler]})
 
     def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
         """Execute a Retrieval Augmented Generation chain using the components defined above."""
 
         logger.info("Using rag to generate response from document")
         set_service_context()
-        final_context = self.run_agent(query, **kwargs)
-        if not final_context:
-            logger.warning("Retrieval failed to get any relevant context")
-            return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
-        
-        logger.info(f"Final Answer from agent: {final_context}")
-        # TODO Add chat_history
-        final_prompt_template = ChatPromptTemplate.from_messages(
-            [
-                ("human", final_context)
-            ]
-        )
-        llm = get_llm(**kwargs)
-        chain = final_prompt_template | llm | StrOutputParser()
+        try:
+            final_context = self.run_agent(query, **kwargs)
+            if not final_context:
+                logger.warning("Retrieval failed to get any relevant context")
+                return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
 
-        return chain.stream({})
+            logger.info(f"Final Answer from agent: {final_context}")
+            # TODO Add chat_history
+            final_prompt_template = ChatPromptTemplate.from_messages(
+                [
+                    ("human", final_context)
+                ]
+            )
+            llm = get_llm(**kwargs)
+            chain = final_prompt_template | llm | StrOutputParser()
+
+            return chain.stream({}, config={"callbacks":[self.cb_handler]})
+        except ValueError as e:
+            logger.warning(f"Failed to get response because {e}")
+            return iter(["I can't find an answer for that."])
 
 
     def create_agent(self, **kwargs) -> AgentExecutor:
@@ -243,13 +252,13 @@ class QueryDecompositionChatbot(BaseExample):
         prompt = CustomPromptTemplate(template=template, tools=tools, input_variables=["question"], ledger=self.ledger)
         output_parser = CustomOutputParser(ledger=self.ledger)
         llm = get_llm(**kwargs)
-        llm_chain = LLMChain(llm=llm, prompt=prompt)
+        llm_chain = LLMChain(llm=llm, prompt=prompt, callbacks=[self.cb_handler])
 
         recursive_decomposition_agent = LLMSingleActionAgent(
             llm_chain=llm_chain, output_parser=output_parser, stop=["\n\n"], allowed_tools=tool_names
         )
 
-        agent_executor = AgentExecutor.from_agent_and_tools(agent=recursive_decomposition_agent, tools=tools, verbose=True)
+        agent_executor = AgentExecutor.from_agent_and_tools(agent=recursive_decomposition_agent, tools=tools, verbose=True, callbacks=[self.cb_handler])
         return agent_executor
 
 
@@ -259,7 +268,7 @@ class QueryDecompositionChatbot(BaseExample):
         """
 
         agent_executor = self.create_agent(**kwargs)
-        agent_executor.invoke({"question": question})
+        agent_executor.invoke({"question": question}, config={"callbacks":[self.cb_handler]})
 
         ##### LLM call to get final answer ######
 
@@ -277,14 +286,15 @@ class QueryDecompositionChatbot(BaseExample):
         Searches for the answer from a given context.
         """
 
-        if vectorstore is None:
+        vs = get_vectorstore(vectorstore, document_embedder)
+        if vs is None:
             return []
 
         logger.info(f"Skipping top k and confidence threshold for query decomposition rag")
         # TODO: Use similarity score threshold and top k provided in config
         # Currently it's raising an error during invoke.
-        retriever = vectorstore.as_retriever()
-        result = retriever.get_relevant_documents(query)
+        retriever = vs.as_retriever()
+        result = retriever.get_relevant_documents(query, callbacks=[self.cb_handler])
         logger.info(result)
         return [hit.page_content for hit in result]
 
@@ -339,12 +349,13 @@ class QueryDecompositionChatbot(BaseExample):
         """Search for the most relevant documents for the given search parameters."""
 
         try:
-            if vectorstore != None:
+            vs = get_vectorstore(vectorstore, document_embedder)
+            if vs != None:
                 logger.info(f"Skipping top k and confidence threshold for query decomposition rag")
 
                 # TODO: Use top k and confidence threshold once retriever issue is resolved
-                retriever = vectorstore.as_retriever()
-                docs = retriever.get_relevant_documents(content)
+                retriever = vs.as_retriever()
+                docs = retriever.get_relevant_documents(content, callbacks=[self.cb_handler])
 
                 result = []
                 for doc in docs:
@@ -363,8 +374,9 @@ class QueryDecompositionChatbot(BaseExample):
     def get_documents(self) -> List[str]:
         """Retrieves filenames stored in the vector store."""
         try:
-            if vectorstore:
-                return get_docs_vectorstore_langchain(vectorstore)
+            vs = get_vectorstore(vectorstore, document_embedder)
+            if vs:
+                return get_docs_vectorstore_langchain(vs)
         except Exception as e:
             logger.error(f"Vectorstore not initialized. Error details: {e}")
         return []
@@ -373,7 +385,8 @@ class QueryDecompositionChatbot(BaseExample):
     def delete_documents(self, filenames: List[str]):
         """Delete documents from the vector index."""
         try:
-            if vectorstore:
-                return del_docs_vectorstore_langchain(vectorstore, filenames)
+            vs = get_vectorstore(vectorstore, document_embedder)
+            if vs:
+                return del_docs_vectorstore_langchain(vs, filenames)
         except Exception as e:
             logger.error(f"Vectorstore not initialized. Error details: {e}")
