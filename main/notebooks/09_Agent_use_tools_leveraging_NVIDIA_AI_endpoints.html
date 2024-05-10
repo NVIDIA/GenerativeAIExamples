@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Multimodal Models from NVIDIA AI Endpoints with LangChain Agent &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -64,10 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +80,14 @@
 <li class="toctree-l1"><a class="reference internal" href="03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -109,7 +113,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</li>
+      <li>Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -118,8 +122,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="multimodal-models-from-nvidia-ai-endpoints-with-langchain-agent">
-<h1>Multimodal Models from NVIDIA AI Endpoints with LangChain Agent<a class="headerlink" href="#multimodal-models-from-nvidia-ai-endpoints-with-langchain-agent" title="Permalink to this headline"></a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="multimodal-models-from-nvidia-ai-catelog-and-ai-catalog-with-langchain-agent">
+<h1>Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent<a class="headerlink" href="#multimodal-models-from-nvidia-ai-catelog-and-ai-catalog-with-langchain-agent" title="Permalink to this headline"></a></h1>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
 <p>To run this notebook, you need the following:</p>
@@ -134,20 +138,20 @@
 </ol>
 <p>This notebook covers the following custom plug-in components:</p>
 <ul class="simple">
-<li><p>LLM using NVIDIA AI Endpoint mixtral_8x7b</p></li>
-<li><p>A NVIDIA AI endpoint <strong>Deplot</strong> as one of the tool</p></li>
-<li><p>A NVIDIA AI endpoint <strong>NeVa</strong> as one of the tool</p></li>
+<li><p>LLM using <strong>ai-mixtral-8x7b-instruct</strong></p></li>
+<li><p>A NVIDIA AI Catalog <strong>Deplot</strong> as one of the tool</p></li>
+<li><p>A NVIDIA AI Catalog <strong>Fuyu</strong> as one of the tool</p></li>
 <li><p>Gradio as the simply User Interface where we will upload a few images</p></li>
 </ul>
 <p>At the end of the day, as below illustrated, we would like to have a UI which allow user to upload image of their choice and have the agent choose tools to do visual reasoning.</p>
 <p><img alt="interactive UI" src="../_images/visual_reasoning.png" /><br />
-Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is no further requirement in the prerequisites about GPUs as compute hardware</p>
+Note: As one can see, since we are using NVIDIA AI Catalog as an API, there is no further requirement in the prerequisites about GPUs as compute hardware</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># uncomment the below to install additional python packages.</span>
 <span class="c1">#!pip install unstructured</span>
 <span class="c1">#!pip install matplotlib scikit-image</span>
-<span class="c1">#!pip install gradio</span>
+<span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">gradio</span><span class="o">==</span><span class="m">3</span>.48.0
 </pre></div>
 </div>
 </div>
@@ -159,9 +163,6 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">getpass</span>
 <span class="kn">import</span> <span class="nn">os</span>
-
-<span class="c1">## API Key can be found by going to NVIDIA NGC -&gt; AI Foundation Models -&gt; (some model) -&gt; Get API Code or similar.</span>
-<span class="c1">## 10K free queries to any endpoint (which is a lot actually).</span>
 
 <span class="c1"># del os.environ[&#39;NVIDIA_API_KEY&#39;]  ## delete key and reset</span>
 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;NVIDIA_API_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;nvapi-&quot;</span><span class="p">):</span>
@@ -176,15 +177,29 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
 </div>
 </div>
 </section>
-<section id="step-2-wrap-the-neva-api-call-into-a-function-and-verify-by-supplying-an-image-to-get-a-respond">
-<h3>Step 2 - wrap the NeVa API call into a function and verify by supplying an image to get a respond<a class="headerlink" href="#step-2-wrap-the-neva-api-call-into-a-function-and-verify-by-supplying-an-image-to-get-a-respond" title="Permalink to this headline"></a></h3>
+<section id="step-2-wrap-the-fuyu-api-call-into-a-function-and-verify-by-supplying-an-image-to-get-a-respond">
+<h3>Step 2 - wrap the Fuyu API call into a function and verify by supplying an image to get a respond<a class="headerlink" href="#step-2-wrap-the-fuyu-api-call-into-a-function-and-verify-by-supplying-an-image-to-get-a-respond" title="Permalink to this headline"></a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">openai</span><span class="o">,</span> <span class="nn">httpx</span><span class="o">,</span> <span class="nn">sys</span>
 
 <span class="kn">import</span> <span class="nn">base64</span><span class="o">,</span> <span class="nn">io</span>
 <span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">import</span> <span class="nn">requests</span><span class="o">,</span> <span class="nn">json</span>
 
+<span class="k">def</span> <span class="nf">fetch_outputs</span><span class="p">(</span><span class="n">output</span><span class="p">):</span>
+    <span class="n">collect_streaming_outputs</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">output</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s1">&#39;{&#39;</span><span class="p">)</span>
+            <span class="n">jsonString</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="n">start</span><span class="p">:]</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonString</span><span class="p">)</span>
+            <span class="n">temp</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;choices&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;delta&#39;</span><span class="p">][</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+            <span class="n">collect_streaming_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">collect_streaming_outputs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">outputs</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">img2base64_string</span><span class="p">(</span><span class="n">img_path</span><span class="p">):</span>
     <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
@@ -195,45 +210,49 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
     <span class="n">image_base64</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">buffered</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">image_base64</span>
 
-<span class="k">def</span> <span class="nf">nv_api_response</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">img_path</span><span class="p">):</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="s2">&quot;https://api.nvcf.nvidia.com&quot;</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;/v2/nvcf/pexec/functions/8bf70738-59b9-4e5f-bc87-7ab4203be7a0&quot;</span>
 
-    <span class="c1"># Get your key at: https://catalog.ngc.nvidia.com/orgs/nvidia/teams/ai-foundation/models/neva-22b/api</span>
-    <span class="c1"># click on the &quot;Generate Key&quot; button</span>
 
-    <span class="k">def</span> <span class="nf">hook</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-        <span class="n">request</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">httpx</span><span class="o">.</span><span class="n">URL</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">url</span><span class="p">)</span>
-        <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Accept&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;text/event-stream&#39;</span>
+<span class="k">def</span> <span class="nf">fuyu</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span><span class="n">img_path</span><span class="p">):</span>
+    <span class="n">invoke_url</span> <span class="o">=</span> <span class="s2">&quot;https://ai.api.nvidia.com/v1/vlm/adept/fuyu-8b&quot;</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="kc">True</span>
+    
+    
+    <span class="n">image_b64</span><span class="o">=</span><span class="n">img2base64_string</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
+    
+    
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_b64</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">200_000</span><span class="p">,</span> \
+      <span class="s2">&quot;To upload larger images, use the assets API (see docs)&quot;</span>
 
-    <span class="n">client</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">OpenAI</span><span class="p">(</span>
-        <span class="n">base_url</span><span class="o">=</span><span class="n">base</span><span class="p">,</span>
-        <span class="n">api_key</span><span class="o">=</span><span class="n">nvapi_key</span><span class="p">,</span>
-        <span class="n">http_client</span><span class="o">=</span><span class="n">httpx</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">event_hooks</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;request&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">hook</span><span class="p">]})</span>
-    <span class="p">)</span>
-    <span class="n">base64_str</span><span class="o">=</span><span class="n">img2base64_string</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
-
-    <span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="s2">&quot;neva-22b&quot;</span><span class="p">,</span>
-        <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="p">[</span>
-                    <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
-                    <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;image_url&quot;</span><span class="p">,</span> <span class="s2">&quot;image_url&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;data:image/png;base64,</span><span class="si">{</span><span class="n">base64_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>         <span class="c1"># or image/jpeg</span>
-                <span class="p">]</span>
-            <span class="p">},</span>
-
-            <span class="c1"># {&quot;role&quot;: &quot;assistant&quot;, &quot;labels&quot;: {&#39;creativity&#39;: 0}}   # Uncomment to get less verbose response</span>
-        <span class="p">],</span>
-        <span class="n">max_tokens</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>     <span class="c1"># Minimum 32, maximum 512. This is a bug.</span>
-        <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-        <span class="n">top_p</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
-        <span class="n">stream</span><span class="o">=</span><span class="kc">True</span>         <span class="c1"># Use streaming mode for responses longer than 32 tokens.</span>
-    <span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">result</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">nvapi_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;text/event-stream&quot;</span> <span class="k">if</span> <span class="n">stream</span> <span class="k">else</span> <span class="s2">&quot;application/json&quot;</span>
+    <span class="p">}</span>
+    
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s2">&quot;messages&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+          <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prompt</span><span class="si">}</span><span class="s1"> &lt;img src=&quot;data:image/png;base64,</span><span class="si">{</span><span class="n">image_b64</span><span class="si">}</span><span class="s1">&quot; /&gt;&#39;</span>
+        <span class="p">}</span>
+      <span class="p">],</span>
+      <span class="s2">&quot;max_tokens&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
+      <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.20</span><span class="p">,</span>
+      <span class="s2">&quot;top_p&quot;</span><span class="p">:</span> <span class="mf">0.70</span><span class="p">,</span>
+      <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s2">&quot;stream&quot;</span><span class="p">:</span> <span class="n">stream</span>
+    <span class="p">}</span>
+    
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">invoke_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="n">output</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">iter_lines</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="n">out</span><span class="o">=</span><span class="n">fetch_outputs</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
 </pre></div>
 </div>
 </div>
@@ -250,7 +269,8 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">img_path</span><span class="o">=</span><span class="s2">&quot;./toy_data/jordan.png&quot;</span>
 <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;describe the image&quot;</span>
-<span class="n">out</span><span class="o">=</span><span class="n">nv_api_response</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span><span class="n">img_path</span><span class="p">)</span>
+<span class="n">out</span><span class="o">=</span><span class="n">fuyu</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span><span class="n">img_path</span><span class="p">)</span>
+<span class="n">out</span>
 </pre></div>
 </div>
 </div>
@@ -262,7 +282,7 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># test run and see that you can genreate a respond successfully</span>
 <span class="kn">from</span> <span class="nn">langchain_nvidia_ai_endpoints</span> <span class="kn">import</span> <span class="n">ChatNVIDIA</span>
-<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatNVIDIA</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;mixtral_8x7b&quot;</span><span class="p">,</span> <span class="n">nvidia_api_key</span><span class="o">=</span><span class="n">nvapi_key</span><span class="p">)</span>
+<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatNVIDIA</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;ai-mixtral-8x7b-instruct&quot;</span><span class="p">,</span> <span class="n">nvidia_api_key</span><span class="o">=</span><span class="n">nvapi_key</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -282,8 +302,8 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
 </div>
 </div>
 </section>
-<section id="step-4-wrap-deplot-and-neva-as-tools-for-later-usage">
-<h3>Step 4- wrap Deplot and Neva as tools for later usage<a class="headerlink" href="#step-4-wrap-deplot-and-neva-as-tools-for-later-usage" title="Permalink to this headline"></a></h3>
+<section id="step-4-wrap-deplot-and-fuyu-as-tools-for-later-usage">
+<h3>Step 4- wrap Deplot and Fuyu as tools for later usage<a class="headerlink" href="#step-4-wrap-deplot-and-fuyu-as-tools-for-later-usage" title="Permalink to this headline"></a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Set up Prerequisites for Image Captioning App User Interface</span>
@@ -304,73 +324,76 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
 <span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
 <span class="kn">from</span> <span class="nn">langchain.agents</span> <span class="kn">import</span> <span class="n">initialize_agent</span>
 <span class="kn">from</span> <span class="nn">langchain.chains.conversation.memory</span> <span class="kn">import</span> <span class="n">ConversationBufferWindowMemory</span>
+    
+<span class="k">def</span> <span class="nf">fetch_outputs</span><span class="p">(</span><span class="n">output</span><span class="p">):</span>
+    <span class="n">collect_streaming_outputs</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">output</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s1">&#39;{&#39;</span><span class="p">)</span>
+            <span class="n">jsonString</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="n">start</span><span class="p">:]</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonString</span><span class="p">)</span>
+            <span class="n">temp</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;choices&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;delta&#39;</span><span class="p">][</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+            <span class="n">collect_streaming_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">collect_streaming_outputs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">outputs</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">img2base64_string</span><span class="p">(</span><span class="n">img_path</span><span class="p">):</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">width</span> <span class="o">&gt;</span> <span class="mi">800</span> <span class="ow">or</span> <span class="n">image</span><span class="o">.</span><span class="n">height</span> <span class="o">&gt;</span> <span class="mi">800</span><span class="p">:</span>
+        <span class="n">image</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">((</span><span class="mi">800</span><span class="p">,</span> <span class="mi">800</span><span class="p">))</span>
+    <span class="n">buffered</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">image</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffered</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;JPEG&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="mi">85</span><span class="p">)</span>
+    <span class="n">image_base64</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">buffered</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">image_base64</span>
+
 
 <span class="k">class</span> <span class="nc">ImageCaptionTool</span><span class="p">(</span><span class="n">BaseTool</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Image captioner from NeVa&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Image captioner from Fuyu&quot;</span>
     <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;Use this tool when given the path to an image that you would like to be described. &quot;</span> \
                   <span class="s2">&quot;It will return a simple caption describing the image.&quot;</span>
 
-    <span class="c1"># generate api key via https://catalog.ngc.nvidia.com/orgs/nvidia/teams/ai-foundation/models/neva-22b/api</span>
-    <span class="k">def</span> <span class="nf">img2base64_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">img_path</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
-        <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">width</span> <span class="o">&gt;</span> <span class="mi">800</span> <span class="ow">or</span> <span class="n">image</span><span class="o">.</span><span class="n">height</span> <span class="o">&gt;</span> <span class="mi">800</span><span class="p">:</span>
-            <span class="n">image</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">((</span><span class="mi">800</span><span class="p">,</span> <span class="mi">800</span><span class="p">))</span>
-        <span class="n">buffered</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
-        <span class="n">image</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffered</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;JPEG&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="mi">85</span><span class="p">)</span>
-        <span class="n">image_base64</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">buffered</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">image_base64</span>
-
     <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img_path</span><span class="p">):</span>
-        <span class="n">invoke_url</span> <span class="o">=</span> <span class="s2">&quot;https://api.nvcf.nvidia.com/v2/nvcf/pexec/functions/8bf70738-59b9-4e5f-bc87-7ab4203be7a0&quot;</span>
-        <span class="n">fetch_url_format</span> <span class="o">=</span> <span class="s2">&quot;https://api.nvcf.nvidia.com/v2/nvcf/pexec/status/&quot;</span>
+        <span class="n">invoke_url</span> <span class="o">=</span> <span class="s2">&quot;https://ai.api.nvidia.com/v1/vlm/adept/fuyu-8b&quot;</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="kc">True</span>
 
+
+        <span class="n">image_b64</span><span class="o">=</span><span class="n">img2base64_string</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
+
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_b64</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">200_000</span><span class="p">,</span> \
+          <span class="s2">&quot;To upload larger images, use the assets API (see docs)&quot;</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">nvapi_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">nvapi_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;text/event-stream&quot;</span> <span class="k">if</span> <span class="n">stream</span> <span class="k">else</span> <span class="s2">&quot;application/json&quot;</span>
         <span class="p">}</span>
-        <span class="n">base64_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">img2base64_string</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
-        <span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        can you summarize what is in the image</span><span class="se">\</span>
-<span class="s2">        and return the answer </span><span class="se">\</span>
-<span class="s2">        &quot;&quot;&quot;</span>
+
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
-          <span class="s2">&quot;messages&quot;</span><span class="p">:[</span>
-                <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="p">[</span>
-                        <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
-                        <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;image_url&quot;</span><span class="p">,</span> <span class="s2">&quot;image_url&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;data:image/png;base64,</span><span class="si">{</span><span class="n">base64_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>         <span class="c1"># or image/jpeg</span>
-                    <span class="p">]</span>
-                <span class="p">},</span>
+          <span class="s2">&quot;messages&quot;</span><span class="p">:</span> <span class="p">[</span>
             <span class="p">{</span>
-          <span class="s2">&quot;labels&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;creativity&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
-            <span class="s2">&quot;helpfulness&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
-            <span class="s2">&quot;humor&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="s2">&quot;quality&quot;</span><span class="p">:</span> <span class="mi">6</span>
-          <span class="p">},</span>
-          <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span>
-            <span class="p">}</span> <span class="p">],</span>
-          <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
-          <span class="s2">&quot;top_p&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span>
-          <span class="s2">&quot;max_tokens&quot;</span><span class="p">:</span> <span class="mi">512</span><span class="p">,</span>
-          <span class="s2">&quot;stream&quot;</span><span class="p">:</span> <span class="kc">False</span>
+              <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;what is in this image &lt;img src=&quot;data:image/png;base64,</span><span class="si">{</span><span class="n">image_b64</span><span class="si">}</span><span class="s1">&quot; /&gt;&#39;</span>
+            <span class="p">}</span>
+          <span class="p">],</span>
+          <span class="s2">&quot;max_tokens&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
+          <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.20</span><span class="p">,</span>
+          <span class="s2">&quot;top_p&quot;</span><span class="p">:</span> <span class="mf">0.70</span><span class="p">,</span>
+          <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+          <span class="s2">&quot;stream&quot;</span><span class="p">:</span> <span class="n">stream</span>
         <span class="p">}</span>
 
-        <span class="c1"># re-use connections</span>
-        <span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">invoke_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 
-        <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">invoke_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
-        <span class="k">while</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">202</span><span class="p">:</span>
-            <span class="n">request_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;NVCF-REQID&quot;</span><span class="p">)</span>
-            <span class="n">fetch_url</span> <span class="o">=</span> <span class="n">fetch_url_format</span> <span class="o">+</span> <span class="n">request_id</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">fetch_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
-
-        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
-        <span class="n">response_body</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">response_body</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">response_body</span><span class="p">[</span><span class="s1">&#39;choices&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">][</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
-
+        <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>
+            <span class="n">output</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">iter_lines</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="n">out</span><span class="o">=</span><span class="n">fetch_outputs</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
 
     <span class="k">def</span> <span class="nf">_arun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;This tool does not support async&quot;</span><span class="p">)</span>
@@ -381,60 +404,47 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
     <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;Use this tool when given the path to an image that contain bar, pie chart objects. &quot;</span> \
                   <span class="s2">&quot;It will extract and return the tabular data &quot;</span>
 
-    <span class="k">def</span> <span class="nf">img2base64_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img_path</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
-        <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">width</span> <span class="o">&gt;</span> <span class="mi">800</span> <span class="ow">or</span> <span class="n">image</span><span class="o">.</span><span class="n">height</span> <span class="o">&gt;</span> <span class="mi">800</span><span class="p">:</span>
-            <span class="n">image</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">((</span><span class="mi">800</span><span class="p">,</span> <span class="mi">800</span><span class="p">))</span>
-        <span class="n">buffered</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
-        <span class="n">image</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffered</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;JPEG&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="mi">85</span><span class="p">)</span>
-        <span class="n">image_base64</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">buffered</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">image_base64</span>
 
     <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img_path</span><span class="p">):</span>
-        <span class="c1"># using DePlot from NVIDIA AI Endpoint playground, generate your key via :https://catalog.ngc.nvidia.com/orgs/nvidia/teams/ai-foundation/models/deplot/api</span>
-        <span class="n">invoke_url</span> <span class="o">=</span> <span class="s2">&quot;https://api.nvcf.nvidia.com/v2/nvcf/pexec/functions/3bc390c7-eeec-40f7-a64d-0c6a719985f7&quot;</span>
-        <span class="n">fetch_url_format</span> <span class="o">=</span> <span class="s2">&quot;https://api.nvcf.nvidia.com/v2/nvcf/pexec/status/&quot;</span>
+        <span class="n">invoke_url</span> <span class="o">=</span> <span class="s2">&quot;https://ai.api.nvidia.com/v1/vlm/google/deplot&quot;</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">image_b64</span><span class="o">=</span><span class="n">img2base64_string</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_b64</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">180_000</span><span class="p">,</span> \
+          <span class="s2">&quot;To upload larger images, use the assets API (see docs)&quot;</span>
 
         <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">nvapi_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">nvapi_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;text/event-stream&quot;</span> <span class="k">if</span> <span class="n">stream</span> <span class="k">else</span> <span class="s2">&quot;application/json&quot;</span>
         <span class="p">}</span>
 
-        <span class="n">base64_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">img2base64_string</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span>
-        <span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        can you summarize what is in the image</span><span class="se">\</span>
-<span class="s2">        and return the answer </span><span class="se">\</span>
-<span class="s2">        &quot;&quot;&quot;</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
-          <span class="s2">&quot;messages&quot;</span><span class="p">:[</span>
-                <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="p">[</span>
-                        <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
-                        <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;image_url&quot;</span><span class="p">,</span> <span class="s2">&quot;image_url&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;data:image/png;base64,</span><span class="si">{</span><span class="n">base64_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>         <span class="c1"># or image/jpeg</span>
-                    <span class="p">]</span>
-                <span class="p">},</span>
-            <span class="p">],</span>
-          <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
-          <span class="s2">&quot;top_p&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span>
-          <span class="s2">&quot;max_tokens&quot;</span><span class="p">:</span> <span class="mi">512</span><span class="p">,</span>
-          <span class="s2">&quot;stream&quot;</span><span class="p">:</span> <span class="kc">False</span>
+          <span class="s2">&quot;messages&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+              <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Generate underlying data table of the figure below: &lt;img src=&quot;data:image/png;base64,</span><span class="si">{</span><span class="n">image_b64</span><span class="si">}</span><span class="s1">&quot; /&gt;&#39;</span>
+            <span class="p">}</span>
+          <span class="p">],</span>
+          <span class="s2">&quot;max_tokens&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
+          <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.20</span><span class="p">,</span>
+          <span class="s2">&quot;top_p&quot;</span><span class="p">:</span> <span class="mf">0.20</span><span class="p">,</span>
+          <span class="s2">&quot;stream&quot;</span><span class="p">:</span> <span class="n">stream</span>
         <span class="p">}</span>
 
-        <span class="c1"># re-use connections</span>
-        <span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">invoke_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 
-        <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">invoke_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
-
-        <span class="k">while</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">202</span><span class="p">:</span>
-            <span class="n">request_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;NVCF-REQID&quot;</span><span class="p">)</span>
-            <span class="n">fetch_url</span> <span class="o">=</span> <span class="n">fetch_url_format</span> <span class="o">+</span> <span class="n">request_id</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">fetch_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
-
-        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
-        <span class="n">response_body</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">response_body</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">response_body</span><span class="p">[</span><span class="s1">&#39;choices&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">][</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
-
+        <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>
+            <span class="n">output</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">iter_lines</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="n">temp</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+                    <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+                    <span class="c1">#print(temp)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="n">outputs</span><span class="o">=</span><span class="n">fetch_outputs</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">outputs</span>
     <span class="k">def</span> <span class="nf">_arun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;This tool does not support async&quot;</span><span class="p">)</span>
 </pre></div>
@@ -475,10 +485,18 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
 <h3>Step 6 - verify the agent can indeed use the tools with the supplied image and query<a class="headerlink" href="#step-6-verify-the-agent-can-indeed-use-the-tools-with-the-supplied-image-and-query" title="Permalink to this headline"></a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">user_question</span> <span class="o">=</span> <span class="s2">&quot;What is in this image?&quot;</span>
-<span class="n">img_path</span><span class="o">=</span><span class="s2">&quot;./toy_data/jordan.png&quot;</span>
-<span class="n">response</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">user_question</span><span class="si">}</span><span class="s1">, this is the image path: </span><span class="si">{</span><span class="n">img_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">img_path</span><span class="o">=</span><span class="s2">&quot;./toy_data/jordan.png&quot;</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">&quot;input&quot;</span><span class="p">:</span><span class="sa">f</span><span class="s1">&#39; this is the image path: </span><span class="si">{</span><span class="n">img_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_agent</span><span class="p">(</span><span class="n">img_path</span><span class="p">):</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">&quot;input&quot;</span><span class="p">:</span><span class="sa">f</span><span class="s1">&#39;this is the image path: </span><span class="si">{</span><span class="n">img_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -489,7 +507,7 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">gradio</span> <span class="k">as</span> <span class="nn">gr</span>
-<span class="n">ImageCaptionApp</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span>
+<span class="n">ImageCaptionApp</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">my_agent</span><span class="p">,</span>
                     <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">gr</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Upload image&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;filepath&quot;</span><span class="p">)],</span>
                     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">gr</span><span class="o">.</span><span class="n">Textbox</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Caption&quot;</span><span class="p">)],</span>
                     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Image Captioning with langchain agent&quot;</span><span class="p">,</span>
@@ -516,7 +534,7 @@ Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    

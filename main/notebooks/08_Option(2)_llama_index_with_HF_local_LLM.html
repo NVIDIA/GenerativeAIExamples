@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HF Checkpoints with LlamaIndex and LangChain &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>HF Checkpoints with LlamaIndex and LangChain &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -25,8 +25,8 @@
         <script src="../_static/version.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Multimodal Models from NVIDIA AI Endpoints with LangChain Agent" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html" />
-    <link rel="prev" title="NVIDIA AI Endpoints, LlamaIndex, and LangChain" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html" />
+    <link rel="next" title="Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html" />
+    <link rel="prev" title="NVIDIA API Catalog, LlamaIndex, and LangChain" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html" />
  
 
 
@@ -64,10 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +80,14 @@
 <li class="toctree-l1"><a class="reference internal" href="03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -118,12 +122,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="hf-checkpoints-with-llamaindex-and-langchain">
+  <section class="tex2jax_ignore mathjax_ignore" id="hf-checkpoints-with-llamaindex-and-langchain">
 <h1>HF Checkpoints with LlamaIndex and LangChain<a class="headerlink" href="#hf-checkpoints-with-llamaindex-and-langchain" title="Permalink to this headline"></a></h1>
 <p>This notebook demonstrates how to plug in a local llm from <a class="reference external" href="https://huggingface.co/meta-llama/Llama-2-13b-chat-hf">HuggingFace Hub Llama-2-13b-chat-hf</a> and <a class="reference external" href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2">all-MiniLM-L6-v2 embedding from Huggingface</a>, bind these to into <a class="reference external" href="https://gpt-index.readthedocs.io/en/stable/">LlamaIndex</a> with these customizations.</p>
 <p>The custom plug-ins shown in this notebook can be replaced, for example, you can swap out the <a class="reference external" href="https://huggingface.co/meta-llama/Llama-2-13b-chat-hf">HuggingFace Llama-2-13b-chat-hf</a> with <a class="reference external" href="https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1">HuggingFace checkpoint from Mistral</a>.</p>
 <div class="alert alert-block alert-info">
-<p>⚠️ The notebook before this one, <code class="docutils literal notranslate"><span class="pre">08_Option(1)_llama_index_with_NVIDIA_AI_endpoint.ipynb</span></code>, contains the same exercise as this notebook but uses NVIDIA AI endpoints’ models via API calls instead of loading the models’ checkpoints pulled from huggingface model hub, and then load from host to devices (i.e GPUs).</p>
+<p>⚠️ The notebook before this one, <code class="docutils literal notranslate"><span class="pre">08_Option(1)_llama_index_with_NVIDIA_AI_endpoint.ipynb</span></code>, contains the same exercise as this notebook but uses NVIDIA AI Catelog’s models via API calls instead of loading the models’ checkpoints pulled from huggingface model hub, and then load from host to devices (i.e GPUs).</p>
 <p>Noted that, since we will load the checkpoints, it will be significantly slower to go through this entire notebook.</p>
 <p>If you do decide to go through this notebook, please kindly check the <strong>Prerequisite</strong> section below.</p>
 <p>There are continous development and retrieval techniques supported in LlamaIndex and this notebook just shows how to quickly replace components such as llm and embedding per user’s choice, read more <a class="reference external" href="https://docs.llamaindex.ai/en/stable/">documentation on llama-index</a> for the latest nformation.</p>
@@ -367,7 +371,7 @@ Note: if you are using the <a class="reference external" href="https://raw.githu
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Test out a query in natural</span>
-<span class="n">response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;what is transformer engine?&quot;</span><span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;Tell me about Sweden&#39;s population?&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -393,14 +397,14 @@ Note: if you are using the <a class="reference external" href="https://raw.githu
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html" class="btn btn-neutral float-left" title="NVIDIA AI Endpoints, LlamaIndex, and LangChain" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html" class="btn btn-neutral float-right" title="Multimodal Models from NVIDIA AI Endpoints with LangChain Agent" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html" class="btn btn-neutral float-left" title="NVIDIA API Catalog, LlamaIndex, and LangChain" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html" class="btn btn-neutral float-right" title="Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    

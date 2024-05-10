@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creating an LLM Chain &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/omni-style.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+        <script src="_static/version.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Creating a RAG Chain" href="rag-api-catalog.html" />
+    <link rel="prev" title="Listing and Searching Documents" href="documents-api-catalog.html" />
+ 
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+<a href="index.html">
+  <img src="_static/nvidia-logo-white.png" class="logo" alt="Logo"/>
+</a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">RAG Pipelines for Developers</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quantized-llm-model.html">Quantized Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structured-data.html">Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multimodal-data.html">Multimodal Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi-turn.html">Multi-turn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using-sample-web-application.html">Sample Chat Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="simple-examples.html">Developing Simple Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="boilerplate-api-catalog.html">Setting up the Simple Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ingest-api-catalog.html">Implementing the Ingest Docs Method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="documents-api-catalog.html">Listing and Searching Documents</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Creating an LLM Chain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rag-api-catalog.html">Creating a RAG Chain</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tools/evaluation/index.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="observability.html">Observability</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/00-llm-non-streaming-nemotron.html">Basics: Prompt, Client, and Responses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/01-llm-streaming-client.html">LLM Streaming Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/02_langchain_simple.html">Q&amp;A with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="llm-inference-server.html">NeMo Framework Inference Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frontend.html">RAG Playground Web Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jupyter-server.html">Jupyter Notebook Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chain-server.html">Chain Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Software Component Configuration</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">NVIDIA Generative AI Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="simple-examples.html">Developing Simple Examples</a> &raquo;</li>
+      <li>Creating an LLM Chain</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <!--
+  SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+  SPDX-License-Identifier: Apache-2.0
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<section class="tex2jax_ignore mathjax_ignore" id="creating-an-llm-chain">
+<h1>Creating an LLM Chain<a class="headerlink" href="#creating-an-llm-chain" title="Permalink to this headline"></a></h1>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#implementing-the-method" id="id1">Implementing the Method</a></p></li>
+<li><p><a class="reference internal" href="#building-and-running-with-docker-compose" id="id2">Building and Running with Docker Compose</a></p></li>
+<li><p><a class="reference internal" href="#verify-the-llm-chain-method-using-curl" id="id3">Verify the LLM Chain Method Using Curl</a></p></li>
+<li><p><a class="reference internal" href="#next-steps" id="id4">Next Steps</a></p></li>
+</ul>
+</div>
+<section id="implementing-the-method">
+<h2>Implementing the Method<a class="headerlink" href="#implementing-the-method" title="Permalink to this headline"></a></h2>
+<ol class="arabic">
+<li><p>Edit the <code class="docutils literal notranslate"><span class="pre">RetrievalAugmentedGeneration/examples/simple_rag_api_catalog/chains.py</span></code> file and add the following <code class="docutils literal notranslate"><span class="pre">import</span></code> statements:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">langchain_core.prompts</span> <span class="kn">import</span> <span class="n">ChatPromptTemplate</span>
+<span class="kn">from</span> <span class="nn">langchain_core.output_parsers</span> <span class="kn">import</span> <span class="n">StrOutputParser</span>
+</pre></div>
+</div>
+</li>
+<li><p>Update the <code class="docutils literal notranslate"><span class="pre">llm_chain</span></code> method with the following statements:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span> <span class="nf">llm_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chat_history</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;Message&quot;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Code to form an answer using LLM when context is already supplied&quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using llm to generate response directly without knowledge base.&quot;</span><span class="p">)</span>
+        <span class="n">system_message</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">prompts</span><span class="o">.</span><span class="n">chat_template</span><span class="p">)]</span>
+        <span class="n">conversation_history</span> <span class="o">=</span> <span class="p">[(</span><span class="n">msg</span><span class="o">.</span><span class="n">role</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">content</span><span class="p">)</span> <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">chat_history</span><span class="p">]</span>
+        <span class="n">user_input</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{input}</span><span class="s2">&quot;</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="n">conversation_history</span><span class="p">:</span>
+            <span class="n">prompt_template</span> <span class="o">=</span> <span class="n">ChatPromptTemplate</span><span class="o">.</span><span class="n">from_messages</span><span class="p">(</span>
+                <span class="n">system_message</span> <span class="o">+</span> <span class="n">conversation_history</span> <span class="o">+</span> <span class="n">user_input</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">prompt_template</span> <span class="o">=</span> <span class="n">ChatPromptTemplate</span><span class="o">.</span><span class="n">from_messages</span><span class="p">(</span>
+                <span class="n">system_message</span> <span class="o">+</span> <span class="n">user_input</span>
+            <span class="p">)</span>
+
+        <span class="n">llm</span> <span class="o">=</span> <span class="n">get_llm</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="n">prompt_template</span> <span class="o">|</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
+
+        <span class="n">augmented_user_input</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Question: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">chain</span><span class="o">.</span><span class="n">stream</span><span class="p">({</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="n">augmented_user_input</span><span class="p">})</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="building-and-running-with-docker-compose">
+<h2>Building and Running with Docker Compose<a class="headerlink" href="#building-and-running-with-docker-compose" title="Permalink to this headline"></a></h2>
+<!-- cp docs/simple-example/code/api-catalog/llm/chains.py RetrievalAugmentedGeneration/examples/simple_rag_api_catalog/chains.py -->
+<p>Using the containers has one additional step this time: exporting your NVIDIA API key as an environment variable.</p>
+<ol class="arabic">
+<li><p>Build the container for the Chain Server:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/simple-rag-api-catalog.yaml<span class="w"> </span>build<span class="w"> </span>chain-server
+</pre></div>
+</div>
+</li>
+<li><p>Export your NVIDIA API key in an environment variable:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">NVIDIA_API_KEY</span><span class="o">=</span>nvapi-...
+</pre></div>
+</div>
+</li>
+<li><p>Run the containers:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/simple-rag-api-catalog.yaml<span class="w"> </span>up<span class="w"> </span>-d
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="verify-the-llm-chain-method-using-curl">
+<h2>Verify the LLM Chain Method Using Curl<a class="headerlink" href="#verify-the-llm-chain-method-using-curl" title="Permalink to this headline"></a></h2>
+<p>You can access the Chain Server with a URL like <a class="reference external" href="http://localhost:8081">http://localhost:8081</a>.</p>
+<ul>
+<li><p>Confirm the <code class="docutils literal notranslate"><span class="pre">llm_chain</span></code> method runs by submitting a query:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span>http://localhost:8081/generate<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;, &quot;content&quot;:&quot;What should I see in Paris?&quot;}], &quot;use_knowledge_base&quot;: false}&#39;</span>
+</pre></div>
+</div>
+<p><em>Example Output</em></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">data: {&quot;id&quot;:&quot;3ffaf2b4-edd1-479e-9192-5b84b49c6ab6&quot;,&quot;choices&quot;:[{&quot;index&quot;:0,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot;&quot;},&quot;finish_reason&quot;:&quot;&quot;}]}</span>
+
+<span class="go">data: {&quot;id&quot;:&quot;3ffaf2b4-edd1-479e-9192-5b84b49c6ab6&quot;,&quot;choices&quot;:[{&quot;index&quot;:0,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot; In&quot;},&quot;finish_reason&quot;:&quot;&quot;}]}</span>
+
+<span class="go">data: {&quot;id&quot;:&quot;3ffaf2b4-edd1-479e-9192-5b84b49c6ab6&quot;,&quot;choices&quot;:[{&quot;index&quot;:0,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot; Paris, you should see famous landmarks such as the Eiffel Tower, the Louvre Museum, Notre-Dame Cathedral, the Arc de&quot;},&quot;finish_reason&quot;:&quot;&quot;}]}</span>
+
+<span class="go">data: {&quot;id&quot;:&quot;3ffaf2b4-edd1-479e-9192-5b84b49c6ab6&quot;,&quot;choices&quot;:[{&quot;index&quot;:0,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot; Triomphe, and the Sacré-Cœur Basilica. You can also take a stroll along the Seine River, visit the Montmartre&quot;},&quot;finish_reason&quot;:&quot;&quot;}]}</span>
+
+<span class="go">data: {&quot;id&quot;:&quot;3ffaf2b4-edd1-479e-9192-5b84b49c6ab6&quot;,&quot;choices&quot;:[{&quot;index&quot;:0,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot; district, and explore the charming streets of the Marais neighborhood. If you&#39;re interested in art, be sure to check out the Musée d&#39;Or&quot;},&quot;finish_reason&quot;:&quot;&quot;}]}</span>
+
+<span class="go">data: {&quot;id&quot;:&quot;3ffaf2b4-edd1-479e-9192-5b84b49c6ab6&quot;,&quot;choices&quot;:[{&quot;index&quot;:0,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot;say&quot;},&quot;finish_reason&quot;:&quot;&quot;}]}</span>
+
+<span class="go">data: {&quot;id&quot;:&quot;3ffaf2b4-edd1-479e-9192-5b84b49c6ab6&quot;,&quot;choices&quot;:[{&quot;index&quot;:0,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot; and the Centre Pompidou. And don&#39;t forget to try some delicious French cuisine while you&#39;re there!&quot;},&quot;finish_reason&quot;:&quot;&quot;}]}</span>
+
+<span class="go">data: {&quot;id&quot;:&quot;3ffaf2b4-edd1-479e-9192-5b84b49c6ab6&quot;,&quot;choices&quot;:[{&quot;index&quot;:0,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot;&quot;},&quot;finish_reason&quot;:&quot;&quot;}]}</span>
+
+<span class="go">data: {&quot;id&quot;:&quot;3ffaf2b4-edd1-479e-9192-5b84b49c6ab6&quot;,&quot;choices&quot;:[{&quot;index&quot;:0,&quot;message&quot;:{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot;&quot;},&quot;finish_reason&quot;:&quot;[DONE]&quot;}]}</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Permalink to this headline"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="rag-api-catalog.html"><span class="doc std std-doc">Creating a RAG Chain</span></a></p></li>
+<li><p>You can stop the containers by running the <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/simple-rag-api-catalog.yaml</span> <span class="pre">down</span></code> command.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="documents-api-catalog.html" class="btn btn-neutral float-left" title="Listing and Searching Documents" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rag-api-catalog.html" class="btn btn-neutral float-right" title="Creating a RAG Chain" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+
+
+
+</body>
+</html>

@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Multi-GPU for Inference &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>Multi-GPU for Inference &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -22,6 +22,8 @@
         <script src="_static/doctools.js"></script>
         <script src="_static/clipboard.min.js"></script>
         <script src="_static/copybutton.js"></script>
+        <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script src="_static/version.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="search" title="Search" href="search.html" />
@@ -64,10 +66,12 @@
 <li class="toctree-l1"><a class="reference internal" href="multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +82,14 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -134,30 +140,44 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<section id="multi-gpu-for-inference">
+<section class="tex2jax_ignore mathjax_ignore" id="multi-gpu-for-inference">
 <h1>Multi-GPU for Inference<a class="headerlink" href="#multi-gpu-for-inference" title="Permalink to this headline"></a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#comparison-with-the-local-gpus-example" id="id1">Comparison with the Local GPUs Example</a></p></li>
-<li><p><a class="reference internal" href="#example-features" id="id2">Example Features</a></p></li>
-<li><p><a class="reference internal" href="#prerequisites" id="id3">Prerequisites</a></p></li>
-<li><p><a class="reference internal" href="#download-the-llama-2-model-and-weights" id="id4">Download the Llama 2 Model and Weights</a></p></li>
-<li><p><a class="reference internal" href="#build-and-start-the-containers" id="id5">Build and Start the Containers</a></p>
+<li><p><a class="reference internal" href="#special-considerations-for-tensor-parallelism" id="id2">Special Considerations for Tensor Parallelism</a></p></li>
+<li><p><a class="reference internal" href="#example-features" id="id3">Example Features</a></p></li>
+<li><p><a class="reference internal" href="#prerequisites" id="id4">Prerequisites</a></p></li>
+<li><p><a class="reference internal" href="#download-the-llama-2-model-and-weights" id="id5">Download the Llama 2 Model and Weights</a></p></li>
+<li><p><a class="reference internal" href="#build-and-start-the-containers" id="id6">Build and Start the Containers</a></p>
 <ul>
-<li><p><a class="reference internal" href="#related-information" id="id6">Related Information</a></p></li>
+<li><p><a class="reference internal" href="#related-information" id="id7">Related Information</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#stopping-the-containers" id="id7">Stopping the Containers</a></p></li>
-<li><p><a class="reference internal" href="#next-steps" id="id8">Next Steps</a></p></li>
+<li><p><a class="reference internal" href="#stopping-the-containers" id="id8">Stopping the Containers</a></p></li>
+<li><p><a class="reference internal" href="#next-steps" id="id9">Next Steps</a></p></li>
 </ul>
 </div>
 <section id="comparison-with-the-local-gpus-example">
 <h2>Comparison with the Local GPUs Example<a class="headerlink" href="#comparison-with-the-local-gpus-example" title="Permalink to this headline"></a></h2>
 <p>This example is very similar to the example that uses local GPUs.
-The key difference is that the <code class="docutils literal notranslate"><span class="pre">deploy/compose/rag-app-text-chatbot.yaml</span></code> file
-is modified to identify the device IDs of the GPUs for the services.</p>
-<p>If you performed all the steps in <a class="reference internal" href="local-gpu.html"><span class="doc std std-doc">Using Local GPUs for a Q&amp;A Chatbot</span></a>, consider skipping to
+The key difference is to modify the <code class="docutils literal notranslate"><span class="pre">deploy/compose/rag-app-text-chatbot.yaml</span></code> file to specify the GPU device IDs for the services.
+If you performed all the steps in <a class="reference internal" href="local-gpu.html"><span class="doc std std-doc">Using Local GPUs for a Q&amp;A Chatbot</span></a>, consider skipping to
 step 1 of <a class="reference internal" href="#build-and-start-the-containers"><span class="std std-doc">Build and Start the Containers</span></a> on this page.</p>
+</section>
+<section id="special-considerations-for-tensor-parallelism">
+<h2>Special Considerations for Tensor Parallelism<a class="headerlink" href="#special-considerations-for-tensor-parallelism" title="Permalink to this headline"></a></h2>
+<p>When you use more than two GPUs for the inference server, you might need to specify additional command-line arguments.</p>
+<p>The special consideration is that the attention head size for the model must be a multiple of the tensor parallelism size.
+For the Llama-2-13B chat model, the model attention head size is 40.
+You can view this value in the <code class="docutils literal notranslate"><span class="pre">n_heads:</span> <span class="pre">40</span></code> field in the <code class="docutils literal notranslate"><span class="pre">llama-2-13b-chat/params.json</span></code> file after you download the model or from the Hugging Face Model Hub: <a class="reference external" href="https://huggingface.co/meta-llama/Llama-2-13b-chat/blob/main/params.json">https://huggingface.co/meta-llama/Llama-2-13b-chat/blob/main/params.json</a>.</p>
+<p>The tensor parallelism is calculated as <span class="math notranslate nohighlight">\(\mbox{tensor-parallelism} = \mbox{world-size} \div \mbox{pipeline-parallelism}\)</span>
+where <span class="math notranslate nohighlight">\(\mbox{world-size}\)</span> is the number of GPUs and <span class="math notranslate nohighlight">\(\mbox{pipeline-parallelism}\)</span> has a default value of 1.</p>
+<p>With 1, 2, 4, 5, or any number of GPUs that divide 40 into equally, no action is required.</p>
+<p>For 3, 6, or any other number that does not divide equally into 40, you can specify a pipeline parallelism value so that the tensor parallelism is a whole number.
+For example, to use 6 GPUs, you can specify <code class="docutils literal notranslate"><span class="pre">--pipeline-parallelism</span> <span class="pre">3</span></code> on the inference server command line so that tensor parallelism is 2.</p>
+<p>If you use a different model, refer to the <code class="docutils literal notranslate"><span class="pre">params.json</span></code> file.
+For example, the Llama-2-7B chat model has <code class="docutils literal notranslate"><span class="pre">n_heads:</span> <span class="pre">32</span></code> and the Llama-2-70B chat model has <code class="docutils literal notranslate"><span class="pre">n_heads:</span> <span class="pre">64</span></code>.</p>
 </section>
 <section id="example-features">
 <h2>Example Features<a class="headerlink" href="#example-features" title="Permalink to this headline"></a></h2>
@@ -189,7 +209,7 @@ step 1 of <a class="reference internal" href="#build-and-start-the-containers"><
 </thead>
 <tbody>
 <tr class="row-even"><td><p>llama-2</p></td>
-<td><p>e5-large-v2</p></td>
+<td><p>UAE-Large-V1</p></td>
 <td><p>LlamaIndex</p></td>
 <td><p>QA chatbot</p></td>
 <td><p>YES</p></td>
@@ -199,7 +219,7 @@ step 1 of <a class="reference internal" href="#build-and-start-the-containers"><
 <td><p>Milvus</p></td>
 </tr>
 <tr class="row-odd"><td><p>llama-2</p></td>
-<td><p>e5-large-v2</p></td>
+<td><p>UAE-Large-V1</p></td>
 <td><p>LlamaIndex</p></td>
 <td><p>QA chatbot</p></td>
 <td><p>YES</p></td>
@@ -358,11 +378,13 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
 <h2>Build and Start the Containers<a class="headerlink" href="#build-and-start-the-containers" title="Permalink to this headline"></a></h2>
 <ol class="arabic">
 <li><p>In the Generative AI Examples repository, edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/rag-app-text-chatbot.yaml</span></code> file.</p>
-<p>Specify the GPU device IDs to assign to the services:</p>
+<p>Specify the GPU device IDs to assign to the services.
+Refer to <a class="reference internal" href="#special-considerations-for-tensor-parallelism"><span class="std std-doc">Special Considerations for Tensor Parallelism</span></a> when specifying more than two GPUs.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">services</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">llm</span><span class="p">:</span>
 <span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">// ...</span>
-<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">deploy</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">command</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="c1"># Add --pipeline-parallelism &lt;n&gt; if you need to specify a value.</span>
+<span class="w">    </span><span class="nt">deploy</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">resources</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">reservations</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">devices</span><span class="p">:</span>
@@ -399,6 +421,7 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
 <span class="w">              </span><span class="nt">capabilities</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gpu</span><span class="p p-Indicator">]</span>
 </pre></div>
 </div>
+<p>You can share device IDs between vector database and Jupyter Server.</p>
 </li>
 <li><p>Edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/compose.env</span></code> file.</p>
 <p>Specify the absolute path to the model location, model architecture, and model name.</p>
@@ -501,7 +524,7 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    

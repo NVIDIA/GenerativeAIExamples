@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LangChain with Local Llama 2 Model &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>LangChain with Local Llama 2 Model &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -25,8 +25,8 @@
         <script src="../_static/version.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="NVIDIA AI Endpoints, LlamaIndex, and LangChain" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html" />
-    <link rel="prev" title="NVIDIA AI Endpoints with LangChain" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html" />
+    <link rel="next" title="NVIDIA API Catalog, LlamaIndex, and LangChain" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html" />
+    <link rel="prev" title="NVIDIA API Catalog with LangChain" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html" />
  
 
 
@@ -64,10 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +80,14 @@
 <li class="toctree-l1"><a class="reference internal" href="03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -118,11 +122,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="langchain-with-local-llama-2-model">
+  <section class="tex2jax_ignore mathjax_ignore" id="langchain-with-local-llama-2-model">
 <h1>LangChain with Local Llama 2 Model<a class="headerlink" href="#langchain-with-local-llama-2-model" title="Permalink to this headline"></a></h1>
 <p>This notebook uses the checkpoint from the <a class="reference external" href="https://huggingface.co/meta-llama/Llama-2-13b-chat-hf">HuggingFace Llama-2-13b-chat-hf</a> model.</p>
 <div class="alert alert-block alert-info">
-<p>⚠️ The notebook before this one, <code class="docutils literal notranslate"><span class="pre">07_Option(1)_NVIDIA_AI_endpoint_simple.ipynb</span></code>, contains the same exercise as this notebook but uses NVIDIA AI endpoints’ models via API calls instead of loading the models’ checkpoints pulled from huggingface model hub, and then load from host to devices (i.e GPUs).</p>
+<p>⚠️ The notebook before this one, <code class="docutils literal notranslate"><span class="pre">07_Option(1)_NVIDIA_AI_endpoint_simple.ipynb</span></code>, contains the same exercise as this notebook but uses NVIDIA AI Catalog’ models via API calls instead of loading the models’ checkpoints pulled from huggingface model hub, and then load from host to devices (i.e GPUs).</p>
 <p>Noted that, since we will load the checkpoints, it will be significantly slower to go through this entire notebook.</p>
 <p>If you do decide to go through this notebook, please kindly check the <strong>Prerequisite</strong> section below.</p>
 </div>
@@ -135,7 +139,6 @@
 <li><p>Installed Docker and <a class="reference external" href="https://github.com/NVIDIA/nvidia-container-toolkit">nvidia-container-toolkit</a>.</p></li>
 <li><p>Registered with <a class="reference external" href="https://www.nvidia.com/en-us/gpu-cloud/">NVIDIA NGC</a> and can pull and run NGC PyTorch containers.</p></li>
 <li><p>Installed Python dependencies for this notebook, by overwriting langchain-core version:</p>
-<p>pip install langchain-core==0.1.15</p>
 <p>If you are using the <a class="reference external" href="https://raw.githubusercontent.com/NVIDIA/GenerativeAIExamples/main/notebooks/Dockerfile.gpu_notebook">Dockerfile.gpu_notebook</a>, the dependency is already installed for you.</p>
 </li>
 </ol>
@@ -147,7 +150,8 @@
 <p><img alt="inference_runtime" src="../_images/inference_runtime.png" /></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>langchain-core<span class="o">==</span><span class="m">0</span>.1.15<span class="w"> </span>faiss-gpu
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># if you have only CPU, please use faiss-cpu instead</span>
+<span class="c1">#!pip install faiss-gpu accelerate</span>
 </pre></div>
 </div>
 </div>
@@ -237,10 +241,8 @@ head -3 ./toy_data/Titanic_film.txt
 
 <span class="c1"># Here we create a vector store from the documents and save it to disk.</span>
 <span class="n">store</span> <span class="o">=</span> <span class="n">FAISS</span><span class="o">.</span><span class="n">from_texts</span><span class="p">(</span><span class="n">docs</span><span class="p">,</span> <span class="n">hf_embedding</span><span class="p">,</span> <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">)</span>
-<span class="n">faiss</span><span class="o">.</span><span class="n">write_index</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">&quot;./toy_data/hf_embedding_docs.index&quot;</span><span class="p">)</span>
-<span class="n">store</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;./toy_data/hf_embeddingfaiss_store.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+<span class="n">store</span><span class="o">.</span><span class="n">save_local</span><span class="p">(</span><span class="s1">&#39;./toy_data/nv_embedding&#39;</span><span class="p">)</span>
 <span class="c1"># you will only need to do this once, later on we will restore the already saved vectorstore</span>
 </pre></div>
 </div>
@@ -258,12 +260,7 @@ head -3 ./toy_data/Titanic_film.txt
 <span class="kn">from</span> <span class="nn">langchain.vectorstores</span> <span class="kn">import</span> <span class="n">FAISS</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 
-<span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="o">.</span><span class="n">read_index</span><span class="p">(</span><span class="s2">&quot;./toy_data/hf_embedding_docs.index&quot;</span><span class="p">)</span>
-
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;./toy_data/hf_embeddingfaiss_store.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">store</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-
-<span class="n">store</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
+<span class="n">store</span> <span class="o">=</span> <span class="n">FAISS</span><span class="o">.</span><span class="n">load_local</span><span class="p">(</span><span class="s2">&quot;./toy_data/nv_embedding&quot;</span><span class="p">,</span><span class="n">hf_embedding</span> <span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -415,14 +412,14 @@ head -3 ./toy_data/Titanic_film.txt
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html" class="btn btn-neutral float-left" title="NVIDIA AI Endpoints with LangChain" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html" class="btn btn-neutral float-right" title="NVIDIA AI Endpoints, LlamaIndex, and LangChain" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html" class="btn btn-neutral float-left" title="NVIDIA API Catalog with LangChain" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html" class="btn btn-neutral float-right" title="NVIDIA API Catalog, LlamaIndex, and LangChain" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    

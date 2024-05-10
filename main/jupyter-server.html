@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jupyter Notebook Server &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>Jupyter Notebook Server &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -64,10 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +80,14 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul class="current">
@@ -134,7 +138,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<section id="jupyter-notebook-server">
+<section class="tex2jax_ignore mathjax_ignore" id="jupyter-notebook-server">
 <h1>Jupyter Notebook Server<a class="headerlink" href="#jupyter-notebook-server" title="Permalink to this headline"></a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -177,10 +181,16 @@
 <li><p><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html"><span class="doc std std-doc">LangChain agent with tools plug in multiple models from  NVIDIA AI Endpoints</span></a></p>
 <p>This notebook demonstrates how to use multiple NVIDIA AI Endpoint models such as mixtral_8x7b, Deplot, and Neva.</p>
 </li>
-<li><p><span class="xref myst">LangChain with HTML documents and NVIDIA AI Endpoints</span></p>
+<li><p><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html"><span class="doc std std-doc">LangChain with HTML documents and NVIDIA AI Endpoints</span></a></p>
 <p>This notebook demonstrates how to build a RAG using NVIDIA AI Endpoints for LangChain.
 The notebook creates a vector store by downloading web pages and generating their embeddings using FAISS.
 The notebook shows two different chat chains for querying the vector store.</p>
+</li>
+<li><p><a class="reference internal" href="notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html"><span class="doc std std-doc">LangChain with HTML documents and NVIDIA AI Endpoints</span></a></p>
+<p>This notebook guides you through creating a basic agent executor using LangGraph. We demonstrate how to handle the logic of the intermediate steps from the agent leveraging different provided tools within langGraph.</p>
+</li>
+<li><p><a class="reference internal" href="notebooks/12_Chat_wtih_nvidia_financial_reports.html"><span class="doc std std-doc">LangChain with HTML documents and NVIDIA AI Endpoints</span></a></p>
+<p>In this notebook, we are going to use milvus as vectorstore, the mixtral_8x7b as LLM and ai-embed-qa-4 embedding provided by NVIDIA_AI_Endpoint as LLM and embedding model, and build a simply RAG example for chatting with NVIDIA Financial Reports.</p>
 </li>
 </ul>
 </section>
@@ -239,7 +249,7 @@ To use more than one, specify the GPU IDs in the <code class="docutils literal n
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    

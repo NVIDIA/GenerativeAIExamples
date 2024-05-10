@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Configuring an Alternative Vector Database &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>Configuring an Alternative Vector Database &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -25,7 +25,7 @@
         <script src="_static/version.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Evaluation Tool" href="evaluation.html" />
+    <link rel="next" title="Using NVIDIA NIM for LLMs" href="nim-llms.html" />
     <link rel="prev" title="Using the Sample Chat Web Application" href="using-sample-web-application.html" />
  
 
@@ -64,10 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +80,14 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -134,7 +138,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<section id="configuring-an-alternative-vector-database">
+<section class="tex2jax_ignore mathjax_ignore" id="configuring-an-alternative-vector-database">
 <h1>Configuring an Alternative Vector Database<a class="headerlink" href="#configuring-an-alternative-vector-database" title="Permalink to this headline"></a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -166,6 +170,7 @@ Alternatively, you can deploy pgvector.</p>
 </div>
 <p>The preceding example shows the default values for the database user, password, and database.
 To override the defaults, edit the values in the Docker Compose file, or set the values in the <code class="docutils literal notranslate"><span class="pre">compose.env</span></code> file.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Note</span></code>: If you have existing setup remove <code class="docutils literal notranslate"><span class="pre">deploy/compose/volumes</span></code> directory to avoid pgvector crash.</p>
 </li>
 <li><p>Optional: If a container for a vector database is running, stop the container:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>deploy/compose/docker-compose-vectordb.yaml<span class="w"> </span>down
@@ -260,13 +265,13 @@ Refer to <a class="reference internal" href="using-sample-web-application.html#u
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="using-sample-web-application.html" class="btn btn-neutral float-left" title="Using the Sample Chat Web Application" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="evaluation.html" class="btn btn-neutral float-right" title="Evaluation Tool" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="nim-llms.html" class="btn btn-neutral float-right" title="Using NVIDIA NIM for LLMs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    

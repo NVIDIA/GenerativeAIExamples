@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Architecture &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>Architecture &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -26,7 +26,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="NeMo Framework Inference Server" href="llm-inference-server.html" />
-    <link rel="prev" title="Build a RAG chain by generating embeddings for NVIDIA Triton documentation" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html" />
+    <link rel="prev" title="Notebook: Chating with NVIDIA Financial Reports" href="notebooks/12_Chat_wtih_nvidia_financial_reports.html" />
  
 
 
@@ -64,10 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +80,14 @@
 <li class="toctree-l1"><a class="reference internal" href="notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul class="current">
@@ -134,7 +138,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<section id="architecture">
+<section class="tex2jax_ignore mathjax_ignore" id="architecture">
 <h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline"></a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -161,7 +165,7 @@
 <li><p><a class="reference external" href="https://github.com/langchain-ai/langchain/">LangChain</a> and <a class="reference external" href="https://www.llamaindex.ai/">LlamaIndex</a> for combining language model components and easily constructing question-answering from a company’s database</p></li>
 <li><p><a class="reference internal" href="jupyter-server.html"><span class="doc std std-doc">Sample Jupyter Notebooks</span></a> and <a class="reference internal" href="frontend.html"><span class="doc std std-doc">chat bot web application/API calls</span></a> so that you can test the chat system in an interactive manner</p></li>
 <li><p><a class="reference external" href="https://milvus.io/docs/install_standalone-docker.md">Milvus</a> - Generated embeddings are stored in a vector database. The vector DB used in this workflow is Milvus. Milvus is an open-source vector database capable of NVIDIA GPU-accelerated vector searches.</p></li>
-<li><p><a class="reference external" href="https://huggingface.co/embaas/sentence-transformers-e5-large-v2">e5-large-v2 model</a> from Hugging Face to generate the embeddings.</p></li>
+<li><p><a class="reference external" href="https://huggingface.co/WhereIsAI/UAE-Large-V1">UAE-Large-V1 model</a> from Hugging Face to generate the embeddings.</p></li>
 <li><p><a class="reference external" href="https://github.com/facebookresearch/llama/">Llama2</a>, an open source model from Meta, to formulate natural responses.</p></li>
 </ul>
 <p>This sample deployment is a reference for you to build your own enterprise AI solution with minimal effort.
@@ -202,7 +206,7 @@ The following graphic describes an overview of this inference pipeline:</p>
 <h2>Document Ingestion and Retrieval<a class="headerlink" href="#document-ingestion-and-retrieval" title="Permalink to this headline"></a></h2>
 <p>RAG begins with a knowledge base of relevant up-to-date information.
 Because data within an enterprise is frequently updated, the ingestion of documents into a knowledge base is a recurring process and could be scheduled as a job.
-Next, content from the knowledge base is passed to an embedding model such as e5-large-v2 that the sample deployment uses.
+Next, content from the knowledge base is passed to an embedding model such as UAE-Large-V1 that the sample deployment uses.
 The embedding model converts the content to vectors, referred to as <em>embeddings</em>.
 Generating embeddings is a critical step in RAG.
 The embeddings provide dense numerical representations of textual information.
@@ -211,7 +215,7 @@ These embeddings are stored in a vector database, in this case Milvus, which is 
 <section id="user-query-and-response-generation">
 <h2>User Query and Response Generation<a class="headerlink" href="#user-query-and-response-generation" title="Permalink to this headline"></a></h2>
 <p>When a user query is sent to the inference server, it is converted to an embedding using the embedding model.
-This is the same embedding model that is used to convert the documents in the knowledge base, e5-large-v2, in the case of this sample deployment.
+This is the same embedding model that is used to convert the documents in the knowledge base, UAE-Large-V1, in the case of this sample deployment.
 The database performs a similarity/semantic search to find the vectors that most closely resemble the user’s intent and provides them to the LLM as enhanced context.
 Because Milvus is RAFT accelerated, the similarity serach is optimized on the GPU.
 Lastly, the LLM generates a full answer that is streamed to the user.
@@ -242,7 +246,7 @@ This software accelerates and maximizes inference performance on the latest LLMs
 <h2>Vector DB<a class="headerlink" href="#vector-db" title="Permalink to this headline"></a></h2>
 <p>Milvus is an open-source vector database built to power embedding similarity search and AI applications.
 The database makes unstructured data from API calls, PDFs, and other documents more accessible by storing them as embeddings.</p>
-<p>When content from the knowledge base is passed to an embedding model, e5-large-v2, the model converts the content to vectors–referred to as <em>embeddings</em>.
+<p>When content from the knowledge base is passed to an embedding model, UAE-Large-V1, the model converts the content to vectors–referred to as <em>embeddings</em>.
 These embeddings are stored in the vector database.
 The sample deployment uses Milvus as the vector database.
 Milvus is an open-source vector database capable of NVIDIA GPU-accelerated vector searches.</p>
@@ -254,14 +258,14 @@ Milvus is an open-source vector database capable of NVIDIA GPU-accelerated vecto
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html" class="btn btn-neutral float-left" title="Build a RAG chain by generating embeddings for NVIDIA Triton documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="notebooks/12_Chat_wtih_nvidia_financial_reports.html" class="btn btn-neutral float-left" title="Notebook: Chating with NVIDIA Financial Reports" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="llm-inference-server.html" class="btn btn-neutral float-right" title="NeMo Framework Inference Server" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    

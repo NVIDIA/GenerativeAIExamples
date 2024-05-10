@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Build a RAG chain by generating embeddings for NVIDIA Triton documentation &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>Build a RAG chain by generating embeddings for NVIDIA Triton documentation &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -25,8 +25,8 @@
         <script src="../_static/version.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Architecture" href="../architecture.html" />
-    <link rel="prev" title="Multimodal Models from NVIDIA AI Endpoints with LangChain Agent" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html" />
+    <link rel="next" title="LangGraph Handling LangChain Agent Intermediate_Steps" href="11_LangGraph_HandlingAgent_IntermediateSteps.html" />
+    <link rel="prev" title="Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html" />
  
 
 
@@ -64,10 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +80,14 @@
 <li class="toctree-l1"><a class="reference internal" href="03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -118,7 +122,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="build-a-rag-chain-by-generating-embeddings-for-nvidia-triton-documentation">
+  <section class="tex2jax_ignore mathjax_ignore" id="build-a-rag-chain-by-generating-embeddings-for-nvidia-triton-documentation">
 <h1>Build a RAG chain by generating embeddings for NVIDIA Triton documentation<a class="headerlink" href="#build-a-rag-chain-by-generating-embeddings-for-nvidia-triton-documentation" title="Permalink to this headline"></a></h1>
 <p>In this notebook we demonstrate how to build a RAG using <a class="reference external" href="https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints">NVIDIA AI Endpoints for LangChain</a>. We create a vector store by downloading web pages and generating their embeddings using FAISS. We then showcase two different chat chains for querying the vector store. For this example, we use the NVIDIA Triton documentation website, though the code can be easily modified to use any other source.</p>
 <section id="first-stage-is-to-load-nvidia-triton-documentation-from-the-web-chunkify-the-data-and-generate-embeddings-using-faiss">
@@ -136,6 +140,85 @@
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>langchain
 <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>langchain_nvidia_ai_endpoints
 <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>faiss-cpu
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Looking in indexes: https://pypi.org/simple, https://pypi.ngc.nvidia.com
+Requirement already satisfied: langchain in /usr/local/lib/python3.10/dist-packages (0.1.9)
+Requirement already satisfied: PyYAML&gt;=5.3 in /usr/local/lib/python3.10/dist-packages (from langchain) (6.0)
+Requirement already satisfied: SQLAlchemy&lt;3,&gt;=1.4 in /usr/local/lib/python3.10/dist-packages (from langchain) (2.0.29)
+Requirement already satisfied: aiohttp&lt;4.0.0,&gt;=3.8.3 in /usr/local/lib/python3.10/dist-packages (from langchain) (3.9.3)
+Requirement already satisfied: async-timeout&lt;5.0.0,&gt;=4.0.0 in /usr/local/lib/python3.10/dist-packages (from langchain) (4.0.2)
+Requirement already satisfied: dataclasses-json&lt;0.7,&gt;=0.5.7 in /usr/local/lib/python3.10/dist-packages (from langchain) (0.6.4)
+Requirement already satisfied: jsonpatch&lt;2.0,&gt;=1.33 in /usr/local/lib/python3.10/dist-packages (from langchain) (1.33)
+Requirement already satisfied: langchain-community&lt;0.1,&gt;=0.0.21 in /usr/local/lib/python3.10/dist-packages (from langchain) (0.0.26)
+Requirement already satisfied: langchain-core&lt;0.2,&gt;=0.1.26 in /usr/local/lib/python3.10/dist-packages (from langchain) (0.1.29)
+Requirement already satisfied: langsmith&lt;0.2.0,&gt;=0.1.0 in /usr/local/lib/python3.10/dist-packages (from langchain) (0.1.39)
+Requirement already satisfied: numpy&lt;2,&gt;=1 in /usr/local/lib/python3.10/dist-packages (from langchain) (1.22.2)
+Requirement already satisfied: pydantic&lt;3,&gt;=1 in /usr/local/lib/python3.10/dist-packages (from langchain) (1.10.7)
+Requirement already satisfied: requests&lt;3,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from langchain) (2.31.0)
+Requirement already satisfied: tenacity&lt;9.0.0,&gt;=8.1.0 in /usr/local/lib/python3.10/dist-packages (from langchain) (8.2.3)
+Requirement already satisfied: aiosignal&gt;=1.1.2 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.8.3-&gt;langchain) (1.3.1)
+Requirement already satisfied: attrs&gt;=17.3.0 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.8.3-&gt;langchain) (23.1.0)
+Requirement already satisfied: frozenlist&gt;=1.1.1 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.8.3-&gt;langchain) (1.3.3)
+Requirement already satisfied: multidict&lt;7.0,&gt;=4.5 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.8.3-&gt;langchain) (6.0.4)
+Requirement already satisfied: yarl&lt;2.0,&gt;=1.0 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.8.3-&gt;langchain) (1.9.2)
+Requirement already satisfied: marshmallow&lt;4.0.0,&gt;=3.18.0 in /usr/local/lib/python3.10/dist-packages (from dataclasses-json&lt;0.7,&gt;=0.5.7-&gt;langchain) (3.21.1)
+Requirement already satisfied: typing-inspect&lt;1,&gt;=0.4.0 in /usr/local/lib/python3.10/dist-packages (from dataclasses-json&lt;0.7,&gt;=0.5.7-&gt;langchain) (0.9.0)
+Requirement already satisfied: jsonpointer&gt;=1.9 in /usr/local/lib/python3.10/dist-packages (from jsonpatch&lt;2.0,&gt;=1.33-&gt;langchain) (2.4)
+Requirement already satisfied: anyio&lt;5,&gt;=3 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2,&gt;=0.1.26-&gt;langchain) (3.7.1)
+Requirement already satisfied: packaging&lt;24.0,&gt;=23.2 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2,&gt;=0.1.26-&gt;langchain) (23.2)
+Requirement already satisfied: orjson&lt;4.0.0,&gt;=3.9.14 in /usr/local/lib/python3.10/dist-packages (from langsmith&lt;0.2.0,&gt;=0.1.0-&gt;langchain) (3.10.0)
+Requirement already satisfied: typing-extensions&gt;=4.2.0 in /usr/local/lib/python3.10/dist-packages (from pydantic&lt;3,&gt;=1-&gt;langchain) (4.10.0)
+Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from requests&lt;3,&gt;=2-&gt;langchain) (3.1.0)
+Requirement already satisfied: idna&lt;4,&gt;=2.5 in /usr/local/lib/python3.10/dist-packages (from requests&lt;3,&gt;=2-&gt;langchain) (3.4)
+Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests&lt;3,&gt;=2-&gt;langchain) (2.2.1)
+Requirement already satisfied: certifi&gt;=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests&lt;3,&gt;=2-&gt;langchain) (2022.12.7)
+Requirement already satisfied: greenlet!=0.4.17 in /usr/local/lib/python3.10/dist-packages (from SQLAlchemy&lt;3,&gt;=1.4-&gt;langchain) (3.0.3)
+Requirement already satisfied: sniffio&gt;=1.1 in /usr/local/lib/python3.10/dist-packages (from anyio&lt;5,&gt;=3-&gt;langchain-core&lt;0.2,&gt;=0.1.26-&gt;langchain) (1.3.1)
+Requirement already satisfied: exceptiongroup in /usr/local/lib/python3.10/dist-packages (from anyio&lt;5,&gt;=3-&gt;langchain-core&lt;0.2,&gt;=0.1.26-&gt;langchain) (1.1.1)
+Requirement already satisfied: mypy-extensions&gt;=0.3.0 in /usr/local/lib/python3.10/dist-packages (from typing-inspect&lt;1,&gt;=0.4.0-&gt;dataclasses-json&lt;0.7,&gt;=0.5.7-&gt;langchain) (1.0.0)
+<span class=" -Color -Color-Yellow">WARNING: Running pip as the &#39;root&#39; user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv</span>
+Looking in indexes: https://pypi.org/simple, https://pypi.ngc.nvidia.com
+Requirement already satisfied: langchain_nvidia_ai_endpoints in /usr/local/lib/python3.10/dist-packages (0.0.4)
+Requirement already satisfied: aiohttp&lt;4.0.0,&gt;=3.9.1 in /usr/local/lib/python3.10/dist-packages (from langchain_nvidia_ai_endpoints) (3.9.3)
+Requirement already satisfied: langchain-core&lt;0.2.0,&gt;=0.1.5 in /usr/local/lib/python3.10/dist-packages (from langchain_nvidia_ai_endpoints) (0.1.29)
+Requirement already satisfied: pillow&lt;11.0.0,&gt;=10.0.0 in /usr/local/lib/python3.10/dist-packages (from langchain_nvidia_ai_endpoints) (10.3.0)
+Requirement already satisfied: aiosignal&gt;=1.1.2 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.9.1-&gt;langchain_nvidia_ai_endpoints) (1.3.1)
+Requirement already satisfied: attrs&gt;=17.3.0 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.9.1-&gt;langchain_nvidia_ai_endpoints) (23.1.0)
+Requirement already satisfied: frozenlist&gt;=1.1.1 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.9.1-&gt;langchain_nvidia_ai_endpoints) (1.3.3)
+Requirement already satisfied: multidict&lt;7.0,&gt;=4.5 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.9.1-&gt;langchain_nvidia_ai_endpoints) (6.0.4)
+Requirement already satisfied: yarl&lt;2.0,&gt;=1.0 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.9.1-&gt;langchain_nvidia_ai_endpoints) (1.9.2)
+Requirement already satisfied: async-timeout&lt;5.0,&gt;=4.0 in /usr/local/lib/python3.10/dist-packages (from aiohttp&lt;4.0.0,&gt;=3.9.1-&gt;langchain_nvidia_ai_endpoints) (4.0.2)
+Requirement already satisfied: PyYAML&gt;=5.3 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (6.0)
+Requirement already satisfied: anyio&lt;5,&gt;=3 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (3.7.1)
+Requirement already satisfied: jsonpatch&lt;2.0,&gt;=1.33 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (1.33)
+Requirement already satisfied: langsmith&lt;0.2.0,&gt;=0.1.0 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (0.1.39)
+Requirement already satisfied: packaging&lt;24.0,&gt;=23.2 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (23.2)
+Requirement already satisfied: pydantic&lt;3,&gt;=1 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (1.10.7)
+Requirement already satisfied: requests&lt;3,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (2.31.0)
+Requirement already satisfied: tenacity&lt;9.0.0,&gt;=8.1.0 in /usr/local/lib/python3.10/dist-packages (from langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (8.2.3)
+Requirement already satisfied: idna&gt;=2.8 in /usr/local/lib/python3.10/dist-packages (from anyio&lt;5,&gt;=3-&gt;langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (3.4)
+Requirement already satisfied: sniffio&gt;=1.1 in /usr/local/lib/python3.10/dist-packages (from anyio&lt;5,&gt;=3-&gt;langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (1.3.1)
+Requirement already satisfied: exceptiongroup in /usr/local/lib/python3.10/dist-packages (from anyio&lt;5,&gt;=3-&gt;langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (1.1.1)
+Requirement already satisfied: jsonpointer&gt;=1.9 in /usr/local/lib/python3.10/dist-packages (from jsonpatch&lt;2.0,&gt;=1.33-&gt;langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (2.4)
+Requirement already satisfied: orjson&lt;4.0.0,&gt;=3.9.14 in /usr/local/lib/python3.10/dist-packages (from langsmith&lt;0.2.0,&gt;=0.1.0-&gt;langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (3.10.0)
+Requirement already satisfied: typing-extensions&gt;=4.2.0 in /usr/local/lib/python3.10/dist-packages (from pydantic&lt;3,&gt;=1-&gt;langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (4.10.0)
+Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from requests&lt;3,&gt;=2-&gt;langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (3.1.0)
+Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests&lt;3,&gt;=2-&gt;langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (2.2.1)
+Requirement already satisfied: certifi&gt;=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests&lt;3,&gt;=2-&gt;langchain-core&lt;0.2.0,&gt;=0.1.5-&gt;langchain_nvidia_ai_endpoints) (2022.12.7)
+<span class=" -Color -Color-Yellow">WARNING: Running pip as the &#39;root&#39; user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv</span>
+Looking in indexes: https://pypi.org/simple, https://pypi.ngc.nvidia.com
+Collecting faiss-cpu
+  Downloading faiss_cpu-1.8.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.6 kB)
+Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from faiss-cpu) (1.22.2)
+Downloading faiss_cpu-1.8.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (27.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ <span class=" -Color -Color-Green">27.0/27.0 MB</span> <span class=" -Color -Color-Red">16.0 MB/s</span> eta <span class=" -Color -Color-Cyan">0:00:00</span>00:0100:01
+?25hInstalling collected packages: faiss-cpu
+Successfully installed faiss-cpu-1.8.0
+<span class=" -Color -Color-Yellow">WARNING: Running pip as the &#39;root&#39; user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv</span>
+
 </pre></div>
 </div>
 </div>
@@ -166,6 +249,8 @@
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;NVIDIA_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nvapi_key</span>
 </pre></div>
 </div>
+</div>
+<div class="cell_output docutils container">
 </div>
 </div>
 <p>Helper functions for loading html files, which we’ll use to generate the embeddings. We’ll use this later to load the relevant html documents from the Triton documentation website and convert to a vector store.</p>
@@ -305,6 +390,11 @@ Note chunk_size value must match the specific LLM used for embedding genetation<
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Storing embeddings to ./embed
+</pre></div>
+</div>
+</div>
 </div>
 <p>Load documents from vector database using FAISS</p>
 <div class="cell docutils container">
@@ -426,14 +516,14 @@ Note chunk_size value must match the specific LLM used for embedding genetation<
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html" class="btn btn-neutral float-left" title="Multimodal Models from NVIDIA AI Endpoints with LangChain Agent" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../architecture.html" class="btn btn-neutral float-right" title="Architecture" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html" class="btn btn-neutral float-left" title="Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="11_LangGraph_HandlingAgent_IntermediateSteps.html" class="btn btn-neutral float-right" title="LangGraph Handling LangChain Agent Intermediate_Steps" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    

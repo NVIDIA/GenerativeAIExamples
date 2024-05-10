@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Using the NVIDIA API Catalog &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
+  <title>Developing Simple Examples &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -25,8 +25,8 @@
         <script src="_static/version.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Using Local GPUs for a Q&amp;A Chatbot" href="local-gpu.html" />
-    <link rel="prev" title="Support Matrix" href="support-matrix.html" />
+    <link rel="next" title="Setting up the Simple Example" href="boilerplate-api-catalog.html" />
+    <link rel="prev" title="Using NVIDIA NIM for LLMs" href="nim-llms.html" />
  
 
 
@@ -54,7 +54,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">API Catalog Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
@@ -65,7 +65,14 @@
 <li class="toctree-l1"><a class="reference internal" href="using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vector-database.html">Alternative Vector Database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nim-llms.html">NIM for LLMs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="simple-examples.html">Developing Simple Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Developing Simple Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="boilerplate-api-catalog.html">Setting up the Simple Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ingest-api-catalog.html">Implementing the Ingest Docs Method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="documents-api-catalog.html">Listing and Searching Documents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llm-api-catalog.html">Creating an LLM Chain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rag-api-catalog.html">Creating a RAG Chain</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
@@ -113,7 +120,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Using the NVIDIA API Catalog</li>
+      <li>Developing Simple Examples</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -138,70 +145,49 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<section class="tex2jax_ignore mathjax_ignore" id="using-the-nvidia-api-catalog">
-<h1>Using the NVIDIA API Catalog<a class="headerlink" href="#using-the-nvidia-api-catalog" title="Permalink to this headline"></a></h1>
-<div class="contents local topic" id="contents">
-<ul class="simple">
-<li><p><a class="reference internal" href="#example-features" id="id1">Example Features</a></p></li>
-<li><p><a class="reference internal" href="#prerequisites" id="id2">Prerequisites</a></p></li>
-<li><p><a class="reference internal" href="#get-an-api-key-for-the-mixtral-8x7b-instruct-api-endpoint" id="id3">Get an API Key for the Mixtral 8x7B Instruct API Endpoint</a></p></li>
-<li><p><a class="reference internal" href="#build-and-start-the-containers" id="id4">Build and Start the Containers</a></p></li>
-<li><p><a class="reference internal" href="#next-steps" id="id5">Next Steps</a></p></li>
+<section class="tex2jax_ignore mathjax_ignore" id="developing-simple-examples">
+<h1>Developing Simple Examples<a class="headerlink" href="#developing-simple-examples" title="Permalink to this headline"></a></h1>
+<section id="about-the-purpose-and-process">
+<h2>About the Purpose and Process<a class="headerlink" href="#about-the-purpose-and-process" title="Permalink to this headline"></a></h2>
+<p>The purpose of the example is to show how to develop a RAG example.
+The example uses models from the NVIDIA API Catalog.
+Using models from the catalog simplifies the initial setup by avoiding the steps to download a model and run an inference server.
+The endpoints from the catalog serve as both an embedding and an inference server.</p>
+<p>The following pages show the sample code for gradually implementing the methods of a chain server that use LlamaIndex utility functions.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="boilerplate-api-catalog.html">Setting up the Simple Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ingest-api-catalog.html">Implementing the Ingest Docs Method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents-api-catalog.html">Listing and Searching Documents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="llm-api-catalog.html">Creating an LLM Chain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rag-api-catalog.html">Creating a RAG Chain</a></li>
 </ul>
 </div>
-<section id="example-features">
-<h2>Example Features<a class="headerlink" href="#example-features" title="Permalink to this headline"></a></h2>
-<p>This example deploys a developer RAG pipeline for chat Q&amp;A and serves inferencing from an NVIDIA API Catalog endpoint
-instead of NVIDIA Triton Inference Server, a local Llama 2 model, or local GPUs.</p>
-<p>Developers get free credits for 10K requests to any of the available models.</p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-</colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Model</p></th>
-<th class="head"><p>Embedding</p></th>
-<th class="head"><p>Framework</p></th>
-<th class="head"><p>Description</p></th>
-<th class="head"><p>Multi-GPU</p></th>
-<th class="head"><p>TRT-LLM</p></th>
-<th class="head"><p>Model Location</p></th>
-<th class="head"><p>Triton</p></th>
-<th class="head"><p>Vector Database</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>ai-mixtral-8x7b-instruct</p></td>
-<td><p>ai-embed-qa-4</p></td>
-<td><p>Langchain</p></td>
-<td><p>QA chatbot</p></td>
-<td><p>NO</p></td>
-<td><p>NO</p></td>
-<td><p>API Catalog</p></td>
-<td><p>NO</p></td>
-<td><p>Milvus</p></td>
-</tr>
-</tbody>
-</table>
-<p>The following figure shows the sample topology:</p>
-<ul class="simple">
-<li><p>The sample chat bot web application communicates with the chain server.
-The chain server sends inference requests to an NVIDIA API Catalog endpoint.</p></li>
-<li><p>Optionally, you can deploy NVIDIA Riva. Riva can use automatic speech recognition to transcribe
-your questions and use text-to-speech to speak the answers aloud.</p></li>
-</ul>
-<p><img alt="Using NVIDIA API Catalog endpoints for inference instead of local components." src="_images/ai-foundations-topology.png" /></p>
+</section>
+<section id="key-considerations-for-the-simple-rag">
+<h2>Key Considerations for the Simple RAG<a class="headerlink" href="#key-considerations-for-the-simple-rag" title="Permalink to this headline"></a></h2>
+<p>The simple example uses the build and configuration approach that NVIDIA provided examples use.
+Reusing the build and configuration enables the sample to focus on the basics of developing the RAG code.</p>
+<p>The key consideration for the RAG code is to implement three required methods and one optional method:</p>
+<dl class="simple myst">
+<dt>ingest_docs</dt><dd><p>The chain server run this method when you upload documents to use as a knowledge base.</p>
+</dd>
+<dt>llm_chain</dt><dd><p>The chain server runs this method when a query does not rely on retrieval.</p>
+</dd>
+<dt>rag_chain</dt><dd><p>The chain server runs this method when you request to use the knowledge base and use retrieval to answer a query.</p>
+</dd>
+<dt>get_documents</dt><dd><p>The chain server runs this method when you access the <code class="docutils literal notranslate"><span class="pre">/documents</span></code> endpoint with a GET request.</p>
+</dd>
+<dt>delete_documents</dt><dd><p>The chain server runs this method when you access the <code class="docutils literal notranslate"><span class="pre">/documents</span></code> endpoint with a DELETE request.</p>
+</dd>
+<dt>document_search</dt><dd><p>This is an optional method that enables you to perform the same document search that the <code class="docutils literal notranslate"><span class="pre">rag_chain</span></code> method runs.</p>
+</dd>
+</dl>
 </section>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
+<p>The following prerequisites are common for using models from the NVIDIA API Catalog.
+If you already performed these steps, you do not need to repeat them.</p>
 <ul>
 <li><p>Clone the Generative AI examples Git repository using Git LFS:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>sudo<span class="w"> </span>apt<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>git-lfs
@@ -233,8 +219,10 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
 </li>
 </ul>
 </section>
-<section id="get-an-api-key-for-the-mixtral-8x7b-instruct-api-endpoint">
-<h2>Get an API Key for the Mixtral 8x7B Instruct API Endpoint<a class="headerlink" href="#get-an-api-key-for-the-mixtral-8x7b-instruct-api-endpoint" title="Permalink to this headline"></a></h2>
+<section id="get-an-nvidia-api-key">
+<h2>Get an NVIDIA API Key<a class="headerlink" href="#get-an-nvidia-api-key" title="Permalink to this headline"></a></h2>
+<p>The following steps describe how to get an NVIDIA API key for the Mixtral 8x7B Instruct API Endpoint.
+If you already performed these steps, you do not need to repeat them.</p>
 <p>Perform the following steps if you do not already have an API key.
 You can use different model API endpoints with the same API key.</p>
 <ol class="arabic">
@@ -254,67 +242,20 @@ The key begins with the letters nvapi-.</p>
 </li>
 </ol>
 </section>
-<section id="build-and-start-the-containers">
-<h2>Build and Start the Containers<a class="headerlink" href="#build-and-start-the-containers" title="Permalink to this headline"></a></h2>
-<ol class="arabic">
-<li><p>In the Generative AI examples repository, export this variable in terminal.</p>
-<p>Add the API key for the model endpoint:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>export NVIDIA_API_KEY=&quot;nvapi-&lt;...&gt;&quot;
-</pre></div>
-</div>
-</li>
-<li><p>From the root of the repository, build the containers:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/rag-app-api-catalog-text-chatbot.yaml<span class="w"> </span>build
-</pre></div>
-</div>
-</li>
-<li><p>Start the containers:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/rag-app-api-catalog-text-chatbot.yaml<span class="w"> </span>up<span class="w"> </span>-d
-</pre></div>
-</div>
-<p><em>Example Output</em></p>
-<div class="highlight-output notranslate"><div class="highlight"><pre><span></span><span class="go"> ✔ Network nvidia-rag         Created</span>
-<span class="go"> ✔ Container chain-server     Started</span>
-<span class="go"> ✔ Container rag-playground   Started</span>
-</pre></div>
-</div>
-</li>
-<li><p>Start the Milvus vector database:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/docker-compose-vectordb.yaml<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>milvus
-</pre></div>
-</div>
-<p><em>Example Output</em></p>
-<div class="highlight-output notranslate"><div class="highlight"><pre><span></span><span class="go">✔ Container milvus-minio       Started</span>
-<span class="go">✔ Container milvus-etcd        Started</span>
-<span class="go">✔ Container milvus-standalone  Started</span>
-</pre></div>
-</div>
-</li>
-<li><p>Confirm the containers are running:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.ID}}\t{{.Names}}\t{{.Status}}&quot;</span>
-</pre></div>
-</div>
-<p><em>Example Output</em></p>
-<div class="highlight-output notranslate"><div class="highlight"><pre><span></span><span class="go">CONTAINER ID   NAMES               STATUS</span>
-<span class="go">39a8524829da   rag-playground      Up 2 minutes</span>
-<span class="go">bfbd0193dbd2   chain-server        Up 2 minutes</span>
-<span class="go">ec02ff3cc58b   milvus-standalone   Up 3 minutes</span>
-<span class="go">6969cf5b4342   milvus-minio        Up 3 minutes (healthy)</span>
-<span class="go">57a068d62fbb   milvus-etcd         Up 3 minutes (healthy)</span>
-</pre></div>
-</div>
-</li>
-</ol>
-</section>
-<section id="next-steps">
-<h2>Next Steps<a class="headerlink" href="#next-steps" title="Permalink to this headline"></a></h2>
-<ul class="simple">
-<li><p>Access the web interface for the chat server.
-Refer to <a class="reference internal" href="using-sample-web-application.html"><span class="doc std std-doc">Using the Sample Chat Web Application</span></a> for information about using the web interface.</p></li>
-<li><p><a class="reference internal" href="vector-database.html"><span class="doc std std-doc">Configuring an Alternative Vector Database</span></a></p></li>
-<li><p>Stop the containers by running <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/rag-app-api-catalog-text-chatbot.yaml</span> <span class="pre">down</span></code> and
-<code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">-f</span> <span class="pre">deploy/compose/docker-compose-vectordb.yaml</span> <span class="pre">down</span></code>.</p></li>
-</ul>
+<section id="custom-requirements">
+<h2>Custom Requirements<a class="headerlink" href="#custom-requirements" title="Permalink to this headline"></a></h2>
+<p>The sample code for implementing the Chain Server is basic.
+As you experiment and implement custom requirements, you might need to use additional Python packages.
+You can install your Python dependencies by creating a <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> file in your example directory.
+When you build the Docker image, the build process automatically installs the packages from the requirements file.</p>
+<p>You might find conflicts in the dependencies from the requirements file and the common dependencies used by the Chain Server.
+In these cases, the custom requirements file is given a higher priority when Python resolves dependencies.
+Your packages and versions can break some of the functionality of the utility methods in the chain server.</p>
+<p>If your example uses any utility methods, check the chain server logs to troubleshoot dependency conflicts.
+If any of the packages required by the utility methods causes an error, the error is logged by the chain server during initialization.
+These errors do not stop the execution of the chain server.
+However, if your example attempts to use a utility method that depends on a broken package, the chain server can produce unexpected behavior or crashes.
+You must use dependencies that do not conflict with the chain server requirements, or do not rely on utility methods that are affected by the dependency conflict.</p>
 </section>
 </section>
 
@@ -322,8 +263,8 @@ Refer to <a class="reference internal" href="using-sample-web-application.html">
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="support-matrix.html" class="btn btn-neutral float-left" title="Support Matrix" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="local-gpu.html" class="btn btn-neutral float-right" title="Using Local GPUs for a Q&amp;A Chatbot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="nim-llms.html" class="btn btn-neutral float-left" title="Using NVIDIA NIM for LLMs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="boilerplate-api-catalog.html" class="btn btn-neutral float-right" title="Setting up the Simple Example" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NVIDIA AI Endpoints, LlamaIndex, and LangChain &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>NVIDIA API Catalog, LlamaIndex, and LangChain &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -64,10 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +80,14 @@
 <li class="toctree-l1"><a class="reference internal" href="03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -109,7 +113,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>NVIDIA AI Endpoints, LlamaIndex, and LangChain</li>
+      <li>NVIDIA API Catalog, LlamaIndex, and LangChain</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -118,9 +122,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="nvidia-ai-endpoints-llamaindex-and-langchain">
-<h1>NVIDIA AI Endpoints, LlamaIndex, and LangChain<a class="headerlink" href="#nvidia-ai-endpoints-llamaindex-and-langchain" title="Permalink to this headline"></a></h1>
-<p>This notebook demonstrates how to plug in a NVIDIA AI Endpoint <a class="reference external" href="https://catalog.ngc.nvidia.com/orgs/nvidia/teams/ai-foundation/models/mixtral-8x7b">mixtral_8x7b</a> and <a class="reference external" href="https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints#setup">embedding nvolveqa_40k</a>, bind these into <a class="reference external" href="https://gpt-index.readthedocs.io/en/stable/">LlamaIndex</a> with these customizations.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="nvidia-api-catalog-llamaindex-and-langchain">
+<h1>NVIDIA API Catalog, LlamaIndex, and LangChain<a class="headerlink" href="#nvidia-api-catalog-llamaindex-and-langchain" title="Permalink to this headline"></a></h1>
+<p>This notebook demonstrates how to plug in a NVIDIA API Catalog <a class="reference external" href="https://build.nvidia.com/mistralai/mixtral-8x7b-instruct"><strong>ai-mixtral-8x7b-instruct as LLM</strong></a> and <a class="reference external" href="https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints#setup"><strong>embedding ai-embed-qa-4</strong></a>, bind these into <a class="reference external" href="https://gpt-index.readthedocs.io/en/stable/">LlamaIndex</a> with these customizations.</p>
 <div class="alert alert-block alert-info">
 <p>⚠️ There are continous development and retrieval techniques supported in LlamaIndex and this notebook just shows to quikcly replace components such as llm and embedding to a user-choice, read more <a class="reference external" href="https://docs.llamaindex.ai/en/stable/">documentation on llama-index</a> for the latest information.</p>
 </div>
@@ -129,27 +133,25 @@
 <p>In order to successfully run this notebook, you will need the following -</p>
 <ol class="arabic simple">
 <li><p>Already successfully gone through the <a class="reference external" href="https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints#setup">setup</a> and generated an API key.</p></li>
-<li><p>Please verify you have successfully pip install all python packages in <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/3d29acf677466c5c301370cab5867cb09e04e318/notebooks/requirements.txt">requirements.txt</a></p></li>
+<li><p>Please verify you have successfully pip install all python packages in <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/main/notebooks/requirements.txt">requirements.txt</a></p></li>
 </ol>
 <p>In this notebook, we will cover the following custom plug-in components -</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>- LLM using NVIDIA AI Endpoint mixtral_8x7b
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>- LLM using ai-mixtral-8x7b-instruct
 
-- A NVIDIA AI endpoint embedding nvolveqa_40k
+- A embedding ai-embed-qa-4
 </pre></div>
 </div>
-<p>Note: As one can see, since we are using NVIDIA AI endpoints as an API, there is no further requirement in the prerequisites about GPUs as compute hardware</p>
+<p>Note: As one can see, since we are using NVIDIA API Catalog as an API, there is no further requirement in the prerequisites about GPUs as compute hardware</p>
 <hr class="docutils" />
 </section>
-<section id="step-1-load-nvidia-ai-endpoint-mixtral-8x7b">
-<h2>Step 1 - Load NVIDIA AI Endpoint <a class="reference external" href="https://catalog.ngc.nvidia.com/orgs/nvidia/teams/ai-foundation/models/mixtral-8x7b">mixtral_8x7b</a><a class="headerlink" href="#step-1-load-nvidia-ai-endpoint-mixtral-8x7b" title="Permalink to this headline"></a></h2>
+<section id="step-1-load-ai-mixtral-8x7b-instruct-as-llm">
+<h2>Step 1 - Load <a class="reference external" href="https://build.nvidia.com/mistralai/mixtral-8x7b-instruct">ai-mixtral-8x7b-instruct as LLM</a><a class="headerlink" href="#step-1-load-ai-mixtral-8x7b-instruct-as-llm" title="Permalink to this headline"></a></h2>
 <p>Note: check the prerequisite if you have not yet obtain a valid API key</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">getpass</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
-<span class="c1">## API Key can be found by going to NVIDIA NGC -&gt; AI Foundation Models -&gt; (some model) -&gt; Get API Code or similar.</span>
-<span class="c1">## 10K free queries to any endpoint (which is a lot actually).</span>
 
 <span class="c1"># del os.environ[&#39;NVIDIA_API_KEY&#39;]  ## delete key and reset</span>
 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;NVIDIA_API_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;nvapi-&quot;</span><span class="p">):</span>
@@ -167,7 +169,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># test run and see that you can genreate a respond successfully</span>
 <span class="kn">from</span> <span class="nn">langchain_nvidia_ai_endpoints</span> <span class="kn">import</span> <span class="n">ChatNVIDIA</span>
-<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatNVIDIA</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;mixtral_8x7b&quot;</span><span class="p">,</span> <span class="n">nvidia_api_key</span><span class="o">=</span><span class="n">nvapi_key</span><span class="p">)</span>
+<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatNVIDIA</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;ai-mixtral-8x7b-instruct&quot;</span><span class="p">,</span> <span class="n">nvidia_api_key</span><span class="o">=</span><span class="n">nvapi_key</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">&quot;Write a ballad about LangChain.&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
 </pre></div>
@@ -175,8 +177,8 @@
 </div>
 </div>
 </section>
-<section id="step-2-load-the-chosen-nvidia-endpoint-embedding-into-llama-index">
-<h2>Step 2 - Load the chosen NVIDIA Endpoint Embedding into llama-index<a class="headerlink" href="#step-2-load-the-chosen-nvidia-endpoint-embedding-into-llama-index" title="Permalink to this headline"></a></h2>
+<section id="step-2-load-the-chosen-an-embedding-into-llama-index">
+<h2>Step 2 - Load the chosen an embedding into llama-index<a class="headerlink" href="#step-2-load-the-chosen-an-embedding-into-llama-index" title="Permalink to this headline"></a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create and dl embeddings instance wrapping huggingface embedding into langchain embedding</span>
@@ -184,7 +186,7 @@
 <span class="kn">from</span> <span class="nn">llama_index.embeddings</span> <span class="kn">import</span> <span class="n">LangchainEmbedding</span>
 
 <span class="kn">from</span> <span class="nn">langchain_nvidia_ai_endpoints</span> <span class="kn">import</span> <span class="n">NVIDIAEmbeddings</span>
-<span class="n">nv_embedding</span> <span class="o">=</span> <span class="n">NVIDIAEmbeddings</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;nvolveqa_40k&quot;</span><span class="p">,</span> <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;query&quot;</span><span class="p">)</span>
+<span class="n">nv_embedding</span> <span class="o">=</span> <span class="n">NVIDIAEmbeddings</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;ai-embed-qa-4&quot;</span><span class="p">)</span>
 <span class="n">li_embedding</span><span class="o">=</span><span class="n">LangchainEmbedding</span><span class="p">(</span><span class="n">nv_embedding</span><span class="p">)</span>
 <span class="c1"># Alternatively, if you want to specify whether it will use the query or passage type</span>
 <span class="c1"># embedder = NVIDIAEmbeddings(model=&quot;nvolveqa_40k&quot;, model_type=&quot;passage&quot;)</span>
@@ -194,8 +196,8 @@
 </div>
 <p>Note: if you encounter typing_extension error, simply reinstall via :pip install typing_extensions==4.7.1 –force-reinstall</p>
 </section>
-<section id="step-3-wrap-the-nvidia-embedding-endpoint-and-the-nvidia-mixtral-8x7b-endpoints-into-llama-index-s-servicecontext">
-<h2>Step 3 - Wrap the NVIDIA embedding endpoint and the NVIDIA mixtral_8x7b endpoints into llama-index’s ServiceContext<a class="headerlink" href="#step-3-wrap-the-nvidia-embedding-endpoint-and-the-nvidia-mixtral-8x7b-endpoints-into-llama-index-s-servicecontext" title="Permalink to this headline"></a></h2>
+<section id="step-3-wrap-the-nvidia-embedding-and-the-nvidia-ai-mixtral-8x7b-instruct-model-as-the-main-llm-into-llama-index-s-servicecontext">
+<h2>Step 3 - Wrap the NVIDIA embedding and the NVIDIA ai-mixtral-8x7b-instruct model as the main llm into llama-index’s ServiceContext<a class="headerlink" href="#step-3-wrap-the-nvidia-embedding-and-the-nvidia-ai-mixtral-8x7b-instruct-model-as-the-main-llm-into-llama-index-s-servicecontext" title="Permalink to this headline"></a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bring in stuff to change service context</span>
@@ -236,22 +238,18 @@
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Setup index query engine using LLM</span>
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">()</span>
+
 <span class="c1"># Test out a query in natural</span>
-<span class="n">response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;who is the director of the movie Titanic?&quot;</span><span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;Who is the director of the movie Titanic?&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">response</span><span class="o">.</span><span class="n">metadata</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">response</span><span class="o">.</span><span class="n">response</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;retrieved text </span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">get_text</span><span class="p">()</span><span class="si">}</span><span class="s2"> , with score :</span><span class="si">{</span><span class="w"> </span><span class="n">item</span><span class="o">.</span><span class="n">get_score</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---&quot;</span><span class="o">*</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -270,7 +268,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    

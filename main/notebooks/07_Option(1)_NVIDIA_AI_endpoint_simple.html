@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NVIDIA AI Endpoints with LangChain &mdash; NVIDIA Generative AI Examples 0.5.0 documentation</title>
+  <title>NVIDIA API Catalog with LangChain &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -64,10 +64,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../multi-turn.html">Multi-turn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../using-sample-web-application.html">Sample Chat Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simple-examples.html">Developing Simple Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/evaluation/index.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../observability.html">Observability</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
@@ -78,12 +80,14 @@
 <li class="toctree-l1"><a class="reference internal" href="03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
 <li class="toctree-l1"><a class="reference internal" href="05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">NVIDIA AI Endpoints with LangChain</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">NVIDIA API Catalog with LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA AI Endpoints, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Endpoints with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
 <li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
@@ -109,7 +113,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>NVIDIA AI Endpoints with LangChain</li>
+      <li>NVIDIA API Catalog with LangChain</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -118,16 +122,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="nvidia-ai-endpoints-with-langchain">
-<h1>NVIDIA AI Endpoints with LangChain<a class="headerlink" href="#nvidia-ai-endpoints-with-langchain" title="Permalink to this headline"></a></h1>
-<p>In this notebook, we are going to use the <strong>mixtral_8x7b as LLM</strong> as well as the <strong>nvolveqa_40k embedding</strong> provided by <a class="reference external" href="https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints">NVIDIA_AI_Endpoint</a> and build a simply RAG example with faiss as vectorstore</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="nvidia-api-catalog-with-langchain">
+<h1>NVIDIA API Catalog with LangChain<a class="headerlink" href="#nvidia-api-catalog-with-langchain" title="Permalink to this headline"></a></h1>
+<p>In this notebook, we are going to use the <a class="reference external" href="https://build.nvidia.com/mistralai/mixtral-8x7b-instruct"><strong>ai-mixtral-8x7b-instruct as LLM</strong></a> and the <a class="reference external" href="https://build.nvidia.com/nvidia/embed-qa-4"><strong>ai-embed-qa-4 embedding</strong></a> provided by <a class="reference external" href="https://build.nvidia.com/explore/discover">NVIDIA_AI_Catelog</a> and build a simply RAG example with faiss as vectorstore</p>
 <section id="prerequisite">
 <h2>Prerequisite<a class="headerlink" href="#prerequisite" title="Permalink to this headline"></a></h2>
 <p>In order to successfully run this notebook, you will need the following -</p>
 <ol class="arabic simple">
 <li><p>Already successfully gone through the <a class="reference external" href="https://python.langchain.com/docs/integrations/text_embedding/nvidia_ai_endpoints#setup">setup</a> and generated an API key.</p></li>
-<li><p>install necesary python dependencies in <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/3d29acf677466c5c301370cab5867cb09e04e318/notebooks/requirements.txt">requirements.txt</a> : then upgrade the langchain-core with the below<br />
-pip install langchain-core==0.1.15</p></li>
+<li><p>install necesary python dependencies in <a class="reference external" href="https://github.com/NVIDIA/GenerativeAIExamples/blob/3d29acf677466c5c301370cab5867cb09e04e318/notebooks/requirements.txt">requirements.txt</a> : then upgrade the langchain-core with the below</p></li>
 </ol>
 <p>Note: change <strong>faiss-gpu –&gt; faiss-cpu</strong> in pre-requisite 2
 if you do not have access to a GPU.</p>
@@ -137,8 +140,7 @@ if you do not have access to a GPU.</p>
 <p>You can supply the NVIDIA_API_KEY directly in this notebook when you run the cell below</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>langchain-core<span class="o">==</span><span class="m">0</span>.1.15
-<span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>faiss-cpu<span class="w"> </span>#<span class="w"> </span>replace<span class="w"> </span>with<span class="w"> </span>faiss-gpu<span class="w"> </span><span class="k">if</span><span class="w"> </span>you<span class="w"> </span>are<span class="w"> </span>using<span class="w"> </span>GPU
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>faiss-cpu<span class="w"> </span>#<span class="w"> </span>replace<span class="w"> </span>with<span class="w"> </span>faiss-gpu<span class="w"> </span><span class="k">if</span><span class="w"> </span>you<span class="w"> </span>are<span class="w"> </span>using<span class="w"> </span>GPU
 </pre></div>
 </div>
 </div>
@@ -165,12 +167,14 @@ if you do not have access to a GPU.</p>
 </section>
 <section id="step-2-initialize-the-llm">
 <h2>Step 2 - initialize the LLM<a class="headerlink" href="#step-2-initialize-the-llm" title="Permalink to this headline"></a></h2>
-<p>Here we will use <strong>mixtral_8x7b</strong></p>
+<p>Here we will use <strong>ai-mixtral-8x7b-instruct</strong></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># test run and see that you can genreate a respond successfully</span>
 <span class="kn">from</span> <span class="nn">langchain_nvidia_ai_endpoints</span> <span class="kn">import</span> <span class="n">ChatNVIDIA</span>
-<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatNVIDIA</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;mixtral_8x7b&quot;</span><span class="p">,</span> <span class="n">nvidia_api_key</span><span class="o">=</span><span class="n">nvapi_key</span><span class="p">)</span>
+ 
+<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatNVIDIA</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;ai-mixtral-8x7b-instruct&quot;</span><span class="p">,</span> <span class="n">nvidia_api_key</span><span class="o">=</span><span class="n">nvapi_key</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
+
 <span class="n">result</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">&quot;Write a ballad about LangChain.&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
 </pre></div>
@@ -180,7 +184,7 @@ if you do not have access to a GPU.</p>
 </section>
 <section id="step-3-we-intiatlize-the-embedding-as-well">
 <h2>Step 3 - We intiatlize the embedding as well<a class="headerlink" href="#step-3-we-intiatlize-the-embedding-as-well" title="Permalink to this headline"></a></h2>
-<p>We selected <strong>nvolveqa_40k</strong> as the embedding</p>
+<p>We selected <strong>ai-embed-qa-4</strong> as the embedding</p>
 </section>
 <section id="first-we-initialize-the-embedding">
 <h2>first we initialize the embedding<a class="headerlink" href="#first-we-initialize-the-embedding" title="Permalink to this headline"></a></h2>
@@ -188,7 +192,7 @@ if you do not have access to a GPU.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">langchain_nvidia_ai_endpoints</span> <span class="kn">import</span> <span class="n">NVIDIAEmbeddings</span>
 
-<span class="n">embedder</span> <span class="o">=</span> <span class="n">NVIDIAEmbeddings</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;nvolveqa_40k&quot;</span><span class="p">)</span>
+<span class="n">embedder</span> <span class="o">=</span> <span class="n">NVIDIAEmbeddings</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;ai-embed-qa-4&quot;</span><span class="p">)</span>
 
 <span class="c1"># Alternatively, if you want to specify whether it will use the query or passage type</span>
 <span class="c1"># embedder = NVIDIAEmbeddings(model=&quot;nvolveqa_40k&quot;, model_type=&quot;passage&quot;)</span>
@@ -226,7 +230,7 @@ if you do not have access to a GPU.</p>
 <h3>Step 5 - Do some basic cleaning and remove empty lines<a class="headerlink" href="#step-5-do-some-basic-cleaning-and-remove-empty-lines" title="Permalink to this headline"></a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">documents</span><span class="o">=</span><span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">]</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">documents</span><span class="o">=</span><span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">]</span>
 <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
@@ -262,7 +266,6 @@ if you do not have access to a GPU.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we create a vector store from the documents and save it to disk.</span>
-<span class="kn">import</span> <span class="nn">faiss</span>
 <span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
 <span class="kn">from</span> <span class="nn">langchain.vectorstores</span> <span class="kn">import</span> <span class="n">FAISS</span>
 <span class="kn">from</span> <span class="nn">langchain_core.output_parsers</span> <span class="kn">import</span> <span class="n">StrOutputParser</span>
@@ -271,7 +274,6 @@ if you do not have access to a GPU.</p>
 <span class="kn">from</span> <span class="nn">langchain.text_splitter</span> <span class="kn">import</span> <span class="n">CharacterTextSplitter</span>
 <span class="kn">from</span> <span class="nn">langchain_nvidia_ai_endpoints</span> <span class="kn">import</span> <span class="n">ChatNVIDIA</span>
 <span class="kn">import</span> <span class="nn">faiss</span>
-<span class="kn">import</span> <span class="nn">pickle</span>
 <span class="c1"># create my own uuid</span>
 <span class="n">text_splitter</span> <span class="o">=</span> <span class="n">CharacterTextSplitter</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">separator</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
 <span class="n">docs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -284,10 +286,8 @@ if you do not have access to a GPU.</p>
     <span class="n">metadatas</span><span class="o">.</span><span class="n">extend</span><span class="p">([{</span><span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">sources</span><span class="p">[</span><span class="n">i</span><span class="p">]}]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">splits</span><span class="p">))</span>
 
 <span class="n">store</span> <span class="o">=</span> <span class="n">FAISS</span><span class="o">.</span><span class="n">from_texts</span><span class="p">(</span><span class="n">docs</span><span class="p">,</span> <span class="n">embedder</span> <span class="p">,</span> <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">)</span>
-<span class="n">faiss</span><span class="o">.</span><span class="n">write_index</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">&quot;./toy_data/nv_embedding.index&quot;</span><span class="p">)</span>
-<span class="n">store</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;./toy_data/nv_embedding.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+<span class="n">store</span><span class="o">.</span><span class="n">save_local</span><span class="p">(</span><span class="s1">&#39;./toy_data/nv_embedding&#39;</span><span class="p">)</span>
+
 <span class="c1"># you will only need to do this once, later on we will restore the already saved vectorstore</span>
 </pre></div>
 </div>
@@ -299,13 +299,8 @@ if you do not have access to a GPU.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load the vectorestore back.</span>
-<span class="kn">import</span> <span class="nn">faiss</span>
-<span class="kn">import</span> <span class="nn">pickle</span>
 
-<span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="o">.</span><span class="n">read_index</span><span class="p">(</span><span class="s2">&quot;./toy_data/nv_embedding.index&quot;</span><span class="p">)</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;./toy_data/nv_embedding.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">store</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-<span class="n">store</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
+<span class="n">store</span> <span class="o">=</span> <span class="n">FAISS</span><span class="o">.</span><span class="n">load_local</span><span class="p">(</span><span class="s2">&quot;./toy_data/nv_embedding&quot;</span><span class="p">,</span> <span class="n">embedder</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -327,12 +322,10 @@ if you do not have access to a GPU.</p>
     <span class="p">]</span>
 <span class="p">)</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">ChatNVIDIA</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;mixtral_8x7b&quot;</span><span class="p">)</span>
-
 <span class="n">chain</span> <span class="o">=</span> <span class="p">(</span>
     <span class="p">{</span><span class="s2">&quot;context&quot;</span><span class="p">:</span> <span class="n">retriever</span><span class="p">,</span> <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">RunnablePassthrough</span><span class="p">()}</span>
     <span class="o">|</span> <span class="n">prompt</span>
-    <span class="o">|</span> <span class="n">model</span>
+    <span class="o">|</span> <span class="n">llm</span>
     <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
 <span class="p">)</span>
 
@@ -356,7 +349,7 @@ if you do not have access to a GPU.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023-2024, NVIDIA.</p>
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
   </div>
 
    
