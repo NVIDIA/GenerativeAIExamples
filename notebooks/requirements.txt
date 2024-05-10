@@ -14,5 +14,5 @@ langchain-nvidia-trt==0.0.1rc0
 langchain-core==0.1.29
 langchain-nvidia-ai-endpoints==0.0.11
 atlassian-python-api==3.41.4
-gradio==3.48.0
+gradio==4.19.2
 markdownify==0.12.1
