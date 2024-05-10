@@ -1,0 +1,9 @@
+{
+  "chunks": [
+    {
+      "content": "NVIDIA Generative AI Examples\n\nIntroduction\n\nState-of-the-art Generative AI examples that are easy to deploy, test, and extend. All examples run on the high performance NVIDIA CUDA-X software stack and NVIDIA GPUs.\n\nNVIDIA NGC\n\nGenerative AI Examples can use models and GPUs from the NVIDIA NGC: AI Development Catalog.\n\nSign up for a free NGC developer account to access:\n\nGPU-optimized containers used in these examples\n\nRelease notes and developer documentation\n\nRetrieval Augmented Generation (RAG)\n\nA RAG pipeline embeds multimodal data --  such as documents, images, and video -- into a database connected to a LLM.\nRAG lets users chat with their data!\n\nDeveloper RAG Examples\n\nThe developer RAG examples run on a single VM.\nThe examples demonstrate how to combine NVIDIA GPU acceleration with popular LLM programming frameworks using NVIDIA's open source connectors.\nThe examples are easy to deploy with Docker Compose.\n\nExamples support local and remote inference endpoints.\nIf you have a GPU, you can inference locally with TensorRT-LLM.\nIf you don't have a GPU, you can inference and embed remotely with NVIDIA API Catalog endpoints.",
+      "filename": "README.md",
+      "score": 0
+    }
+  ]
+}

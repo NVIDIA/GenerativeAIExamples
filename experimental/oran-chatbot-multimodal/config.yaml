@@ -1,0 +1,13 @@
+NIM: false
+nim_model_name: "mistral7b"
+nim_base_url: "http://localhost:9990/v1"
+temperature: 0.1
+top_p: 0.5
+max_tokens: 1600
+
+NREM: false
+nrem_model_name: "NV-Embed-QA"
+nrem_api_endpoint_url: "http://localhost:8084/v1"
+nrem_truncate: "END"
+
+file_delete_password: "oranpwd"

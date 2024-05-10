@@ -67,9 +67,9 @@ Customization of the CSV data retrieval prompt is not supported.
   - Triton
   - Vector Database
 
-* - ai-mixtral-8x7b-instruct for response generation
+* - ai-llama3-70b for response generation
 
-    ai-mixtral-8x7b-instruct for PandasAI
+    ai-llama3-70b for PandasAI
   - Not Applicable
   - PandasAI
   - QA chatbot
@@ -176,6 +176,6 @@ The following figure shows the sample topology:
 
 - Access the web interface for the chat server.
   Refer to [](./using-sample-web-application.md) for information about using the web interface.
-- Upload a CSV from the `RetrievalAugmentedGeneration/examples/csv_rag` directory to the knowledge base.
+- Upload a CSV from the `RetrievalAugmentedGeneration/examples/structured_data_rag` directory to the knowledge base.
 - Enable the **Use knowledge base** checkbox when you submit a question.
 - Stop the containers by running `docker compose -f deploy/compose/rag-app-structured-data-chatbot.yaml down`.

@@ -56,7 +56,7 @@ The agent continues to break down the question into subquestions until it has th
   - Vector Database
 
 * - ai-llama2-70b
-  - nvolveqa_40k
+  - ai-embed-qa-4
   - LangChain
   - QA chatbot
   - NO

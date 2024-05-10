@@ -1,0 +1,24 @@
+{
+  "chunks": [
+    {
+      "content": "NVIDIA Generative AI Examples\n\nIntroduction\n\nState-of-the-art Generative AI examples that are easy to deploy, test, and extend. All examples run on the high performance NVIDIA CUDA-X software stack and NVIDIA GPUs.\n\nNVIDIA NGC\n\nGenerative AI Examples can use models and GPUs from the NVIDIA NGC: AI Development Catalog.\n\nSign up for a free NGC developer account to access:\n\nGPU-optimized containers used in these examples\n\nRelease notes and developer documentation\n\nRetrieval Augmented Generation (RAG)",
+      "filename": "README.md",
+      "score": 0
+    },
+    {
+      "content": "Model Embedding Framework Description Multi-GPU TRT-LLM NVIDIA Endpoints Triton Vector Database mixtral_8x7b nvolveqa_40k LangChain NVIDIA API Catalog endpoints chat bot [ code , docs ] No No Yes Yes Milvus or pgvector llama-2 e5-large-v2 LlamaIndex Canonical QA Chatbot [ code , docs ] Yes Yes No Yes Milvus or pgvector llama-2 all-MiniLM-L6-v2 LlamaIndex Chat bot, GeForce, Windows [ repo ] No Yes No No FAISS llama-2 nvolveqa_40k LangChain Chat bot with query decomposition agent [ code , docs ] No No Yes Yes Milvus or pgvector mixtral_8x7b nvolveqa_40k LangChain Minimilastic example: RAG with NVIDIA AI Foundation Models [ code , README ] No No Yes Yes FAISS mixtral_8x7b Deplot Neva-22b nvolveqa_40k Custom Chat bot with multimodal data [ code , docs ] No No Yes No Milvus or pvgector llama-2 e5-large-v2 LlamaIndex Chat bot with quantized LLM model [ docs ] Yes Yes No Yes Milvus or pgvector mixtral_8x7b none PandasAI Chat bot with structured data [ code , docs ] No No Yes No none llama-2 nvolveqa_40k LangChain Chat bot with multi-turn conversation [ code , docs ] No No Yes No Milvus or pgvector",
+      "filename": "README.md",
+      "score": 0
+    },
+    {
+      "content": "Enterprise RAG examples also support local and remote inference with TensorRT-LLM and NVIDIA API Catalog endpoints.\n\nModel Embedding Framework Description Multi-GPU Multi-node TRT-LLM NVIDIA Endpoints Triton Vector Database llama-2 NV-Embed-QA LlamaIndex Chat bot, Kubernetes deployment [ README ] No No Yes No Yes Milvus\n\nTools\n\nExample tools and tutorials to enhance LLM development and productivity when using NVIDIA RAG pipelines.",
+      "filename": "README.md",
+      "score": 0
+    },
+    {
+      "content": "Examples support local and remote inference endpoints.\nIf you have a GPU, you can inference locally with TensorRT-LLM.\nIf you don't have a GPU, you can inference and embed remotely with NVIDIA API Catalog endpoints.",
+      "filename": "README.md",
+      "score": 0
+    }
+  ]
+}

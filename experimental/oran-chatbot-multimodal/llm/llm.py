@@ -19,11 +19,22 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from langchain_community.llms import HuggingFacePipeline
+import yaml
 
 
 class NvidiaLLM:
     def __init__(self, model_name):
         self.llm = ChatNVIDIA(model=model_name)
+
+class NimLLM:
+    def __init__(self, model_name):
+        config_yaml_path = 'config.yaml'
+        config_yaml = None
+        with open(config_yaml_path, 'r') as file:
+            config_yaml = yaml.safe_load(file)
+        self.llm = ChatNVIDIA(model=config_yaml['nim_model_name'], temperature = config_yaml['temperature'], \
+                            top_p = config_yaml['top_p'], max_tokens = config_yaml['max_tokens']).mode("nim", \
+                            base_url = config_yaml['nim_base_url'])
 
 
 class LocalLLM:
@@ -53,6 +64,8 @@ def create_llm(model_name, model_type="NVIDIA"):
     # Use LLM to generate answer
     if model_type == "NVIDIA":
         model = NvidiaLLM(model_name)
+    elif model_type == "NIM":
+        model = NimLLM(model_name)
     elif model_type == "LOCAL":
         model = LocalLLM(model_name)
     else:
@@ -63,13 +76,13 @@ def create_llm(model_name, model_type="NVIDIA"):
 
 
 if __name__ == "__main__":
-    llm = create_llm("gpt2", "LOCAL")
+    llm = create_llm("mistral7b", "NIM")
 
     from langchain_core.output_parsers import StrOutputParser
     from langchain_core.prompts import ChatPromptTemplate
     from langchain import LLMChain
 
-    system_prompt = ""
+    system_prompt = "Hello,"
     prompt = "who are you"
     langchain_prompt = ChatPromptTemplate.from_messages([("system", system_prompt), ("user", "{input}")])
     chain = langchain_prompt | llm | StrOutputParser()

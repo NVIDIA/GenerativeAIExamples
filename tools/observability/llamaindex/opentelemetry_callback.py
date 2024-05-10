@@ -17,12 +17,12 @@ from opentelemetry.trace import Tracer, get_tracer, set_span_in_context, Status,
 from opentelemetry.trace.span import Span
 from opentelemetry.context import Context, get_current, attach, detach
 from typing import Any, Dict, List, Optional, Callable
-from llama_index.callbacks.base_handler import BaseCallbackHandler
-from llama_index.callbacks.base import CallbackManager
-from llama_index.callbacks.schema import CBEventType, EventPayload, BASE_TRACE_EVENT
-from llama_index.callbacks.token_counting import get_llm_token_counts, TokenCountingEvent
-from llama_index.utilities.token_counting import TokenCounter
-from llama_index.utils import get_tokenizer
+from llama_index.core.callbacks.base_handler import BaseCallbackHandler
+from llama_index.core.callbacks.base import CallbackManager
+from llama_index.core.callbacks.schema import CBEventType, EventPayload, BASE_TRACE_EVENT
+from llama_index.core.callbacks.token_counting import get_llm_token_counts, TokenCountingEvent
+from llama_index.core.utilities.token_counting import TokenCounter
+from llama_index.core.utils import get_tokenizer
 from dataclasses import dataclass
 from contextvars import ContextVar
 import threading
@@ -96,9 +96,6 @@ class OpenTelemetryCallbackHandler(BaseCallbackHandler):
         # Case where the parent of this event is the root trace, and the root trace exists
         elif parent_id is BASE_TRACE_EVENT and global_root_trace.get() is not None:
             parent_ctx = global_root_trace.get().context
-        # Case where the parent of this event is the root trace, but the trace does not exist
-        else:
-            return
         
         span_prefix = "llamaindex.event."
         span = self._tracer.start_span(span_prefix + event_type.value, context=parent_ctx)
@@ -133,7 +130,10 @@ class OpenTelemetryCallbackHandler(BaseCallbackHandler):
                         span.set_attribute(f"template_variables.{key}", var)
             elif event_type is CBEventType.LLM:
                 span.set_attribute("llm.class_name", payload[EventPayload.SERIALIZED]['class_name'])
-                span.set_attribute("llm.formatted_prompt", payload[EventPayload.PROMPT])
+                if EventPayload.PROMPT in payload:
+                    span.set_attribute("llm.formatted_prompt", payload[EventPayload.PROMPT])
+                else:
+                    span.set_attribute("llm.messages", str(payload[EventPayload.MESSAGES]))
                 span.set_attribute("llm.additional_kwargs", str(payload[EventPayload.ADDITIONAL_KWARGS]))
             elif event_type is CBEventType.NODE_PARSING:
                 span.set_attribute("node_parsing.num_documents", len(payload[EventPayload.DOCUMENTS]))

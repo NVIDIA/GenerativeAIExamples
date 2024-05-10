@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Install required ubuntu packages for setting up python 3.10
 RUN apt update && \
-    apt install -y dpkg openssl libgl1 linux-libc-dev libksba8 curl software-properties-common build-essential libssl-dev libffi-dev && \
+    apt install -y curl software-properties-common libgl1 libglib2.0-0 && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt update && apt install -y python3.10 python3.10-dev python3.10-distutils && \
     apt-get clean
@@ -17,6 +17,9 @@ RUN apt update && \
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
 
 RUN rm -rf /var/lib/apt/lists/*
+
+# Uninstall build packages
+RUN apt autoremove -y curl software-properties-common
 
 # Install common dependencies for all examples
 RUN --mount=type=bind,source=RetrievalAugmentedGeneration/requirements.txt,target=/opt/requirements.txt \

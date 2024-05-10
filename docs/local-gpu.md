@@ -45,7 +45,7 @@ This example uses a local host with an NVIDIA A100, H100, or L40S GPU.
   - Vector Database
 
 * - llama-2
-  - e5-large-v2
+  - UAE-Large-V1
   - LlamaIndex
   - QA chatbot
   - NO
@@ -55,7 +55,7 @@ This example uses a local host with an NVIDIA A100, H100, or L40S GPU.
   - Milvus
 
 * - llama-2
-  - e5-large-v2
+  - UAE-Large-V1
   - LlamaIndex
   - QA chatbot
   - NO

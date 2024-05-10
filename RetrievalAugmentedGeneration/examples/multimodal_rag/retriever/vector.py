@@ -15,6 +15,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Any
+import uuid
 from pydantic import BaseModel
 from pymilvus import connections, Collection, FieldSchema, CollectionSchema, DataType, utility
 
@@ -118,9 +119,12 @@ class MilvusVectorClient(VectorClient):
          # Processing each document
         insert_data = []
         for i, doc in enumerate(documents):
+            # If 'doc' has unique identifier or create one for the document
+            doc_id = doc.id if hasattr(doc, 'id') else str(uuid.uuid4())
+
             # Prepare data for insertion
             example = {
-                "id": i,
+                "id": doc_id,
                 "content": doc.page_content,
                 "embedding": embeddings[i],
                 "metadata": doc.metadata
@@ -132,7 +136,7 @@ class MilvusVectorClient(VectorClient):
     def get_schema(self, embedding_size):
         # Define the primary key field along with other fields
         fields = [
-            FieldSchema(name="id", dtype=DataType.INT64, is_primary=True),  # Primary key field
+            FieldSchema(name="id", dtype=DataType.VARCHAR, max_length=100, is_primary=True),  # Primary key field
             FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=10000),  # Text field with up to 10000 characters
             FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=embedding_size),
             FieldSchema(name="metadata", dtype=DataType.JSON)
@@ -145,3 +149,24 @@ class MilvusVectorClient(VectorClient):
         # Formulate the schema and create the collection
         schema = self.get_schema(embedding_size)
         self.vector_db = Collection(name=collection_name, schema=schema)
+
+    def list_filenames(self):
+        """
+        List all filenames in the collection.
+        """
+        # Assuming 'filename' is a field in the metadata
+
+        expr = "metadata['filename'] != ''"  # Expression to match all entities with a non-empty filename
+        entities = self.vector_db.query(expr, output_fields=["metadata"])
+        filenames = list(set([entity['metadata']['filename'] for entity in entities]))
+        return filenames
+
+    def delete_by_filename(self, filename):
+        """
+        Delete entities in the collection by filename.
+        """
+        # Assuming 'filename' is a field in the metadata
+        expr = f"metadata['filename'] == '{filename}'"
+        self.vector_db.delete(expr)
+        # Load the collection to make the deletion take effect
+        self.vector_db.load()

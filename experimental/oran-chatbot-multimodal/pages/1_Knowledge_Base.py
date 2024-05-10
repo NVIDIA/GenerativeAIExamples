@@ -18,10 +18,11 @@ import streamlit as st
 import time
 
 from bot_config.utils import get_config
-from vectorstore.vectorstore_updater import update_vectorstore
+from vectorstore.vectorstore_updater import create_vectorstore, update_vectorstore
 from retriever.embedder import NVIDIAEmbedders, HuggingFaceEmbeders
 from retriever.vector import MilvusVectorClient
 import shutil
+import yaml
 
 st.set_page_config(
         page_title="Knowledge Base",
@@ -64,8 +65,9 @@ DOCS_DIR_new = os.path.join(DOCS_DIR, "new_files")
 if not os.path.exists(DOCS_DIR_new):
     os.mkdir(DOCS_DIR_new)
 
+
 # File upload
-st.subheader("Contribute to the {} Knowledge Base".format(config["name"]))
+st.subheader("Upload files to the {} Knowledge Base".format(config["name"]))
 with st.form("my-form", clear_on_submit=True):
     uploaded_files = st.file_uploader("Upload a file to {}'s Knowledge Base:".format(config["name"]), type=["pdf", "txt", "docx"], accept_multiple_files = True)
     submitted = st.form_submit_button("UPLOAD!")
@@ -77,16 +79,47 @@ if uploaded_files and submitted:
             f.write(uploaded_file.read())
             st.write("filename: ", uploaded_file.name)
 
+# st.divider()
+
+vectorstore_folder = os.path.join(CORE_DIR, "vectorstore_nv")
+
+import datetime
+def modification_date(vectorstore_folder):
+    t = os.path.getmtime(vectorstore_folder)
+    return datetime.datetime.fromtimestamp(t)
+
+# Create the basic vector DB for comparison
+st.subheader("Create vector database")
+if os.path.exists(vectorstore_folder):
+    # st.write(f"Vector store already exists, and it may not need to be created again unless new documents have been added since then. Creation date: {modification_date(vectorstore_folder)}")
+    st.write(f"Vector store already exists. Creation date: {modification_date(vectorstore_folder)}.")
+else:
+    st.write("To setup the ORAN bot, upload your documents and click to create your vector DB!")
+
+if st.button("Create vector DB"):
+    createDB_error = 0
+    with st.spinner("Running vector DB creation..."):
+        createDB_error = create_vectorstore(CORE_DIR, config["name"], st.status)
+    if not(createDB_error):
+        st.success("Completed!")
+    else:
+        st.warning("To add more documents to the exising DB, please use the Re-Train Multimodal Assistant button.")
+
 st.divider()
+
 
 # Retraining/vector DB creation
 
-st.subheader("Re-train {} to use the new information you uploaded".format(config["name"]))
+st.subheader("Re-train {} with new files".format(config["name"]))
 st.write("This section will rerun the information chunking and vector storage algorithms on all documents again. ONLY run if you have uploaded new documents! Note that this can take a minute or more, depending on the number of documents and the sizes.")
 if st.button("Re-train {}".format(config["name"])):
+    updateDB_error = 0
     with st.status("Loading documents. Expand to see current status", expanded=False) as status:
-        update_vectorstore(DOCS_DIR, config["name"], st.status)
-    st.success("Completed re-training. Now {} will use the updated documentation to answer questions!".format(config["name"]))
+        updateDB_error = update_vectorstore(DOCS_DIR, config["name"], st.status)
+    if not(updateDB_error):
+        st.success("Completed re-training. Now {} will use the updated documentation to answer questions!".format(config["name"]))
+    else:
+        st.warning("Vector DB not found. Please create a vector DB first!")
     # st.rerun()
 st.divider()
 
@@ -117,7 +150,8 @@ if len(filelist) > 0:
 
         if st.session_state.get("delete_clicked"):
             password = st.text_input('Are you sure? Please confirm the password to delete this file.', key='password_field')
-            if password == "avfleetengineering":
+            # if password == "avfleetengineering":
+            if password == yaml.safe_load(open('config.yaml', 'r'))['file_delete_password']:
                 with st.spinner("Marking file for deletion"):
                     time.sleep(5)
                     os.remove(file_path)
@@ -126,4 +160,4 @@ if len(filelist) > 0:
                     st.success("File has been deleted!")
                     st.session_state.delete_clicked = False  # Reset delete_clicked for next time
 else:
-    st.warning("There are no documents avaible for retrieval. Please upload some documents for the chatbot to use!", icon="⚠️")
+    st.warning("There are no documents available for retrieval. Please upload some documents for the chatbot to use!", icon="⚠️")

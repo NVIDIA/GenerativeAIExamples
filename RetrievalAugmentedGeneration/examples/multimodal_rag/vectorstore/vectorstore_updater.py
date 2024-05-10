@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+import os
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
 
@@ -72,6 +73,11 @@ def update_vectorstore(file_path, vector_client, embedder, config_name):
     raw_documents = load_documents(file_path)
     documents = split_text(raw_documents)
 
+    # Adding file name to the metadata
+    extract_filename = lambda filepath : os.path.splitext(os.path.basename(filepath))[0]
+    for document in documents:
+        document.metadata["filename"] = extract_filename(file_path)
+    
     logger.info("[Step 3/4] Inserting documents into the vector store...")
     # Extracting the page content from each document
     document_contents = [doc.page_content for doc in documents]

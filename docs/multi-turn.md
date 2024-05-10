@@ -57,7 +57,7 @@ This example uses models from the NVIDIA API Catalog.
   - Vector Database
 
 * - ai-llama2-70b
-  - nvolveqa_40k
+  - ai-embed-qa-4
   - LangChain
   - QA chatbot
   - NO

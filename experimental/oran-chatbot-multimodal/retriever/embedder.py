@@ -18,7 +18,9 @@ from pydantic import BaseModel, Field
 from typing import Any, Optional
 
 from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
+from langchain_community.embeddings import NeMoEmbeddings
 from langchain_community.embeddings import HuggingFaceEmbeddings
+import yaml 
 
 class Embedder(ABC, BaseModel):
     
@@ -43,8 +45,17 @@ class NVIDIAEmbedders(Embedder):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.embedder = NVIDIAEmbeddings(model=self.name, model_type=self.type)
 
+        if yaml.safe_load(open('config.yaml', 'r'))['NREM']:
+            # Embeddings with NeMo Retriever Embeddings Microservice (NREM)
+            print("Generating embeddings with NREM")
+            self.embedder = NVIDIAEmbeddings(model=yaml.safe_load(open('config.yaml', 'r'))['nrem_model_name'],
+                                        truncate = yaml.safe_load(open('config.yaml', 'r'))['nrem_truncate']).mode("nim", 
+                                        base_url= yaml.safe_load(open('config.yaml', 'r'))['nrem_api_endpoint_url'])
+
+        else: 
+            # Embeddings with NVIDIA AI Foundation Endpoints
+            self.embedder = NVIDIAEmbeddings(model=self.name, model_type=self.type)
     
     def embed_query(self, text):
         return self.embedder.embed_query(text)

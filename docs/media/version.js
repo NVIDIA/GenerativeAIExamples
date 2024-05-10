@@ -64,7 +64,7 @@ function _populateVersionWarning(project, latest, versions, root)
 
     const inner = document.createElement("p")
     inner.classList.add("omni-version-warning-content")
-    inner.innerHTML = message
+    inner.innerHTML = escape(message)
 
     outer.appendChild(inner)
 
@@ -127,7 +127,7 @@ async function _populateVersions()
 
             let content = document.createElement("span")
             content.classList.add("omni-version-content")
-            content.innerHTML = `${project.name} `
+            content.innerHTML = escape(`${project.name} `)
 
             let selector = document.createElement("select")
             selector.classList.add("omni-version-select")
@@ -137,7 +137,7 @@ async function _populateVersions()
                 console.log(`adding ${v}`)
                 let opt = document.createElement("option")
                 opt.value = `../${v}/index.html`
-                opt.innerHTML = v
+                opt.innerHTML = escape(v)
 
                 if (v == project.version)
                 {
@@ -190,3 +190,11 @@ async function _populateVersions()
 
 // wait until the page is loaded to modify the DOM
 window.addEventListener("load", _populateVersions)
+
+
+// --------------------------------------------------------------------------------------
+// HTML escape data to prevent XSS attacks
+// ---------------------------------------------------------------------------------------
+function escape(data) {
+    return data.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}

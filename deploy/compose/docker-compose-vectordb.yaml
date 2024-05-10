@@ -1,7 +1,7 @@
 services:
   pgvector:
     container_name: pgvector
-    image: ankane/pgvector:v0.5.1
+    image: pgvector/pgvector:pg16
     ports:
     - 5432:5432
     expose:
@@ -76,7 +76,7 @@ services:
           devices:
             - driver: nvidia
               capabilities: ["gpu"]
-              count: 1
+              device_ids: ['${VECTORSTORE_GPU_DEVICE_ID:-0}']
 
 networks:
   default:
