@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notebook 3: Evaluation with Ragas &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/omni-style.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+        <script src="../../_static/version.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="search" title="Search" href="../../search.html" />
+ 
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+<a href="../../index.html">
+  <img src="../../_static/nvidia-logo-white.png" class="logo" alt="Logo"/>
+</a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">RAG Pipelines for Developers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">About the RAG Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support-matrix.html">Support Matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api-catalog.html">API Catalog Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../local-gpu.html">Local GPUs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi-gpu.html">Multi-GPU for Inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../query-decomposition.html">Query Decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quantized-llm-model.html">Quantized Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../structured-data.html">Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multimodal-data.html">Multimodal Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi-turn.html">Multi-turn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using-sample-web-application.html">Sample Chat Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simple-examples.html">Developing Simple Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../observability.html">Observability</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/00-llm-non-streaming-nemotron.html">Basics: Prompt, Client, and Responses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/01-llm-streaming-client.html">LLM Streaming Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/02_langchain_simple.html">Q&amp;A with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../llm-inference-server.html">NeMo Framework Inference Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../frontend.html">RAG Playground Web Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../jupyter-server.html">Jupyter Notebook Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../chain-server.html">Chain Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Software Component Configuration</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">NVIDIA Generative AI Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Notebook 3: Evaluation with Ragas</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="notebook-3-evaluation-with-ragas">
+<h1>Notebook 3: Evaluation with Ragas<a class="headerlink" href="#notebook-3-evaluation-with-ragas" title="Permalink to this headline"></a></h1>
+<p>Leveraging a strong LLM for reference-free evaluation is an upcoming solution that has shown a lot of promise. They correlate better with human judgment than traditional metrics and also require less human annotation. Papers like G-Eval have experimented with this and given promising results but there are certain shortcomings too.</p>
+<p>LLM prefers their own outputs and when asked to compare between different outputs the relative position of those outputs matters more. LLMs can also have a bias toward a value when asked to score given a range and they also prefer longer responses.</p>
+<p><a class="reference external" href="https://docs.ragas.io/en/latest/">Ragas</a> aims to work around these limitations of using LLMs to evaluate your QA pipelines while also providing actionable metrics using as little annotated data as possible, cheaper, and faster.</p>
+<p>In this notebook, we will use NVIDIA AI playground’s  Llama 70B LLM as a judge and eval model. <strong>NVIDIA AI Playground</strong> on NGC allows developers to experience state of the art LLMs accelerated on NVIDIA DGX Cloud with NVIDIA TensorRT nd Triton Inference Server. Developers get <strong>free credits for 10K requests</strong> to any of the available models. Sign up process is easy. Follow the instructions <span class="xref myst">here.</span></p>
+<section id="step-1-set-nvidia-ai-playground-api-key">
+<h2>Step 1: Set NVIDIA AI Playground API key<a class="headerlink" href="#step-1-set-nvidia-ai-playground-api-key" title="Permalink to this headline"></a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NVIDIA_API_KEY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;nvapi-*&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">langchain_nvidia_ai_endpoints</span> <span class="kn">import</span> <span class="n">ChatNVIDIA</span><span class="p">,</span> <span class="n">NVIDIAEmbeddings</span>
+<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatNVIDIA</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;llama2_70b&quot;</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">embeddings</span> <span class="o">=</span> <span class="n">NVIDIAEmbeddings</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;nvolveqa_40k&quot;</span><span class="p">,</span> <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;passage&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="bring-your-own-llms">
+<h2>Bring your own LLMs¶<a class="headerlink" href="#bring-your-own-llms" title="Permalink to this headline"></a></h2>
+<p>Ragas uses langchain under the hood for connecting to LLMs for metrices that require them. This means you can swap out the default LLM (gpt-3.5) with llama2 70B from AI playground.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ragas.llms</span> <span class="kn">import</span> <span class="n">LangchainLLMWrapper</span>
+<span class="kn">from</span> <span class="nn">ragas.embeddings</span> <span class="kn">import</span> <span class="n">LangchainEmbeddingsWrapper</span>
+<span class="n">nvpl_llm</span> <span class="o">=</span> <span class="n">LangchainLLMWrapper</span><span class="p">(</span><span class="n">langchain_llm</span><span class="o">=</span><span class="n">llm</span><span class="p">)</span>
+<span class="n">nvpl_embeddings</span> <span class="o">=</span> <span class="n">LangchainEmbeddingsWrapper</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-2-import-eval-data-and-reformat-it">
+<h2>Step 2: Import Eval Data and Reformat It<a class="headerlink" href="#step-2-import-eval-data-and-reformat-it" title="Permalink to this headline"></a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;eval.json&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+    <span class="n">json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">eval_questions</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">eval_answers</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">ground_truths</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">vdb_contexts</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">json_data</span><span class="p">:</span>
+    <span class="n">eval_questions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">])</span>
+    <span class="n">eval_answers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">])</span>
+    <span class="n">vdb_contexts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;contexts&quot;</span><span class="p">])</span>
+    <span class="n">ground_truths</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;gt_answer&quot;</span><span class="p">]])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data_samples</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;question&#39;</span><span class="p">:</span> <span class="n">eval_questions</span><span class="p">,</span>
+    <span class="s1">&#39;answer&#39;</span><span class="p">:</span> <span class="n">eval_answers</span><span class="p">,</span>
+    <span class="s1">&#39;contexts&#39;</span> <span class="p">:</span> <span class="n">vdb_contexts</span><span class="p">,</span>
+    <span class="s1">&#39;ground_truths&#39;</span><span class="p">:</span> <span class="n">ground_truths</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ragas</span> <span class="kn">import</span> <span class="n">evaluate</span>
+<span class="kn">from</span> <span class="nn">datasets</span> <span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data_samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ragas.metrics</span> <span class="kn">import</span> <span class="n">faithfulness</span><span class="p">,</span> <span class="n">answer_relevancy</span><span class="p">,</span> <span class="n">context_precision</span><span class="p">,</span> <span class="n">context_recall</span>
+<span class="n">evaluate</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">llm</span><span class="o">=</span><span class="n">nvpl_llm</span><span class="p">,</span> <span class="n">embeddings</span><span class="o">=</span><span class="n">nvpl_embeddings</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">faithfulness</span><span class="p">,</span> <span class="n">answer_relevancy</span><span class="p">,</span> <span class="n">context_precision</span><span class="p">,</span> <span class="n">context_recall</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-3-view-and-interpret-results">
+<h2>Step 3: View and Interpret Results<a class="headerlink" href="#step-3-view-and-interpret-results" title="Permalink to this headline"></a></h2>
+<p>A Ragas score is comprised of the following:
+<img alt="ragas" src="../../_images/ragas.png" /></p>
+<section id="metrics-explained">
+<h3>Metrics explained<a class="headerlink" href="#metrics-explained" title="Permalink to this headline"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Faithfulness</strong>: measures the factual accuracy of the generated answer with the context provided. This is done in 2 steps. First, given a question and generated answer, Ragas uses an LLM to figure out the statements that the generated answer makes. This gives a list of statements whose validity we have we have to check. In step 2, given the list of statements and the context returned, Ragas uses an LLM to check if the statements provided are supported by the context. The number of correct statements is summed up and divided by the total number of statements in the generated answer to obtain the score for a given example.</p></li>
+<li><p><strong>Answer Relevancy</strong>: measures how relevant and to the point the answer is to the question. For a given generated answer Ragas uses an LLM to find out the probable questions that the generated answer would be an answer to and computes similarity to the actual question asked.</p></li>
+<li><p><strong>Context Precision</strong>: measures the precision of the retrieved context in providing relevant information for generating answer. Given a question, answer and retrieved context, Ragas calls LLM to check sentences from the ground truth answer against a retrieved context. It is the ratio between the relevant sentences from retrieved context and the total sentence from ground truth answer.</p></li>
+<li><p><strong>Context Recall</strong>: measures the ability of the retriever to retrieve all the necessary information needed to answer the question. Ragas calculates this by using the provided ground_truth answer and using an LLM to check if each statement from it can be found in the retrieved context. If it is not found that means the retriever was not able to retrieve the information needed to support that statement.</p></li>
+</ol>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+
+
+
+</body>
+</html>

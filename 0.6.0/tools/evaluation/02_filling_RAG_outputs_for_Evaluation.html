@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notebook 2: Filling RAG outputs For Evaluation &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/omni-style.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+        <script src="../../_static/version.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="search" title="Search" href="../../search.html" />
+ 
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+<a href="../../index.html">
+  <img src="../../_static/nvidia-logo-white.png" class="logo" alt="Logo"/>
+</a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">RAG Pipelines for Developers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">About the RAG Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support-matrix.html">Support Matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api-catalog.html">API Catalog Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../local-gpu.html">Local GPUs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi-gpu.html">Multi-GPU for Inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../query-decomposition.html">Query Decomposition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quantized-llm-model.html">Quantized Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../structured-data.html">Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multimodal-data.html">Multimodal Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../multi-turn.html">Multi-turn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../using-sample-web-application.html">Sample Chat Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vector-database.html">Alternative Vector Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nim-llms.html">NIM for LLMs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simple-examples.html">Developing Simple Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../observability.html">Observability</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/00-llm-non-streaming-nemotron.html">Basics: Prompt, Client, and Responses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/01-llm-streaming-client.html">LLM Streaming Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/02_langchain_simple.html">Q&amp;A with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../llm-inference-server.html">NeMo Framework Inference Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../frontend.html">RAG Playground Web Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../jupyter-server.html">Jupyter Notebook Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../chain-server.html">Chain Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Software Component Configuration</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">NVIDIA Generative AI Examples</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Notebook 2: Filling RAG outputs For Evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="notebook-2-filling-rag-outputs-for-evaluation">
+<h1>Notebook 2: Filling RAG outputs For Evaluation<a class="headerlink" href="#notebook-2-filling-rag-outputs-for-evaluation" title="Permalink to this headline"></a></h1>
+<p>In this notebook, we will use the example RAG pipeline to populate the RAG outputs: contexts (retrieved relevant documents) and answer (generated by RAG pipeline).</p>
+<p>The example RAG pipeline provided as part of this repository uses <a class="reference external" href="https://gpt-index.readthedocs.io/en/stable/">LlamaIndex</a> to build a chatbot that references a custom knowledge base.</p>
+<p>If you want to learn more about how the example RAG works, please see <span class="xref myst">03_llama_index_simple.ipynb</span>.</p>
+<ul class="simple">
+<li><p><strong>Steps 1-5</strong>: Build the RAG pipeline.</p></li>
+<li><p><strong>Step 6</strong>: Build the Query Engine, exposing the Retriever and Generator outputs</p></li>
+<li><p><strong>Step 7</strong>: Fill the RAG outputs</p></li>
+</ul>
+<section id="steps-1-5-build-the-rag-pipeline">
+<h2>Steps 1-5: Build the RAG pipeline<a class="headerlink" href="#steps-1-5-build-the-rag-pipeline" title="Permalink to this headline"></a></h2>
+<section id="define-the-llm">
+<h3>Define the LLM<a class="headerlink" href="#define-the-llm" title="Permalink to this headline"></a></h3>
+<p>Here we are using a local llm on triton and the address and gRPC port that the Triton is available on.</p>
+<p>***If you are using AI Playground (no local GPU) replace, the code in the cell two cells below with the following: ***</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">import os</span>
+<span class="go">from nv_aiplay import GeneralLLM</span>
+<span class="go">os.environ[&#39;NVAPI_KEY&#39;] = &quot;REPLACE_WITH_YOUR_API_KEY&quot;</span>
+
+<span class="go">llm = GeneralLLM(</span>
+<span class="go">    model=&quot;llama2_70b&quot;,</span>
+<span class="go">    temperature=0.2,</span>
+<span class="go">    max_tokens=300</span>
+<span class="go">)</span>
+</pre></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%capture
+!test -d dataset || unzip dataset.zip
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">triton_trt_llm</span> <span class="kn">import</span> <span class="n">TensorRTLLM</span>
+<span class="kn">from</span> <span class="nn">llama_index.llms.langchain</span> <span class="kn">import</span> <span class="n">LangChainLLM</span>
+<span class="n">trtllm</span> <span class="o">=</span><span class="n">TensorRTLLM</span><span class="p">(</span><span class="n">server_url</span><span class="o">=</span><span class="s2">&quot;llm:8001&quot;</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;ensemble&quot;</span><span class="p">,</span> <span class="n">tokens</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">llm</span> <span class="o">=</span> <span class="n">LangChainLLM</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">trtllm</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="create-a-prompt-template">
+<h3>Create a Prompt Template<a class="headerlink" href="#create-a-prompt-template" title="Permalink to this headline"></a></h3>
+<p>A <a class="reference external" href="https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/prompts.html"><strong>prompt template</strong></a> is a common paradigm in LLM development.</p>
+<p>They are a pre-defined set of instructions provided to the LLM and guide the output produced by the model. They can contain few shot examples and guidance and are a quick way to engineer the responses from the LLM. Llama 2 accepts the <a class="reference external" href="https://huggingface.co/blog/llama2#how-to-prompt-llama-2">prompt format</a> shown in <code class="docutils literal notranslate"><span class="pre">LLAMA_PROMPT_TEMPLATE</span></code>, which we manipulate to be constructed with:</p>
+<ul class="simple">
+<li><p>The system prompt</p></li>
+<li><p>The context</p></li>
+<li><p>The user’s question</p></li>
+</ul>
+<p>Much like LangChain’s abstraction of prompts, LlamaIndex has similar abstractions for you to create prompts.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># import the relevant libraries</span>
+<span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">Prompt</span>
+
+<span class="n">LLAMA_PROMPT_TEMPLATE</span> <span class="o">=</span> <span class="p">(</span>
+ <span class="s2">&quot;&lt;s&gt;[INST] &lt;&lt;SYS&gt;&gt;&quot;</span>
+ <span class="s2">&quot;Use the following context to answer the user&#39;s question. If you don&#39;t know the answer, just say that you don&#39;t know, don&#39;t try to make up an answer.&quot;</span>
+ <span class="s2">&quot;&lt;&lt;/SYS&gt;&gt;&quot;</span>
+ <span class="s2">&quot;&lt;s&gt;[INST] Context: </span><span class="si">{context_str}</span><span class="s2"> Question: </span><span class="si">{query_str}</span><span class="s2"> Only return the helpful answer below and nothing else. Helpful answer:[/INST]&quot;</span>
+<span class="p">)</span>
+
+<span class="n">qa_template</span> <span class="o">=</span> <span class="n">Prompt</span><span class="p">(</span><span class="n">LLAMA_PROMPT_TEMPLATE</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="load-documents">
+<h2>Load Documents<a class="headerlink" href="#load-documents" title="Permalink to this headline"></a></h2>
+<p>Follow the step number 1 <span class="xref myst">defined here</span> to upload the pdf’s to Milvus server.</p>
+<p>In this rest of this section, we will load and split the pdfs of NVIDIA blogs. We will use the <code class="docutils literal notranslate"><span class="pre">SentenceTransformersTokenTextSplitter</span></code>.
+Additionally, we use a LlamaIndex <a class="reference external" href="https://gpt-index.readthedocs.io/en/latest/api_reference/service_context/prompt_helper.html"><code class="docutils literal notranslate"><span class="pre">PromptHelper</span></code></a> to help deal with LLM context window token limitations.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># import the relevant libraries</span>
+<span class="kn">from</span> <span class="nn">langchain.text_splitter</span> <span class="kn">import</span> <span class="n">SentenceTransformersTokenTextSplitter</span>
+<span class="kn">from</span> <span class="nn">llama_index.core.node_parser</span> <span class="kn">import</span> <span class="n">LangchainNodeParser</span>
+<span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">PromptHelper</span>
+
+<span class="c1"># setup the text splitter</span>
+<span class="n">TEXT_SPLITTER_MODEL</span> <span class="o">=</span> <span class="s2">&quot;intfloat/e5-large-v2&quot;</span>
+<span class="n">TEXT_SPLITTER_TOKENS_PER_CHUNK</span> <span class="o">=</span> <span class="mi">510</span>
+<span class="n">TEXT_SPLITTER_CHUNCK_OVERLAP</span> <span class="o">=</span> <span class="mi">200</span>
+
+<span class="n">text_splitter</span> <span class="o">=</span> <span class="n">SentenceTransformersTokenTextSplitter</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="o">=</span><span class="n">TEXT_SPLITTER_MODEL</span><span class="p">,</span>
+    <span class="n">tokens_per_chunk</span><span class="o">=</span><span class="n">TEXT_SPLITTER_TOKENS_PER_CHUNK</span><span class="p">,</span>
+    <span class="n">chunk_overlap</span><span class="o">=</span><span class="n">TEXT_SPLITTER_CHUNCK_OVERLAP</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">node_parser</span> <span class="o">=</span> <span class="n">LangchainNodeParser</span><span class="p">(</span><span class="n">text_splitter</span><span class="p">)</span>
+
+
+<span class="c1"># Use the PromptHelper</span>
+
+<span class="n">prompt_helper</span> <span class="o">=</span> <span class="n">PromptHelper</span><span class="p">(</span>
+  <span class="n">context_window</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+  <span class="n">num_output</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+  <span class="n">chunk_overlap_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+  <span class="n">chunk_size_limit</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="generate-and-store-embeddings">
+<h3>Generate and Store Embeddings<a class="headerlink" href="#generate-and-store-embeddings" title="Permalink to this headline"></a></h3>
+<section id="a-generate-embeddings">
+<h4>a) Generate Embeddings<a class="headerlink" href="#a-generate-embeddings" title="Permalink to this headline"></a></h4>
+<p><a class="reference external" href="https://python.langchain.com/docs/modules/data_connection/text_embedding/">Embeddings</a> for documents are created by vectorizing the document text; this vectorization captures the semantic meaning of the text.</p>
+<p>We will use <a class="reference external" href="https://huggingface.co/intfloat/e5-large-v2">intfloat/e5-large-v2</a> for the embeddings.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># import the relevant libraries</span>
+<span class="kn">from</span> <span class="nn">langchain.embeddings</span> <span class="kn">import</span> <span class="n">HuggingFaceEmbeddings</span>
+<span class="kn">from</span> <span class="nn">llama_index.embeddings.langchain</span> <span class="kn">import</span> <span class="n">LangchainEmbedding</span>
+
+<span class="c1">#Running the model on CPU as we want to conserve gpu memory.</span>
+<span class="c1">#In the production deployment (API server shown as part of the 5th notebook we run the model on GPU)</span>
+<span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;intfloat/e5-large-v2&quot;</span>
+<span class="n">model_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;device&quot;</span><span class="p">:</span> <span class="s2">&quot;cuda:0&quot;</span><span class="p">}</span>
+<span class="n">encode_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;normalize_embeddings&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+<span class="n">hf_embeddings</span> <span class="o">=</span> <span class="n">HuggingFaceEmbeddings</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
+    <span class="n">model_kwargs</span><span class="o">=</span><span class="n">model_kwargs</span><span class="p">,</span>
+    <span class="n">encode_kwargs</span><span class="o">=</span><span class="n">encode_kwargs</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># Load in a specific embedding model</span>
+<span class="n">embed_model</span> <span class="o">=</span> <span class="n">LangchainEmbedding</span><span class="p">(</span><span class="n">hf_embeddings</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="b-store-embeddings">
+<h4>b) Store Embeddings<a class="headerlink" href="#b-store-embeddings" title="Permalink to this headline"></a></h4>
+<p>We will use the LlamaIndex module <a class="reference external" href="https://docs.llamaindex.ai/en/stable/module_guides/supporting_modules/settings/?h=settings"><code class="docutils literal notranslate"><span class="pre">Settings</span></code></a> to bundle commonly used resources during the indexing and querying stage.</p>
+<p>In this example, we bundle the build resources: the LLM, the embedding model, the node parser, and the prompt helper.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># import the relevant libraries</span>
+<span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">Settings</span>
+
+<span class="n">Settings</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">llm</span>
+<span class="n">Settings</span><span class="o">.</span><span class="n">embed_model</span> <span class="o">=</span> <span class="n">embed_model</span>
+<span class="n">Settings</span><span class="o">.</span><span class="n">node_parser</span> <span class="o">=</span> <span class="n">node_parser</span>
+<span class="n">Settings</span><span class="o">.</span><span class="n">prompt_helper</span> <span class="o">=</span> <span class="n">prompt_helper</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Ingest the dataset using the /documents endpoint in the chain-server.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">mimetypes</span>
+
+<span class="k">def</span> <span class="nf">upload_document</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;accept&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span>
+    <span class="p">}</span>
+    <span class="n">mime_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">),</span> <span class="n">mime_type</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span>
+
+<span class="k">def</span> <span class="nf">upload_pdf_files</span><span class="p">(</span><span class="n">folder_path</span><span class="p">,</span> <span class="n">upload_url</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">folder_path</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+        <span class="c1"># Ingest only pdf files</span>
+        <span class="k">if</span> <span class="n">ext</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.pdf&quot;</span><span class="p">:</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_path</span><span class="p">,</span> <span class="n">files</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">upload_document</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">upload_url</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
+
+<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">upload_pdf_files</span><span class="p">(</span><span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;http://chain-server:8081/documents&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;--- </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">}</span><span class="s2"> seconds ---&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="alert alert-block alert-info">
+<p>⚠️ in the deployment of this workflow, <a class="reference external" href="https://milvus.io/">Milvus</a> is running as a vector database microservice.</p>
+</div><div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># import the relevant libraries</span>
+<span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
+<span class="kn">from</span> <span class="nn">llama_index.core.storage.storage_context</span> <span class="kn">import</span> <span class="n">StorageContext</span>
+<span class="kn">from</span> <span class="nn">llama_index.vector_stores.milvus</span> <span class="kn">import</span> <span class="n">MilvusVectorStore</span>
+
+<span class="c1"># store</span>
+<span class="n">vector_store</span> <span class="o">=</span> <span class="n">MilvusVectorStore</span><span class="p">(</span><span class="n">uri</span><span class="o">=</span><span class="s2">&quot;http://milvus:19530&quot;</span><span class="p">,</span>
+    <span class="n">dim</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">collection_name</span><span class="o">=</span><span class="s2">&quot;developer_rag&quot;</span><span class="p">,</span>
+    <span class="n">index_config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;index_type&quot;</span><span class="p">:</span> <span class="s2">&quot;GPU_IVF_FLAT&quot;</span><span class="p">,</span> <span class="s2">&quot;nlist&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">},</span>
+    <span class="n">search_config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;nprobe&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">},</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+<span class="n">storage_context</span> <span class="o">=</span> <span class="n">StorageContext</span><span class="o">.</span><span class="n">from_defaults</span><span class="p">(</span><span class="n">vector_store</span><span class="o">=</span><span class="n">vector_store</span><span class="p">)</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">VectorStoreIndex</span><span class="o">.</span><span class="n">from_vector_store</span><span class="p">(</span><span class="n">vector_store</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="step-6-build-the-query-engine-exposing-the-retriever-and-generator-outputs">
+<h2>Step 6: Build the Query Engine, exposing the Retriever and Generator outputs<a class="headerlink" href="#step-6-build-the-query-engine-exposing-the-retriever-and-generator-outputs" title="Permalink to this headline"></a></h2>
+<section id="a-limit-the-retriever-total-output-length">
+<h3>a) Limit the Retriever Total Output Length<a class="headerlink" href="#a-limit-the-retriever-total-output-length" title="Permalink to this headline"></a></h3>
+<p>First, we need to restrict the output of the Retriever to a reasonable length so that the prompt can fit the context length of the LLM.
+In this notebook, we will restrict it to 1000 (anything up to 1000 will ignored).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># import the relevant libraries</span>
+<span class="kn">from</span> <span class="nn">llama_index.core.postprocessor.types</span> <span class="kn">import</span> <span class="n">BaseNodePostprocessor</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">llama_index.core.utils</span> <span class="kn">import</span> <span class="n">get_tokenizer</span>
+<span class="n">DEFAULT_MAX_CONTEXT</span> <span class="o">=</span> <span class="mi">1000</span>
+
+<span class="c1"># limit the Retriever total outputs length</span>
+<span class="k">class</span> <span class="nc">LimitRetrievedNodesLength</span><span class="p">(</span><span class="n">BaseNodePostprocessor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Llama Index chain filter to limit token lengths.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_postprocess_nodes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;NodeWithScore&quot;</span><span class="p">],</span> <span class="n">query_bundle</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;QueryBundle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;NodeWithScore&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter function.&quot;&quot;&quot;</span>
+        <span class="n">included_nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current_length</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_CONTEXT</span>
+
+        <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">get_tokenizer</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="n">current_length</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">tokenizer</span><span class="p">(</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">get_content</span><span class="p">(</span><span class="n">metadata_mode</span><span class="o">=</span><span class="n">MetadataMode</span><span class="o">.</span><span class="n">LLM</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">current_length</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">included_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">included_nodes</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="b-build-the-query-engine">
+<h3>b) Build the Query Engine<a class="headerlink" href="#b-build-the-query-engine" title="Permalink to this headline"></a></h3>
+<p>Now, let’s build the query engine that takes a query and returns a response. Each vector index has a default corresponding query engine; for example, the default query engine for a vector index performs a standard top-k retrieval over the vector store.
+We will use <code class="docutils literal notranslate"><span class="pre">RetrieverQueryEngine</span></code> to get the output of the Retriever and generator. Learn more about the RetrieverQueryEngine in the <a class="reference external" href="https://gpt-index.readthedocs.io/en/latest/examples/query_engine/CustomRetrievers.html">documentation</a>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># import the relevant libraries</span>
+<span class="kn">from</span> <span class="nn">llama_index.core.query_engine</span> <span class="kn">import</span> <span class="n">RetrieverQueryEngine</span>
+<span class="kn">from</span> <span class="nn">llama_index.core.schema</span> <span class="kn">import</span> <span class="n">MetadataMode</span>
+
+<span class="c1"># Expose the retriever</span>
+<span class="n">retriever</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_retriever</span><span class="p">(</span><span class="n">similarity_top_k</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">query_engine</span> <span class="o">=</span> <span class="n">RetrieverQueryEngine</span><span class="o">.</span><span class="n">from_args</span><span class="p">(</span>
+    <span class="n">retriever</span><span class="p">,</span>
+    <span class="n">text_qa_template</span><span class="o">=</span><span class="n">qa_template</span><span class="p">,</span>
+    <span class="n">node_postprocessors</span><span class="o">=</span><span class="p">[</span><span class="n">LimitRetrievedNodesLength</span><span class="p">()]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="step-7-fill-the-rag-outputs">
+<h2>Step 7: Fill the RAG outputs<a class="headerlink" href="#step-7-fill-the-rag-outputs" title="Permalink to this headline"></a></h2>
+<p>Let’s now query the RAG pipeline and fill the outputs <code class="docutils literal notranslate"><span class="pre">contexts</span></code> and <code class="docutils literal notranslate"><span class="pre">answer</span></code> on the evaluation JSON file.</p>
+<p>First, we need to load the previously generated dataset. So far, the RAG outputs fields are empty.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># import the relevant libraries</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">JSON</span>
+
+<span class="c1"># load the evaluation data</span>
+<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;qa_generation.json&#39;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+<span class="c1"># show the first element</span>
+<span class="n">JSON</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Let now query the RAG pipeline and populate the <code class="docutils literal notranslate"><span class="pre">contexts</span></code> and <code class="docutils literal notranslate"><span class="pre">answer</span></code> fields.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+    <span class="n">limited_retrieval_length</span> <span class="o">=</span> <span class="n">LimitRetrievedNodesLength</span><span class="p">()</span>
+    <span class="n">retrieved_text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">])</span>
+    <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">response</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">])</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">])</span>
+    <span class="n">included_nodes</span> <span class="o">=</span> <span class="n">limited_retrieval_length</span><span class="o">.</span><span class="n">postprocess_nodes</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">included_nodes</span><span class="p">:</span>
+        <span class="n">retrieved_text</span> <span class="o">=</span> <span class="n">retrieved_text</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">text</span>
+    <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;contexts&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">retrieved_text</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># json_list_string=json.dumps(data)</span>
+
+<span class="c1"># show again the first element</span>
+<span class="n">JSON</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Let now save the new evaluation datasets.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;eval.json&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>In the next notebook, we will evaluate the <a class="reference external" href="https://gitlab-master.nvidia.com/chat-labs/rag-demos/corp-comms-copilot">Corp Comms Copilot</a> RAG pipeline.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023-2024, NVIDIA Corporation.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+
+
+
+</body>
+</html>
