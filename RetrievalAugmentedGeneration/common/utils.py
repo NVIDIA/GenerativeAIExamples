@@ -15,8 +15,8 @@
 
 """Utility functions for the LLM Chains."""
 import os
-import base64
 import logging
+from shlex import quote
 from functools import lru_cache, wraps
 from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Callable, List, Optional
@@ -39,17 +39,19 @@ except Exception as e:
     logger.error(f"SQLalchemy import failed with error: {e}")
 
 try:
-    from llama_index.postprocessor.types import BaseNodePostprocessor
-    from llama_index.schema import MetadataMode
-    from llama_index.utils import globals_helper, get_tokenizer
-    from llama_index.vector_stores import MilvusVectorStore, PGVectorStore
-    from llama_index import VectorStoreIndex, ServiceContext, set_global_service_context
-    from llama_index.llms import LangChainLLM
-    from llama_index.embeddings import LangchainEmbedding
+    from llama_index.core.postprocessor.types import BaseNodePostprocessor
+    from llama_index.core.schema import MetadataMode
+    from llama_index.core.utils import globals_helper, get_tokenizer
+    from llama_index.vector_stores.milvus import MilvusVectorStore
+    from llama_index.vector_stores.postgres import PGVectorStore
+    from llama_index.core.indices import VectorStoreIndex
+    from llama_index.core.service_context import ServiceContext, set_global_service_context
+    from llama_index.llms.langchain import LangChainLLM
+    from llama_index.embeddings.langchain import LangchainEmbedding
     if TYPE_CHECKING:
-        from llama_index.indices.base_retriever import BaseRetriever
-        from llama_index.indices.query.schema import QueryBundle
-        from llama_index.schema import NodeWithScore
+        from llama_index.core.indices.base_retriever import BaseRetriever
+        from llama_index.core.indices.query.schema import QueryBundle
+        from llama_index.core.schema import NodeWithScore
 except Exception as e:
     logger.error(f"Llamaindex import failed with error: {e}")
 
@@ -66,21 +68,26 @@ except Exception as e:
     logger.error(f"Langchain core import failed with error: {e}")
 
 try:
+    from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
+except Exception as e:
+    logger.error(f"Langchain nvidia ai endpoints import failed with error: {e}")
+
+try:
     from langchain_community.vectorstores import PGVector
     from langchain_community.vectorstores import Milvus
+    from langchain_community.docstore.in_memory import InMemoryDocstore
 except Exception as e:
     logger.error(f"Langchain community import failed with error: {e}")
 
 try:
-    from langchain_community.chat_models import ChatOpenAI
+    from faiss import IndexFlatL2
 except Exception as e:
-    logger.error(f"NVIDIA AI connector import failed with error: {e}")
+    logger.error(f"faiss import failed with error: {e}")
 
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain.llms.base import LLM
 from integrations.langchain.llms.triton_trt_llm import TensorRTLLM
-from integrations.langchain.llms.nemo_infer import NemoInfer
 from integrations.langchain.embeddings.nemo_embed import NemoEmbeddings
 from RetrievalAugmentedGeneration.common import configuration
 
@@ -88,7 +95,6 @@ if TYPE_CHECKING:
     from RetrievalAugmentedGeneration.common.configuration_wizard import ConfigWizard
 
 DEFAULT_MAX_CONTEXT = 1500
-TEXT_SPLITTER_EMBEDDING_MODEL = "intfloat/e5-large-v2"
 
 
 class LimitRetrievedNodesLength(BaseNodePostprocessor):
@@ -148,15 +154,16 @@ def get_config() -> "ConfigWizard":
 
 
 @lru_cache
-def get_vector_index(collection_name: str = "") -> VectorStoreIndex:
+def get_vector_index(collection_name: str = "") -> "VectorStoreIndex":
     """Create the vector db index."""
     config = get_config()
     vector_store = None
+    store_nodes_override = True
 
     logger.info(f"Using {config.vector_store.name} as vector store")
 
     if config.vector_store.name == "pgvector":
-        db_name = os.getenv('POSTGRES_DB', None)
+        db_name = quote(os.getenv('POSTGRES_DB', None))
         if not collection_name:
             collection_name = os.getenv('COLLECTION_NAME', "vector_db")
         connection_string = f"postgresql://{os.getenv('POSTGRES_USER', '')}:{os.getenv('POSTGRES_PASSWORD', '')}@{config.vector_store.url}/{db_name}"
@@ -182,6 +189,7 @@ def get_vector_index(collection_name: str = "") -> VectorStoreIndex:
             table_name=collection_name,
             embed_dim=config.embeddings.dimensions
         )
+        store_nodes_override = True
     elif config.vector_store.name == "milvus":
         if not collection_name:
             collection_name = os.getenv('COLLECTION_NAME', "vector_db")
@@ -192,47 +200,57 @@ def get_vector_index(collection_name: str = "") -> VectorStoreIndex:
             index_config={"index_type": "GPU_IVF_FLAT", "nlist": config.vector_store.nlist},
             search_config={"nprobe": config.vector_store.nprobe},
             overwrite=False)
+        store_nodes_override = False
     else:
         raise RuntimeError("Unable to find any supported Vector Store DB. Supported engines are milvus and pgvector.")
-    vector_store_index = VectorStoreIndex.from_vector_store(vector_store)
+    vector_store_index = VectorStoreIndex.from_vector_store(vector_store=vector_store, store_nodes_override=store_nodes_override)
     return vector_store_index
 
 
-def get_vectorstore_langchain(documents, document_embedder, collection_name: str = "") -> VectorStore:
+def create_vectorstore_langchain(document_embedder, collection_name: str = "") -> VectorStore:
     """Create the vector db index for langchain."""
 
     config = get_config()
 
     if config.vector_store.name == "faiss":
-        vectorstore = FAISS.from_documents(documents, document_embedder)
+        vectorstore = FAISS(document_embedder, IndexFlatL2(config.embeddings.dimensions), InMemoryDocstore(), {})
     elif config.vector_store.name == "pgvector":
         db_name = os.getenv('POSTGRES_DB', None)
         if not collection_name:
             collection_name = os.getenv('COLLECTION_NAME', "vector_db")
         logger.info(f"Using PGVector collection: {collection_name}")
         connection_string = f"postgresql://{os.getenv('POSTGRES_USER', '')}:{os.getenv('POSTGRES_PASSWORD', '')}@{config.vector_store.url}/{db_name}"
-        vectorstore = PGVector.from_documents(
-            embedding=document_embedder,
-            documents=documents,
+        vectorstore = PGVector(
             collection_name=collection_name,
             connection_string=connection_string,
+            embedding_function=document_embedder,
         )
     elif config.vector_store.name == "milvus":
         if not collection_name:
             collection_name = os.getenv('COLLECTION_NAME', "vector_db")
         logger.info(f"Using milvus collection: {collection_name}")
         url = urlparse(config.vector_store.url)
-        vectorstore = Milvus.from_documents(
-            documents,
+        vectorstore = Milvus(
             document_embedder,
+            connection_args={"host": url.hostname, "port": url.port},
             collection_name=collection_name,
-            connection_args={"host": url.hostname, "port": url.port}
+            auto_id = True
         )
     else:
         raise ValueError(f"{config.vector_store.name} vector database is not supported")
     logger.info("Vector store created and saved.")
     return vectorstore
 
+
+def get_vectorstore(vectorstore, document_embedder) -> VectorStore:
+    """
+    Send a vectorstore object.
+    If a Vectorstore object already exists, the function returns that object.
+    Otherwise, it creates a new Vectorstore object and returns it.
+    """
+    if vectorstore is None:
+        return create_vectorstore_langchain(document_embedder)
+    return vectorstore
 
 @lru_cache
 def get_doc_retriever(num_nodes: int = 4) -> "BaseRetriever":
@@ -260,53 +278,25 @@ def get_llm(**kwargs) -> LLM | SimpleChatModel:
         if unused_params:
             logger.warning(f"The following parameters from kwargs are not supported: {unused_params} for {settings.llm.model_engine}")
         return trtllm
-    elif settings.llm.model_engine == "nv-ai-foundation":
-        from langchain_nvidia_ai_endpoints import ChatNVIDIA
-
+    elif settings.llm.model_engine == "nvidia-ai-endpoints":
         unused_params = [key for key in kwargs.keys() if key not in ['temperature', 'top_p', 'max_tokens']]
         if unused_params:
             logger.warning(f"The following parameters from kwargs are not supported: {unused_params} for {settings.llm.model_engine}")
-        return ChatNVIDIA(model=settings.llm.model_name,
-                          temperature = kwargs.get('temperature', None),
-                          top_p = kwargs.get('top_p', None),
-                          max_tokens = kwargs.get('max_tokens', None))
-    elif settings.llm.model_engine == "nv-api-catalog":
-        # Import custom ChatNVIDIA for api catalog
-        from integrations.langchain.llms.nv_api_catalog import ChatNVIDIA
-
-        unused_params = [key for key in kwargs.keys() if key not in ['temperature', 'top_p', 'max_tokens']]
-        if unused_params:
-            logger.warning(f"The following parameters from kwargs are not supported: {unused_params} for {settings.llm.model_engine}")
-        return ChatNVIDIA(model=settings.llm.model_name,
-                          temperature = kwargs.get('temperature', None),
-                          top_p = kwargs.get('top_p', None),
-                          max_tokens = kwargs.get('max_tokens', None))
-    elif settings.llm.model_engine == "nemo-infer":
-        unused_params = [key for key in kwargs.keys() if key not in ['temperature', 'top_p', 'max_tokens',  'stream']]
-        if unused_params:
-            logger.warning(f"The following parameters from kwargs are not supported: {unused_params} for {settings.llm.model_engine}")
-        nemo_infer = NemoInfer(
-            server_url=f"http://{settings.llm.server_url}/v1/completions",
-            model=settings.llm.model_name,
-            temperature = kwargs.get('temperature', None),
-            top_p = kwargs.get('top_p', None),
-            tokens = kwargs.get('max_tokens', None)
-        )
-        return nemo_infer
-    elif settings.llm.model_engine == "nemo-infer-openai":
-        unused_params = [key for key in kwargs.keys() if key not in ['temperature', 'max_tokens',  'stream']]
-        if unused_params:
-            logger.warning(f"The following parameters from kwargs are not supported: {unused_params} for {settings.llm.model_engine}")
-        nemo_infer = ChatOpenAI(
-            openai_api_base=f"http://{settings.llm.server_url}/v1/",
-            openai_api_key="xyz",
-            model_name=settings.llm.model_name,
-            temperature = kwargs.get('temperature', 0.7),
-            max_tokens=kwargs.get('max_tokens', None)
-        )
-        return nemo_infer
+        if settings.llm.server_url:
+            logger.info(f"Using llm model {settings.llm.model_name} hosted at {settings.llm.server_url}")
+            return ChatNVIDIA(model=settings.llm.model_name,
+                            temperature = kwargs.get('temperature', None),
+                            top_p = kwargs.get('top_p', None),
+                            max_tokens = kwargs.get('max_tokens', None)
+                    ).mode("nim", base_url=f"http://{settings.llm.server_url}/v1")
+        else:
+            logger.info(f"Using llm model {settings.llm.model_name} from api catalog")
+            return ChatNVIDIA(model=settings.llm.model_name,
+                            temperature = kwargs.get('temperature', None),
+                            top_p = kwargs.get('top_p', None),
+                            max_tokens = kwargs.get('max_tokens', None))
     else:
-        raise RuntimeError("Unable to find any supported Large Language Model server. Supported engines are triton-trt-llm, nv-ai-foundation, nv-api-catalog, nemo-infer and nemo-infer-openai.")
+        raise RuntimeError("Unable to find any supported Large Language Model server. Supported engines are triton-trt-llm, nvidia-ai-endpoints.")
 
 
 @lru_cache
@@ -328,12 +318,13 @@ def get_embedding_model() -> Embeddings:
         )
         # Load in a specific embedding model
         return hf_embeddings
-    elif settings.embeddings.model_engine == "nv-ai-foundation":
-        from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
-        return NVIDIAEmbeddings(model=settings.embeddings.model_name, model_type="passage")
-    elif settings.embeddings.model_engine == "nv-api-catalog":
-        from integrations.langchain.llms.nv_api_catalog import NVIDIAEmbeddings
-        return NVIDIAEmbeddings(model=settings.embeddings.model_name, model_type="passage")
+    elif settings.embeddings.model_engine == "nvidia-ai-endpoints":
+        if settings.embeddings.server_url:
+            logger.info(f"Using embedding model {settings.embeddings.model_name} hosted at {settings.embeddings.server_url}")
+            return NVIDIAEmbeddings(model=settings.embeddings.model_name).mode("nim", base_url=f"http://{settings.embeddings.server_url}/v1")
+        else:
+            logger.info(f"Using embedding model {settings.embeddings.model_name} hosted at api catalog")
+            return NVIDIAEmbeddings(model=settings.embeddings.model_name)
     elif settings.embeddings.model_engine == "nemo-embed":
         nemo_embed = NemoEmbeddings(
             server_url=f"http://{settings.embeddings.server_url}/v1/embeddings",
@@ -344,25 +335,9 @@ def get_embedding_model() -> Embeddings:
         raise RuntimeError("Unable to find any supported embedding model. Supported engine is huggingface.")
 
 
-@lru_cache
-def is_base64_encoded(s: str) -> bool:
-    """Check if a string is base64 encoded."""
-    try:
-        # Attempt to decode the string as base64
-        decoded_bytes = base64.b64decode(s)
-        # Encode the decoded bytes back to a string to check if it's valid
-        decoded_str = decoded_bytes.decode("utf-8")
-        # If the original string and the decoded string match, it's base64 encoded
-        return s == base64.b64encode(decoded_str.encode("utf-8")).decode("utf-8")
-    except Exception:  # pylint:disable = broad-exception-caught
-        # An exception occurred during decoding, so it's not base64 encoded
-        return False
-
-
 def get_text_splitter() -> SentenceTransformersTokenTextSplitter:
     """Return the token text splitter instance from langchain."""
 
-    embedding_model_name = TEXT_SPLITTER_EMBEDDING_MODEL
     if get_config().text_splitter.model_name:
         embedding_model_name = get_config().text_splitter.model_name
 
@@ -378,7 +353,7 @@ def get_docs_vectorstore_langchain(vectorstore: VectorStore) -> List[str]:
 
     settings = get_config()
     try:
-        # No API availbe in LangChain for listing the docs, thus usig its private _dict 
+        # No API availbe in LangChain for listing the docs, thus usig its private _dict
         extract_filename = lambda metadata : os.path.splitext(os.path.basename(metadata['source']))[0]
         if settings.vector_store.name == "faiss":
             in_memory_docstore = vectorstore.docstore._dict
@@ -386,20 +361,20 @@ def get_docs_vectorstore_langchain(vectorstore: VectorStore) -> List[str]:
             filenames = list(set(filenames))
             return filenames
         elif settings.vector_store.name == "pgvector":
-            # No API availbe in LangChain for listing the docs, thus usig its private _make_session 
+            # No API availbe in LangChain for listing the docs, thus usig its private _make_session
             with vectorstore._make_session() as session:
                 embedding_doc_store = session.query(vectorstore.EmbeddingStore.custom_id, vectorstore.EmbeddingStore.document, vectorstore.EmbeddingStore.cmetadata).all()
-                filenames = set([extract_filename(metadata) for _, _, metadata in embedding_doc_store])
+                filenames = set([extract_filename(metadata) for _, _, metadata in embedding_doc_store if metadata])
                 return filenames
         elif settings.vector_store.name == "milvus":
             # Getting all the ID's > 0
-            milvus_data = vectorstore.col.query(expr="pk >= 0", output_fields=["pk","source", "text"])
-            filenames = set([extract_filename(metadata) for metadata in milvus_data])
-            return filenames
+            if vectorstore.col:
+                milvus_data = vectorstore.col.query(expr="pk >= 0", output_fields=["pk","source", "text"])
+                filenames = set([extract_filename(metadata) for metadata in milvus_data])
+                return filenames
     except Exception as e:
         logger.error(f"Error occurred while retrieving documents: {e}")
-        return []
-    
+    return []
 
 def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str]):
     """Delete documents from the vector index implemented in LangChain."""
@@ -427,6 +402,68 @@ def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str
             for filename in filenames:
                 ids_list = [metadata["pk"] for metadata in milvus_data if extract_filename(metadata) == filename]
                 vectorstore.col.delete(f"pk in {ids_list}")
+                logger.info(f"Deleted documents with filenames {filename}")
+    except Exception as e:
+        logger.error(f"Error occurred while deleting documents: {e}")
+
+
+def get_docs_vectorstore_llamaindex() -> List[str]:
+    """Retrieves filenames stored in the vector store implemented in LlamaIndex."""
+
+    settings = get_config()
+    index = get_vector_index()
+    decoded_filenames = []
+    try:
+        if settings.vector_store.name == "pgvector":
+            ref_doc_info = index.ref_doc_info
+            for _ , ref_doc_value in ref_doc_info.items():
+                metadata = ref_doc_value.metadata
+                if 'filename' in metadata:
+                    filename = metadata['filename']
+                    decoded_filenames.append(filename)
+            decoded_filenames = list(set(decoded_filenames))
+        elif settings.vector_store.name == "milvus":
+            client = index.vector_store.client
+            collection_name = os.getenv('COLLECTION_NAME', "vector_db")
+            query_res = client.query(collection_name=collection_name, filter="common_field == 'all'",
+                                    output_fields=["filename"])
+            if not query_res:
+                return decoded_filenames
+
+            filenames = [entry.get('filename') for entry in query_res]
+            for filename in filenames:
+                decoded_filenames.append(filename)
+            decoded_filenames = list(set(decoded_filenames))
+        return decoded_filenames
+    except Exception as e:
+        logger.error(f"Error occurred while retrieving documents: {e}")
+        return []
+
+
+def del_docs_vectorstore_llamaindex(filenames: List[str]):
+    """Delete documents from the vector index implemented in LlamaIndex."""
+
+    settings = get_config()
+    index = get_vector_index()
+    try:
+        if settings.vector_store.name == "pgvector":
+            ref_doc_info = index.ref_doc_info
+            for filename in filenames:
+                for ref_doc_id, doc_info in ref_doc_info.items():
+                    if 'filename' in doc_info.metadata and doc_info.metadata['filename'] == filename:
+                        index.delete_ref_doc(ref_doc_id, delete_from_docstore=True)
+                        logger.info(f"Deleted documents with filenames {filename}")
+        elif settings.vector_store.name == "milvus":
+            for filename in filenames:
+                client = index.vector_store.client
+                collection_name = os.getenv('COLLECTION_NAME', "vector_db")
+                query_res = client.query(collection_name=collection_name, filter=f"filename == '{filename}'",
+                                        output_fields=["id"])
+                if not query_res:
+                    return
+
+                ids = [entry.get('id') for entry in query_res]
+                res = client.delete(collection_name=collection_name, filter=f"id in {str(ids)}")
                 logger.info(f"Deleted documents with filenames {filename}")
     except Exception as e:
         logger.error(f"Error occurred while deleting documents: {e}")

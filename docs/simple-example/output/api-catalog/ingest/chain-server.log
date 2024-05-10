@@ -1,0 +1,21 @@
+INFO:unstructured:Reading document from string ...
+INFO:unstructured:Reading document ...
+[nltk_data] Downloading package averaged_perceptron_tagger to
+[nltk_data]     /root/nltk_data...
+[nltk_data]   Unzipping taggers/averaged_perceptron_tagger.zip.
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+INFO:unstructured:HTML element instance has no attribute type
+WARNING:langchain.text_splitter:Created a chunk of size 1107, which is longer than the specified 510
+WARNING:langchain.text_splitter:Created a chunk of size 701, which is longer than the specified 510
+INFO:faiss.loader:Loading faiss with AVX2 support.
+INFO:faiss.loader:Successfully loaded faiss with AVX2 support.
+INFO:example:Vector store created and saved.

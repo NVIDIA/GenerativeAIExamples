@@ -17,6 +17,7 @@
 
 import os
 import json
+import pandas as pd
 from typing import Dict, List
 
 import yaml
@@ -97,3 +98,9 @@ def get_prompt_params(prompt_list: List) -> Dict[str, str]:
             }
 
     return {}
+
+def is_result_valid(result):
+    """ Check for validity of resultant data frame"""
+    if isinstance(result, pd.DataFrame):
+        return not result.empty
+    return bool(result)

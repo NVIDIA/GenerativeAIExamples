@@ -71,12 +71,20 @@ The following Jupyter notebooks are provided with the AI workflow for the defaul
 
   This notebook demonstrates how to use multiple NVIDIA AI Endpoint models such as mixtral_8x7b, Deplot, and Neva.
 
-- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html)
+- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.ipynb)
 
   This notebook demonstrates how to build a RAG using NVIDIA AI Endpoints for LangChain.
   The notebook creates a vector store by downloading web pages and generating their embeddings using FAISS.
   The notebook shows two different chat chains for querying the vector store.
 
+- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.ipynb)
+
+  This notebook guides you through creating a basic agent executor using LangGraph. We demonstrate how to handle the logic of the intermediate steps from the agent leveraging different provided tools within langGraph.
+
+
+- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/12_Chat_wtih_nvidia_financial_reports.ipynb)
+
+  In this notebook, we are going to use milvus as vectorstore, the mixtral_8x7b as LLM and ai-embed-qa-4 embedding provided by NVIDIA_AI_Endpoint as LLM and embedding model, and build a simply RAG example for chatting with NVIDIA Financial Reports.
 
 
 ## Running JupyterLab Server Individually

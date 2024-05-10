@@ -54,7 +54,7 @@ The chat bot also supports uploading documents to create a knowledge base.
        | Database
 
    * - ai-mixtral-8x7b-instruct
-     - nvolveqa_40k
+     - ai-embed-qa-4
      - LangChain
      - :doc:`api-catalog`
      - NO
@@ -64,7 +64,7 @@ The chat bot also supports uploading documents to create a knowledge base.
      - Milvus or pgvector
 
    * - llama-2
-     - e5-large-v2
+     - UAE-Large-V1
      - LlamaIndex
      - :doc:`local-gpu`
      - NO
@@ -74,7 +74,7 @@ The chat bot also supports uploading documents to create a knowledge base.
      - Milvus or pgvector
 
    * - llama-2
-     - e5-large-v2
+     - UAE-Large-V1
      - LlamaIndex
      - :doc:`multi-gpu`
      - YES
@@ -84,7 +84,7 @@ The chat bot also supports uploading documents to create a knowledge base.
      - Milvus or pgvector
 
    * - ai-llama2-70b
-     - nvolveqa_40k
+     - ai-embed-qa-4
      - LangChain
      - :doc:`query-decomposition`
      - NO
@@ -94,7 +94,7 @@ The chat bot also supports uploading documents to create a knowledge base.
      - Milvus or pgvector
 
    * - llama2-7b
-     - e5-large-v2
+     - UAE-Large-V1
      - LlamaIndex
      - :doc:`quantized-llm-model`
      - NO
@@ -103,9 +103,9 @@ The chat bot also supports uploading documents to create a knowledge base.
      - YES
      - Milvus or pgvector
 
-   * - ai-mixtral-8x7b-instruct for response generation
+   * - ai-llama3-70b for response generation
 
-       ai-mixtral-8x7b-instruct for PandasAI
+       ai-llama3-70b for PandasAI
      - Not Applicable
      - PandasAI
      - :doc:`structured-data`
@@ -120,7 +120,7 @@ The chat bot also supports uploading documents to create a knowledge base.
        ai-google-Deplot for graph to text conversion
 
        ai-Neva-22B for image to text conversion
-     - nvolveqa_40k
+     - ai-embed-qa-4
      - Custom Python
      - :doc:`multimodal-data`
      - NO
@@ -130,7 +130,7 @@ The chat bot also supports uploading documents to create a knowledge base.
      - Milvus or pgvector
 
    * - ai-llama2-70b
-     - nvolveqa_40k
+     - ai-embed-qa-4
      - LangChain
      - :doc:`multi-turn`
      - NO
@@ -145,7 +145,7 @@ The chat bot also supports uploading documents to create a knowledge base.
 
 ```{include} ../README.md
 :start-after: '## Open Source Integrations'
-:end-before: '## NVIDIA support'
+:end-before: '## Support, Feedback, and Contributing'
 ```
 
 ```{toctree}
@@ -165,6 +165,8 @@ Multimodal Data <multimodal-data>
 Multi-turn <multi-turn>
 Sample Chat Application <using-sample-web-application>
 Alternative Vector Database <vector-database>
+NIM for LLMs <nim-llms>
+Developing Simple Examples <simple-examples>
 ```
 
 ```{toctree}
@@ -172,7 +174,7 @@ Alternative Vector Database <vector-database>
 :titlesonly:
 :hidden:
 
-Evaluation <evaluation>
+Evaluation <tools/evaluation/index.md>
 Observability <observability>
 ```
 

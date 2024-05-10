@@ -57,7 +57,7 @@ class LLMConfig(ConfigWizard):
 
     server_url: str = configfield(
         "server_url",
-        default="localhost:8001",
+        default="",
         help_txt="The location of the Triton server hosting the llm model.",
     )
     model_name: str = configfield(
@@ -86,7 +86,7 @@ class TextSplitterConfig(ConfigWizard):
 
     model_name: str = configfield(
         "model_name",
-        default="intfloat/e5-large-v2",
+        default="WhereIsAI/UAE-Large-V1",
         help_txt="The name of Sentence Transformer model used for SentenceTransformer TextSplitter.",
     )
     chunk_size: int = configfield(
@@ -110,7 +110,7 @@ class EmbeddingConfig(ConfigWizard):
 
     model_name: str = configfield(
         "model_name",
-        default="intfloat/e5-large-v2",
+        default="WhereIsAI/UAE-Large-V1",
         help_txt="The name of huggingface embedding model.",
     )
     model_engine: str = configfield(
@@ -125,7 +125,7 @@ class EmbeddingConfig(ConfigWizard):
     )
     server_url: str = configfield(
         "server_url",
-        default="localhost:9080",
+        default="",
         help_txt="The url of the server hosting nemo embedding model",
     )
 

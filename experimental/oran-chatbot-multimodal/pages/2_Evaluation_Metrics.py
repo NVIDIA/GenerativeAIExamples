@@ -27,6 +27,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import DirectoryLoader, UnstructuredFileLoader,Docx2txtLoader, UnstructuredHTMLLoader, TextLoader, UnstructuredPDFLoader
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
 from langchain_core.output_parsers import StrOutputParser
+from langchain_community.embeddings import NeMoEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from continuous_eval.data_downloader import example_data_downloader
 from continuous_eval.evaluators import RetrievalEvaluator, GenerationEvaluator
@@ -37,10 +38,23 @@ import sys
 from datasets import Dataset
 import matplotlib.pyplot as plt
 from PIL import Image
+import yaml
 from continuous_eval.metrics import PrecisionRecallF1, RankedRetrievalMetrics, DeterministicAnswerCorrectness, DeterministicFaithfulness, BertAnswerRelevance, BertAnswerSimilarity, DebertaAnswerScores
+from langchain_community.vectorstores import FAISS
 
 llm_2 = ChatNVIDIA(model="playground_steerlm_llama_70b")
-nv_embedder = NVIDIAEmbeddings(model="nvolveqa_40k")
+
+if yaml.safe_load(open('config.yaml', 'r'))['NREM']:
+    # Embeddings with NeMo Retriever Embeddings Microservice (NREM)
+    print("Generating embeddings with NREM")
+    nv_embedder = NVIDIAEmbeddings(model=yaml.safe_load(open('config.yaml', 'r'))['nrem_model_name'],
+                                            truncate = yaml.safe_load(open('config.yaml', 'r'))['nrem_truncate']).mode("nim",
+                                            base_url= yaml.safe_load(open('config.yaml', 'r'))['nrem_api_endpoint_url'])
+
+else:
+    # Embeddings with NVIDIA AI Foundation Endpoints
+    nv_embedder = NVIDIAEmbeddings(model="ai-embed-qa-4")
+
 
 prompt_template = ChatPromptTemplate.from_messages(
     [("system", "You are a helpful and friendly intelligent AI assistant bot named ORAN Chatbot, deployed by the Artificial Intelligence Solutions Architecture and Engineering team at NVIDIA. The context given below will provide some documentation as well as ORAN specifications. Based on this context, answer the following question related to ORAN standards and specifications. If the question is not related to this, please refrain from answering."), ("user", "{input}")]
@@ -94,11 +108,6 @@ def plot_metrics_with_values(metrics_dict, title='RAG Metrics',figsize=(10, 6)):
     plt.show()
     st.pyplot(fig)
 
-import datetime
-def modification_date(filename):
-    t = os.path.getmtime(filename)
-    return datetime.datetime.fromtimestamp(t)
-
 st.set_page_config(
         page_title="Evaluation Metrics",
         page_icon="🔍",
@@ -123,18 +132,7 @@ with st.sidebar:
 st.sidebar.success("Select an experience above.")
 BASE_DIR = os.path.abspath("vectorstore")
 CORE_DIR = os.path.join(BASE_DIR, config["core_docs_directory_name"])
-vectorstore_file = os.path.join(CORE_DIR, "vectorstore_nv.pkl")
-
-# Create the basic vector DB for comparison
-st.subheader("Create the basic vector database")
-if os.path.exists(vectorstore_file):
-    st.write(f"Vector store already exists, and it may not need to be created again unless new documents have been added since then. Creation date: {modification_date(vectorstore_file)}")
-if st.button("Create vector DB"):
-    with st.spinner("Running vector DB creation..."):
-        create_vectorstore(CORE_DIR, config["name"], st.status)
-    st.success("Completed!")
-
-st.divider()
+vectorstore_folder = os.path.join(CORE_DIR, "vectorstore_nv")
 
 st.subheader("Create synthetic data with the documents")
 # Just load documents in a simple way (basic nemo-rag-chatbot) and create Q&A. Make chunks larger to include more context
@@ -216,12 +214,14 @@ if st.button("Run synthetic data generation"):
             ]).partial(sample_response=sample_response, sample_doc=sample_doc, instruction_prompt=instruction_prompt)
         gen_chain = langchain_prompt | llm | StrOutputParser()
         print("Done processing")
-        with open(os.path.join(CORE_DIR, "vectorstore_nv.pkl"), "rb") as f:
-            vectorstore = pickle.load(f)
-            print("Done loading vectorstore")
+        # with open(os.path.join(CORE_DIR, "vectorstore_nv.pkl"), "rb") as f:
+        #     vectorstore = pickle.load(f)
+        vectorstore = FAISS.load_local(vectorstore_folder, nv_embedder, allow_dangerous_deserialization=True)
+
+        print("Done loading vectorstore")
         retriever = vectorstore.as_retriever(search_kwargs={"k": 3, "score_threshold": 0.5})
         # loop on a few sample chunks
-        for chunk in documents[:10:]: 
+        for chunk in documents[:10:]:
             # create the prompt
             answer = gen_chain.invoke({"input_doc": chunk.page_content})
             # generate the q/A pair
@@ -238,7 +238,7 @@ if st.button("Run synthetic data generation"):
             # print(augmented_user_input)
             full_response = ""
             for response in chain.stream({"input": augmented_user_input}):
-                full_response += response   
+                full_response += response
 
             # json object
             json_list.append(
@@ -262,16 +262,21 @@ st.subheader("Run Evaluation Metrics")
 # Just load documents in a simple way (basic nemo-rag-chatbot) and create Q&A. Make chunks larger to include more context
 if st.button("Generate evaluation metrics"):
     from pathlib import Path
+    status = st.status("Generating plots.....")
     time.sleep(5)
     df = pd.read_pickle('./evals/metrics_df.pkl')
     st.dataframe(df)
+    with status:
+        st.write("Loading evaluation dataset.....")
     # look at evals folder for generating eval plots offline
-    with st.status("Generating plots.....", expanded=True) as status:
-        image_path = './evals/gen.jpg'
-        st.image(image_path)
-        st.image(Image.open('./evals/ret.jpg'))
-        st.image(Image.open('./evals/end.jpg'))
+    image_path = './evals/gen.jpg'
+    st.image(image_path)
+    st.image(Image.open('./evals/ret.jpg'))
+    st.image(Image.open('./evals/end.jpg'))
+    with status:
+        st.write("Showing evaluation metrics plots.....")
     status.update(label="Completed!",state="complete")
+    # st.success("Completed!")
 
     # Evaluation metrics are computed offline in ./evals/03_eval_ragas.ipynb because:
     # 1. Real-time generation of these metrics involves more compute and a longer than intended waiting time
@@ -387,7 +392,7 @@ if st.button("Generate evaluation metrics"):
 
 
     # # answer_correctness.embeddings = nv_query_embedder
-    # ## using NVIDIA embedding 
+    # ## using NVIDIA embedding
 
     # answer_similarity = AnswerSimilarity(llm=nvpl_llm, embeddings=nv_embedder)
     # answer_relevancy = AnswerRelevancy(embeddings=nv_embedder,llm=nvpl_llm) #embeddings=nv_query_embedder,
@@ -421,4 +426,3 @@ if st.button("Generate evaluation metrics"):
     # plot_metrics_with_values(results_generator, "Base Generator Metrics",figsize=(6, 3))
     # plot_metrics_with_values(results_retriever, "Base Retriever Metrics",figsize=(6, 3))
     # plot_metrics_with_values(results_endtoend, "Base End-to-End Metrics",figsize=(10, 6))
-    

@@ -16,7 +16,6 @@
 """Model-Server converts LLMs to TensorRT engines and hosts them with Triton."""
 import argparse
 import logging
-import os
 
 from .conversion import ConversionOptions, convert
 from .errors import ModelServerException
@@ -24,49 +23,6 @@ from .model import Model, ModelFormats
 from .server import ModelServer
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def _mk_symlink(source: str, dest: str) -> None:
-    """Safely create a symbolic link."""
-    if not os.path.exists(dest):
-        os.symlink(source, dest)
-        _LOGGER.debug("Creating symlink from %s to %s", source, dest)
-
-
-def _azureml(source_directory: str) -> None:
-    """Make accomodations for AzureML."""
-    _LOGGER.info("Detected running on AzureML.")
-    _LOGGER.debug("AZUREML_MODEL_DIR Variable is %s", source_directory)
-    destination_directory = "/model"
-    source_directory = os.path.abspath(source_directory)
-    _LOGGER.debug("Azure Model Directory is now  %s", source_directory)
-    _LOGGER.debug(
-        "Azure model directory contents: %s", repr(os.listdir(source_directory))
-    )
-
-    # find the direct path to the model weights
-    # $AZUREML_MODEL_DIR/model_name
-    try:
-        source_directory = os.path.join(
-            source_directory, os.listdir(source_directory)[0]
-        )
-        _LOGGER.debug("Azure Model Directory is now  %s", source_directory)
-        _LOGGER.debug(
-            "Azure model directory contents: %s", repr(os.listdir(source_directory))
-        )
-    except IndexError:
-        # pylint: disable-next=raise-missing-from
-        raise ModelServerException("AzureML folder structure is not recognized.")
-
-    # create links for the model files to the /models directory
-    for root, dirs, files in os.walk(source_directory):
-        root_destination = root.replace(source_directory, destination_directory)
-        for fi in files:
-            _mk_symlink(os.path.join(root, fi), os.path.join(root_destination, fi))
-        for di in dirs:
-            dest = os.path.join(root_destination, di)
-            os.makedirs(dest, exist_ok=True)
-            _LOGGER.debug("Creating directory %s", dest)
 
 
 def _should_convert(args: argparse.Namespace, model: "Model") -> bool:
@@ -82,10 +38,6 @@ def _should_convert(args: argparse.Namespace, model: "Model") -> bool:
 
 def main(args: argparse.Namespace) -> int:
     """Execute the model server."""
-    # make accomidations for various ML platforms
-    azureml_model_dir = os.environ.get("AZUREML_MODEL_DIR")
-    if azureml_model_dir:
-        _azureml(azureml_model_dir)
 
     # load the model directory
     _LOGGER.info("Reading the model directory.")

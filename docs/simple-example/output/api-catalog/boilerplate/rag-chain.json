@@ -1,0 +1,4 @@
+data: {"id":"dc99aaf0-b6ab-4332-bbf2-4b53fc72f963","choices":[{"index":0,"message":{"role":"assistant","content":"TODO: Implement RAG chain call"},"finish_reason":""}]}
+
+data: {"id":"dc99aaf0-b6ab-4332-bbf2-4b53fc72f963","choices":[{"index":0,"message":{"role":"assistant","content":""},"finish_reason":"[DONE]"}]}
+

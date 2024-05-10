@@ -31,22 +31,31 @@ from langchain_core.runnables.passthrough import RunnableAssign
 from RetrievalAugmentedGeneration.common.utils import (
     get_config,
     get_llm,
-    get_vectorstore_langchain,
+    create_vectorstore_langchain,
     get_embedding_model,
     get_text_splitter,
     get_docs_vectorstore_langchain,
-    del_docs_vectorstore_langchain
+    del_docs_vectorstore_langchain,
+    get_vectorstore
 )
 from RetrievalAugmentedGeneration.common.base import BaseExample
+from RetrievalAugmentedGeneration.common.tracing import langchain_instrumentation_class_wrapper
 from operator import itemgetter
 
 DOCS_DIR = os.path.abspath("./uploaded_files")
 document_embedder = get_embedding_model()
-docstore = None
 text_splitter = None
 settings = get_config()
 logger = logging.getLogger(__name__)
 
+try:
+    docstore = create_vectorstore_langchain(document_embedder=document_embedder)
+except Exception as e:
+    docstore = None
+    logger.info(f"Unable to connect to vector store during initialization: {e}")
+
+
+@langchain_instrumentation_class_wrapper
 class MultiTurnChatbot(BaseExample):
 
     def save_memory_and_get_output(self, d, vstore):
@@ -59,12 +68,11 @@ class MultiTurnChatbot(BaseExample):
         )
         return d.get("output")
 
-    def ingest_docs(self, file_name: str, filename: str):
+    def ingest_docs(self, filepath: str, filename: str):
         """Ingest documents to the VectorDB."""
+        if  not filename.endswith((".txt",".pdf",".md")):
+            raise ValueError(f"{filename} is not a valid Text, PDF or Markdown file")
         try:
-            # TODO: Load embedding created in older conversation, memory persistance
-            # We initialize class in every call therefore it should be global
-            global docstore
             # Load raw documents from the directory
             # Data is copied to `DOCS_DIR` in common.server:upload_document
             _path = os.path.join(DOCS_DIR, filename)
@@ -76,10 +84,8 @@ class MultiTurnChatbot(BaseExample):
                     text_splitter = get_text_splitter()
 
                 documents = text_splitter.split_documents(raw_documents)
-                if docstore:
-                    docstore.add_documents(documents)
-                else:
-                    docstore = get_vectorstore_langchain(documents, document_embedder)
+                ds = get_vectorstore(docstore, document_embedder)
+                ds.add_documents(documents)
             else:
                 logger.warning("No documents available to process!")
         except Exception as e:
@@ -94,22 +100,26 @@ class MultiTurnChatbot(BaseExample):
         """Execute a simple LLM chain using the components defined above."""
 
         logger.info("Using llm to generate response directly without knowledge base.")
-        system_message = [("system", settings.prompts.chat_template)]
+        # WAR: Disable chat history (UI consistency).
+        chat_history = []
         conversation_history = [(msg.role, msg.content) for msg in chat_history]
-        user_message = [("user", query)]
+        user_message = [("user", settings.prompts.chat_template)]
 
+        # TODO: Enable this block once conversation history is enabled for llm chain
         # Checking if conversation_history is not None and not empty
+        # prompt_template = ChatPromptTemplate.from_messages(
+        #     conversation_history + user_message
+        # ) if conversation_history else ChatPromptTemplate.from_messages(
+        #     user_message
+        # )
         prompt_template = ChatPromptTemplate.from_messages(
-            system_message + conversation_history
-        ) if conversation_history else ChatPromptTemplate.from_messages(
-            system_message + user_message
+            user_message
         )
 
         llm = get_llm(**kwargs)
-
         chain = prompt_template | llm | StrOutputParser()
 
-        return chain.stream({"context_str": "", "query_str": query})
+        return chain.stream({"context_str": "", "query_str": query}, config={"callbacks":[self.cb_handler]})
 
     def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
         """Execute a Retrieval Augmented Generation chain using the components defined above."""
@@ -133,20 +143,21 @@ class MultiTurnChatbot(BaseExample):
         llm = get_llm(**kwargs)
         stream_chain = chat_prompt | llm | StrOutputParser()
 
-        convstore = get_vectorstore_langchain(
-            [], document_embedder, collection_name="conv_store"
+        convstore = create_vectorstore_langchain(
+            document_embedder, collection_name="conv_store"
         )
 
         resp_str = ""
         # TODO Integrate chat_history
         try:
-            if docstore:
+            ds = get_vectorstore(docstore, document_embedder)
+            if ds:
 
                 try:
                     logger.info(f"Getting retrieved top k values: {settings.retriever.top_k} with confidence threshold: {settings.retriever.score_threshold}")
                     retrieval_chain = (
                         RunnableAssign(
-                            {"context": itemgetter("input") | docstore.as_retriever(search_type="similarity_score_threshold",
+                            {"context": itemgetter("input") | ds.as_retriever(search_type="similarity_score_threshold",
                                                                                     search_kwargs={"score_threshold": settings.retriever.score_threshold, "k": settings.retriever.top_k})}
                         )
                         | RunnableAssign(
@@ -156,14 +167,14 @@ class MultiTurnChatbot(BaseExample):
                     )
 
                     # Handling Retrieval failure
-                    docs = retrieval_chain.invoke({"input": query})
+                    docs = retrieval_chain.invoke({"input": query}, config={"callbacks":[self.cb_handler]})
                     if not docs:
                         logger.warning("Retrieval failed to get any relevant context")
                         return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
                     
                     chain = retrieval_chain | stream_chain
 
-                    for chunk in chain.stream({"input": query}):
+                    for chunk in chain.stream({"input": query}, config={"callbacks":[self.cb_handler]}):
                         yield chunk
                         resp_str += chunk
 
@@ -171,7 +182,7 @@ class MultiTurnChatbot(BaseExample):
                         {"input": query, "output": resp_str}, convstore
                     )
 
-                    return chain.stream(query)
+                    return chain.stream(query, config={"callbacks":[self.cb_handler]})
 
                 except NotImplementedError:
                     # TODO: Optimize it, currently error is raised during stream
@@ -180,7 +191,7 @@ class MultiTurnChatbot(BaseExample):
                     # Some retriever like milvus don't have similarity score threshold implemented
                     retrieval_chain = (
                         RunnableAssign(
-                            {"context": itemgetter("input") | docstore.as_retriever()}
+                            {"context": itemgetter("input") | ds.as_retriever()}
                         )
                         | RunnableAssign(
                             {"history": itemgetter("input") | convstore.as_retriever()}
@@ -188,13 +199,13 @@ class MultiTurnChatbot(BaseExample):
                     )
 
                     # Handling Retrieval failure
-                    docs = retrieval_chain.invoke({"input": query})
+                    docs = retrieval_chain.invoke({"input": query}, config={"callbacks":[self.cb_handler]})
                     if not docs:
                         logger.warning("Retrieval failed to get any relevant context")
                         return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
 
                     chain = retrieval_chain | stream_chain
-                    for chunk in chain.stream({"input": query}):
+                    for chunk in chain.stream({"input": query}, config={"callbacks":[self.cb_handler]}):
                         yield chunk
                         resp_str += chunk
 
@@ -202,7 +213,7 @@ class MultiTurnChatbot(BaseExample):
                         {"input": query, "output": resp_str}, convstore
                     )
 
-                    return chain.stream(query)
+                    return chain.stream(query, config={"callbacks":[self.cb_handler]})
 
         except Exception as e:
             logger.warning(f"Failed to generate response due to exception {e}")
@@ -219,17 +230,18 @@ class MultiTurnChatbot(BaseExample):
         """Search for the most relevant documents for the given search parameters."""
 
         try:
-            if docstore != None:
+            ds = get_vectorstore(docstore, document_embedder)
+            if ds != None:
                 try:
-                    retriever = docstore.as_retriever(
+                    retriever = ds.as_retriever(
                         search_type="similarity_score_threshold",
                         search_kwargs={"score_threshold": settings.retriever.score_threshold, "k": settings.retriever.top_k},
                     )
-                    docs = retriever.invoke(content)
+                    docs = retriever.invoke(content, config={"callbacks":[self.cb_handler]})
                 except NotImplementedError:
                     # Some retriever like milvus don't have similarity score threshold implemented
-                    retriever = docstore.as_retriever()
-                    docs = retriever.invoke(content)
+                    retriever = ds.as_retriever()
+                    docs = retriever.invoke(content, config={"callbacks":[self.cb_handler]})
 
                 result = []
                 for doc in docs:
@@ -248,8 +260,9 @@ class MultiTurnChatbot(BaseExample):
     def get_documents(self) -> List[str]:
         """Retrieves filenames stored in the vector store."""
         try:
-            if docstore:
-                return get_docs_vectorstore_langchain(docstore)
+            ds = get_vectorstore(docstore, document_embedder)
+            if ds:
+                return get_docs_vectorstore_langchain(ds)
         except Exception as e:
             logger.error(f"Vectorstore not initialized. Error details: {e}")
         return []
@@ -258,7 +271,8 @@ class MultiTurnChatbot(BaseExample):
     def delete_documents(self, filenames: List[str]):
         """Delete documents from the vector index."""
         try:
-            if docstore:
-                return del_docs_vectorstore_langchain(docstore, filenames)
+            ds = get_vectorstore(docstore, document_embedder)
+            if ds:
+                return del_docs_vectorstore_langchain(ds, filenames)
         except Exception as e:
             logger.error(f"Vectorstore not initialized. Error details: {e}")

@@ -80,9 +80,7 @@ You can configure the server using the following environment variable:
 
   `triton-trt-llm` to use locally deployed LLM models.
 
-  `nv-ai-foundation` to use models hosted from NVIDIA AI Endpoints.
-
-  `nv-api-catalog` to use models hosted from NVIDIA API Catalog.
+  `nvidia-ai-endpoints` to use models hosted from NVIDIA API Catalog.
 :APP_RETRIEVER_TOPK: Number of relevant results to retrieve. The default value is `4`.
 :APP_RETRIEVER_SCORETHRESHOLD: The minimum confidence score for the retrieved values to be considered. The default value is `0.25`.
 :APP_PROMPTS_CHATTEMPLATE: Specifies the instructions to provide to the model.

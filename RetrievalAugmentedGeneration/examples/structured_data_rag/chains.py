@@ -38,11 +38,13 @@ from RetrievalAugmentedGeneration.example.csv_utils import (
     extract_df_desc,
     get_prompt_params,
     parse_prompt_config,
+    is_result_valid
 )
 
 logger = logging.getLogger(__name__)
 settings = get_config()
 
+INGESTED_CSV_FILES_LIST = "ingested_csv_files.txt"
 
 class PandasDataFrame(ResponseParser):
     """Returns Pandas Dataframe instead of SmartDataFrame"""
@@ -57,8 +59,26 @@ class PandasDataFrame(ResponseParser):
 class CSVChatbot(BaseExample):
     """RAG example showcasing CSV parsing using Pandas AI Agent"""
 
+
+    def compare_csv_columns(self, ref_csv_file, current_csv_file):
+        """Compares columns of two CSV files"""
+
+        ref_csv_file = ref_csv_file.replace('\n', '')
+        current_csv_file = current_csv_file.replace('\n', '')
+        logger.info(f"ref_csv_file: {ref_csv_file}, current_csv_file: {current_csv_file}")
+
+        ref_df = pd.read_csv(ref_csv_file)
+        curr_df = pd.read_csv(current_csv_file)
+
+        if not curr_df.columns.equals(ref_df.columns):
+            return False
+        else:
+            return True
+
     def read_and_concatenate_csv(self, file_paths_txt):
         """Reads CSVs and concatenates their data"""
+
+        file_paths = None
 
         with open(file_paths_txt, "r", encoding="UTF-8") as file:
             file_paths = file.read().splitlines()
@@ -74,6 +94,7 @@ class CSVChatbot(BaseExample):
                 reference_columns = df.columns
                 concatenated_df = df
                 reference_file = path
+                logger.info(f"reference_columns: {reference_columns}, reference_file: {reference_file}")
             else:
                 if not df.columns.equals(reference_columns):
                     raise ValueError(
@@ -83,16 +104,31 @@ class CSVChatbot(BaseExample):
 
         return concatenated_df
 
-    def ingest_docs(self, data_dir: str, filename: str):
+    def ingest_docs(self, filepath: str, filename: str):
         """Ingest documents to the VectorDB."""
+        
+        if not filename.endswith(".csv"):
+            raise ValueError(f"{filename} is not a valid CSV file")
 
-        if not data_dir.endswith(".csv"):
-            raise ValueError(f"{data_dir} is not a valid CSV file")
+        with open(INGESTED_CSV_FILES_LIST, "a+", encoding="UTF-8") as f:
+            
+            ref_csv_path = None
 
-        with open("ingested_csv_files.txt", "a", encoding="UTF-8") as f:
-            f.write(data_dir + "\n")
+            try:
+                f.seek(0)
+                ref_csv_path = f.readline()
+            except Exception as e:
+                # Skip reading reference file path as this is the first file
+                pass
 
-        self.read_and_concatenate_csv(file_paths_txt="ingested_csv_files.txt")
+            if not ref_csv_path:
+                f.write(filepath + "\n")
+            elif self.compare_csv_columns(ref_csv_path, filepath):
+                f.write(filepath + "\n")
+            else:
+                raise ValueError(
+                        f"Columns of the file {filepath} do not match the reference columns of {ref_csv_path} file."
+                    )
 
         logger.info("Document %s ingested successfully", filename)
 
@@ -102,6 +138,8 @@ class CSVChatbot(BaseExample):
         """Execute a simple LLM chain using the components defined above."""
 
         logger.info("Using llm to generate response directly without knowledge base.")
+        # WAR: Disable chat history (UI consistency).
+        chat_history = []
 
         system_message = [("system", get_config().prompts.chat_template)]
         conversation_history = [(msg.role, msg.content) for msg in chat_history]
@@ -123,12 +161,14 @@ class CSVChatbot(BaseExample):
         """Execute a Retrieval Augmented Generation chain using the components defined above."""
 
         logger.info("Using rag to generate response from document")
+        # WAR: Disable chat history (UI consistency).
+        chat_history = []
         llm = get_llm(**kwargs)
 
-        if not os.path.exists("ingested_csv_files.txt"):
+        if not os.path.exists(INGESTED_CSV_FILES_LIST):
             return iter(["No CSV file ingested"])
 
-        df = self.read_and_concatenate_csv(file_paths_txt="ingested_csv_files.txt")
+        df = self.read_and_concatenate_csv(file_paths_txt=INGESTED_CSV_FILES_LIST)
         df = df.fillna(0)
 
         df_desc = extract_df_desc(df)
@@ -145,6 +185,7 @@ class CSVChatbot(BaseExample):
         config_data_retrieval = {
             "llm": llm_data_retrieval,
             "response_parser": PandasDataFrame,
+            "max_retries": 6
         }
         agent_data_retrieval = PandasAI_Agent(
             [df], config=config_data_retrieval, memory_size=20
@@ -173,10 +214,11 @@ class CSVChatbot(BaseExample):
             ).to_string()
         )
         logger.info("Result Data Frame: %s", result_df)
-        if not result_df:
+        if not is_result_valid(result_df):
             logger.warning("Retrieval failed to get any relevant context")
             return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
 
+        result_df = str(result_df)
         response_prompt_template = PromptTemplate(
             template=prompt_config.get("csv_response_template", []),
             input_variables=["query", "data"],
@@ -187,11 +229,14 @@ class CSVChatbot(BaseExample):
 
         chain = response_prompt_template | llm | StrOutputParser()
         return chain.stream({"query": query, "data": result_df})
-    
-    def get_documents(self):
+
+    def get_documents(self) -> List[str]:
         """Retrieves filenames stored in the vector store."""
         decoded_filenames = []
-        logger.error("get_documents not implemented")
+        if os.path.exists(INGESTED_CSV_FILES_LIST):
+            with open(INGESTED_CSV_FILES_LIST, "r", encoding="UTF-8") as file:
+                for csv_file_path in file.read().splitlines():
+                    decoded_filenames.append(os.path.basename(csv_file_path))
         return decoded_filenames
 
     def delete_documents(self, filenames: List[str]):

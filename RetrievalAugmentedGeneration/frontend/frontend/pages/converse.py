@@ -27,7 +27,7 @@ from frontend import assets, chat_client, asr_utils, tts_utils
 _LOGGER = logging.getLogger(__name__)
 PATH = "/converse"
 TITLE = "Converse"
-OUTPUT_TOKENS = 250
+OUTPUT_TOKENS = 1024
 MAX_DOCS = 5
 
 _LOCAL_CSS = """

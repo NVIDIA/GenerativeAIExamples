@@ -101,6 +101,12 @@ def text_to_speech(text, language, voice, enable_tts):
     tts_client = riva.client.SpeechSynthesisService(grpc_auth)
 
     _LOGGER.info(f"Calling synthesize_online")
+
+    # To manage the 400-character limit for Riva's text-to-speech (TTS), longer answers are segmented by adding 'full stops' at every 400 characters
+    for i in range(len(text)//400):
+        indx = text.rfind(' ',i*400)
+        text = text[:indx]+' . '+text[indx:]
+
     response = tts_client.synthesize_online(
         text=text,
         voice_name=voice,

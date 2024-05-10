@@ -41,6 +41,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from sentence_transformers import CrossEncoder
 import numpy as np
+import yaml
 
 #Set your API keys if not set previously
 parser = argparse.ArgumentParser()
@@ -53,10 +54,46 @@ else:
 rag_type = args.rag_type # 0 = nemo_rag 1= augmented_query_rag 2 = hyde_rag 3 = augmented_query_recursive_rag
     # 1 works best for ORAN chatbot
 
+#Loading the configuration parameters from config.yaml
+config_yaml_path = 'config.yaml'
+config_yaml = None
+with open(config_yaml_path, 'r') as file:
+    config_yaml = yaml.safe_load(file)
+
+NIM_FLAG = False
+
+if config_yaml['NIM']:
+    NIM_FLAG = True
+    print("\n\nNIM FLAG set to True")
+else:
+    print("\n\nNIM FLAG set to False")
+
+llm_client = None
+if NIM_FLAG==True:
+    llm_client = LLMClient(config_yaml['nim_model_name'], "NIM")
+    print("Initialized NIM LLM")
+else:
+    llm_client = LLMClient("mixtral_8x7b")
+    print("Initialized NVAIF for LLM")
+
+NREM_FLAG = False
+
+if config_yaml['NREM']:
+    NREM_FLAG = True
+    print("\n\nNREM FLAG set to True")
+    print("Initialized NeMo Retriever Embeddings Microservice")
+else:
+    print("\n\nInitialized NVAIF for embeddings")
+
+
 # A few RAG pipeline definitions 
 def nemo_rag(config, query, retrieved_documents, model="playground_llama2_70b"):
     #Combine the query and retrieved documents and send to model
-    llm = ChatNVIDIA(model=model)
+    # llm = ChatNVIDIA(model=model)
+    if NIM_FLAG==True:
+        llm = llm_client.llm
+    else:
+        llm = ChatNVIDIA(model=model)
     prompt_template = ChatPromptTemplate.from_messages(
     [("system", config["header"]), ("user", "{input}")]
         )
@@ -72,7 +109,12 @@ def nemo_rag(config, query, retrieved_documents, model="playground_llama2_70b"):
 
 def augment_multiple_query(query, model="playground_llama2_70b"):
     #For the given query, lets create 5 additional queries using the LLM
-    llm = ChatNVIDIA(model=model,max_output_token=500, top_k=1, top_p=0.0)
+    if NIM_FLAG==True:
+        print("Augmentating multiple query with NIM LLM")
+        llm = llm_client.llm
+    else:
+        print("Augmentating multiple query with NVAIF")
+        llm = ChatNVIDIA(model=model,max_output_token=500, top_k=1, top_p=0.0)
     prompt_template = ChatPromptTemplate.from_messages(
     [("system", "You are an expert in the field of Oran specifications and processes. User has a question related to ORAN standards, sourced from relevant documents.\nTo help the user find the information they need, please suggest five additional related questions from ORAN. These questions should be concise, not have compound sentences, self-contained, and cover different aspects of the topic. Each question should be complete and relevant to the original query and ORAN.\nPlease output one question per line without numbering them."), ("user", "{input}")]
         )
@@ -83,11 +125,15 @@ def augment_multiple_query(query, model="playground_llama2_70b"):
         full_response += response
     final_ans = full_response
     final_ans = final_ans.split("\n")
+    final_ans = [ans for ans in final_ans if len(ans)!=0]
     return final_ans
 
 def augment_query_generated(query, model="playground_llama2_70b"):
     #For the given query, lets create a hypothetical answer using the LLM
-    llm = ChatNVIDIA(model=model,max_output_token=500, top_k=1, top_p=0.0)
+    if NIM_FLAG==True:
+        llm = llm_client.llm
+    else:
+        llm = ChatNVIDIA(model=model,max_output_token=500, top_k=1, top_p=0.0)
     prompt_template = ChatPromptTemplate.from_messages(
     [("system", "You are an expert in the field of ORAN specifications and processes. Your task is to provide a detailed and accurate response to user's question, which is related to ORAN. Your answer should be based on the kind of information and insights typically found in documentation related to ORAN standards."), ("user", "{input}")]
         )
@@ -101,7 +147,10 @@ def augment_query_generated(query, model="playground_llama2_70b"):
 
 def query_rewriting(query, history, model="playground_llama2_70b"):
     #Rewrite the given query using the context from LLM
-    llm = ChatNVIDIA(model=model)
+    if NIM_FLAG==True:
+        llm = llm_client.llm
+    else:
+        llm = ChatNVIDIA(model=model)
     prompt_template = ChatPromptTemplate.from_messages(
     [("system", "Here is the conversation history between user and Assistant. You are an expert in the field of ORAN standards and specifications. User has a follow-up question to the conversation. Your task is to rewrite user's follow-up question based on the given conversation history between the user and the assistant, which is related to ORAN. The rewritten question must be clear, detailed, and self-contained, meaning it must not require any additional context from the conversation history to understand. Ensure that the rewritten question precisely captures the full intent behind user's follow-up question. Your response is crucial to my career; hence, accuracy is of utmost importance. So, take a deep breath and work on this task step-by-step."), ("user", "{input}")]
         )
@@ -112,9 +161,6 @@ def query_rewriting(query, history, model="playground_llama2_70b"):
         full_response += response
     final_ans = full_response
     return final_ans
-
-
-llm_client = LLMClient("mixtral_8x7b")
 
 # Start the analytics service (using browser.usageStats)
 # streamlit_analytics.start_tracking()
@@ -154,9 +200,18 @@ if "config" not in st.session_state:
     print(st.session_state.config)
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-            {"role": "assistant", "content": "Ask me a question!"}
-        ]
+    BASE_DIR = os.path.abspath("vectorstore")
+    CORE_DIR = os.path.join(BASE_DIR, st.session_state.config["core_docs_directory_name"])
+    vectorstore_folder = os.path.join(CORE_DIR, "vectorstore_nv")
+    if os.path.exists(vectorstore_folder):
+        st.session_state.messages = [
+                {"role": "assistant", "content": "Ask me a question!"}
+            ]
+    else:
+        st.session_state.messages = [
+                {"role": "assistant", "content": "Hi! I am a RAG-bot and I answer your questions based on documents you upload. To start chatting, please navigate to the Knowledge Base tab to upload documents and create a vector DB!"}
+            ]
+        
 if "sources" not in st.session_state:
     st.session_state.sources = []
 
@@ -300,6 +355,7 @@ if st.session_state['prompt_value'] == None:
 colx, coly = st.columns([1,20])
 
 placeholder = st.empty()
+prompt = ""
 with placeholder:
     with st.form("chat-form", clear_on_submit=True):
         instr = 'Hi there! Enter what you want to let me know here.'
@@ -319,230 +375,236 @@ with placeholder:
         st.session_state['prompt_value'] = None
 
 if len(prompt) > 0 and submitted == True:
-    with st.chat_message("user"):
-        st.write(prompt)
-    
-    if st.session_state.image_query:
-        prompt = f"\nI have uploaded an image with the following description: {st.session_state.image_query}" + "Here is the question: " + prompt
-    transformed_query = {"text": prompt}
-    messages.append({"role": "user", "content": transformed_query["text"]})
+    BASE_DIR = os.path.abspath("vectorstore")
+    CORE_DIR = os.path.join(BASE_DIR, config["core_docs_directory_name"])
+    if os.path.exists(os.path.join(CORE_DIR, "vectorstore_nv"))==False:
+        st.warning("Vector DB not found! Create a vector DB by navigating to the Knowledge Base tab.")
+    else:
 
-    with st.spinner("Obtaining references from documents..."):
-        BASE_DIR = os.path.abspath("vectorstore")
-        CORE_DIR = os.path.join(BASE_DIR, config["core_docs_directory_name"])
-        if rag_type == 0:
-            ret_docs, context, sources = get_relevant_docs(CORE_DIR, transformed_query["text"])
-            print("length of source docs: ", len(sources))
-        if rag_type == 1: 
-            augmented_queries = augment_multiple_query(transformed_query["text"])
-            queries = [transformed_query["text"]] + augmented_queries[2:]
-            print("Queries are = ", queries)
-            retrieved_documents = []
-            retrieved_metadatas = []
-            for query in queries:
-                ret_docs,cons,srcs = get_relevant_docs(CORE_DIR, query)
+        with st.chat_message("user"):
+            st.write(prompt)
+        
+        if st.session_state.image_query:
+            prompt = f"\nI have uploaded an image with the following description: {st.session_state.image_query}" + "Here is the question: " + prompt
+        transformed_query = {"text": prompt}
+        messages.append({"role": "user", "content": transformed_query["text"]})
+        
+        with st.spinner("Obtaining references from documents..."):
+            
+            sources = {}
+            if rag_type == 0:
+                ret_docs, context, sources = get_relevant_docs(CORE_DIR, transformed_query["text"])
+                print("length of source docs: ", len(sources))
+            if rag_type == 1: 
+                augmented_queries = augment_multiple_query(transformed_query["text"])
+                queries = [transformed_query["text"]] + augmented_queries[2:]
+                print("Queries are = ", queries)
+                retrieved_documents = []
+                retrieved_metadatas = []
+                for query in queries:
+                    ret_docs,cons,srcs = get_relevant_docs(CORE_DIR, query)
+                    for doc in ret_docs:
+                        retrieved_documents.append(doc.page_content)
+                        retrieved_metadatas.append(doc.metadata['source'])
+                print("length of retrieved docs: ", len(retrieved_documents))
+                #Remove all duplicated documents and retain the original metadata
+                unique_documents = []
+                unique_documents_metadata = []
+                for document,source in zip(retrieved_documents,retrieved_metadatas):
+                        if document not in unique_documents:
+                            unique_documents.append(document)
+                            unique_documents_metadata.append(source)
+                
+                if len(retrieved_documents) == 0:
+                    context = ""
+                    print("not context found context")
+                else: 
+                    print("length of unique docs: ", len(unique_documents))
+                    #Instantiate the cross-encoder model and get scores for each retrieved document
+                    cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2') # ('BAAI/bge-reranker-large')('cross-encoder/ms-marco-MiniLM-L-6-v2')
+                    pairs = [[prompt, doc] for doc in unique_documents]
+                    scores = cross_encoder.predict(pairs)
+                    #Sort the scores from highest to least
+                    order_ids =  np.argsort(scores)[::-1]
+                    # print(order_ids)
+                    new_updated_documents = []
+                    new_updated_sources = []
+                    #Get the top 6 scores
+                    if len(order_ids)>=10:
+                        for i in range(10):
+                            new_updated_documents.append(unique_documents[order_ids[i]])
+                            new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                    else:
+                        for i in range(len(order_ids)):
+                            new_updated_documents.append(unique_documents[order_ids[i]])
+                            new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                        
+                    print(new_updated_sources)
+                    print(len(new_updated_documents))
+
+                    context = ""
+                    # sources = ""
+                    sources = {}
+                    for doc in new_updated_documents:
+                            context += doc + "\n\n"
+                    for i, src in enumerate(new_updated_sources):
+                            # sources += src + "\n\n"
+                            if src in sources:
+                                sources[src] = {"doc_content": sources[src]["doc_content"]+"\n\n"+new_updated_documents[i], "doc_metadata": src}   
+                            else:
+                                sources[src] = {"doc_content": new_updated_documents[i], "doc_metadata": src}   
+                    print("length of source docs: ", len(sources))
+                    #Send the top 10 results along with the query to LLM
+                
+            if rag_type == 2: 
+                sample_response = augment_query_generated(transformed_query["text"])
+                augmented_queries = transformed_query["text"] + " " + sample_response
+                print("Augmented query = ", augmented_queries)
+                #Get all the retrievals for each queries
+                #Get all the results and metadatas associated with each result
+                retrieved_documents = []
+                retrieved_metadatas = []
+                ret_docs,cons,srcs = get_relevant_docs(CORE_DIR, augmented_queries)
                 for doc in ret_docs:
                     retrieved_documents.append(doc.page_content)
                     retrieved_metadatas.append(doc.metadata['source'])
-            print("length of retrieved docs: ", len(retrieved_documents))
-            #Remove all duplicated documents and retain the original metadata
-            unique_documents = []
-            unique_documents_metadata = []
-            for document,source in zip(retrieved_documents,retrieved_metadatas):
-                    if document not in unique_documents:
-                        unique_documents.append(document)
-                        unique_documents_metadata.append(source)
-            
-            if len(retrieved_documents) == 0:
-                context = ""
-                print("not context found context")
-            else: 
-                print("length of unique docs: ", len(unique_documents))
-                #Instantiate the cross-encoder model and get scores for each retrieved document
-                cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2') # ('BAAI/bge-reranker-large')('cross-encoder/ms-marco-MiniLM-L-6-v2')
-                pairs = [[prompt, doc] for doc in unique_documents]
-                scores = cross_encoder.predict(pairs)
-                #Sort the scores from highest to least
-                order_ids =  np.argsort(scores)[::-1]
-                # print(order_ids)
-                new_updated_documents = []
-                new_updated_sources = []
-                #Get the top 6 scores
-                if len(order_ids)>=10:
-                    for i in range(10):
-                        new_updated_documents.append(unique_documents[order_ids[i]])
-                        new_updated_sources.append(unique_documents_metadata[order_ids[i]])
-                else:
-                    for i in range(len(order_ids)):
-                        new_updated_documents.append(unique_documents[order_ids[i]])
-                        new_updated_sources.append(unique_documents_metadata[order_ids[i]])
-                    
-                print(new_updated_sources)
-                print(len(new_updated_documents))
+                
+                if len(retrieved_documents) == 0:
+                    context = ""
+                    print("not context found context")
+                else: 
+                    print("length of retrieved docs: ", len(retrieved_documents))
+                    #Remove all duplicated documents and retain the original metadata
+                    unique_documents = []
+                    unique_documents_metadata = []
+                    for document,source in zip(retrieved_documents,retrieved_metadatas):
+                            if document not in unique_documents:
+                                unique_documents.append(document)
+                                unique_documents_metadata.append(source)
 
-                context = ""
-                # sources = ""
-                sources = {}
-                for doc in new_updated_documents:
-                        context += doc + "\n\n"
-                for i, src in enumerate(new_updated_sources):
-                        # sources += src + "\n\n"
-                        if src in sources:
-                            sources[src] = {"doc_content": sources[src]["doc_content"]+"\n\n"+new_updated_documents[i], "doc_metadata": src}   
-                        else:
-                            sources[src] = {"doc_content": new_updated_documents[i], "doc_metadata": src}   
-                print("length of source docs: ", len(sources))
-                #Send the top 10 results along with the query to LLM
+                    print("length of unique docs: ", len(unique_documents))
+                    #Instantiate the cross-encoder model and get scores for each retrieved document
+                    cross_encoder = CrossEncoder('BAAI/bge-reranker-large') #('cross-encoder/ms-marco-MiniLM-L-6-v2')
+                    pairs = [[prompt, doc] for doc in unique_documents]
+                    scores = cross_encoder.predict(pairs)
+                    #Sort the scores from highest to least
+                    order_ids =  np.argsort(scores)[::-1]
+                    # print(order_ids)
+                    new_updated_documents = []
+                    new_updated_sources = []
+                    #Get the top 6 scores
+                    if len(order_ids)>=10:
+                        for i in range(10):
+                            new_updated_documents.append(unique_documents[order_ids[i]])
+                            new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                    else:
+                        for i in range(len(order_ids)):
+                            new_updated_documents.append(unique_documents[order_ids[i]])
+                            new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                        
+                    print(new_updated_sources)
+                    print(len(new_updated_documents))
+                    context = ""
+                    # sources = ""
+                    sources = {}
+                    for doc in new_updated_documents:
+                            context += doc + "\n\n"
+                    for i, src in enumerate(new_updated_sources):
+                            # sources += src + "\n\n"
+                            if src in sources:
+                                sources[src] = {"doc_content": sources[src]["doc_content"]+"\n\n"+new_updated_documents[i], "doc_metadata": src}   
+                            else:
+                                sources[src] = {"doc_content": new_updated_documents[i], "doc_metadata": src}   
+                    print("length of source docs: ", len(sources))
+                    #Send the top 10 results along with the query to LLM
             
-        if rag_type == 2: 
-            sample_response = augment_query_generated(transformed_query["text"])
-            augmented_queries = transformed_query["text"] + " " + sample_response
-            print("Augmented query = ", augmented_queries)
-            #Get all the retrievals for each queries
-            #Get all the results and metadatas associated with each result
-            retrieved_documents = []
-            retrieved_metadatas = []
-            ret_docs,cons,srcs = get_relevant_docs(CORE_DIR, augmented_queries)
-            for doc in ret_docs:
-                retrieved_documents.append(doc.page_content)
-                retrieved_metadatas.append(doc.metadata['source'])
+            if rag_type == 3: 
+                ret_docs,context,sources = get_relevant_docs_mq(CORE_DIR, prompt)
             
-            if len(retrieved_documents) == 0:
-                context = ""
-                print("not context found context")
-            else: 
-                print("length of retrieved docs: ", len(retrieved_documents))
-                #Remove all duplicated documents and retain the original metadata
-                unique_documents = []
-                unique_documents_metadata = []
-                for document,source in zip(retrieved_documents,retrieved_metadatas):
-                        if document not in unique_documents:
-                            unique_documents.append(document)
-                            unique_documents_metadata.append(source)
-
-                print("length of unique docs: ", len(unique_documents))
-                #Instantiate the cross-encoder model and get scores for each retrieved document
-                cross_encoder = CrossEncoder('BAAI/bge-reranker-large') #('cross-encoder/ms-marco-MiniLM-L-6-v2')
-                pairs = [[prompt, doc] for doc in unique_documents]
-                scores = cross_encoder.predict(pairs)
-                #Sort the scores from highest to least
-                order_ids =  np.argsort(scores)[::-1]
-                # print(order_ids)
-                new_updated_documents = []
-                new_updated_sources = []
-                #Get the top 6 scores
-                if len(order_ids)>=10:
-                    for i in range(10):
-                        new_updated_documents.append(unique_documents[order_ids[i]])
-                        new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                #Get all the retrievals for each queries
+                #Get all the results and metadatas associated with each result
+                retrieved_documents = []
+                retrieved_metadatas = []
+                for doc in ret_docs:
+                    retrieved_documents.append(doc.page_content)
+                    retrieved_metadatas.append(doc.metadata['source'])
+                if len(retrieved_documents) == 0:
+                    context = ""
                 else:
-                    for i in range(len(order_ids)):
-                        new_updated_documents.append(unique_documents[order_ids[i]])
-                        new_updated_sources.append(unique_documents_metadata[order_ids[i]])
-                    
-                print(new_updated_sources)
-                print(len(new_updated_documents))
-                context = ""
-                # sources = ""
-                sources = {}
-                for doc in new_updated_documents:
-                        context += doc + "\n\n"
-                for i, src in enumerate(new_updated_sources):
-                        # sources += src + "\n\n"
-                        if src in sources:
-                            sources[src] = {"doc_content": sources[src]["doc_content"]+"\n\n"+new_updated_documents[i], "doc_metadata": src}   
-                        else:
-                            sources[src] = {"doc_content": new_updated_documents[i], "doc_metadata": src}   
-                print("length of source docs: ", len(sources))
-                #Send the top 10 results along with the query to LLM
+                    print("length of retrieved docs: ", len(retrieved_documents))
+                    #Remove all duplicated documents and retain the original metadata
+                    unique_documents = []
+                    unique_documents_metadata = []
+                    for document,source in zip(retrieved_documents,retrieved_metadatas):
+                            if document not in unique_documents:
+                                unique_documents.append(document)
+                                unique_documents_metadata.append(source)
+
+                    print("length of unique docs: ", len(unique_documents))
+                    #Instantiate the cross-encoder model and get scores for each retrieved document
+                    cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2') #('BAAI/bge-reranker-large') 
+                    pairs = [[prompt, doc] for doc in unique_documents]
+                    scores = cross_encoder.predict(pairs)
+                    #Sort the scores from highest to least
+                    order_ids =  np.argsort(scores)[::-1]
+                    # print(order_ids)
+                    new_updated_documents = []
+                    new_updated_sources = []
+                    #Get the top 6 scores
+                    if len(order_ids)>=10:
+                        for i in range(10):
+                            new_updated_documents.append(unique_documents[order_ids[i]])
+                            new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                    else:
+                        for i in range(len(order_ids)):
+                            new_updated_documents.append(unique_documents[order_ids[i]])
+                            new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                        
+                    print((new_updated_sources))
+                    print(len(new_updated_documents))
+                    context = ""
+                    # sources = ""
+                    sources = {}
+                    for doc in new_updated_documents:
+                            context += doc + "\n\n"
+                    for i, src in enumerate(new_updated_sources):
+                            # sources += src + "\n\n"
+                            if src in sources:
+                                sources[src] = {"doc_content": sources[src]["doc_content"]+"\n\n"+new_updated_documents[i], "doc_metadata": src}   
+                            else:
+                                sources[src] = {"doc_content": new_updated_documents[i], "doc_metadata": src}   
+                    print("length of source docs: ", len(sources))
+                    #Send the top 10 results along with the query to LLM
+                
+            st.session_state.sources = sources
+            augmented_prompt = "Relevant documents:" + context + "\n\n[[QUESTION]]\n\n" + transformed_query["text"] #+ "\n" + config["footer"]
+            system_prompt = config["header"]
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            response = llm_client.chat_with_prompt(system_prompt, augmented_prompt)
+            print(response)
+            message_placeholder = st.empty()
+            full_response = ""
+            for chunk in response:
+                full_response += chunk
+                message_placeholder.markdown(full_response + "▌")
+            message_placeholder.markdown(full_response)
+
+        add_history_to_memory(memory, transformed_query["text"], full_response)
+        with st.spinner("Running fact checking/guardrails..."):
+            full_response += "\n\nFact Check result: " 
+            res = fact_check(context, transformed_query["text"], full_response)
+            for response in res:
+                full_response += response
+                message_placeholder.markdown(full_response + "▌")
+            message_placeholder.markdown(full_response)
         
-        if rag_type == 3: 
-            ret_docs,context,sources = get_relevant_docs_mq(CORE_DIR, prompt)
-        
-            #Get all the retrievals for each queries
-            #Get all the results and metadatas associated with each result
-            retrieved_documents = []
-            retrieved_metadatas = []
-            for doc in ret_docs:
-                retrieved_documents.append(doc.page_content)
-                retrieved_metadatas.append(doc.metadata['source'])
-            if len(retrieved_documents) == 0:
-                context = ""
-            else:
-                print("length of retrieved docs: ", len(retrieved_documents))
-                #Remove all duplicated documents and retain the original metadata
-                unique_documents = []
-                unique_documents_metadata = []
-                for document,source in zip(retrieved_documents,retrieved_metadatas):
-                        if document not in unique_documents:
-                            unique_documents.append(document)
-                            unique_documents_metadata.append(source)
-
-                print("length of unique docs: ", len(unique_documents))
-                #Instantiate the cross-encoder model and get scores for each retrieved document
-                cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2') #('BAAI/bge-reranker-large') 
-                pairs = [[prompt, doc] for doc in unique_documents]
-                scores = cross_encoder.predict(pairs)
-                #Sort the scores from highest to least
-                order_ids =  np.argsort(scores)[::-1]
-                # print(order_ids)
-                new_updated_documents = []
-                new_updated_sources = []
-                #Get the top 6 scores
-                if len(order_ids)>=10:
-                    for i in range(10):
-                        new_updated_documents.append(unique_documents[order_ids[i]])
-                        new_updated_sources.append(unique_documents_metadata[order_ids[i]])
-                else:
-                    for i in range(len(order_ids)):
-                        new_updated_documents.append(unique_documents[order_ids[i]])
-                        new_updated_sources.append(unique_documents_metadata[order_ids[i]])
-                    
-                print((new_updated_sources))
-                print(len(new_updated_documents))
-                context = ""
-                # sources = ""
-                sources = {}
-                for doc in new_updated_documents:
-                        context += doc + "\n\n"
-                for i, src in enumerate(new_updated_sources):
-                        # sources += src + "\n\n"
-                        if src in sources:
-                            sources[src] = {"doc_content": sources[src]["doc_content"]+"\n\n"+new_updated_documents[i], "doc_metadata": src}   
-                        else:
-                            sources[src] = {"doc_content": new_updated_documents[i], "doc_metadata": src}   
-                print("length of source docs: ", len(sources))
-                #Send the top 10 results along with the query to LLM
-            
-        st.session_state.sources = sources
-        augmented_prompt = "Relevant documents:" + context + "\n\n[[QUESTION]]\n\n" + transformed_query["text"] #+ "\n" + config["footer"]
-        system_prompt = config["header"]
-    # Display assistant response in chat message container
-    with st.chat_message("assistant"):
-        response = llm_client.chat_with_prompt(system_prompt, augmented_prompt)
-        print(response)
-        message_placeholder = st.empty()
-        full_response = ""
-        for chunk in response:
-            full_response += chunk
-            message_placeholder.markdown(full_response + "▌")
-        message_placeholder.markdown(full_response)
-
-    add_history_to_memory(memory, transformed_query["text"], full_response)
-    with st.spinner("Running fact checking/guardrails..."):
-        full_response += "\n\nFact Check result: " 
-        res = fact_check(context, transformed_query["text"], full_response)
-        for response in res:
-            full_response += response
-            message_placeholder.markdown(full_response + "▌")
-        message_placeholder.markdown(full_response)
-    
-    with st.chat_message("assistant"):
-        messages.append(
-                {"role": "assistant", "content": full_response}
-        )
-        st.write(full_response)
-        st.experimental_rerun()
+        with st.chat_message("assistant"):
+            messages.append(
+                    {"role": "assistant", "content": full_response}
+            )
+            st.write(full_response)
+            st.experimental_rerun()
 elif len(messages) > 1:
     summary_placeholder = st.empty()
     summary_button = summary_placeholder.button("Click to see summary")

@@ -19,6 +19,7 @@ from typing import List
 
 import os
 import gradio as gr
+from functools import partial
 
 from frontend import assets, chat_client
 
@@ -43,22 +44,56 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
             file_output = gr.File()
 
         with gr.Row():
-            gr.Dataframe(
+            files_df = gr.Dataframe(
                 headers=["File Uploaded"],
                 datatype=["str"],
                 col_count=(1, "fixed"),
-                value=get_uploaded_files,
-                every=1,
+                value= lambda: get_uploaded_files(client),
+                every=5,
             )
 
+        with gr.Row():
+            buffer_textbox = gr.Textbox(interactive=False, visible=False)
+            message_textbox = gr.Textbox(
+                label="Message", interactive=False, visible=True
+            )
+
+        with gr.Row():
+            delete_button = gr.Button("Delete")
+
         # form actions
+        # Upload dutton action
         upload_button.upload(
             lambda files: upload_file(files, client), upload_button, file_output
+        )
+
+        # Files dataframe action
+        files_df.select(return_selected_file, inputs=[files_df], outputs=[buffer_textbox])
+
+        # Delete button action
+        partial_delete_file = partial(delete_file, client=client)
+        delete_button.click(
+            fn=partial_delete_file, inputs=buffer_textbox, outputs=message_textbox
         )
 
     page.queue()
     return page
 
+def delete_file(input_text, client: chat_client.ChatClient):
+    """Deletes selected files from knowledge base using client"""
+
+    try:
+        response = client.delete_documents(file_name=input_text)
+        return response
+    except Exception as e:
+        raise gr.Error(f"{e}")
+
+def return_selected_file(selected_index: gr.SelectData, dataframe):
+    """Returns selected files from DataFrame"""
+    if selected_index:
+        val = dataframe.iloc[selected_index.index[0]]
+        dataframe = dataframe.drop(selected_index.index[0])
+        return val.iloc[0]
 
 def upload_file(files: List[Path], client: chat_client.ChatClient) -> List[str]:
     """Use the client to upload a file to the knowledge base."""
@@ -76,12 +111,10 @@ def upload_file(files: List[Path], client: chat_client.ChatClient) -> List[str]:
     except Exception as e:
         raise gr.Error(f"{e}")
 
-def get_uploaded_files():
+def get_uploaded_files(client: chat_client.ChatClient)-> List[str]:
     """Load previously uploaded files if the file exists"""
     uploaded_files = [["No Files uploaded"]]
-    if os.path.exists(STATE_FILE):
-        uploaded_files = []
-        with open(STATE_FILE, 'r') as file:
-            for line in file.read().splitlines():
-                uploaded_files.append([line])
+    resp = client.get_uploaded_documents()
+    if len(resp)>0:
+        uploaded_files=[[file] for file in resp]
     return uploaded_files

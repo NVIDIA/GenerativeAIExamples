@@ -28,11 +28,30 @@ backlinks: none
 ## Comparison with the Local GPUs Example
 
 This example is very similar to the example that uses local GPUs.
-The key difference is that the `deploy/compose/rag-app-text-chatbot.yaml` file
-is modified to identify the device IDs of the GPUs for the services.
-
+The key difference is to modify the `deploy/compose/rag-app-text-chatbot.yaml` file to specify the GPU device IDs for the services.
 If you performed all the steps in [](local-gpu.md), consider skipping to
 step 1 of [](#build-and-start-the-containers) on this page.
+
+
+## Special Considerations for Tensor Parallelism
+
+When you use more than two GPUs for the inference server, you might need to specify additional command-line arguments.
+
+The special consideration is that the attention head size for the model must be a multiple of the tensor parallelism size.
+For the Llama-2-13B chat model, the model attention head size is 40.
+You can view this value in the `n_heads: 40` field in the `llama-2-13b-chat/params.json` file after you download the model or from the Hugging Face Model Hub: <https://huggingface.co/meta-llama/Llama-2-13b-chat/blob/main/params.json>.
+
+The tensor parallelism is calculated as {math}`\mbox{tensor-parallelism} = \mbox{world-size} \div \mbox{pipeline-parallelism}`
+where $\mbox{world-size}$ is the number of GPUs and $\mbox{pipeline-parallelism}$ has a default value of 1.
+
+With 1, 2, 4, 5, or any number of GPUs that divide 40 into equally, no action is required.
+
+For 3, 6, or any other number that does not divide equally into 40, you can specify a pipeline parallelism value so that the tensor parallelism is a whole number.
+For example, to use 6 GPUs, you can specify `--pipeline-parallelism 3` on the inference server command line so that tensor parallelism is 2.
+
+If you use a different model, refer to the `params.json` file.
+For example, the Llama-2-7B chat model has `n_heads: 32` and the Llama-2-70B chat model has `n_heads: 64`.
+
 
 ## Example Features
 
@@ -54,7 +73,7 @@ This example uses a local host with an NVIDIA A100, H100, or L40S GPU.
   - Vector Database
 
 * - llama-2
-  - e5-large-v2
+  - UAE-Large-V1
   - LlamaIndex
   - QA chatbot
   - YES
@@ -64,7 +83,7 @@ This example uses a local host with an NVIDIA A100, H100, or L40S GPU.
   - Milvus
 
 * - llama-2
-  - e5-large-v2
+  - UAE-Large-V1
   - LlamaIndex
   - QA chatbot
   - YES
@@ -241,12 +260,14 @@ The following figure shows the sample topology:
 
 1. In the Generative AI Examples repository, edit the `deploy/compose/rag-app-text-chatbot.yaml` file.
 
-   Specify the GPU device IDs to assign to the services:
+   Specify the GPU device IDs to assign to the services.
+   Refer to [](#special-considerations-for-tensor-parallelism) when specifying more than two GPUs.
 
    ```yaml
    services:
      llm:
        // ...
+       command: # Add --pipeline-parallelism <n> if you need to specify a value.
        deploy:
          resources:
            reservations:
@@ -285,6 +306,8 @@ The following figure shows the sample topology:
                  device_ids: ["3"]
                  capabilities: [gpu]
    ```
+
+   You can share device IDs between vector database and Jupyter Server.
 
 1. Edit the `deploy/compose/compose.env` file.
 

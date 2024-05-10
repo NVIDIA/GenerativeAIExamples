@@ -49,7 +49,7 @@ def asr_init(auth):
 
         config_response = asr_client.stub.GetRivaSpeechRecognitionConfig(riva_asr.RivaSpeechRecognitionConfigRequest())
         for model_config in config_response.model_config:
-            if model_config.parameters["decoder_type"] and model_config.model_name.endswith("streaming"):
+            if model_config.parameters["type"] == "online" and model_config.parameters["streaming"]:
                 language_code = model_config.parameters['language_code']
                 language_name = f"{pycountry.languages.get(alpha_2=language_code[:2]).name} ({language_code})"
                 _LOGGER.info(f"{language_name} {model_config.model_name}")

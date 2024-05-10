@@ -23,14 +23,15 @@ from vectorstore.custom_powerpoint_parser import process_ppt_file
 from vectorstore.custom_pdf_parser import get_pdf_documents
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.document_loaders import DirectoryLoader, UnstructuredFileLoader,Docx2txtLoader, UnstructuredHTMLLoader, TextLoader, UnstructuredPDFLoader
-# from vectorstore.embedder import nvolve_embedding
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import NeMoEmbeddings
 from qdrant_client import QdrantClient
 import multiprocessing
 import pickle
 import re
 import pandas as pd
+import yaml
 
 
 CUSTOM_PROCESSING = True
@@ -48,7 +49,17 @@ CUSTOM_PROCESSING = True
 #     model_kwargs=model_kwargs,
 #     encode_kwargs=encode_kwargs,
 # )
-nv_embedder = NVIDIAEmbeddings(model="nvolveqa_40k")
+nv_embedder = None
+if yaml.safe_load(open('config.yaml', 'r'))['NREM']:
+    # Embeddings with NeMo Retriever Embeddings Microservice (NREM)
+    print("Generating embeddings with NREM")
+    nv_embedder = NVIDIAEmbeddings(model=yaml.safe_load(open('config.yaml', 'r'))['nrem_model_name'],
+                                            truncate = yaml.safe_load(open('config.yaml', 'r'))['nrem_truncate']).mode("nim",
+                                            base_url= yaml.safe_load(open('config.yaml', 'r'))['nrem_api_endpoint_url'])
+
+else:
+    # Embeddings with NVIDIA AI Foundation Endpoints
+    nv_embedder = NVIDIAEmbeddings(model="ai-embed-qa-4")
 
 def load_documents(folder, status=None):
     """Load documents from the specified folder."""
@@ -131,7 +142,7 @@ def split_text(documents):
 #     """Generates word embeddings for documents and updates the Milvus collection."""
 #     # Attempt to create collection, catch exception if it already exists
 #     status.update(label="[Step 1/4] Creating/loading vector store")
-    
+
 #     # Create collection if it doesn't exist
 #     st.write("Creating collection...")
 #     # get embedding size
@@ -142,7 +153,7 @@ def split_text(documents):
 #     # load and split documents
 #     raw_documents = load_documents(folder, status)
 #     documents = split_text(raw_documents)
-    
+
 #     print("Loading data to the vector index store...")
 #     status.update(label="[Step 3/4] Inserting documents into the vector store...")
 #     # Extracting the page content from each document
@@ -163,15 +174,20 @@ def update_vectorstore(folder, config_name, status=None):
     # Create collection if it doesn't exist
     # Attempt to create collection, catch exception if it already exists
     # status(label="[Step 1/4] Creating/loading vector store", state="complete", expanded=False)
-    
-    with open(os.path.join(folder, "vectorstore_nv.pkl"), "rb") as f:
-        vectorstore = pickle.load(f)
+
+    # with open(os.path.join(folder, "vectorstore_nv.pkl"), "rb") as f:
+    #     vectorstore = pickle.load(f)
+    if not os.path.exists(os.path.join(folder, "vectorstore_nv")):
+        st.write("Vector DB not found. Please create a vector DB.")
+        return 1
+    vectorstore = FAISS.load_local(os.path.join(folder, "vectorstore_nv"), nv_embedder, allow_dangerous_deserialization=True)
     # status("[Step 2/4] Processing and splitting documents", state="complete", expanded=False)
     prev_folder = folder
     folder = os.path.join(folder, "new_files")
     if not os.path.exists(folder):
         os.mkdir(folder)
     raw_documents = load_documents(folder, status)
+
     documents = split_text(raw_documents)
 
     #remove short chuncks
@@ -197,8 +213,11 @@ def update_vectorstore(folder, config_name, status=None):
     # status("[Step 3/4] Inserting documents into the vector store...", state="complete", expanded=False)
     db1 = FAISS.from_documents(documents, nv_embedder)
     vectorstore.merge_from(db1)
-    with open(os.path.join(prev_folder, "vectorstore_nv.pkl"), "wb") as f:
-        pickle.dump(vectorstore, f)
+    # with open(os.path.join(prev_folder, "vectorstore_nv.pkl"), "wb") as f:
+    #     pickle.dump(vectorstore, f)
+    # vectorstore.save_local("vectorstore_nv")
+    vectorstore.save_local(os.path.join(folder, "vectorstore_nv"))
+    return 0
 
 # Function to process documents in chunks of 20
 def process_documents_nvolve(documents):
@@ -206,10 +225,10 @@ def process_documents_nvolve(documents):
     for i in range(0, len(documents), 20):
         # Selecting a chunk of 20 documents
         doc_chunk = documents[i:i+20]
-        
+
         for doc in doc_chunk:
             print(len(doc.page_content))
-        
+
         # Extracting the page content from each document
         chunk_content = [doc.page_content for doc in doc_chunk]
 
@@ -228,7 +247,7 @@ def process_documents_nvolve(documents):
                 "metadata": doc.metadata
             }
             batch_insert_data.append(insert_data)
-    
+
     return batch_insert_data
 
 def create_vectorstore(folder, config_name, status=None):
@@ -236,8 +255,10 @@ def create_vectorstore(folder, config_name, status=None):
     # Create vectorstore if it doesn't exist
     # Attempt to create collection, catch exception if it already exists
     # status(label="[Step 1/4] Creating/loading vector store", state="complete", expanded=False)
-    if os.path.isfile(os.path.join(folder, "vectorstore_nv.pkl")) == True:
-        st.write("Vectorstore already exists!")
+    # if os.path.isfile(os.path.join(folder, "vectorstore_nv/index.pkl")) == True:
+    if os.path.exists(os.path.join(folder, "vectorstore_nv")) == True:
+        # st.write("To add more documents to the exising DB, please use the Re-Train Multimodal Assistant button.")
+        return 1
     else:
         # status("[Step 2/4] Processing and splitting documents", state="complete", expanded=False)
         raw_documents = load_documents(folder, status)
@@ -267,6 +288,8 @@ def create_vectorstore(folder, config_name, status=None):
         # status("[Step 3/4] Inserting documents into the vector store...", state="complete", expanded=False)
         vectorstore = FAISS.from_documents(documents, nv_embedder)
         # vectorstore.merge_from(db1)
-        with open(os.path.join(folder, "vectorstore_nv.pkl"), "wb") as f:
-            pickle.dump(vectorstore, f)
-        
+        # with open(os.path.join(folder, "vectorstore_nv.pkl"), "wb") as f:
+        #     pickle.dump(vectorstore, f)
+        # vectorstore.save_local("vectorstore_nv")
+        vectorstore.save_local(os.path.join(folder, "vectorstore_nv"))
+    return 0

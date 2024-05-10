@@ -18,6 +18,7 @@ import json
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from langchain_community.llms import HuggingFacePipeline
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 from RetrievalAugmentedGeneration.common.utils import get_llm, get_config
 
@@ -30,21 +31,10 @@ class NvidiaLLM:
         if is_response_generator:
             self.llm = get_llm(**kwargs)
         else:
-            settings = get_config()
-            # Use nv-ai-foundaion as default
-            if settings.llm.model_engine == "nv-api-catalog":
-                from integrations.langchain.llms.nv_api_catalog import ChatNVIDIA
-                self.llm = ChatNVIDIA(model=model_name,
-                                temperature = kwargs.get('temperature', None),
-                                top_p = kwargs.get('top_p', None),
-                                max_tokens = kwargs.get('max_tokens', None))
-            else:
-                from langchain_nvidia_ai_endpoints import ChatNVIDIA
-                self.llm = ChatNVIDIA(model=model_name,
-                    temperature = kwargs.get('temperature', None),
-                    top_p = kwargs.get('top_p', None),
-                    max_tokens = kwargs.get('max_tokens', None))
-
+            self.llm = ChatNVIDIA(model=model_name,
+                            temperature = kwargs.get('temperature', None),
+                            top_p = kwargs.get('top_p', None),
+                            max_tokens = kwargs.get('max_tokens', None))
 
 class LocalLLM:
     def __init__(self, model_path, **kwargs):

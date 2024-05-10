@@ -1,5 +1,5 @@
-# Multimodal O-RAN RAG Chatbot with NVIDIA NeMo
-This repository is designed to make it extremely easy to set up your own retrieval-augmented generation chatbot for ORAN techncial specifications and processes. The backend here calls the NVIDIA NeMo Service, which makes it very easy to deploy on a thin client or Virtual Machine (ie, without a GPU setup).
+# Multimodal O-RAN RAG Chatbot with NVIDIA AI Foundation Endpoints or NVIDIA NIM
+This repository is designed to make it extremely easy to set up your own retrieval-augmented generation chatbot for ORAN techncial specifications and processes. The backend here calls the NVIDIA AI Foundation Endpoints, which makes it very easy to deploy on a thin client or Virtual Machine. This example is also compatible with NVIDIA NIM if you wish to self-host these microservices on your GPU. 
 
 # Implemented Features
 - [RAG in 5 minutes Chatbot Video](https://youtu.be/N_OOfkEWcOk) Setup with NVIDIA AI Playground components
@@ -10,15 +10,22 @@ This repository is designed to make it extremely easy to set up your own retriev
 - Fact-check verification of results through a second LLM API call
 - Multimodal parsing of documents - images, tables, text through multimodal LLM APIs
 - Added simple conversational history with memory and summarization
+- Support for NVIDIA NIM
 
 # Setup O-RAN RAG Chatbot
 
 Before running the pipeline, please ensure that you have the following prerequisites:
 - Python version 3.10.12
 - GPU-enabled machine
-- NVIDIA API Key
+- For NVIDIA AI Foundation Endpoints:
+  - NVIDIA API Key
+  - If you do not have a NVIDIA API Key, please follow the steps 1-4 mentioned [here](https://github.com/NVIDIA/GenerativeAIExamples/blob/main/docs/rag/aiplayground.md#prepare-the-environment) to get your key.
 
-If you do not have a NVIDIA API Key, please follow the steps 1-4 mentioned [here](https://github.com/NVIDIA/GenerativeAIExamples/blob/main/docs/rag/aiplayground.md#prepare-the-environment) to get your key.
+- (Optional) For NVIDIA NIM:
+  - [Early access](https://www.nvidia.com/en-us/ai/nim-notifyme/) to NVIDIA NIM 
+  - [nim_llm:24.02](nvcr.io/ohlfw0olaadg/ea-participants/nim_llm:24.02)
+  - [nemo-retriever-embedding-microservices:24.02](nvcr.io/ohlfw0olaadg/ea-participants/nemo-retriever-embedding-microservice:24.02)
+  - GPU resources to support the model deployed on `nim_llm:24.02` (e.g. 1x A100 for Mistral-7B-Instruct_v0.2 or 2x A100 for Mixtral-8x7B-Instruct-v0.1)
 
 The following describes how you can have this chatbot up-and-running in less than 5 minutes.
 
@@ -58,7 +65,17 @@ Save your service account credentials file as `service.json` inside the `oran-ch
    export NVIDIA_API_KEY="nvapi-b**************"
    ```
 
-### Step 7. Run the chatbot using streamlit
+### Step 7. (Optional) Enable NVIDIA NIM
+
+NVIDIA NIM and NeMo Retriever Embeddings Microservice (NREM) can be enabled in `config.yaml` if you wish to use these microservices instead of NVIDIA AI Foundation Endpoints.  
+
+To use self-hosted NIM, set `NIM: true` in `config.yaml` - then set `nim_model_name`, `nim_base_url`, and other parameters appropriately. 
+
+To use self-hosted NREM: set `NREM: true` in `config.yaml` - then set `nrem_model_name` and `nrem_api_endpoint_url` appropriately. 
+
+For more information on how to setup NIM, please see the documentation [here](https://developer.nvidia.com/docs/nemo-microservices/index.html).
+
+### Step 8. Run the chatbot using streamlit
    Go to the `oran_chatbot` folder to run the O-RAN RAG chatbot using streamlit.
    ```
    streamlit run Multimodal_Assistant.py --server.port 8011
@@ -75,7 +92,7 @@ Save your service account credentials file as `service.json` inside the `oran-ch
    ssh -L PORT:IP_ADDR:PORT localhost
    ```
 
-### Step 8. Adding documents and creating vector database
+### Step 9. Adding documents and creating vector database
 
    Before you can run the chatbot, we need to upload our documents to the bot and create a vector database.
 
@@ -89,7 +106,7 @@ Save your service account credentials file as `service.json` inside the `oran-ch
       ```mkdir vectorstore/oran```
       - Move your O-RAN documents inside this folder using `cp /path/to/oran_document /vectorstore/oran`, or `cp /path/to/oran_folder/* /vectorstore/oran`. If you are running the bot through a remote server, you can use `scp` to upload the documents from your local machine to the server.
 
-   Once the documents are uploaded, navigate to the `Evaluation Metrics` tab and click on the `Create vector DB` button. This indexes all the uploaded documents into a vector database.
+   Once the documents are uploaded, click on the `Create vector DB` button. This indexes all the uploaded documents into a vector database.
 
    You are all set now! Try out queries pertinent to the knowledge base using text from the UI.
 
@@ -97,17 +114,14 @@ Save your service account credentials file as `service.json` inside the `oran-ch
 
    All the documents in the knowledge base are shown in the drop-down menu of `Knowledge Base` tab.
 
-   If you want to add more documents to your existing knowledge base, navigate to the `Knowledge Base` tab, select the files using the `Browse Files` button and click on `Upload!` button. Finally, click on the `Re-train Multimodal ORAN Assistant' button to complete the ingestion process.
+   If you want to add more documents to your existing knowledge base, select the files using the `Browse Files` button in the `Knowledge Base` tab and click on `Upload!` button. Finally, click on the `Re-train Multimodal ORAN Assistant' button to complete the ingestion process.
 
-   You can delete files from your knowledge base using the `Delete File` button. The default password to delete files is `avfleetengineering`, and can be changed using `1_Knowledge_Base.py` file inside `pages` folder.
-
-   **Warning:** The `Create vector DB` button overwrites any existing vector database, and creates a new vector database using documents available in the `vectorstore/oran` folder. To upload additional documents to your database, always use the `Re-train Multimodal ORAN Assistant` button.
+   You can delete files from your knowledge base using the `Delete File` button. The default password to delete files is `oranpwd`, and can be changed using the `config.yaml` file.
 
 
-### Step 9. Evaluating the chatbot
+### Step 10. Evaluating the chatbot
 
    Once our chatbot is running, we can use the evaluation scripts to test its performance.
-
    The `Run synthetic data generation` button in `Evaluation Metrics` tab generates a test dataset using the files in knowledge base. Once the synthetic test set is generated, click on the `Generate evaluation metrics` button to see a comprehensive evaluation report for the RAG performance.
 
 ## Architecture Diagram
@@ -158,4 +172,3 @@ Implementing robust guardrails for multimodal systems presents unique challenges
 
 ### Function-calling Agents:
 Empower the Language Model (LLM) by providing access to external APIs. This integration allows the model to augment response quality through structured interactions with existing systems and software, such as leveraging Google Search for enhanced depth and accuracy in replies.
-
