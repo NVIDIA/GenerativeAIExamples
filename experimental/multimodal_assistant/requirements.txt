@@ -10,7 +10,7 @@ pydantic==2.5.3
 pymilvus==2.3.5
 python_pptx==0.6.23
 qdrant_client==1.7.1
-Requests==2.31.0
+Requests==2.32.0
 streamlit==1.30.0
 streamlit_analytics==0.4.1
 streamlit_feedback==0.1.3
