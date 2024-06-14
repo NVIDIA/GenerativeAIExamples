@@ -17,7 +17,6 @@ import logging
 import os
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
-
 from RetrievalAugmentedGeneration.example.vectorstore.custom_powerpoint_parser import process_ppt_file
 from RetrievalAugmentedGeneration.example.vectorstore.custom_pdf_parser import get_pdf_documents
 
@@ -74,17 +73,10 @@ def update_vectorstore(file_path, vector_client, embedder, config_name):
     documents = split_text(raw_documents)
 
     # Adding file name to the metadata
-    extract_filename = lambda filepath : os.path.splitext(os.path.basename(filepath))[0]
     for document in documents:
-        document.metadata["filename"] = extract_filename(file_path)
+        document.metadata["filename"] = os.path.basename(file_path)
     
     logger.info("[Step 3/4] Inserting documents into the vector store...")
-    # Extracting the page content from each document
-    document_contents = [doc.page_content for doc in documents]
-
-    # Embedding the documents using the updated embedding function
-    document_embeddings = embedder.embed_documents(document_contents, batch_size=10)
-
     # Batch insert into Milvus collection
-    vector_client.update(documents, document_embeddings, config_name)
+    vector_client.add_documents(documents)
     logger.info("[Step 4/4] Saved vector store!")

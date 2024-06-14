@@ -1,7 +1,7 @@
 services:
   chain-server:
     container_name: chain-server
-    image: chain-server:latest
+    image: chain-server:${TAG:-latest}
     build:
       context: ../../
       dockerfile: ./RetrievalAugmentedGeneration/Dockerfile
@@ -11,14 +11,14 @@ services:
     environment:
       APP_VECTORSTORE_URL: "http://milvus:19530"
       APP_VECTORSTORE_NAME: "milvus"
-      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-ai-mixtral-8x7b-instruct}
+      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-"meta/llama3-8b-instruct"}
       APP_LLM_MODELENGINE: nvidia-ai-endpoints
       APP_LLM_SERVERURL: ${APP_LLM_SERVERURL:-""}
-      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-ai-embed-qa-4}
-      APP_EMBEDDINGS_MODELENGINE: nvidia-ai-endpoints
+      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-snowflake/arctic-embed-l}
+      APP_EMBEDDINGS_MODELENGINE: ${APP_EMBEDDINGS_MODELENGINE:-nvidia-ai-endpoints}
       APP_EMBEDDINGS_SERVERURL: ${APP_EMBEDDINGS_SERVERURL:-""}
-      APP_TEXTSPLITTER_MODELNAME: WhereIsAI/UAE-Large-V1
-      APP_TEXTSPLITTER_CHUNKSIZE: 510
+      APP_TEXTSPLITTER_MODELNAME: Snowflake/snowflake-arctic-embed-l
+      APP_TEXTSPLITTER_CHUNKSIZE: 506
       APP_TEXTSPLITTER_CHUNKOVERLAP: 200
       NVIDIA_API_KEY: ${NVIDIA_API_KEY}
       APP_RETRIEVER_TOPK: 4
@@ -26,10 +26,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-api}
-      COLLECTION_NAME: multi_turn_rag
+      COLLECTION_NAME: ${COLLECTION_NAME:-multi_turn_rag}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       ENABLE_TRACING: false
+      LOGLEVEL: ${LOGLEVEL:-INFO}
     ports:
     - "8081:8081"
     expose:
@@ -45,7 +46,7 @@ services:
 
   rag-playground:
     container_name: rag-playground
-    image: rag-playground:latest
+    image: rag-playground:${TAG:-latest}
     build:
       context: ../.././RetrievalAugmentedGeneration/frontend/
       dockerfile: Dockerfile
@@ -53,7 +54,7 @@ services:
     environment:
       APP_SERVERURL: http://chain-server
       APP_SERVERPORT: 8081
-      APP_MODELNAME: ${APP_LLM_MODELNAME:-ai-mixtral-8x7b-instruct}
+      APP_MODELNAME: ${APP_LLM_MODELNAME:-"meta/llama3-8b-instruct"}
       RIVA_API_URI: ${RIVA_API_URI:-}
       RIVA_API_KEY: ${RIVA_API_KEY:-}
       RIVA_FUNCTION_ID: ${RIVA_FUNCTION_ID:-}

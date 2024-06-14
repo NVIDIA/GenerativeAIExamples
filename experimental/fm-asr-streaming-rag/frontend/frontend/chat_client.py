@@ -44,6 +44,33 @@ class ChatClient:
         self._running_buffer = ""
         self._finalized_buffer = deque(maxlen=50)
         self._timetag_len = len(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] ')
+        self._wait_for_server()
+
+    def _server_is_ready(self):
+        try:
+            response = requests.get(f"{self.server_url}/serverStatus")
+            if response.status_code == 200 and response.json()["is_ready"]:
+                return True
+        except requests.ConnectionError:
+            return False
+
+    def _wait_for_server(self, timeout=300, wait_sec=5):
+        """ Wait for server URL to open
+        """
+        start_time = time.time()
+        while not self._server_is_ready():
+            # Check for timeout
+            elapsed_time = time.time() - start_time
+            if elapsed_time > timeout:
+                _LOGGER.error(
+                    f"Timeout reached: {self.server_url} is not open after {timeout} seconds."
+                    f"Waited {elapsed_time} seconds"
+                )
+                raise TimeoutError
+
+            # Wait a short period before trying again
+            _LOGGER.warning(f"Waiting {wait_sec}s for application at {self.server_url}")
+            time.sleep(wait_sec)
 
     @property
     def model_name(self) -> str:
@@ -70,10 +97,9 @@ class ChatClient:
         defaults = {
             "question": query,
             "name": "mixtral_8x7b",
-            "engine": "nv-ai-foundation",
+            "engine": "nvai-api-endpoint",
             "use_knowledge_base": True,
             "temperature": 1.0,
-            "threshold": 0.65,
             "max_docs": 4,
             "num_tokens": 512
         }
@@ -82,7 +108,7 @@ class ChatClient:
         _LOGGER.debug("making request - %s", str({"server_url": url, "post_data": data}))
         with requests.get(url, stream=True, json=data) as req:
             for chunk in req.iter_content():
-                yield chunk.decode("UTF-8")
+                yield chunk.decode("UTF-8", "ignore")
 
     def update_running_buffer(self, transcript):
         with self._lock:

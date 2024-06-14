@@ -17,8 +17,13 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 import os
+import yaml
 
-llm = ChatNVIDIA(model="mixtral_8x7b")
+# llm = ChatNVIDIA(model="mixtral_8x7b")
+NVIDIA_API_KEY = yaml.safe_load(open("config.yaml"))['nvidia_api_key']
+os.environ['NVIDIA_API_KEY'] = NVIDIA_API_KEY
+
+llm = ChatNVIDIA(model=yaml.safe_load(open("config.yaml"))["llm_model"], max_tokens = 10000)
 
 def fact_check(evidence, query, response):
 

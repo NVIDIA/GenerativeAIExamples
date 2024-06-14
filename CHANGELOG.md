@@ -3,6 +3,38 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.7.0] - 2024-06-18
+
+This release switches all examples to use cloud hosted GPU accelerated LLM and embedding models from [Nvidia API Catalog](https://build.nvidia.com) as default. It also deprecates support to deploy on-prem models using NeMo Inference Framework Container and adds support to deploy accelerated generative AI models across the cloud, data center, and workstation using [latest Nvidia NIM-LLM](https://docs.nvidia.com/nim/large-language-models/latest/introduction.html).
+
+### Added
+- Added model [auto download and caching support for `nemo-retriever-embedding-microservice` and `nemo-retriever-reranking-microservice`](./deploy/compose/docker-compose-nim-ms.yaml). Updated steps to deploy the services can be found [here](https://nvidia.github.io/GenerativeAIExamples/latest/nim-llms.html).
+- [Multimodal RAG Example enhancements](https://nvidia.github.io/GenerativeAIExamples/latest/multimodal-data.html)
+  - Moved to the [PDF Plumber library](https://pypi.org/project/pdfplumber/) for parsing text and images.
+  - Added `pgvector` vector DB support.
+  - Added support to ingest files with .pptx extension
+  - Improved accuracy of image parsing by using [tesseract-ocr](https://pypi.org/project/tesseract-ocr/)
+- Added a [new notebook showcasing RAG usecase using accelerated NIM based on-prem deployed models](./notebooks/08_RAG_Langchain_with_Local_NIM.ipynb)
+- Added a [new experimental example](./experimental/rag-developer-chatbot/) showcasing how to create a developer-focused RAG chatbot using RAPIDS cuDF source code and API documentation.
+- Added a [new experimental example](./experimental/event-driven-rag-cve-analysis/) demonstrating how NVIDIA Morpheus, NIMs, and RAG pipelines can be integrated to create LLM-based agent pipelines.
+
+### Changed
+- All examples now use llama3 models from [Nvidia API Catalog](https://build.nvidia.com/search?term=llama3) as default. Summary of updated examples and the model it uses is available [here](https://nvidia.github.io/GenerativeAIExamples/latest/index.html#developer-rag-examples).
+- Switched default embedding model of all examples to [Snowflake arctic-embed-I model](https://build.nvidia.com/snowflake/arctic-embed-l)
+- Added more verbose logs and support to configure [log level for chain server using LOG_LEVEL enviroment variable](https://nvidia.github.io/GenerativeAIExamples/latest/configuration.html#chain-server).
+- Bumped up version of `langchain-nvidia-ai-endpoints`, `sentence-transformers` package and `milvus` containers
+- Updated base containers to use ubuntu 22.04 image `nvcr.io/nvidia/base/ubuntu:22.04_20240212`
+- Added `llama-index-readers-file` as dependency to avoid runtime package installation within chain server.
+
+
+### Deprecated
+- Deprecated support of on-prem LLM model deployment using [NeMo Inference Framework Container](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.6.0/deploy/compose/rag-app-text-chatbot.yaml#L2). Developers can use [Nvidia NIM-LLM to deploy TensorRT optimized models on-prem and plug them in with existing examples](https://nvidia.github.io/GenerativeAIExamples/latest/nim-llms.html).
+- Deprecated [kubernetes operator support](https://github.com/NVIDIA/GenerativeAIExamples/tree/v0.6.0/deploy/k8s-operator/kube-trailblazer).
+- `nvolveqa_40k` embedding model was deprecated from [Nvidia API Catalog](https://build.nvidia.com). Updated all [notebooks](./notebooks/) and [experimental artifacts](./experimental/) to use [Nvidia embed-qa-4 model](https://build.nvidia.com/nvidia/embed-qa-4) instead.
+- Removed [notebooks numbered 00-04](https://github.com/NVIDIA/GenerativeAIExamples/tree/v0.6.0/notebooks), which used on-prem LLM model deployment using deprecated [NeMo Inference Framework Container](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.6.0/deploy/compose/rag-app-text-chatbot.yaml#L2).
+
+
 ## [0.6.0] - 2024-05-07
 
 ### Added

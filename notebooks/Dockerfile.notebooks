@@ -13,10 +13,6 @@ COPY ./notebooks/dataset.zip .
 
 COPY ./notebooks/imgs/* imgs/
 
-COPY ./integrations/langchain/llms/triton_trt_llm.py .
-
-COPY ./integrations/langchain/llms/nv_aiplay.py .
-
 COPY ./notebooks/requirements.txt .
 
 # Run pip dependencies

@@ -14,60 +14,58 @@
 # limitations under the License.
 
 import os
-import logging
 
-from database import VectorStoreInterface
+from accumulator import TextAccumulator
+from retriever import NemoRetrieverInterface, NvidiaApiInterface
 from chains import RagChain
 from common import (
+    get_logger,
     TextEntry,
-    SearchDocumentConfig,
-    RecentDocumentConfig,
-    PastDocumentConfig,
-    LLMConfig
+    LLMConfig,
+    USE_NEMO_RETRIEVER
 )
+
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-LOG_LEVEL = logging.getLevelName(os.environ.get('CHAIN_LOG_LEVEL', 'WARN').upper())
-logger = logging.getLogger(__name__)
-logger.setLevel(LOG_LEVEL)
+logger = get_logger(__name__)
 
 app = FastAPI()
 
-# Create vector database
-db = VectorStoreInterface(
+# Create retriever and accumulators
+if USE_NEMO_RETRIEVER:
+    db_interface = NemoRetrieverInterface()
+else:
+    db_interface = NvidiaApiInterface()
+
+text_accumulator = TextAccumulator(
+    db_interface,
     chunk_size=int(os.environ.get('DB_CHUNK_SIZE', 256)),
     chunk_overlap=int(os.environ.get('DB_CHUNK_OVERLAP', 32))
 )
 
+@app.get("/availableNvidiaModels")
+async def available_nvidia_models(request: Request) -> JSONResponse:
+    models = [m.id for m in ChatNVIDIA.get_available_models() if m.model_type == 'chat']
+    return JSONResponse({
+        "models": models
+    })
+
+@app.get("/serverStatus")
+async def server_status():
+    return {"is_ready": True}
 
 # API for database storage and searching
 @app.post("/storeStreamingText")
 async def store_streaming_text(request: Request, data: TextEntry) -> JSONResponse:
     return JSONResponse(
-        db.store_streaming_text(data.transcript, tstamp=data.timestamp)
+        text_accumulator.update(data.source_id, data.transcript)
     )
-
-@app.get("/searchDocuments")
-async def search_documents(request: Request, data: SearchDocumentConfig) -> JSONResponse:
-    docs = db.search(
-        data.content, max_entries=data.max_docs, score_threshold=data.threshold
-    )
-    return JSONResponse([doc.dict() for doc in docs])
-
-@app.get("/recentDocuments")
-async def recent_documents(request: Request, data: RecentDocumentConfig) -> JSONResponse:
-    docs = db.recent(data.timestamp, max_entries=data.max_docs)
-    return JSONResponse([doc.dict() for doc in docs])
-
-@app.get("/pastDocuments")
-async def past_documents(request: Request, data: PastDocumentConfig) -> JSONResponse:
-    docs = db.past(data.timestamp, window=data.window, max_entries=data.max_docs)
-    return JSONResponse([doc.dict() for doc in docs])
 
 # API for LLM interaction
 @app.get("/generate")
 async def generate_answer(request: Request, config: LLMConfig) -> StreamingResponse:
-    chain = RagChain(config, db)
+    chain = RagChain(config, text_accumulator, db_interface)
     return StreamingResponse(chain.answer())

@@ -1,6 +1,0 @@
-name: file-getter
-version: 0.0.1
-description: file:// Helm getter for local filesystem charts
-downloaders:
-- command: file-getter
-  protocols: [file]

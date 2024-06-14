@@ -21,11 +21,10 @@ from langchain_community.document_loaders import UnstructuredFileLoader
 
 from vectorstore.custom_powerpoint_parser import process_ppt_file
 from vectorstore.custom_pdf_parser import get_pdf_documents
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.document_loaders import DirectoryLoader, UnstructuredFileLoader,Docx2txtLoader, UnstructuredHTMLLoader, TextLoader, UnstructuredPDFLoader
+from langchain_community.document_loaders import DirectoryLoader, UnstructuredFileLoader, Docx2txtLoader, UnstructuredHTMLLoader, TextLoader, UnstructuredPDFLoader
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import NeMoEmbeddings
+from langchain_community.embeddings import NeMoEmbeddings, HuggingFaceEmbeddings
 from qdrant_client import QdrantClient
 import multiprocessing
 import pickle
@@ -35,6 +34,8 @@ import yaml
 
 
 CUSTOM_PROCESSING = True
+NVIDIA_API_KEY = yaml.safe_load(open("config.yaml"))['nvidia_api_key']
+os.environ['NVIDIA_API_KEY'] = NVIDIA_API_KEY
 # Initialize the HuggingFaceEmbeddings object
 # hf_embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-large-en-v1.5")
 # sample_text = "This is a sample text."
@@ -59,7 +60,7 @@ if yaml.safe_load(open('config.yaml', 'r'))['NREM']:
 
 else:
     # Embeddings with NVIDIA AI Foundation Endpoints
-    nv_embedder = NVIDIAEmbeddings(model="ai-embed-qa-4")
+    nv_embedder = NVIDIAEmbeddings(model=yaml.safe_load(open('config.yaml', 'r'))['embedding_model'])
 
 def load_documents(folder, status=None):
     """Load documents from the specified folder."""

@@ -26,7 +26,7 @@ project = "NVIDIA Generative AI Examples"
 this_year = date.today().year
 copyright = f"2023-{this_year}, NVIDIA Corporation"
 author = "NVIDIA Corporation"
-release = "24.4.0"
+release = "24.6.0"
 
 extensions = [
     "sphinx_rtd_theme",

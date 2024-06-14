@@ -27,6 +27,9 @@ from llama_index.core.base.response.schema import StreamingResponse
 from llama_index.core.node_parser import LangchainNodeParser
 from llama_index.llms.langchain import LangChainLLM
 from llama_index.embeddings.langchain import LangchainEmbedding
+from RetrievalAugmentedGeneration.common.tracing import llama_index_cb_handler
+from llama_index.core import Settings
+from llama_index.core.callbacks import CallbackManager
 
 from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.prompts.chat import ChatPromptTemplate
@@ -49,7 +52,7 @@ from RetrievalAugmentedGeneration.common.tracing import (
 )
 
 # nltk downloader
-nltk.download("averaged_perceptron_tagger")
+# nltk.download("averaged_perceptron_tagger")
 
 # prestage the embedding model
 _ = get_embedding_model()
@@ -66,6 +69,7 @@ class QAChatbot(BaseExample):
     def ingest_docs(self, filepath: str, filename: str):
         """Ingest documents to the VectorDB."""
         try:
+            Settings.callback_manager = CallbackManager([llama_index_cb_handler])
             logger.info(f"Ingesting {filename} in vectorDB")
             _, ext = os.path.splitext(filename)
 
@@ -116,36 +120,23 @@ class QAChatbot(BaseExample):
         logger.info("Using llm to generate response directly without knowledge base.")
         set_service_context(**kwargs)
         # TODO Include chat_history
-        prompt = get_config().prompts.chat_template.format(
-            context_str="", query_str=query
-        )
+        prompt = get_config().prompts.chat_template
 
         logger.info(f"Prompt used for response generation: {prompt}")
-        # stream_complete is returning empty response with NIM
-        # TODO: Use llama_index llm wrapper to stream response
-        if get_config().llm.model_engine == "triton-trt-llm":
-            llm = LangChainLLM(get_llm(**kwargs))
-            response = llm.stream_complete(
-                prompt,
-                tokens=kwargs.get("max_tokens", None),
-                callbacks=[self.cb_handler],
-            )
-            gen_response = (resp.delta for resp in response)
-            return gen_response
-        else:
-            # This is for get_config().llm.model_engine == "nvidia-ai-endpoints-nim"
-            user_input = [("user", get_config().prompts.chat_template)]
+        system_message = [("system", prompt)]
+        user_input = [("user", "{query_str}")]
 
-            prompt_template = ChatPromptTemplate.from_messages(user_input)
+        prompt_template = ChatPromptTemplate.from_messages(
+            system_message + user_input
+        )
 
-            llm = get_llm(**kwargs)
+        llm = get_llm(**kwargs)
 
-            chain = prompt_template | llm | StrOutputParser()
-            augmented_user_input = "\n\nQuestion: " + query + "\n"
-            return chain.stream(
-                {"context_str": "", "query_str": query},
-                config={"callbacks": [self.cb_handler]},
-            )
+        chain = prompt_template | llm | StrOutputParser()
+        return chain.stream(
+            {"query_str": query},
+            config={"callbacks": [self.cb_handler]},
+        )
 
     def rag_chain(
         self, query: str, chat_history: List["Message"], **kwargs
@@ -159,7 +150,7 @@ class QAChatbot(BaseExample):
         retriever = get_doc_retriever(num_nodes=get_config().retriever.top_k)
         qa_template = Prompt(get_config().prompts.rag_template)
 
-        logger.info(f"Prompt used for response generation: {qa_template}")
+        logger.info(f"Prompt template used for response generation: {qa_template}")
 
         # Handling Retrieval failure
         nodes = retriever.retrieve(query)

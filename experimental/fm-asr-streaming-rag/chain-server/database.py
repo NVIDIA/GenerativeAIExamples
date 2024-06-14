@@ -25,177 +25,70 @@ data sources or users querying the database - it is intended to be an example
 implementation of what is possible with this sort of streaming workflow.
 """
 
-import os
-import logging
-import faiss
+import sqlite3
 import datetime
 import numpy as np
 
-from typing import List
+from common import get_logger
+from datetime import datetime
+from langchain.docstore.document import Document
 
-from langchain_community.embeddings   import HuggingFaceInstructEmbeddings
-from langchain_community.docstore     import InMemoryDocstore
-from langchain_community.vectorstores import FAISS
-from langchain.text_splitter          import RecursiveCharacterTextSplitter
+logger = get_logger(__name__)
 
-LOG_LEVEL = logging.getLevelName(os.environ.get('CHAIN_LOG_LEVEL', 'WARN').upper())
-logger = logging.getLogger(__name__)
-logger.setLevel(LOG_LEVEL)
-
-EMBED_INSTRUCT = "Represent the sentence for retrieval: "
-EMBED_QUERY = "Represent the question for retrieving supporting texts from the sentence: "
-
-class TimeIndex:
-    """ Manages database entry indices, tying the entry index to its timestamp
+class TimestampDatabase:
+    """ Use SQLite database to track time-based entries
     """
     def __init__(self):
-        self.index: List[int] = []
-        self.tstamp: np.ndarray = np.array([], dtype=np.datetime64)
+        self.conn = sqlite3.connect('timeseries.db', check_same_thread=False)
+        self.cursor = self.conn.cursor()
 
-    def size(self):
-        return len(self.index)
-
-    def get(self, i):
-        return self.index[i], self.tstamp[i]
-
-    def get_range(self, start=None, stop=None):
-        return self.index[start:stop], self.tstamp[start:stop]
-
-    def reduce_to(self, start=None, stop=None):
-        self.index, self.tstamp = self.get_range(start, stop)
-
-    def append(self, new_id, new_tstamp):
-        self.index.append(new_id)
-        self.tstamp = np.append(self.tstamp, new_tstamp)
-
-    def time_window(self, tstart=None, tend=None):
-        if not tstart:
-            tstart = self.tstamp[0]
-        if not tend:
-            tend = self.tstamp[-1]
-        mask = (self.tstamp >= tstart) & (self.tstamp <= tend)
-        return [self.index[i] for i in np.where(mask)[0]]
-
-    def next_id(self):
-        return self.index[-1] + 1 if self.size() > 0 else 0
-
-class DatabaseManager:
-    """ Self-managed FAISS database that ties entries to when they were added
-    """
-    def __init__(self, embedding_model, embedding_dim):
-        self._timeindex = TimeIndex()
-        self._db_index = faiss.IndexFlatL2(embedding_dim)
-        self._db = FAISS(
-            embedding_model,
-            self._db_index,
-            InMemoryDocstore({}),
-            {}
+        # Create table
+        self.cursor.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY,
+                text TEXT,
+                timestamp DATETIME,
+                source_id TEXT
+            )
+            '''
         )
+        self.conn.commit()
 
-    def size(self):
-        return self._timeindex.size()
-
-    def pop_back(self):
-        if self.size() == 0:
-            return None
-
-        # Get the last document and delete it
-        idx, _ = self._timeindex.get(-1)
-        doc = self._db.docstore._dict[idx]
-        self._db.delete([self._db.index_to_docstore_id[idx]])
-
-        # Adjust the indices and timestamps
-        self._timeindex.reduce_to(stop=-1)
-        return doc
-
-    def pop_front(self):
-        if self.size() == 0:
-            return None
-
-        # Get the document and delete it
-        idx, _ = self._timeindex.get(0)
-        doc = self._db.docstore._dict[idx]
-        self._db.delete([self._db.index_to_docstore_id[idx]])
-
-        # Adjust the indices and timestamps
-        self._timeindex.reduce_to(start=1)
-        return doc
-
-    def push_back(self, entry, tstamp):
-        # Add the entry to the database
-        new_id = self._timeindex.next_id()
-        self._db.add_texts(
-            [entry], ids=[new_id], metadatas=[{'tstamp': tstamp.strftime("%Y-%m-%d %H:%M:%S")}]
+    def insert_docs(self, docs, source_id):
+        tnow = datetime.now()
+        self.cursor.executemany(
+            '''
+            INSERT INTO messages (text, timestamp, source_id) VALUES (?, ?, ?)
+            ''',
+            [(doc, tnow, source_id) for doc in docs]
         )
-        self._timeindex.append(new_id, tstamp)
+        self.conn.commit()
 
-    def as_retriever(self, search_kwargs):
-        return self._db.as_retriever(
-            search_type='similarity_score_threshold',
-            search_kwargs=search_kwargs
+    def reformat(self, doc):
+        return {'content': doc[1], 'timestamp': doc[2], 'source_id': doc[3]}
+
+    def reformat(self, doc):
+        return Document(
+            page_content=doc[1],
+            metadata={
+                'tstamp': datetime.strptime(doc[2], "%Y-%m-%d %H:%M:%S.%f"),
+                'source_id': doc[3]
+            }
         )
-
-    def get_by_time(self, tstart=None, tend=None):
-        if self.size() == 0:
-            return []
-        indices = self._timeindex.time_window(tstart=tstart, tend=tend)
-        return [self._db.docstore._dict[i] for i in indices]
-
-class VectorStoreInterface:
-    """ Manages interfacing with the vector store
-    """
-    def __init__(self, chunk_size=1024, chunk_overlap=200):
-        self._text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-            length_function=len
-        )
-        self._embed_model = HuggingFaceInstructEmbeddings(
-            embed_instruction=EMBED_INSTRUCT,
-            query_instruction=EMBED_QUERY
-        )
-        embedding_pool = self._embed_model.dict()['client'][1]
-        self.embedding_dim = embedding_pool.get_config_dict()['word_embedding_dimension']
-        self._db_mgr = DatabaseManager(self._embed_model, self.embedding_dim)
-
-    def dbsize(self):
-        return self._db_mgr.size()
-
-    def store_text(self, text, tstamp):
-        """ Split text into chunks and store in DB
-        """
-        new_entries = self._text_splitter.split_text(text)
-        for entry in new_entries:
-            self._db_mgr.push_back(entry, tstamp)
-        return {
-            "status":
-                f"Added {len(new_entries)} entries.  " +
-                f"Number of total database entries: {self.dbsize()}"
-        }
-
-    def store_streaming_text(self, text, tstamp):
-        """ Assume last entry was short, delete it, append it to new text, and re-chunk
-        """
-        prev_doc = self._db_mgr.pop_back()
-        if prev_doc:
-            text = f"{prev_doc.page_content} {text}"
-        return self.store_text(text, tstamp)
-
-    def search(self, query, max_entries=4, score_threshold=0.65):
-        """ Search DB for similar documents
-        """
-        search_kwargs = {'k': max_entries, 'score_threshold': score_threshold}
-        retriever = self._db_mgr.as_retriever(search_kwargs)
-        return [doc for doc in retriever.get_relevant_documents(query)]
 
     def recent(self, tstamp):
         """ Return all entries since tstamp
         """
-        return self._db_mgr.get_by_time(tstart=tstamp)
+        self.cursor.execute("SELECT * FROM messages WHERE timestamp >= ?", (tstamp,))
+        docs = self.cursor.fetchall()
+        return [self.reformat(doc) for doc in docs]
 
     def past(self, tstamp, window=90):
         """ Return entries within 'window' seconds of tstamp
         """
         tstart = tstamp - datetime.timedelta(seconds=window)
         tend = tstamp + datetime.timedelta(seconds=window)
-        return self._db_mgr.get_by_time(tstart=tstart, tend=tend)
+        self.cursor.execute('SELECT * FROM messages WHERE timestamp BETWEEN ? AND ?', (tstart, tend))
+        docs = self.cursor.fetchall()
+        return [self.reformat(doc) for doc in docs]

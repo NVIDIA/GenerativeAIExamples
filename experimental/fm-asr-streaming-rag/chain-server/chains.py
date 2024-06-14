@@ -13,31 +13,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import logging
-
+from typing import Union
 from copy import copy
 from datetime import datetime, timedelta
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.docstore.document import Document
 
-from database import VectorStoreInterface
-from common import LLMConfig, TimeResponse, UserIntent
-from utils import get_llm, classify, doc_tstamp
+from accumulator import TextAccumulator
+from retriever import NemoRetrieverInterface, NvidiaApiInterface
+from common import get_logger, LLMConfig, TimeResponse, UserIntent
+from utils import get_llm, classify
 from prompts import RAG_PROMPT, INTENT_PROMPT, RECENCY_PROMPT, SUMMARIZATION_PROMPT
 
-LOG_LEVEL = logging.getLevelName(os.environ.get('CHAIN_LOG_LEVEL', 'WARN').upper())
-logger = logging.getLogger(__name__)
-logger.setLevel(LOG_LEVEL)
+logger = get_logger(__name__)
 
 # Maximum number of times to attempt recursive summarization (if enabled)
 MAX_SUMMARIZATION_ATTEMPTS = 3
 
 class RagChain:
-    def __init__(self, config: LLMConfig, db: VectorStoreInterface):
+    def __init__(
+        self,
+        config: LLMConfig,
+        text_accumulator: TextAccumulator,
+        retv_interface: Union[NemoRetrieverInterface, NvidiaApiInterface]
+    ):
         self.config = config
-        self.db = db
+        self.text_accumulator = text_accumulator
+        self.timestamp_db = text_accumulator.timestamp_db
+        self.retv_interface = retv_interface
         self.llm = get_llm(config)
         self.rag_prompt = ChatPromptTemplate.from_messages([
             ("system", RAG_PROMPT),
@@ -76,7 +80,9 @@ class RagChain:
             UserIntent
         )
 
-        if intent.intentType in ['RecentSummary', 'TimeWindow']:
+        if intent is None or intent.intentType == 'Unknown':
+            logger.warning('Unknown user intent, falling back to basic RAG')
+        elif intent.intentType in ['RecentSummary', 'TimeWindow']:
             try:
                 # Determine the time units user is asking about
                 recency = classify(
@@ -101,32 +107,28 @@ class RagChain:
                 intent.intentType = 'SpecificTopic'
 
         # Do basic RAG with semantic similarity retrieval
-        if intent is None or intent.intentType != 'SpecificTopic':
-            logger.warning('Unknown user intent, falling back to basic RAG')
         yield from self.answer_by_relevence()
         return
 
     def answer_by_relevence(self):
         # Retrieve
-        docs = self.db.search(
+        docs = self.retv_interface.search(
             self.config.question,
-            max_entries=self.config.max_docs,
-            score_threshold=self.config.threshold
+            max_entries=self.config.max_docs
         )
-        yield f"*Returned {len(docs)} related entries*\n"
 
         # Output
         if not len(docs):
-            yield "*Try to lower the retrieval threshold or be more specific*"
+            yield "*Found no documents related to the query*"
         else:
-            yield "\n"
+            yield f"*Returned {len(docs)} related entries*\n\n"
             yield from self.generate(docs)
 
     def answer_by_recent(self, recency: TimeResponse):
         # Retrieve
         seconds = recency.to_seconds()
         tstamp = datetime.now() - timedelta(seconds=seconds)
-        docs = self.db.recent(tstamp)
+        docs = self.timestamp_db.recent(tstamp)
         yield f"*Found {len(docs)} entries from the last {seconds:.0f}s*\n"
 
         # Handle case when we get too many docs
@@ -143,7 +145,7 @@ class RagChain:
             else:
                 # Just throw some away
                 docs = docs[-self.config.max_docs:]
-                oldest = doc_tstamp(docs[0]).second
+                oldest = docs[0].metadata['tstamp'].second
                 yield f"*Reduced to last {len(docs)} entries, oldest is from {oldest}s ago*\n"
 
         # Output
@@ -155,7 +157,7 @@ class RagChain:
         # Retrieve
         seconds = recency.to_seconds()
         tstamp = datetime.now() - timedelta(seconds=seconds)
-        docs = self.db.past(tstamp, window=window)
+        docs = self.timestamp_db.past(tstamp, window=window)
         yield f"*Found {len(docs)} entries from {seconds:.0f}s ago (+/- {window}s)*\n"
 
         # Handle case when we get too many docs
@@ -171,9 +173,9 @@ class RagChain:
                 docs = docs[-self.config.max_docs:]
             else:
                 # Just throw some away
-                sorted_docs = sorted(docs, key=lambda doc: abs(doc_tstamp(doc) - tstamp))
+                sorted_docs = sorted(docs, key=lambda doc: abs(doc.metadata['tstamp'] - tstamp))
                 docs = sorted_docs[:self.config.max_docs]
-                dt = abs(doc_tstamp(docs[-1]) - tstamp).seconds
+                dt = abs(docs[-1].metadata['tstamp'] - tstamp).seconds
                 yield f"*Reduced to last {len(docs)} entries, furthest is {dt}s away*\n"
 
         # Output
@@ -185,7 +187,7 @@ class RagChain:
         """ Given a set of documents, leverage the LLM to reduce context via summarization
         """
         summary_chain = self.get_chat_chain(SUMMARIZATION_PROMPT)
-        splitter = copy(self.db._text_splitter)
+        splitter = copy(self.text_accumulator.splitter)
         splitter._chunk_overlap = 0
 
         # Summarize each chunk of 'max_docs' entries

@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-# Last command-line argument is the URL of the resource
-readonly URL="${*: -1}"
-
-# Trim the scheme
-readonly FILE="${URL#file://}"
-
-cat "${FILE}"

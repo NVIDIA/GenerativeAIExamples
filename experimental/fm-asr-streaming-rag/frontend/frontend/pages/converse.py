@@ -17,6 +17,7 @@
 import functools
 import os
 import logging
+import requests
 from typing import Any, Dict, List, Tuple, Union
 
 import gradio as gr
@@ -46,33 +47,32 @@ _LOCAL_CSS = """
 
 """
 
-BACKEND_OPTIONS = [
-    "NVIDIA NIM - Mistral 7B",
-    "NVIDIA AI Foundation - Mistral 7B",
-    "NVIDIA AI Foundation - Mixtral 8x7B",
-    "NVIDIA AI Foundation - Llama 2 70B"
-]
-
 BACKEND_MAPPING = {
-    "NVIDIA NIM": "triton-trt-llm",
-    "NVIDIA AI Foundation": "nv-ai-foundation"
-}
-
-MODEL_MAPPING = {
-    "Mistral 7B": "mistral_7b",
-    "Mixtral 8x7B": "mixtral_8x7b",
-    "Llama 2 70B": "llama2_70b"
+    "Local NVIDIA NIM": "triton-trt-llm",
+    "NVIDIA API Endpoint": "nvai-api-endpoint"
 }
 
 def get_backend_and_model(option):
     backend, model = option.split(' - ')
     backend = BACKEND_MAPPING[backend]
-    model = MODEL_MAPPING[model]
     return backend, model
 
 def build_page(client: chat_client.ChatClient) -> gr.Blocks:
     """Buiild the gradio page to be mounted in the frame."""
     kui_theme, kui_styles = assets.load_theme("kaizen")
+
+    # Setup model options
+    backend_options = []
+
+    # Add local NIM if running
+    nim_model = os.environ.get('NIM_LLM_DISPLAY', None)
+    if os.environ.get('DEPLOY_LOCAL_NIM', 'False').lower() in ('true', '1'):
+        backend_options.append(f"Local NVIDIA NIM - {nim_model}")
+
+    # Get NVIDIA API Endpoint model options
+    response = requests.get(f"{client.server_url}/availableNvidiaModels")
+    for model in response.json()["models"]:
+        backend_options.append(f"NVIDIA API Endpoint - {model}")
 
     with gr.Blocks(title=TITLE, theme=kui_theme, css=kui_styles + _LOCAL_CSS) as page:
 
@@ -82,7 +82,6 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
             with gr.Column(scale=3):
                 gr.Markdown(value="**<font size='4'>User Query</font>**")
                 with gr.Row(equal_height=True):
-                    # TODO: Change this model name.
                     chatbot = gr.Chatbot(height=700)
                     context = gr.JSON(
                         label="Knowledge Base Context",
@@ -105,8 +104,8 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
                 with gr.Row():
                     with gr.Column():
                         backend_dropdown = gr.Dropdown(
-                            choices=BACKEND_OPTIONS,
-                            value=BACKEND_OPTIONS[1],
+                            choices=backend_options,
+                            value=backend_options[0],
                             label="LLM Backend / Model",
                             interactive=True
                         )
@@ -132,23 +131,15 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
                         tokens_slider = gr.Slider(
                             minimum=32,
                             maximum=1024,
-                            value=512,
+                            value=1024,
                             label="Max Tokens",
                             step=32,
-                            interactive=True
-                        )
-                        similarity_slider = gr.Slider(
-                            minimum=0,
-                            maximum=1,
-                            value=0.65,
-                            label="Retrieval Similarity Threshold",
-                            step=0.01,
                             interactive=True
                         )
                         entries_slider = gr.Slider(
                             minimum=1,
                             maximum=25,
-                            value=15,
+                            value=25,
                             label="Retrieval Max Entries",
                             step=1,
                             interactive=True
@@ -183,7 +174,6 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
             summary_checkbox,
             temp_slider,
             tokens_slider,
-            similarity_slider,
             entries_slider,
             msg,
             chatbot
@@ -216,7 +206,6 @@ def _stream_predict(
     summary_checkbox: bool,
     temperature: float,
     max_tokens: int,
-    threshold: float,
     max_entries: int,
     question: str,
     chat_history: List[Tuple[str, str]]
@@ -231,7 +220,6 @@ def _stream_predict(
         "use_knowledge_base": knowledge_checkbox,
         "allow_summary": summary_checkbox,
         "temperature": temperature,
-        "threshold": threshold,
         "max_docs": max_entries,
         "num_tokens": max_tokens
     }

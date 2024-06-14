@@ -1,6 +1,13 @@
+## Default settings
+nvidia_api_key: "nvapi-****"
+## Set these to required models endpoints from NVIDIA NGC 
+llm_model: "mistralai/mixtral-8x7b-instruct-v0.1"
+# Augmentation_model:
+embedding_model: "NV-Embed-QA"
+
 NIM: false
-nim_model_name: "mistral7b"
-nim_base_url: "http://localhost:9990/v1"
+nim_model_name: "meta-llama3-8b-instruct"
+nim_base_url: "http://localhost:8019/v1"
 temperature: 0.1
 top_p: 0.5
 max_tokens: 1600

@@ -47,7 +47,7 @@ st.sidebar.success("Select an experience above.")
 
 # init the embedder
 if "document_embedder" not in st.session_state:
-    st.session_state.document_embedder = NVIDIAEmbedders(name="nvolveqa_40k", type="passage")
+    st.session_state.document_embedder = NVIDIAEmbedders(name="ai-embed-qa-4", type="passage")
 document_embedder = st.session_state.document_embedder
 # init the vector client
 if "vector_client" not in st.session_state or st.session_state.vector_client.collection_name != config["core_docs_directory_name"]:

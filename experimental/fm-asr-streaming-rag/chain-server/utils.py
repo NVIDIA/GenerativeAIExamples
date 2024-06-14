@@ -14,37 +14,27 @@
 # limitations under the License.
 
 import os
-import logging
 import json
 import re
 
-from datetime import datetime
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_community.chat_models import ChatOpenAI
 from pydantic import BaseModel
 
-from common import LLMConfig
+from common import get_logger, LLMConfig
 
-LOG_LEVEL = logging.getLevelName(os.environ.get('CHAIN_LOG_LEVEL', 'WARN').upper())
-logger = logging.getLogger(__name__)
-logger.setLevel(LOG_LEVEL)
+logger = get_logger(__name__)
 
 def get_llm(config: LLMConfig):
+    client = ChatNVIDIA(
+        model=config.name,
+        temperature=config.temperature,
+        max_tokens=config.num_tokens
+    )
     if config.engine == "triton-trt-llm":
-        openai_port = os.environ.get('NIM_OPENAI_PORT', 9999)
-        return ChatOpenAI(
-            model_name=config.name,
-            temperature=config.temperature,
-            max_tokens=config.num_tokens,
-            openai_api_base=f"http://0.0.0.0:{openai_port}/v1/",
-            openai_api_key="not needed"
-        )
-    elif config.engine == "nv-ai-foundation":
-        return ChatNVIDIA(
-            model=config.name,
-            temperature=config.temperature,
-            max_tokens=config.num_tokens
-        )
+        nim_llm_port = os.environ.get('NIM_LLM_PORT', 9999)
+        return client.mode("nim", base_url=f"http://0.0.0.0:{nim_llm_port}/v1")
+    elif config.engine == "nvai-api-endpoint":
+        return client
     else:
         raise ValueError(f"Unknown engine {config.engine}")
 
@@ -65,10 +55,8 @@ def classify(question, chain, pydantic_obj: BaseModel):
             # Neither approach worked, return None
             logger.error(f"Error parsing output into {pydantic_obj}: '{output}'")
             result = None
+    logger.info(f"Result: {result}")
     return result
-
-def doc_tstamp(doc):
-    return datetime.strptime(doc.metadata['tstamp'], "%Y-%m-%d %H:%M:%S")
 
 """
 These are some functions that try to fix some common mistakes LLMs might make

@@ -57,7 +57,7 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
             message_textbox = gr.Textbox(
                 label="Message", interactive=False, visible=True
             )
-
+        
         with gr.Row():
             delete_button = gr.Button("Delete")
 

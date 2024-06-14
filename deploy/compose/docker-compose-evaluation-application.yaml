@@ -1,7 +1,7 @@
 services:
   rag_evaluator:
     container_name: rag-evaluator
-    image: rag-evaluator:latest
+    image: rag-evaluator:${TAG:-latest}
     build:
       context: ../../
       dockerfile: ./tools/evaluation/Dockerfile
@@ -18,7 +18,7 @@ services:
 
   synthetic_data_generator:
     container_name: data-generator
-    image: data-generator:latest
+    image: data-generator:${TAG:-latest}
     build:
       context: ../../
       dockerfile: ./tools/evaluation/Dockerfile

@@ -28,7 +28,7 @@ backlinks: none
 ## Example Features
 
 This example deploys a developer RAG pipeline for chat Q&A and serves inferencing from an NVIDIA API Catalog endpoint
-instead of NVIDIA Triton Inference Server, a local Llama 2 model, or local GPUs.
+instead of a local inference server, local LLM, or local GPUs.
 
 Developers get free credits for 10K requests to any of the available models.
 
@@ -64,12 +64,12 @@ Customization of the CSV data retrieval prompt is not supported.
   - Multi-GPU
   - TRT-LLM
   - Model Location
-  - Triton
+  - NIM for LLMs
   - Vector Database
 
-* - ai-llama3-70b for response generation
+* - meta/llama3-70b-instruct for response generation
 
-    ai-llama3-70b for PandasAI
+    meta/llama3-70b-instruct for PandasAI
   - Not Applicable
   - PandasAI
   - QA chatbot
@@ -103,6 +103,14 @@ The following figure shows the sample topology:
 - Install Docker Engine and Docker Compose.
   Refer to the instructions for [Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
+- Login to Nvidia's docker registry. Please refer to [instructions](https://docs.nvidia.com/ngc/gpu-cloud/ngc-overview/index.html) to create account and generate NGC API key. This is needed for pulling in the secure base container used by all the examples.
+
+  ```console
+  $ docker login nvcr.io
+  Username: $oauthtoken
+  Password: <ngc-api-key>
+  ```
+
 - Optional: Enable NVIDIA Riva automatic speech recognition (ASR) and text to speech (TTS).
 
   - To launch a Riva server locally, refer to the [Riva Quick Start Guide](https://docs.nvidia.com/deeplearning/riva/user-guide/docs/quick-start-guide.html).
@@ -121,7 +129,7 @@ The following figure shows the sample topology:
     export RIVA_FUNCTION_ID="<riva-function-id>"
     ```
 
-## Get an API Key for the Mixtral 8x7B Instruct API Endpoint
+## Get an API Key for the Llama 3 70B API Endpoint
 
 ```{include} api-catalog.md
 :start-after: api-key-start

@@ -18,6 +18,7 @@ import os
 from typing import Generator, List, Dict, Any
 from functools import lru_cache
 from traceback import print_exc
+from langchain_community.document_loaders import UnstructuredFileLoader
 
 from RetrievalAugmentedGeneration.common.utils import utils_cache
 
@@ -25,34 +26,29 @@ logger = logging.getLogger(__name__)
 
 from RetrievalAugmentedGeneration.common.base import BaseExample
 from RetrievalAugmentedGeneration.example.llm.llm_client import LLMClient
-from RetrievalAugmentedGeneration.example.retriever.embedder import NVIDIAEmbedders
-from RetrievalAugmentedGeneration.example.retriever.vector import MilvusVectorClient
-from RetrievalAugmentedGeneration.example.retriever.retriever import Retriever
 from RetrievalAugmentedGeneration.example.vectorstore.vectorstore_updater import update_vectorstore
-from RetrievalAugmentedGeneration.common.utils import get_config
+from RetrievalAugmentedGeneration.common.utils import (
+    get_config,
+    create_vectorstore_langchain,
+    get_embedding_model,
+    get_text_splitter,
+    get_docs_vectorstore_langchain,
+    del_docs_vectorstore_langchain,
+    get_vectorstore
+)
 from RetrievalAugmentedGeneration.common.tracing import langchain_instrumentation_class_wrapper 
 
+document_embedder = get_embedding_model()
+text_splitter = None
 settings = get_config()
 sources = []
 RESPONSE_PARAPHRASING_MODEL = settings.llm.model_name
 
-@lru_cache
-def get_vector_index(embed_dim: int = 1024) -> MilvusVectorClient:
-    return MilvusVectorClient(hostname="milvus", port="19530", collection_name=os.getenv('COLLECTION_NAME', "vector_db"), embedding_size=embed_dim)
-
-@lru_cache
-def get_embedder(type: str = "query") -> NVIDIAEmbedders:
-    if type == "query":
-        embedder = NVIDIAEmbedders(name=settings.embeddings.model_name, type="query")
-    else:
-        embedder = NVIDIAEmbedders(name=settings.embeddings.model_name, type="passage")
-    return embedder
-
-@lru_cache
-def get_doc_retriever(type: str = "query") -> Retriever:
-    embedder = get_embedder(type)
-    embedding_size = embedder.get_embedding_size()
-    return Retriever(embedder=get_embedder(type) , vector_client=get_vector_index(embedding_size))
+try:
+    docstore = create_vectorstore_langchain(document_embedder=document_embedder)
+except Exception as e:
+    docstore = None
+    logger.info(f"Unable to connect to vector store during initialization: {e}")
 
 @utils_cache
 @lru_cache()
@@ -66,17 +62,18 @@ class MultimodalRAG(BaseExample):
     def ingest_docs(self, filepath: str, filename: str):
         """Ingest documents to the VectorDB."""
 
-        if not filename.endswith(".pdf"):
-            raise ValueError(f"{filename} is not a valid PDF file. Only PDF files are supported for multimodal rag. The PDF files can contain multimodal data.")
+        if not filename.endswith((".pdf",".pptx")):
+            raise ValueError(f"{filename} is not a valid PDF/PPTX file. Only PDF/PPTX files are supported for multimodal rag. The PDF/PPTX files can contain multimodal data.")
 
         try:
-            embedder = get_embedder(type="passage")
-            embedding_size = embedder.get_embedding_size()
-            update_vectorstore(os.path.abspath(filepath), get_vector_index(embedding_size), embedder, os.getenv('COLLECTION_NAME', "vector_db"))
+            _path = filepath
+            ds = get_vectorstore(docstore, document_embedder)
+            update_vectorstore(_path,ds,document_embedder,os.getenv('COLLECTION_NAME', "vector_db"))
         except Exception as e:
             logger.error(f"Failed to ingest document due to exception {e}")
-            print_exc()
-            raise ValueError("Failed to upload document. Please check chain server logs for details.")
+            raise ValueError(
+                "Failed to upload document. Please upload an unstructured text document."
+            )
 
 
     def llm_chain(
@@ -95,18 +92,35 @@ class MultimodalRAG(BaseExample):
         logger.info("Using rag to generate response from document")
         # TODO integrate chat_history
         try:
-            retriever = get_doc_retriever(type="query")
-            context, sources = retriever.get_relevant_docs(query, limit=settings.retriever.top_k)
-            if not context:
-                logger.warning("Retrieval failed to get any relevant context")
-                return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
+            ds = get_vectorstore(docstore, document_embedder)
+            if ds:
+                try:
+                    logger.info(f"Getting retrieved top k values: {settings.retriever.top_k} with confidence threshold: {settings.retriever.score_threshold}")
+                    retriever = ds.as_retriever(search_type="similarity_score_threshold",search_kwargs={"score_threshold": settings.retriever.score_threshold,"k": settings.retriever.top_k})
+                    docs = retriever.invoke(input=query, config={"callbacks":[self.cb_handler]})
+                    if not docs:
+                        logger.warning("Retrieval failed to get any relevant context")
+                        return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
 
-            augmented_prompt = "Relevant documents:" + context + "\n\n[[QUESTION]]\n\n" + query
-            system_prompt = settings.prompts.rag_template
-            logger.info(f"Formulated prompt for RAG chain: {system_prompt}\n{augmented_prompt}")
-            response = get_llm(model_name=RESPONSE_PARAPHRASING_MODEL, cb_handler=self.cb_handler, is_response_generator=True, **kwargs).chat_with_prompt(settings.prompts.rag_template, augmented_prompt)
-            return response
-
+                    augmented_prompt = "Relevant documents:" + docs + "\n\n[[QUESTION]]\n\n" + query
+                    system_prompt = settings.prompts.rag_template
+                    logger.info(f"Formulated prompt for RAG chain: {system_prompt}\n{augmented_prompt}")
+                    response = get_llm(model_name=RESPONSE_PARAPHRASING_MODEL, cb_handler=self.cb_handler, is_response_generator=True, **kwargs).chat_with_prompt(settings.prompts.rag_template, augmented_prompt)
+                    return response
+                except Exception as e:
+                    logger.info(f"Skipping similarity score as it's not supported by retriever")
+                    retriever = ds.as_retriever()
+                    docs = retriever.invoke(input=query, config={"callbacks":[self.cb_handler]})
+                    if not docs:
+                        logger.warning("Retrieval failed to get any relevant context")
+                        return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
+                    docs=[doc.page_content for doc in docs]
+                    docs = " ".join(docs)
+                    augmented_prompt = "Relevant documents:" + docs + "\n\n[[QUESTION]]\n\n" + query
+                    system_prompt = settings.prompts.rag_template
+                    logger.info(f"Formulated prompt for RAG chain: {system_prompt}\n{augmented_prompt}")
+                    response = get_llm(model_name=RESPONSE_PARAPHRASING_MODEL, cb_handler=self.cb_handler, is_response_generator=True, **kwargs).chat_with_prompt(settings.prompts.rag_template, augmented_prompt)
+                    return response
         except Exception as e:
             logger.warning(f"Failed to generate response due to exception {e}")
         logger.warning(
@@ -122,11 +136,12 @@ class MultimodalRAG(BaseExample):
         """Search for the most relevant documents for the given search parameters."""
 
         try:
-            retriever = get_doc_retriever(type="query")
-            context, sources = retriever.get_relevant_docs(content, limit=settings.retriever.top_k)
+            ds = get_vectorstore(docstore, document_embedder)
+            retriever = ds.as_retriever()
+            sources = retriever.invoke(input=content, limit=settings.retriever.top_k, config={"callbacks":[self.cb_handler]})
             output = []
-            for every_chunk in sources.values():
-                entry = {"source": every_chunk['doc_metadata']['filename'], "content": every_chunk['doc_content']}
+            for every_chunk in sources:
+                entry = {"source": every_chunk.metadata['filename'], "content": every_chunk.page_content}
                 output.append(entry)
             return output
         except Exception as e:
@@ -135,14 +150,19 @@ class MultimodalRAG(BaseExample):
 
     def get_documents(self):
         """Retrieves filenames stored in the vector store."""
-        embedding_size = get_embedder(type="passage").get_embedding_size()
-        vector_db = get_vector_index(embedding_size)
-        decoded_filenames = vector_db.list_filenames()
-        return decoded_filenames
+        try:
+            ds = get_vectorstore(docstore, document_embedder)
+            if ds:
+                return get_docs_vectorstore_langchain(ds)
+        except Exception as e:
+            logger.error(f"Vectorstore not initialized. Error details: {e}")
+        return []
 
     def delete_documents(self, filenames: List[str]):
         """Delete documents from the vector index."""
-        embedding_size = get_embedder(type="passage").get_embedding_size()
-        vector_db = get_vector_index(embedding_size)
-        for each_file in filenames:
-            vector_db.delete_by_filename(each_file)
+        try:
+            ds = get_vectorstore(docstore, document_embedder)
+            if ds:
+                return del_docs_vectorstore_langchain(ds, filenames)
+        except Exception as e:
+            logger.error(f"Vectorstore not initialized. Error details: {e}")

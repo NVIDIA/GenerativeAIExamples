@@ -1,8 +1,11 @@
-# Multimodal O-RAN RAG Chatbot with NVIDIA AI Foundation Endpoints or NVIDIA NIM
-This repository is designed to make it extremely easy to set up your own retrieval-augmented generation chatbot for ORAN techncial specifications and processes. The backend here calls the NVIDIA AI Foundation Endpoints, which makes it very easy to deploy on a thin client or Virtual Machine. This example is also compatible with NVIDIA NIM if you wish to self-host these microservices on your GPU. 
+# Multimodal O-RAN RAG Chatbot with NVIDIA AI Foundation Endpoints or NVIDIA NIM for LLMs
+
+![O-RAN RAG Chatbot diagram](oran_diagram.png)
+
+This repository is designed to make it extremely easy to set up your own retrieval-augmented generation chatbot for ORAN techncial specifications and processes. The backend here calls the NVIDIA AI Foundation Endpoints, which makes it very easy to deploy on a thin client or Virtual Machine. This example is also compatible with NVIDIA NIM for LLMs if you wish to self-host these microservices on your GPU. 
 
 # Implemented Features
-- [RAG in 5 minutes Chatbot Video](https://youtu.be/N_OOfkEWcOk) Setup with NVIDIA AI Playground components
+- [RAG in 5 minutes Chatbot Video](https://youtu.be/N_OOfkEWcOk) Setup with NVIDIA AI Foundation Endpoints
 - This bot uses augmented retrieval methods like augmented query, query rewriting, cross encoder reranking and others.
 - Source references with options to download the source document
 - Analytics through Streamlit at ```/?analytics=on```
@@ -10,7 +13,7 @@ This repository is designed to make it extremely easy to set up your own retriev
 - Fact-check verification of results through a second LLM API call
 - Multimodal parsing of documents - images, tables, text through multimodal LLM APIs
 - Added simple conversational history with memory and summarization
-- Support for NVIDIA NIM
+- Support for NVIDIA NIM for LLMs
 
 # Setup O-RAN RAG Chatbot
 
@@ -21,11 +24,10 @@ Before running the pipeline, please ensure that you have the following prerequis
   - NVIDIA API Key
   - If you do not have a NVIDIA API Key, please follow the steps 1-4 mentioned [here](https://github.com/NVIDIA/GenerativeAIExamples/blob/main/docs/rag/aiplayground.md#prepare-the-environment) to get your key.
 
-- (Optional) For NVIDIA NIM:
-  - [Early access](https://www.nvidia.com/en-us/ai/nim-notifyme/) to NVIDIA NIM 
-  - [nim_llm:24.02](nvcr.io/ohlfw0olaadg/ea-participants/nim_llm:24.02)
-  - [nemo-retriever-embedding-microservices:24.02](nvcr.io/ohlfw0olaadg/ea-participants/nemo-retriever-embedding-microservice:24.02)
-  - GPU resources to support the model deployed on `nim_llm:24.02` (e.g. 1x A100 for Mistral-7B-Instruct_v0.2 or 2x A100 for Mixtral-8x7B-Instruct-v0.1)
+- (Optional) For NVIDIA NIM for LLMs and NeMo Retriever Embedding Microservice:
+  - [NVIDIA NIM for LLMs](https://docs.nvidia.com/nim/index.html) with Llama3-8B-instruct or Llama3-70B-instruct
+  - [NeMo Retriever Embedding Microservice](https://www.nvidia.com/en-us/ai-data-science/products/nemo/)
+  - GPU resources to support the model(s) deployed on, please see the [support maxtix](https://docs.nvidia.com/nim/large-language-models/latest/support-matrix.html) for more details.
 
 The following describes how you can have this chatbot up-and-running in less than 5 minutes.
 
@@ -59,21 +61,18 @@ Save your service account credentials file as `service.json` inside the `oran-ch
 
 ### Step 6. Setup your NVIDIA API key
 
-   To access NeMo services and language model, we will export the NVIDIA API key to the environment using the following command:
+   To access NeMo services and language model, we will add the NVIDIA API key to the `config.yaml` file under the placeholder called `nvidia_api_key`. Note that the NVIDIA API key should be of form `nvapi-b**************`
 
-   ```
-   export NVIDIA_API_KEY="nvapi-b**************"
-   ```
 
-### Step 7. (Optional) Enable NVIDIA NIM
+### Step 7. (Optional) Enable NVIDIA NIM for LLMs and NeMo Retriever Embedding Microservice
 
-NVIDIA NIM and NeMo Retriever Embeddings Microservice (NREM) can be enabled in `config.yaml` if you wish to use these microservices instead of NVIDIA AI Foundation Endpoints.  
+NVIDIA NIM for LLMs and NeMo Retriever Embeddings Microservice (NREM) can be enabled in `config.yaml` if you wish to use these microservices instead of NVIDIA AI Foundation Endpoints.  
 
 To use self-hosted NIM, set `NIM: true` in `config.yaml` - then set `nim_model_name`, `nim_base_url`, and other parameters appropriately. 
 
 To use self-hosted NREM: set `NREM: true` in `config.yaml` - then set `nrem_model_name` and `nrem_api_endpoint_url` appropriately. 
 
-For more information on how to setup NIM, please see the documentation [here](https://developer.nvidia.com/docs/nemo-microservices/index.html).
+For more information on how to setup NIM, please see the documentation [here](https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html).
 
 ### Step 8. Run the chatbot using streamlit
    Go to the `oran_chatbot` folder to run the O-RAN RAG chatbot using streamlit.
@@ -156,7 +155,7 @@ The vector database being used here is FAISS, a CPU-based embedding database. It
 Depending on the backend and model, you may need to modify the way in which you format your prompt and chat conversations to interact with the model. The current design considers each query independently. However, if you put the input as a set of user/assistant/user interactions, you can combine multi-turn conversations. This may also require periodic summarization of past context to ensure the chat does not exceed the context length of the model.
 
 ### Backend
-- Cloud Hosted: The current implementation uses the NVIDIA AI Playground APIs to abstract away the details of the infrastructure through a simple API call. You can also swap this out quickly by deploying in DGX Cloud with NVIDIA GPUs and LLMs.
+- Cloud Hosted: The current implementation uses the NVIDIA AI Foundation Endpoints to abstract away the details of the infrastructure through a simple API call. You can also swap this out quickly by deploying in DGX Cloud with NVIDIA GPUs and LLMs.
 - On-Prem/Locally Hosted: If you would like to run a similar model locally, it is usually necessary to have significantly powerful hardware (Llama2-70B requires over 100GB of GPU memory) and various optimization toolkits to run inference (TRT-LLM and TensorRT). Smaller models (Llama2-7B, Mistral-7B, etc) are easier to run but may have worse performance.
 
 ## Pipeline Enhancement Opportunities:

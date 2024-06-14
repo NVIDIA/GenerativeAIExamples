@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE_URL="nvcr.io/nvstaging/holoscan/holoscan"
-ARG BASE_IMAGE_TAG="23.10.02.0-dgpu"
+ARG BASE_IMAGE_URL="nvcr.io/nvidia/clara-holoscan/holoscan"
+ARG BASE_IMAGE_TAG="v2.0.0-dgpu"
 FROM ${BASE_IMAGE_URL}:${BASE_IMAGE_TAG}
 
 ENV TZ="America/New_York"

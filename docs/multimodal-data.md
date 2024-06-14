@@ -28,12 +28,12 @@ backlinks: none
 ## Example Features
 
 This example deploys a developer RAG pipeline for chat Q&A and serves inferencing from NVIDIA API Catalog endpoints
-instead of NVIDIA Triton Inference Server, a local Llama 2 model, or local GPUs.
+instead of a local inference server, a local LLM, or local GPUs.
 
 Developers get free credits for 10K requests to any of the available models.
 
 The key difference from the [](./api-catalog.md) example is that this example demonstrates how work with multimodal data.
-The model works with any kind of image in PDF, such as graphs and plots, as well as text and tables.
+The model works with any kind of image in PDF or PPTX, such as graphs and plots, as well as text and tables.
 
 This example uses models from the NVIDIA API Catalog.
 
@@ -48,15 +48,15 @@ This example uses models from the NVIDIA API Catalog.
   - Multi-GPU
   - TRT-LLM
   - Model Location
-  - Triton
+  - NIM for LLMs
   - Vector Database
 
-* - ai-mixtral-8x7b-instruct for response generation
+* - meta/llama3-8b-instruct for response generation
 
     ai-google-Deplot for graph to text conversion
 
     ai-Neva-22B for image to text conversion
-  - ai-embed-qa-4
+  - snowflake-arctic-embed-l
   - Custom Python
   - QA chatbot
   - NO
@@ -79,7 +79,7 @@ The following figure shows the sample topology:
 ## Limitations
 
 Although the AI Foundation Models endpoint uses the Neva_22B model for processing images, this example
-supports uploading images that are part of PDF files only.
+supports uploading images that are part of PDF and PPTX files only.
 For example, after deploying the services, you cannot upload a PNG, JPEG, TIFF, or any other image format file.
 
 
@@ -96,6 +96,14 @@ For example, after deploying the services, you cannot upload a PNG, JPEG, TIFF, 
 
 - Install Docker Engine and Docker Compose.
   Refer to the instructions for [Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
+
+- Login to Nvidia's docker registry. Please refer to [instructions](https://docs.nvidia.com/ngc/gpu-cloud/ngc-overview/index.html) to create account and generate NGC API key. This is needed for pulling in the secure base container used by all the examples.
+
+  ```console
+  $ docker login nvcr.io
+  Username: $oauthtoken
+  Password: <ngc-api-key>
+  ```
 
 - Optional: Enable NVIDIA Riva automatic speech recognition (ASR) and text to speech (TTS).
 
@@ -115,12 +123,33 @@ For example, after deploying the services, you cannot upload a PNG, JPEG, TIFF, 
     export RIVA_FUNCTION_ID="<riva-function-id>"
     ```
 
-## Get an API Key for the Mixtral 8x7B Instruct API Endpoint
+## Get an API Key for the Meta Llama 3 8B Instruct API Endpoint
 
-```{include} api-catalog.md
-:start-after: api-key-start
-:end-before: api-key-end
-```
+% api-key-start
+
+Perform the following steps if you do not already have an API key.
+You can use different model API endpoints with the same API key.
+
+1. Navigate to <https://build.nvidia.com/explore/discover>.
+
+2. Find the **Llama 3 8B Instruct** card and click the card.
+
+   ![Llama 3 8B Instruct model card](./images/llama3-8b-instruct-model-card.png)
+
+3. Click **Get API Key**.
+
+   ![API section of the model page.](./images/llama3-8b-instruct-get-api-key.png)
+
+4. Click **Generate Key**.
+
+   ![Generate key window.](./images/api-catalog-generate-api-key.png)
+
+5. Click **Copy Key** and then save the API key.
+   The key begins with the letters nvapi-.
+
+   ![Key Generated window.](./images/key-generated.png)
+
+% api-key-end
 
 ## Build and Start the Containers
 
@@ -155,7 +184,11 @@ For example, after deploying the services, you cannot upload a PNG, JPEG, TIFF, 
 1. Start the Milvus vector database:
 
    ```console
-   $ docker compose --env-file deploy/compose/compose.env -f deploy/compose/docker-compose-vectordb.yaml up -d milvus
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/docker-compose-vectordb.yaml \
+       --profile llm-embedding \
+       up -d milvus
    ```
 
    *Example Output*
@@ -187,7 +220,7 @@ For example, after deploying the services, you cannot upload a PNG, JPEG, TIFF, 
 
 - Access the web interface for the chat server.
   Refer to [](./using-sample-web-application.md) for information about using the web interface.
-- Upload one or more PDF files with graphics, plots, and tables.
+- Upload one or more PDF and PPTX files with graphics, plots, and tables.
 - Enable the **Use knowledge base** checkbox when you submit a question.
 - Stop the containers by running `docker compose -f deploy/compose/rag-app-multimodal-chatbot.yaml down` and
-  `docker compose -f deploy/compose/docker-compose-vectordb.yaml down`.
+  `docker compose -f deploy/compose/docker-compose-vectordb.yaml --profile llm-embedding down`.

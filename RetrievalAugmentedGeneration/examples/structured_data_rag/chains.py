@@ -106,12 +106,12 @@ class CSVChatbot(BaseExample):
 
     def ingest_docs(self, filepath: str, filename: str):
         """Ingest documents to the VectorDB."""
-        
+
         if not filename.endswith(".csv"):
             raise ValueError(f"{filename} is not a valid CSV file")
 
         with open(INGESTED_CSV_FILES_LIST, "a+", encoding="UTF-8") as f:
-            
+
             ref_csv_path = None
 
             try:
@@ -152,8 +152,7 @@ class CSVChatbot(BaseExample):
             system_message + user_input
         )
 
-        logger.info("Using prompt for response: %s", prompt)
-
+        logger.info(f"Using prompt for response generation: {prompt.format(input=query)}")
         chain = prompt | get_llm(**kwargs) | StrOutputParser()
         return chain.stream({"input": query})
 
@@ -242,3 +241,4 @@ class CSVChatbot(BaseExample):
     def delete_documents(self, filenames: List[str]):
         """Delete documents from the vector index."""
         logger.error("delete_documents not implemented")
+        return True
