@@ -1,0 +1,572 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "FastAPI",
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/health": {
+            "get": {
+                "summary": "Health Check",
+                "description": "Perform a Health Check\n\nReturns 200 when service is up. This does not check the health of downstream services.",
+                "operationId": "health_check_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Internal server error occurred"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/documents": {
+            "post": {
+                "summary": "Upload Document",
+                "description": "Upload a document to the vector store.",
+                "operationId": "upload_document_documents_post",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_upload_document_documents_post"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Internal server error occurred"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "summary": "Get Documents",
+                "description": "List available documents.",
+                "operationId": "get_documents_documents_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Internal server error occurred"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Document",
+                "description": "Delete a document.",
+                "operationId": "delete_document_documents_delete",
+                "parameters": [
+                    {
+                        "name": "filename",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Filename"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Internal server error occurred"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/generate": {
+            "post": {
+                "summary": "Generate Answer",
+                "description": "Generate and stream the response to the provided prompt.",
+                "operationId": "generate_answer_generate_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Prompt"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChainResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Internal server error occurred"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/search": {
+            "post": {
+                "summary": "Document Search",
+                "description": "Search for the most relevant documents for the given search parameters.",
+                "operationId": "document_search_search_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DocumentSearch"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentSearchResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Internal server error occurred"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Body_upload_document_documents_post": {
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "title": "File"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "file"
+                ],
+                "title": "Body_upload_document_documents_post"
+            },
+            "ChainResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 100000,
+                        "pattern": "[\\s\\S]*",
+                        "title": "Id",
+                        "default": ""
+                    },
+                    "choices": {
+                        "items": {
+                            "$ref": "#/components/schemas/ChainResponseChoices"
+                        },
+                        "type": "array",
+                        "maxItems": 256,
+                        "title": "Choices",
+                        "default": []
+                    }
+                },
+                "type": "object",
+                "title": "ChainResponse",
+                "description": "Definition of Chain APIs resopnse data type"
+            },
+            "ChainResponseChoices": {
+                "properties": {
+                    "index": {
+                        "type": "integer",
+                        "maximum": 9223372036854776000,
+                        "minimum": 0,
+                        "format": "int64",
+                        "title": "Index",
+                        "default": 0
+                    },
+                    "message": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Message"
+                            }
+                        ],
+                        "default": {
+                            "role": "assistant",
+                            "content": ""
+                        }
+                    },
+                    "finish_reason": {
+                        "type": "string",
+                        "maxLength": 4096,
+                        "pattern": "[\\s\\S]*",
+                        "title": "Finish Reason",
+                        "default": ""
+                    }
+                },
+                "type": "object",
+                "title": "ChainResponseChoices",
+                "description": "Definition of Chain response choices"
+            },
+            "DocumentChunk": {
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "maxLength": 131072,
+                        "pattern": "[\\s\\S]*",
+                        "title": "Content",
+                        "description": "The content of the document chunk."
+                    },
+                    "filename": {
+                        "type": "string",
+                        "maxLength": 4096,
+                        "pattern": "[\\s\\S]*",
+                        "title": "Filename",
+                        "description": "The name of the file the chunk belongs to."
+                    },
+                    "score": {
+                        "type": "number",
+                        "title": "Score",
+                        "description": "The relevance score of the chunk."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "content",
+                    "filename",
+                    "score"
+                ],
+                "title": "DocumentChunk",
+                "description": "Represents a chunk of a document."
+            },
+            "DocumentSearch": {
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "maxLength": 131072,
+                        "pattern": "[\\s\\S]*",
+                        "title": "Query",
+                        "description": "The content or keywords to search for within documents."
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "maximum": 9223372036854776000,
+                        "minimum": 0,
+                        "format": "int64",
+                        "title": "Top K",
+                        "description": "The maximum number of documents to return in the response.",
+                        "default": 4
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "query"
+                ],
+                "title": "DocumentSearch",
+                "description": "Definition of the DocumentSearch API data type."
+            },
+            "DocumentSearchResponse": {
+                "properties": {
+                    "chunks": {
+                        "items": {
+                            "$ref": "#/components/schemas/DocumentChunk"
+                        },
+                        "type": "array",
+                        "maxItems": 256,
+                        "title": "Chunks",
+                        "description": "List of document chunks."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "chunks"
+                ],
+                "title": "DocumentSearchResponse",
+                "description": "Represents a response from a document search."
+            },
+            "DocumentsResponse": {
+                "properties": {
+                    "documents": {
+                        "items": {
+                            "type": "string",
+                            "maxLength": 131072,
+                            "pattern": "[\\s\\S]*"
+                        },
+                        "type": "array",
+                        "maxItems": 1000000,
+                        "title": "Documents",
+                        "description": "List of filenames."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "documents"
+                ],
+                "title": "DocumentsResponse",
+                "description": "Represents the response containing a list of documents."
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "HealthResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "maxLength": 4096,
+                        "pattern": "[\\s\\S]*",
+                        "title": "Message"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "message"
+                ],
+                "title": "HealthResponse"
+            },
+            "Message": {
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "pattern": "[\\s\\S]*",
+                        "title": "Role",
+                        "description": "Role for a message AI, User and System",
+                        "default": "user"
+                    },
+                    "content": {
+                        "type": "string",
+                        "maxLength": 131072,
+                        "pattern": "[\\s\\S]*",
+                        "title": "Content",
+                        "description": "The input query/prompt to the pipeline.",
+                        "default": "I am going to Paris, what should I see?"
+                    }
+                },
+                "type": "object",
+                "title": "Message",
+                "description": "Definition of the Chat Message type."
+            },
+            "Prompt": {
+                "properties": {
+                    "messages": {
+                        "items": {
+                            "$ref": "#/components/schemas/Message"
+                        },
+                        "type": "array",
+                        "maxItems": 50000,
+                        "title": "Messages",
+                        "description": "A list of messages comprising the conversation so far. The roles of the messages must be alternating between user and assistant. The last input message should have role user. A message with the the system role is optional, and must be the very first message if it is present."
+                    },
+                    "use_knowledge_base": {
+                        "type": "boolean",
+                        "title": "Use Knowledge Base",
+                        "description": "Whether to use a knowledge base"
+                    },
+                    "temperature": {
+                        "type": "number",
+                        "maximum": 1,
+                        "minimum": 0.1,
+                        "title": "Temperature",
+                        "description": "The sampling temperature to use for text generation. The higher the temperature value is, the less deterministic the output text will be. It is not recommended to modify both temperature and top_p in the same call.",
+                        "default": 0.2
+                    },
+                    "top_p": {
+                        "type": "number",
+                        "maximum": 1,
+                        "minimum": 0.1,
+                        "title": "Top P",
+                        "description": "The top-p sampling mass used for text generation. The top-p value determines the probability mass that is sampled at sampling time. For example, if top_p = 0.2, only the most likely tokens (summing to 0.2 cumulative probability) will be sampled. It is not recommended to modify both temperature and top_p in the same call.",
+                        "default": 0.7
+                    },
+                    "max_tokens": {
+                        "type": "integer",
+                        "maximum": 9223372036854776000,
+                        "minimum": 0,
+                        "format": "int64",
+                        "title": "Max Tokens",
+                        "description": "The maximum number of tokens to generate in any given call. Note that the model is not aware of this value, and generation will simply stop at the number of tokens specified.",
+                        "default": 1024
+                    },
+                    "stop": {
+                        "items": {
+                            "type": "string",
+                            "maxLength": 256,
+                            "pattern": "[\\s\\S]*"
+                        },
+                        "type": "array",
+                        "maxItems": 256,
+                        "title": "Stop",
+                        "description": "A string or a list of strings where the API will stop generating further tokens. The returned text will not contain the stop sequence."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "messages",
+                    "use_knowledge_base"
+                ],
+                "title": "Prompt",
+                "description": "Definition of the Prompt API data type."
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}
