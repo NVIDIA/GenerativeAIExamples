@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Software Component Configuration &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
+  <title>Software Component Configuration &mdash; NVIDIA Generative AI Examples 24.6.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -54,10 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="quantized-llm-model.html">Quantized Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="structured-data.html">Structured Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multimodal-data.html">Multimodal Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-turn.html">Multi-turn</a></li>
@@ -73,25 +70,20 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/00-llm-non-streaming-nemotron.html">Basics: Prompt, Client, and Responses</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/01-llm-streaming-client.html">LLM Streaming Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/02_langchain_simple.html">Q&amp;A with LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/01_dataloader.html">Press Release Chat Bot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/02_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/02_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/03_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/03_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/04_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/05_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/06_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Chat_with_nvidia_financial_reports.html">Notebook: Chatting with NVIDIA Financial Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_RAG_Langchain_with_Local_NIM.html">Build a RAG using a locally hosted NIM</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="llm-inference-server.html">NeMo Framework Inference Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="frontend.html">RAG Playground Web Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jupyter-server.html">Jupyter Notebook Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="chain-server.html">Chain Server</a></li>
@@ -143,11 +135,10 @@
 <ul class="simple">
 <li><p><a class="reference internal" href="#configuration-with-the-docker-compose-environment-file" id="id1">Configuration with the Docker Compose Environment File</a></p>
 <ul>
-<li><p><a class="reference internal" href="#llm-server-configuration" id="id2">LLM Server Configuration</a></p></li>
-<li><p><a class="reference internal" href="#milvus" id="id3">Milvus</a></p></li>
-<li><p><a class="reference internal" href="#pgvector" id="id4">Pgvector</a></p></li>
-<li><p><a class="reference internal" href="#chain-server" id="id5">Chain Server</a></p></li>
-<li><p><a class="reference internal" href="#rag-playground" id="id6">RAG Playground</a></p></li>
+<li><p><a class="reference internal" href="#milvus" id="id2">Milvus</a></p></li>
+<li><p><a class="reference internal" href="#pgvector" id="id3">Pgvector</a></p></li>
+<li><p><a class="reference internal" href="#chain-server" id="id4">Chain Server</a></p></li>
+<li><p><a class="reference internal" href="#rag-playground" id="id5">RAG Playground</a></p></li>
 </ul>
 </li>
 </ul>
@@ -156,28 +147,6 @@
 <h2>Configuration with the Docker Compose Environment File<a class="headerlink" href="#configuration-with-the-docker-compose-environment-file" title="Permalink to this headline"></a></h2>
 <p>The following sections identify the environment variables and parameters that are used in the <code class="docutils literal notranslate"><span class="pre">rag-app-text-chatbot.yaml</span></code> Docker Compose file in the <code class="docutils literal notranslate"><span class="pre">deploy/compose</span></code> directory of the repository.</p>
 <p>You can set environment variables in the <code class="docutils literal notranslate"><span class="pre">deploy/compose/compose.env</span></code> file.</p>
-<section id="llm-server-configuration">
-<h3>LLM Server Configuration<a class="headerlink" href="#llm-server-configuration" title="Permalink to this headline"></a></h3>
-<p>LLM Inference server hosts the Large Language Model (LLM) with Triton Inference Server backend.</p>
-<p>You can configure the server using the following environment variables:</p>
-<dl class="myst field-list simple">
-<dt class="field-odd">MODEL_DIRECTORY</dt>
-<dd class="field-odd"><p>Specifies the path to the model directory where model checkpoints are stored.</p>
-</dd>
-<dt class="field-even">MODEL_ARCHITECTURE</dt>
-<dd class="field-even"><p>Defines the architecture of the model used for deployment.</p>
-</dd>
-<dt class="field-odd">MODEL_MAX_INPUT_LENGTH</dt>
-<dd class="field-odd"><p>Maximum allowed input length, with a default value of 3000.</p>
-</dd>
-<dt class="field-even">QUANTIZATION</dt>
-<dd class="field-even"><p>Specifies to enable activation-aware quantization for the LLM. By default, quantization is not enabled.</p>
-</dd>
-<dt class="field-odd">INFERENCE_GPU_COUNT</dt>
-<dd class="field-odd"><p>Specifies the GPUs to be used by Triton for model deployment, with the default setting being “all.”</p>
-</dd>
-</dl>
-</section>
 <section id="milvus">
 <h3>Milvus<a class="headerlink" href="#milvus" title="Permalink to this headline"></a></h3>
 <p>Milvus is the default vector database server.
@@ -216,7 +185,7 @@ The default value is <code class="docutils literal notranslate"><span class="pre
 <h3>Chain Server<a class="headerlink" href="#chain-server" title="Permalink to this headline"></a></h3>
 <p>The chain server is the core component that interacts with the LLM Inference Server and the Milvus server to obtain responses.
 You can configure the server using the following environment variable:</p>
-<dl class="myst field-list">
+<dl class="myst field-list simple">
 <dt class="field-odd">APP_VECTORSTORE_URL</dt>
 <dd class="field-odd"><p>Specifies the URL of the vector database server.</p>
 </dd>
@@ -227,15 +196,14 @@ You can configure the server using the following environment variable:</p>
 <dd class="field-odd"><p>Specifies the example-specific collection in the vector database.</p>
 </dd>
 <dt class="field-even">APP_LLM_SERVERURL</dt>
-<dd class="field-even"><p>Specifies the URL of Triton Inference Server.</p>
+<dd class="field-even"><p>Specifies the URL of NVIDIA NIM for LLMs.</p>
 </dd>
 <dt class="field-odd">APP_LLM_MODELNAME</dt>
-<dd class="field-odd"><p>The model name used by the Triton server.</p>
+<dd class="field-odd"><p>The model name used by NIM for LLMs.</p>
 </dd>
 <dt class="field-even">APP_LLM_MODELENGINE</dt>
-<dd class="field-even"><p>An enum that specifies the backend name hosting the model. Supported values are as follows:</p>
-<p><code class="docutils literal notranslate"><span class="pre">triton-trt-llm</span></code> to use locally deployed LLM models.</p>
-<p><code class="docutils literal notranslate"><span class="pre">nvidia-ai-endpoints</span></code> to use models hosted from NVIDIA API Catalog.</p>
+<dd class="field-even"><p>An enum that specifies the backend name hosting the model. Supported values are as follows:
+<code class="docutils literal notranslate"><span class="pre">nvidia-ai-endpoints</span></code> to use models hosted using NIM for LLMs in cloud based API Catalog or locally.</p>
 </dd>
 <dt class="field-odd">APP_RETRIEVER_TOPK</dt>
 <dd class="field-odd"><p>Number of relevant results to retrieve. The default value is <code class="docutils literal notranslate"><span class="pre">4</span></code>.</p>
@@ -252,6 +220,9 @@ The chain server uses this prompt when the query does not use a knowledge base.<
 <dd class="field-even"><p>Specifies the instructions to provide to the model.
 The prompt is combined with the user-supplied query and then presented to the model.
 The chain server uses this prompt when the query uses a knowledge base.</p>
+</dd>
+<dt class="field-odd">LOGLEVEL</dt>
+<dd class="field-odd"><p>Set the logging verbosity level for the logs printed by container. Chain server uses the standard python logging module. Possible values are NOTSET, DEBUG, INFO, WARN, ERROR, CRITICAL.</p>
 </dd>
 </dl>
 </section>

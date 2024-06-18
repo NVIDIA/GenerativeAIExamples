@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
+  <title>Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent &mdash; NVIDIA Generative AI Examples 24.6.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -25,8 +25,8 @@
         <script src="../_static/version.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Build a RAG chain by generating embeddings for NVIDIA Triton documentation" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html" />
-    <link rel="prev" title="HF Checkpoints with LlamaIndex and LangChain" href="08_Option%282%29_llama_index_with_HF_local_LLM.html" />
+    <link rel="next" title="Build a RAG chain by generating embeddings for NVIDIA Triton documentation" href="05_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html" />
+    <link rel="prev" title="HF Checkpoints with LlamaIndex and LangChain" href="03_Option%282%29_llama_index_with_HF_local_LLM.html" />
  
 
 
@@ -55,10 +55,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../support-matrix.html">Support Matrix</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api-catalog.html">API Catalog Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../local-gpu.html">Local GPUs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../query-decomposition.html">Query Decomposition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../quantized-llm-model.html">Quantized Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../structured-data.html">Structured Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../multimodal-data.html">Multimodal Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../multi-turn.html">Multi-turn</a></li>
@@ -74,25 +71,20 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="00-llm-non-streaming-nemotron.html">Basics: Prompt, Client, and Responses</a></li>
-<li class="toctree-l1"><a class="reference internal" href="01-llm-streaming-client.html">LLM Streaming Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="02_langchain_simple.html">Q&amp;A with LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
-<li class="toctree-l1"><a class="reference internal" href="04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
-<li class="toctree-l1"><a class="reference internal" href="05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01_dataloader.html">Press Release Chat Bot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
-<li class="toctree-l1"><a class="reference internal" href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
-<li class="toctree-l1"><a class="reference internal" href="12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_Chat_with_nvidia_financial_reports.html">Notebook: Chatting with NVIDIA Financial Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_RAG_Langchain_with_Local_NIM.html">Build a RAG using a locally hosted NIM</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../llm-inference-server.html">NeMo Framework Inference Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../frontend.html">RAG Playground Web Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../jupyter-server.html">Jupyter Notebook Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../chain-server.html">Chain Server</a></li>
@@ -527,8 +519,8 @@ Note: As one can see, since we are using NVIDIA AI Catalog as an API, there is n
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="08_Option%282%29_llama_index_with_HF_local_LLM.html" class="btn btn-neutral float-left" title="HF Checkpoints with LlamaIndex and LangChain" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html" class="btn btn-neutral float-right" title="Build a RAG chain by generating embeddings for NVIDIA Triton documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="03_Option%282%29_llama_index_with_HF_local_LLM.html" class="btn btn-neutral float-left" title="HF Checkpoints with LlamaIndex and LangChain" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="05_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html" class="btn btn-neutral float-right" title="Build a RAG chain by generating embeddings for NVIDIA Triton documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

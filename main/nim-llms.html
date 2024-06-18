@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Using NVIDIA NIM for LLMs &mdash; NVIDIA Generative AI Examples 24.4.0 documentation</title>
+  <title>Using NVIDIA NIM for LLMs &mdash; NVIDIA Generative AI Examples 24.6.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -55,10 +55,7 @@
 <li class="toctree-l1"><a class="reference internal" href="index.html">About the RAG Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support-matrix.html">Support Matrix</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-catalog.html">API Catalog Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="local-gpu.html">Local GPUs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="multi-gpu.html">Multi-GPU for Inference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="query-decomposition.html">Query Decomposition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="quantized-llm-model.html">Quantized Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="structured-data.html">Structured Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multimodal-data.html">Multimodal Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="multi-turn.html">Multi-turn</a></li>
@@ -74,25 +71,20 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Jupyter Notebooks</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/00-llm-non-streaming-nemotron.html">Basics: Prompt, Client, and Responses</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/01-llm-streaming-client.html">LLM Streaming Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/02_langchain_simple.html">Q&amp;A with LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/03_llama_index_simple.html">Q&amp;A with LlamaIndex</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/04_llamaindex_hier_node_parser.html">Advanced Q&amp;A with LlamaIndex</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/05_dataloader.html">Press Release Chat Bot</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/08_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/12_Chat_wtih_nvidia_financial_reports.html">Notebook: Chating with NVIDIA Financial Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/01_dataloader.html">Press Release Chat Bot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/02_Option%281%29_NVIDIA_AI_endpoint_simple.html">NVIDIA API Catalog with LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/02_Option%282%29_minimalistic_RAG_with_langchain_local_HF_LLM.html">LangChain with Local Llama 2 Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/03_Option%281%29_llama_index_with_NVIDIA_AI_endpoint.html">NVIDIA API Catalog, LlamaIndex, and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/03_Option%282%29_llama_index_with_HF_local_LLM.html">HF Checkpoints with LlamaIndex and LangChain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/04_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.html">Multimodal Models from NVIDIA AI Catelog and AI Catalog with LangChain Agent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/05_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.html">Build a RAG chain by generating embeddings for NVIDIA Triton documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/06_LangGraph_HandlingAgent_IntermediateSteps.html">LangGraph Handling LangChain Agent Intermediate_Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/07_Chat_with_nvidia_financial_reports.html">Notebook: Chatting with NVIDIA Financial Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/08_RAG_Langchain_with_Local_NIM.html">Build a RAG using a locally hosted NIM</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Software Components</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="llm-inference-server.html">NeMo Framework Inference Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="frontend.html">RAG Playground Web Application</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jupyter-server.html">Jupyter Notebook Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="chain-server.html">Chain Server</a></li>
@@ -144,9 +136,9 @@
 <ul class="simple">
 <li><p><a class="reference internal" href="#running-examples-on-nim-for-llms" id="id1">Running Examples on NIM for LLMs</a></p></li>
 <li><p><a class="reference internal" href="#prerequisites" id="id2">Prerequisites</a></p></li>
-<li><p><a class="reference internal" href="#deploy-nim-for-llms-and-nemo-retriever-embedding" id="id3">Deploy NIM for LLMs and NeMo Retriever Embedding</a></p></li>
-<li><p><a class="reference internal" href="#build-and-start-the-chain-server-and-rag-playground" id="id4">Build and Start the Chain Server and RAG Playground</a></p></li>
-<li><p><a class="reference internal" href="#stopping-the-containers" id="id5">Stopping the Containers</a></p></li>
+<li><p><a class="reference internal" href="#build-and-start-the-containers" id="id3">Build and Start the Containers</a></p></li>
+<li><p><a class="reference internal" href="#stopping-the-containers" id="id4">Stopping the Containers</a></p></li>
+<li><p><a class="reference internal" href="#related-information" id="id5">Related Information</a></p></li>
 <li><p><a class="reference internal" href="#next-steps" id="id6">Next Steps</a></p></li>
 </ul>
 </div>
@@ -154,6 +146,14 @@
 <h2>Running Examples on NIM for LLMs<a class="headerlink" href="#running-examples-on-nim-for-llms" title="Permalink to this headline"></a></h2>
 <p>NVIDIA NIM for LLMs provides the enterprise-ready approach for deploying large language models (LLMs).</p>
 <p>If you are approved for <a class="reference external" href="https://developer.nvidia.com/nemo-microservices">early access to NVIDIA NeMo Microservices</a>, you can run the examples with NIM for LLMs.</p>
+<p>The following figure shows the sample topology:</p>
+<ul class="simple">
+<li><p>The sample chat bot web application communicates with the chain server.
+The chain server sends inference requests to a local NVIDIA NIM for LLMs microservice.</p></li>
+<li><p>Optionally, you can deploy NVIDIA Riva. Riva can use automatic speech recognition to transcribe
+your questions and use text-to-speech to speak the answers aloud.</p></li>
+</ul>
+<p><img alt="Using NVIDIA NIM for LLMs." src="_images/nim-llms-topology.png" /></p>
 </section>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
@@ -245,57 +245,47 @@ Refer to the instructions for <a class="reference external" href="https://docs.d
 </li>
 </ul>
 </section>
-<section id="deploy-nim-for-llms-and-nemo-retriever-embedding">
-<h2>Deploy NIM for LLMs and NeMo Retriever Embedding<a class="headerlink" href="#deploy-nim-for-llms-and-nemo-retriever-embedding" title="Permalink to this headline"></a></h2>
-<ul class="simple">
-<li><p>Deploy an LLM with NIM for LLMs, such as Llama-2-13b-chat-hf or Mixtral 8x7b Instruct.
-Refer to the <a class="reference external" href="https://docs.nvidia.com/ai-enterprise/nim-llm/latest/quickstart/llama2-70b-chat.html">Llama 2 70B Chat</a> quick start, or another quick start in the <em>NVIDIA NIM for LLMs</em> documentation.</p></li>
-<li><p>Deploy a text embedding model, such as NV-Embed-QA.
-Refer to <a class="reference external" href="https://developer.nvidia.com/docs/nemo-microservices/embedding/source/deploy.html">Deploying Text Embedding Models</a>
-in the <em>NVIDIA NeMo Retriever Embedding</em> documentation.</p></li>
-</ul>
-</section>
-<section id="build-and-start-the-chain-server-and-rag-playground">
-<h2>Build and Start the Chain Server and RAG Playground<a class="headerlink" href="#build-and-start-the-chain-server-and-rag-playground" title="Permalink to this headline"></a></h2>
+<section id="build-and-start-the-containers">
+<h2>Build and Start the Containers<a class="headerlink" href="#build-and-start-the-containers" title="Permalink to this headline"></a></h2>
 <ol class="arabic">
+<li><p>Create a <code class="docutils literal notranslate"><span class="pre">model-cache</span></code> directory to download and store the models</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>model-cache
+</pre></div>
+</div>
+</li>
 <li><p>In the Generative AI Examples repository, edit the <code class="docutils literal notranslate"><span class="pre">deploy/compose/compose.env</span></code> file.</p>
-<p>Add the following environment variables.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Name of the deployed LLM model.</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">APP_LLM_MODELNAME</span><span class="o">=</span>&lt;inference-model-name&gt;
-
-<span class="nb">export</span><span class="w"> </span><span class="nv">APP_LLM_MODELENGINE</span><span class="o">=</span>nvidia-ai-endpoints
+<p>Add or update the following environment variables.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># full path to the `model-cache` directory</span>
+<span class="c1"># NOTE: This should be an absolute path and not relative path</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MODEL_DIRECTORY</span><span class="o">=</span><span class="s2">&quot;/path/to/model/cache/directory/&quot;</span>
 
 <span class="c1"># IP of system where llm is deployed.</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">APP_LLM_SERVERURL</span><span class="o">=</span><span class="s2">&quot;&lt;ip-address&gt;:&lt;port&gt;&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_LLM_SERVERURL</span><span class="o">=</span><span class="s2">&quot;nemollm-inference:8000&quot;</span>
 
 <span class="c1"># Name of the deployed embedding model (NV-Embed-QA)</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">APP_EMBEDDINGS_MODELNAME</span><span class="o">=</span>&lt;embedding-model-name&gt;
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_EMBEDDINGS_MODELNAME</span><span class="o">=</span><span class="s2">&quot;NV-Embed-QA&quot;</span>
 
 <span class="nb">export</span><span class="w"> </span><span class="nv">APP_EMBEDDINGS_MODELENGINE</span><span class="o">=</span>nvidia-ai-endpoints
+
 <span class="c1"># IP of system where embedding model is deployed.</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">APP_EMBEDDINGS_SERVERURL</span><span class="o">=</span><span class="s2">&quot;&lt;ip-address&gt;:&lt;port&gt;&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_EMBEDDINGS_SERVERURL</span><span class="o">=</span><span class="s2">&quot;nemollm-embedding:9080&quot;</span><span class="w">    </span><span class="c1"># Or ranking-ms:8080 for the reranking example.</span>
+
+<span class="c1"># GPU for use by Milvus</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VECTORSTORE_GPU_DEVICE_ID</span><span class="o">=</span>&lt;free-gpu-id&gt;
 ...
 </pre></div>
 </div>
 </li>
-<li><p>From the root of the repository, build the containers:</p>
+<li><p>Build the Chain Server and RAG Playground containers:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-f<span class="w"> </span>deploy/compose/rag-app-text-chatbot.yaml<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>build<span class="w"> </span>chain-server<span class="w"> </span>rag-playground
 </pre></div>
 </div>
-<p>You can specify a different Docker Compose file, such as <code class="docutils literal notranslate"><span class="pre">deploy/compose/rag-app-multiturn-chatbot.yaml</span></code>.</p>
-</li>
-<li><p>Start the Chain Server and RAG Playground:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>-f<span class="w"> </span>deploy/compose/rag-app-text-chatbot.yaml<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>up<span class="w"> </span>-d<span class="w"> </span>--no-deps<span class="w"> </span>chain-server<span class="w"> </span>rag-playground
-</pre></div>
-</div>
-<p>The <code class="docutils literal notranslate"><span class="pre">-d</span></code> argument starts the services in the background and the <code class="docutils literal notranslate"><span class="pre">--no-deps</span></code> argument avoids starting a second inference server.</p>
-<p><code class="docutils literal notranslate"><span class="pre">Note</span></code>: To avoid memory issues, deploy the chain server on a separate GPU from the LLM. Update <code class="docutils literal notranslate"><span class="pre">device_ids</span></code> in <code class="docutils literal notranslate"><span class="pre">chain-server</span></code> service of <code class="docutils literal notranslate"><span class="pre">deploy/compose/rag-app-text-chatbot.yaml</span></code> (or relevant Docker Compose file) to specify a different GPU</p>
+<p>Avoid GPU memory errors by assigning a GPU to the Chain Server.
+Update <code class="docutils literal notranslate"><span class="pre">device_ids</span></code> in the <code class="docutils literal notranslate"><span class="pre">chain-server</span></code> service of <code class="docutils literal notranslate"><span class="pre">deploy/compose/rag-app-text-chatbot.yaml</span></code> manifest to specify a unique GPU ID.
+You can specify a different Docker Compose file, such as <code class="docutils literal notranslate"><span class="pre">deploy/compose/rag-app-multiturn-chatbot.yaml</span></code>.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">     </span><span class="nt">deploy</span><span class="p">:</span>
 <span class="w">       </span><span class="nt">resources</span><span class="p">:</span>
 <span class="w">         </span><span class="nt">reservations</span><span class="p">:</span>
@@ -306,12 +296,40 @@ in the <em>NVIDIA NeMo Retriever Embedding</em> documentation.</p></li>
 </pre></div>
 </div>
 </li>
-<li><p>Start the Milvus vector database:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span>-f<span class="w"> </span>deploy/compose/docker-compose-vectordb.yaml<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>milvus
+<li><p>Start the Chain Server and RAG Playground:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-f<span class="w"> </span>deploy/compose/rag-app-text-chatbot.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>up<span class="w"> </span>-d<span class="w"> </span>--no-deps<span class="w"> </span>chain-server<span class="w"> </span>rag-playground
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">Note</span></code>: To avoid memory issues, deploy the milvus on a separate GPU from the LLM. Update <code class="docutils literal notranslate"><span class="pre">VECTORSTORE_GPU_DEVICE_ID</span></code> in <code class="docutils literal notranslate"><span class="pre">deploy/compose/compose.env</span></code></p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">export VECTORSTORE_GPU_DEVICE_ID=&lt;free-gpu-id&gt;</span>
+<p>The <code class="docutils literal notranslate"><span class="pre">-d</span></code> argument starts the services in the background and the <code class="docutils literal notranslate"><span class="pre">--no-deps</span></code> argument avoids starting the JupyterLab server.</p>
+</li>
+<li><p>Start the NIM for LLMs and NeMo Embedding Microservices containers.</p>
+<ol class="arabic">
+<li><p>Export the <code class="docutils literal notranslate"><span class="pre">NGC_API_KEY</span></code> environment variable that the containers use to download models from NVIDIA NGC:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">export NGC_API_KEY=M2...</span>
+</pre></div>
+</div>
+<p>The NGC API key has a different value than the NVIDIA API key that the API catalog examples use.</p>
+</li>
+<li><p>Start the containers:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nv">DOCKER_USER</span><span class="o">=</span><span class="k">$(</span>id<span class="w"> </span>-u<span class="k">)</span><span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-f<span class="w"> </span>deploy/compose/docker-compose-nim-ms.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--profile<span class="w"> </span>llm-embedding<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>up<span class="w"> </span>-d
+</pre></div>
+</div>
+</li>
+</ol>
+</li>
+<li><p>Start the Milvus vector database:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-f<span class="w"> </span>deploy/compose/docker-compose-vectordb.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--profile<span class="w"> </span>llm-embedding<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>up<span class="w"> </span>-d<span class="w"> </span>milvus
 </pre></div>
 </div>
 </li>
@@ -337,7 +355,16 @@ in the <em>NVIDIA NeMo Retriever Embedding</em> documentation.</p></li>
 <h2>Stopping the Containers<a class="headerlink" href="#stopping-the-containers" title="Permalink to this headline"></a></h2>
 <ol class="arabic">
 <li><p>Stop the vector database:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>deploy/compose/docker-compose-vectordb.yaml<span class="w"> </span>down
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>deploy/compose/docker-compose-vectordb.yaml<span class="w"> </span>--profile<span class="w"> </span>llm-embedding<span class="w"> </span>down
+</pre></div>
+</div>
+</li>
+<li><p>Stop the NIM for LLMs and NeMo Retriever Embedding Microservices:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nv">DOCKER_USER</span><span class="o">=</span><span class="k">$(</span>id<span class="w"> </span>-u<span class="k">)</span><span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--env-file<span class="w"> </span>deploy/compose/compose.env<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-f<span class="w"> </span>deploy/compose/docker-compose-nim-ms.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--profile<span class="w"> </span>llm-embedding<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>down
 </pre></div>
 </div>
 </li>
@@ -348,6 +375,14 @@ in the <em>NVIDIA NeMo Retriever Embedding</em> documentation.</p></li>
 </li>
 <li><p>Stop the NIM for LLMs container and NeMo Retriever Embedding container by pressing Ctrl+C in each terminal.</p></li>
 </ol>
+</section>
+<section id="related-information">
+<h2>Related Information<a class="headerlink" href="#related-information" title="Permalink to this headline"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.nvidia.com/nim/large-language-models/latest/index.html"><em>NVIDIA NIM for LLMs</em></a></p></li>
+<li><p><a class="reference external" href="https://developer.nvidia.com/docs/nemo-microservices/embedding/source/overview.html"><em>NVIDIA NeMo Retriever Embedding</em></a></p></li>
+<li><p><a class="reference external" href="https://developer.nvidia.com/docs/nemo-microservices/reranking/source/overview.html"><em>NVIDIA NeMo Retriever Reranking</em></a></p></li>
+</ul>
 </section>
 <section id="next-steps">
 <h2>Next Steps<a class="headerlink" href="#next-steps" title="Permalink to this headline"></a></h2>
