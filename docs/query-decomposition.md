@@ -28,7 +28,7 @@ backlinks: none
 ## Example Features
 
 This example deploys a recursive query decomposition example for chat Q&A.
-The example uses the llama2-70b chat model from an NVIDIA API Catalog endpoint for inference.
+The example uses the Meta Llama 3 70B Instruct model from an NVIDIA API Catalog endpoint for inference.
 
 Query decomposition can perform RAG when the agent needs to access information from several different documents
 (also referred to as _chunks_) or to perform some computation on the answers.
@@ -52,11 +52,11 @@ The agent continues to break down the question into subquestions until it has th
   - Multi-GPU
   - TRT-LLM
   - Model Location
-  - Triton
+  - NIM for LLMs
   - Vector Database
 
-* - ai-llama2-70b
-  - ai-embed-qa-4
+* - meta/llama3-70b-instruct
+  - snowflake-arctic-embed-l
   - LangChain
   - QA chatbot
   - NO
@@ -89,6 +89,14 @@ The following figure shows the sample topology:
 - Install Docker Engine and Docker Compose.
   Refer to the instructions for [Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
+- Login to Nvidia's docker registry. Please refer to [instructions](https://docs.nvidia.com/ngc/gpu-cloud/ngc-overview/index.html) to create account and generate NGC API key. This is needed for pulling in the secure base container used by all the examples.
+
+  ```console
+  $ docker login nvcr.io
+  Username: $oauthtoken
+  Password: <ngc-api-key>
+  ```
+
 - Optional: Enable NVIDIA Riva automatic speech recognition (ASR) and text to speech (TTS).
 
   - To launch a Riva server locally, refer to the [Riva Quick Start Guide](https://docs.nvidia.com/deeplearning/riva/user-guide/docs/quick-start-guide.html).
@@ -107,33 +115,12 @@ The following figure shows the sample topology:
     export RIVA_FUNCTION_ID="<riva-function-id>"
     ```
 
-## Get an API Key for the Llama 2 70B API Endpoint
+## Get an API Key for the Llama 3 70B API Endpoint
 
-% api-key-start
-
-Perform the following steps if you do not already have an API key.
-You can use different model API endpoints with the same API key.
-
-1. Navigate to <https://build.ngc.nvidia.com/explore/reasoning>.
-
-1. Find the **Llama 2 70B** card and click the card.
-
-   ![Llama 2 70B model card](./images/llama-2-70b-card.png)
-
-1. Click **Get API Key**.
-
-   ![API section of the model page.](./images/llama-2-generate-key.png)
-
-1. Click **Generate Key**.
-
-   ![Generate key window.](./images/api-catalog-generate-api-key.png)
-
-1. Click **Copy Key** and then save the API key.
-   The key begins with the letters nvapi-.
-
-   ![Key Generated window.](./images/key-generated.png)
-
-% api-key-end
+```{include} ./api-catalog.md
+:start-after: api-key-start
+:end-before: api-key-end
+```
 
 ## Build and Start the Containers
 
@@ -168,7 +155,11 @@ You can use different model API endpoints with the same API key.
 4. Start the Milvus vector database:
 
    ```console
-   $ docker compose --env-file deploy/compose/compose.env -f deploy/compose/docker-compose-vectordb.yaml up -d milvus
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/docker-compose-vectordb.yaml \
+       --profile llm-embedding \
+       up -d milvus
    ```
 
    *Example Output*
@@ -204,4 +195,4 @@ You can use different model API endpoints with the same API key.
   Ensure that you upload documents and use the knowledge base to answer queries.
 - [](./vector-database.md)
 - Stop the containers by running `docker compose -f deploy/compose/rag-app-query-decomposition-agent.yaml down` and
-  `docker compose -f deploy/compose/docker-compose-vectordb.yaml down`.
+  `docker compose -f deploy/compose/docker-compose-vectordb.yaml --profile llm-embedding down`.

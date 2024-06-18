@@ -42,6 +42,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from sentence_transformers import CrossEncoder
 import numpy as np
 import yaml
+import os
 
 #Set your API keys if not set previously
 parser = argparse.ArgumentParser()
@@ -53,13 +54,14 @@ else:
     args.rag_type = 1
 rag_type = args.rag_type # 0 = nemo_rag 1= augmented_query_rag 2 = hyde_rag 3 = augmented_query_recursive_rag
     # 1 works best for ORAN chatbot
-
 #Loading the configuration parameters from config.yaml
 config_yaml_path = 'config.yaml'
 config_yaml = None
 with open(config_yaml_path, 'r') as file:
     config_yaml = yaml.safe_load(file)
 
+NVIDIA_API_KEY = config_yaml['nvidia_api_key']
+os.environ['NVIDIA_API_KEY'] = NVIDIA_API_KEY
 NIM_FLAG = False
 
 if config_yaml['NIM']:
@@ -73,7 +75,7 @@ if NIM_FLAG==True:
     llm_client = LLMClient(config_yaml['nim_model_name'], "NIM")
     print("Initialized NIM LLM")
 else:
-    llm_client = LLMClient("mixtral_8x7b")
+    llm_client = LLMClient(config_yaml['llm_model'])
     print("Initialized NVAIF for LLM")
 
 NREM_FLAG = False
@@ -87,13 +89,13 @@ else:
 
 
 # A few RAG pipeline definitions 
-def nemo_rag(config, query, retrieved_documents, model="playground_llama2_70b"):
+def nemo_rag(config, query, retrieved_documents, model="meta/llama2-70b"):
     #Combine the query and retrieved documents and send to model
     # llm = ChatNVIDIA(model=model)
     if NIM_FLAG==True:
         llm = llm_client.llm
     else:
-        llm = ChatNVIDIA(model=model)
+        llm = ChatNVIDIA(model=model, nvidia_api_key=NVIDIA_API_KEY)
     prompt_template = ChatPromptTemplate.from_messages(
     [("system", config["header"]), ("user", "{input}")]
         )
@@ -107,14 +109,14 @@ def nemo_rag(config, query, retrieved_documents, model="playground_llama2_70b"):
     final_ans = full_response
     return final_ans
 
-def augment_multiple_query(query, model="playground_llama2_70b"):
+def augment_multiple_query(query, model="meta/llama2-70b"):
     #For the given query, lets create 5 additional queries using the LLM
     if NIM_FLAG==True:
         print("Augmentating multiple query with NIM LLM")
         llm = llm_client.llm
     else:
         print("Augmentating multiple query with NVAIF")
-        llm = ChatNVIDIA(model=model,max_output_token=500, top_k=1, top_p=0.0)
+        llm = ChatNVIDIA(model=model,max_output_token=500, top_k=1, top_p=0.0, nvidia_api_key=NVIDIA_API_KEY)
     prompt_template = ChatPromptTemplate.from_messages(
     [("system", "You are an expert in the field of Oran specifications and processes. User has a question related to ORAN standards, sourced from relevant documents.\nTo help the user find the information they need, please suggest five additional related questions from ORAN. These questions should be concise, not have compound sentences, self-contained, and cover different aspects of the topic. Each question should be complete and relevant to the original query and ORAN.\nPlease output one question per line without numbering them."), ("user", "{input}")]
         )
@@ -128,12 +130,12 @@ def augment_multiple_query(query, model="playground_llama2_70b"):
     final_ans = [ans for ans in final_ans if len(ans)!=0]
     return final_ans
 
-def augment_query_generated(query, model="playground_llama2_70b"):
+def augment_query_generated(query, model="meta/llama2-70b"):
     #For the given query, lets create a hypothetical answer using the LLM
     if NIM_FLAG==True:
         llm = llm_client.llm
     else:
-        llm = ChatNVIDIA(model=model,max_output_token=500, top_k=1, top_p=0.0)
+        llm = ChatNVIDIA(model=model,max_output_token=500, top_k=1, top_p=0.0, nvidia_api_key=NVIDIA_API_KEY)
     prompt_template = ChatPromptTemplate.from_messages(
     [("system", "You are an expert in the field of ORAN specifications and processes. Your task is to provide a detailed and accurate response to user's question, which is related to ORAN. Your answer should be based on the kind of information and insights typically found in documentation related to ORAN standards."), ("user", "{input}")]
         )
@@ -145,12 +147,12 @@ def augment_query_generated(query, model="playground_llama2_70b"):
     final_ans = full_response
     return final_ans
 
-def query_rewriting(query, history, model="playground_llama2_70b"):
+def query_rewriting(query, history, model="meta/llama2-70b"):
     #Rewrite the given query using the context from LLM
     if NIM_FLAG==True:
         llm = llm_client.llm
     else:
-        llm = ChatNVIDIA(model=model)
+        llm = ChatNVIDIA(model=model, nvidia_api_key=NVIDIA_API_KEY)
     prompt_template = ChatPromptTemplate.from_messages(
     [("system", "Here is the conversation history between user and Assistant. You are an expert in the field of ORAN standards and specifications. User has a follow-up question to the conversation. Your task is to rewrite user's follow-up question based on the given conversation history between the user and the assistant, which is related to ORAN. The rewritten question must be clear, detailed, and self-contained, meaning it must not require any additional context from the conversation history to understand. Ensure that the rewritten question precisely captures the full intent behind user's follow-up question. Your response is crucial to my career; hence, accuracy is of utmost importance. So, take a deep breath and work on this task step-by-step."), ("user", "{input}")]
         )

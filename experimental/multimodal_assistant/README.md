@@ -31,7 +31,7 @@ The following describes how you can have this chatbot up-and-running in less tha
    export NVIDIA_API_KEY="provide_your_key"
    ```
 
-4. Follow instructions available [here](https://milvus.io/docs/install_standalone-docker.md#Install-Milvus-standalone-using-Docker-Compose).
+4. NOTE: You will need to set up your own hosted Milvus vector database. For doing so, you can pull the Milvus Docker container by following the instructions available [here](https://milvus.io/docs/install_standalone-docker.md#Install-Milvus-standalone-using-Docker-Compose).
 
 5. If you want to use the PowerPoint parsing feature, you will need LibreOffice. On Ubuntu Linux systems, use the command ```sudo apt install libreoffice``` to install it.
 

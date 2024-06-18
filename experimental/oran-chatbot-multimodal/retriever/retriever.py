@@ -29,6 +29,10 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import NeMoEmbeddings
 import yaml
+import os
+
+NVIDIA_API_KEY = yaml.safe_load(open("config.yaml"))['nvidia_api_key']
+os.environ['NVIDIA_API_KEY'] = NVIDIA_API_KEY
 
 def clean_source(full_path):
     return os.path.basename(full_path)
@@ -59,7 +63,7 @@ def get_relevant_docs(DOCS_DIR, text, limit=None):
 
     else:
         # Embeddings with NVIDIA AI Foundation Endpoints
-        nv_embedder = NVIDIAEmbeddings(model="ai-embed-qa-4")
+        nv_embedder = NVIDIAEmbeddings(model=yaml.safe_load(open('config.yaml', 'r'))['embedding_model'])
 
     vectorstore = FAISS.load_local(os.path.join(DOCS_DIR, "vectorstore_nv"), nv_embedder, allow_dangerous_deserialization=True)
     retriever = vectorstore.as_retriever(search_type="similarity_score_threshold",

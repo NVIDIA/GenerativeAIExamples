@@ -28,7 +28,7 @@ backlinks: none
 ## Example Features
 
 This example deploys a developer RAG pipeline for chat Q&A and serves inferencing from an NVIDIA API Catalog endpoint
-instead of NVIDIA Triton Inference Server, a local Llama 2 model, or local GPUs.
+instead of a local inference server, a local model, or local GPUs.
 
 Developers get free credits for 10K requests to any of the available models.
 
@@ -42,12 +42,22 @@ Developers get free credits for 10K requests to any of the available models.
   - Multi-GPU
   - TRT-LLM
   - Model Location
-  - Triton
+  - NIM for LLMs
   - Vector Database
 
-* - ai-mixtral-8x7b-instruct
-  - ai-embed-qa-4
-  - Langchain
+* - ai-llama3-70b
+  - snowflake/arctic-embed-l
+  - LangChain
+  - QA chatbot
+  - NO
+  - NO
+  - API Catalog
+  - NO
+  - Milvus
+
+* - ai-llama3-8b
+  - snowflake/arctic-embed-l
+  - LlamaIndex
   - QA chatbot
   - NO
   - NO
@@ -81,6 +91,14 @@ The following figure shows the sample topology:
 - Install Docker Engine and Docker Compose.
   Refer to the instructions for [Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
+- Login to Nvidia's docker registry. Please refer to [instructions](https://docs.nvidia.com/ngc/gpu-cloud/ngc-overview/index.html) to create account and generate NGC API key. This is needed for pulling in the secure base container used by all the examples.
+
+  ```console
+  $ docker login nvcr.io
+  Username: $oauthtoken
+  Password: <ngc-api-key>
+  ```
+
 - Optional: Enable NVIDIA Riva automatic speech recognition (ASR) and text to speech (TTS).
 
   - To launch a Riva server locally, refer to the [Riva Quick Start Guide](https://docs.nvidia.com/deeplearning/riva/user-guide/docs/quick-start-guide.html).
@@ -101,7 +119,7 @@ The following figure shows the sample topology:
 
 % end-prerequisites
 
-## Get an API Key for the Mixtral 8x7B Instruct API Endpoint
+## Get an API Key for the Accessing Models on the API Catalog
 
 % api-key-start
 
@@ -110,13 +128,13 @@ You can use different model API endpoints with the same API key.
 
 1. Navigate to <https://build.nvidia.com/explore/discover>.
 
-2. Find the **Mixtral 8x7B Instruct** card and click the card.
+2. Find the **Llama 3 70B Instruct** card and click the card.
 
-   ![Mixtral 8x7B Instruct model card](./images/mixtral-8x7b-instruct.png)
+   ![Llama 3 70B Instruct model card](./images/llama3-70b-instruct-model-card.png)
 
 3. Click **Get API Key**.
 
-   ![API section of the model page.](./images/image8.png)
+   ![API section of the model page.](./images/llama3-70b-instruct-get-api-key.png)
 
 4. Click **Generate Key**.
 
@@ -125,7 +143,7 @@ You can use different model API endpoints with the same API key.
 5. Click **Copy Key** and then save the API key.
    The key begins with the letters nvapi-.
 
-   ![Key Generated widnow.](./images/key-generated.png)
+   ![Key Generated window.](./images/key-generated.png)
 
 % api-key-end
 
@@ -143,13 +161,19 @@ You can use different model API endpoints with the same API key.
 2. From the root of the repository, build the containers:
 
    ```console
-   $ docker compose --env-file deploy/compose/compose.env -f deploy/compose/rag-app-api-catalog-text-chatbot.yaml build
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/rag-app-api-catalog-text-chatbot.yaml \
+       build
    ```
 
 3. Start the containers:
 
    ```console
-   $ docker compose --env-file deploy/compose/compose.env -f deploy/compose/rag-app-api-catalog-text-chatbot.yaml up -d
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/rag-app-api-catalog-text-chatbot.yaml \
+       up -d
    ```
 
    *Example Output*
@@ -163,7 +187,11 @@ You can use different model API endpoints with the same API key.
 4. Start the Milvus vector database:
 
    ```console
-   $ docker compose --env-file deploy/compose/compose.env -f deploy/compose/docker-compose-vectordb.yaml up -d milvus
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/docker-compose-vectordb.yaml \
+       --profile llm-embedding \
+       up -d milvus
    ```
 
    *Example Output*
@@ -191,10 +219,64 @@ You can use different model API endpoints with the same API key.
    57a068d62fbb   milvus-etcd         Up 3 minutes (healthy)
    ```
 
+## Using an Alternative Inference Model
+
+You can specify the model to use in the `APP_LLM_MODELNAME` environment variable when you start the Chain Server.
+The following sample command uses the Mistral AI Mixtral 8x7B Instruct model.
+
+```console
+$ APP_LLM_MODELNAME='mistralai/mixtral-8x7b-instruct-v0.1' docker compose \
+     --env-file deploy/compose/compose.env \
+     -f deploy/compose/rag-app-api-catalog-text-chatbot.yaml \
+     up -d
+```
+
+You can determine the available model names using one of the following methods:
+
+- Browse the models at <https://build.ngc.nvidia.com/explore/discover>.
+  View the sample Python code and get the model name from the `model` argument to the `client.chat.completions.create` method.
+- Install the [langchain-nvidia-ai-endpoints](https://pypi.org/project/langchain-nvidia-ai-endpoints/) Python package from PyPi.
+  Use the `get_available_models()` method to list the models.
+  Refer to the preceding web page for sample code to list the models.
+
+## Using the LlamaIndex Data Framework
+
+As an alternative to the LangChain based Chain Server, you can build and run a LlamaIndex based Chain Server.
+
+This example also starts a JupyterLab server on port 8888.
+
+1. After meeting the [](#prerequisites), build the containers:
+
+   ```console
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/rag-app-text-chatbot.yaml \
+       build
+   ```
+
+1. Start the containers:
+
+   ```console
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/rag-app-text-chatbot.yaml \
+       up -d
+   ```
+
+1. Start the Milvus vector database:
+
+   ```console
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/docker-compose-vectordb.yaml \
+       --profile llm-embedding \
+       up -d milvus
+   ```
+
 ## Next Steps
 
 - Access the web interface for the chat server.
   Refer to [](./using-sample-web-application.md) for information about using the web interface.
 - [](./vector-database.md)
 - Stop the containers by running `docker compose -f deploy/compose/rag-app-api-catalog-text-chatbot.yaml down` and
-  `docker compose -f deploy/compose/docker-compose-vectordb.yaml down`.
+  `docker compose -f deploy/compose/docker-compose-vectordb.yaml --profile llm-embedding down`.

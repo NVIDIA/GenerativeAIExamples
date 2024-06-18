@@ -47,17 +47,17 @@ with st.sidebar:
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
 
 # make sure to export your NVIDIA AI Playground key as NVIDIA_API_KEY!
-llm = ChatNVIDIA(model="mixtral_8x7b")
-document_embedder = NVIDIAEmbeddings(model="nvolveqa_40k", model_type="passage")
-query_embedder = NVIDIAEmbeddings(model="nvolveqa_40k", model_type="query")
+llm = ChatNVIDIA(model="ai-llama3-70b")
+document_embedder = NVIDIAEmbeddings(model="ai-embed-qa-4", model_type="passage")
+query_embedder = NVIDIAEmbeddings(model="ai-embed-qa-4", model_type="query")
 
 ############################################
 # Component #3 - Vector Database Store
 ############################################
 
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.document_loaders import DirectoryLoader
-from langchain.vectorstores import FAISS
+from langchain_community.document_loaders import DirectoryLoader
+from langchain_community.vectorstores import FAISS
 import pickle
 
 with st.sidebar:
@@ -116,14 +116,14 @@ prompt_template = ChatPromptTemplate.from_messages(
     [("system", "You are a helpful AI assistant named Envie. You will reply to questions only based on the context that you are provided. If something is out of context, you will refrain from replying and politely decline to respond to the user."), ("user", "{input}")]
 )
 user_input = st.chat_input("Can you tell me what NVIDIA is known for?")
-llm = ChatNVIDIA(model="mixtral_8x7b")
+llm = ChatNVIDIA(model="ai-llama3-70b")
 
 chain = prompt_template | llm | StrOutputParser()
 
 if user_input and vectorstore!=None:
     st.session_state.messages.append({"role": "user", "content": user_input})
     retriever = vectorstore.as_retriever()
-    docs = retriever.get_relevant_documents(user_input)
+    docs = retriever.invoke(user_input)
     with st.chat_message("user"):
         st.markdown(user_input)
 

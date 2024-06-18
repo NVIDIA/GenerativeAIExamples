@@ -13,42 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+import requests
+import json
+import os
 import numpy as np
 
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
 from typing import Literal
 from langchain_community.utils.math import cosine_similarity
-from langchain_community.embeddings import HuggingFaceEmbeddings
+
+USE_NEMO_RETRIEVER = os.environ.get('USE_NEMO_RETRIEVER', 'False').lower() in ('true', '1')
+NVIDIA_API_KEY = os.environ.get('NVIDIA_API_KEY', 'null')
+
+def get_logger(name):
+    LOG_LEVEL = logging.getLevelName(os.environ.get('CHAIN_LOG_LEVEL', 'WARN').upper())
+    logger = logging.getLogger(name)
+    logger.setLevel(LOG_LEVEL)
+    logger.addHandler(logging.StreamHandler())
+    return logger
 
 class TextEntry(BaseModel):
     """ API to store text in database
     """
     transcript: str = Field("Streaming text to store")
+    source_id: str = Field("Source of text")
     timestamp: datetime = Field("Timestamp of text")
-
-class SearchDocumentConfig(BaseModel):
-    """ API to do similarity search on database
-    """
-    content: str = Field("Content to search database for")
-    max_docs: int = Field("Maximum number of documents to return")
-    threshold: float = Field("Minimum similarity threshold for docs")
-
-class RecentDocumentConfig(BaseModel):
-    """ API to return all documents since timestamp
-    """
-    timestamp: datetime = Field("Timestamp of documents to retrieve up to")
-    max_docs: int = Field("Maximum number of documents to return")
-
-class PastDocumentConfig(BaseModel):
-    """ API to return all documents near timestamp, within window seconds
-    """
-    timestamp: datetime = Field("Timestamp of documents to retrieve near")
-    max_docs: int = Field("Maximum number of documents to return")
-    window: int = Field(
-        description="Window (sec) around which documents from timestamp are returned",
-        default=90
-    )
 
 class LLMConfig(BaseModel):
     """ Definition of the LLMConfig API data type
@@ -60,32 +51,70 @@ class LLMConfig(BaseModel):
     )
     # Model choice
     name: str = Field("Name of LLM instance to use")
-    engine: str = Field("Name of engine ['nv-ai-foundation', 'triton-trt-llm']")
+    engine: str = Field("Name of engine ['nvai-api-endpoint', 'triton-trt-llm']")
     # Chain parameters
     use_knowledge_base: bool = Field(
         description="Whether to use a knowledge base", default=True
     )
     allow_summary: bool = Field("Use recursive summarization to reduce long contexts")
     temperature: float = Field("Temperature of the LLM response")
-    threshold: float = Field("Minimum similarity threshold for docs")
     max_docs: int = Field("Maximum number of documents to return")
     num_tokens: int = Field("The maximum number of tokens in the response")
 
-"""
-For cases where an LLM returns a time unit that doesn't match one of the discrete
-options, find the closest with cosine similarity.
+def nemo_embedding(text):
+    """
+    Uses the NeMo Embedding MS to convert text to embeddings
+    - ex: embeddings = nemo_embedding(['Chunk A', 'Chunk B'])
+    """
+    port = os.environ.get('NEMO_EMBEDDING_PORT', 1985)
+    url = f"http://localhost:{port}/v1/embeddings"
+    payload = json.dumps({
+        "input": text,
+        "model": "NV-Embed-QA",
+        "input_type": "query"
+    })
+    headers = {'Content-Type': 'application/json'}
+    response = requests.request("POST", url, headers=headers, data=payload)
+    embeddings = [chunk['embedding'] for chunk in response.json()['data']]
+    return embeddings
 
-Example: 'min' -> 'minutes'
-"""
-EMBEDDINGS = HuggingFaceEmbeddings()
+def nvapi_embedding(text):
+    session = requests.Session()
+    url = "https://ai.api.nvidia.com/v1/retrieval/nvidia/embeddings"
+    headers = {
+        "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Accept": "application/json",
+    }
+    payload = {
+        "input": text,
+        "input_type": "passage",
+        "model": "NV-Embed-QA"
+    }
+    response = session.post(url, headers=headers, json=payload)
+    embeddings = [chunk['embedding'] for chunk in response.json()['data']]
+    return embeddings
+
 VALID_TIME_UNITS = ["seconds", "minutes", "hours", "days"]
-TIME_VECTORS = EMBEDDINGS.embed_documents(VALID_TIME_UNITS)
+TIME_VECTORS = None # Lazy loading in 'sanitize_time_unit'
+if USE_NEMO_RETRIEVER:
+    embedding_service = nemo_embedding
+else:
+    embedding_service = nvapi_embedding
 
 def sanitize_time_unit(time_unit):
+    """
+    For cases where an LLM returns a time unit that doesn't match one of the
+    discrete options, find the closest with cosine similarity.
+
+    Example: 'min' -> 'minutes'
+    """
     if time_unit in VALID_TIME_UNITS:
         return time_unit
 
-    unit_embedding = [EMBEDDINGS.embed_query(time_unit)]
+    if TIME_VECTORS is None:
+        TIME_VECTORS = embedding_service(VALID_TIME_UNITS)
+
+    unit_embedding = embedding_service([time_unit])
     similarity = cosine_similarity(unit_embedding, TIME_VECTORS)
     return VALID_TIME_UNITS[np.argmax(similarity)]
 

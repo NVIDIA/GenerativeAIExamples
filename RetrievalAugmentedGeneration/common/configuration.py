@@ -67,8 +67,8 @@ class LLMConfig(ConfigWizard):
     )
     model_engine: str = configfield(
         "model_engine",
-        default="triton-trt-llm",
-        help_txt="The server type of the hosted model. Allowed values are triton-trt-llm and nemo-infer",
+        default="nvidia-ai-endpoints",
+        help_txt="The server type of the hosted model. Allowed values are nvidia-ai-endpoints",
     )
     model_name_pandas_ai: str = configfield(
         "model_name_pandas_ai",
@@ -86,7 +86,7 @@ class TextSplitterConfig(ConfigWizard):
 
     model_name: str = configfield(
         "model_name",
-        default="WhereIsAI/UAE-Large-V1",
+        default="Snowflake/snowflake-arctic-embed-l",
         help_txt="The name of Sentence Transformer model used for SentenceTransformer TextSplitter.",
     )
     chunk_size: int = configfield(
@@ -110,12 +110,12 @@ class EmbeddingConfig(ConfigWizard):
 
     model_name: str = configfield(
         "model_name",
-        default="WhereIsAI/UAE-Large-V1",
+        default="snowflake/arctic-embed-l",
         help_txt="The name of huggingface embedding model.",
     )
     model_engine: str = configfield(
         "model_engine",
-        default="huggingface",
+        default="nvidia-ai-endpoints",
         help_txt="The server type of the hosted model. Allowed values are hugginface",
     )
     dimensions: int = configfield(
@@ -148,6 +148,16 @@ class RetrieverConfig(ConfigWizard):
         default=0.25,
         help_txt="The minimum confidence score for the retrieved values to be considered",
     )
+    nr_url: str = configfield(
+        "nr_url",
+        default='http://retrieval-ms:8000',
+        help_txt="The nemo retriever microservice url",
+    )
+    nr_pipeline: str = configfield(
+        "nr_pipeline",
+        default='ranked_hybrid',
+        help_txt="The name of the nemo retriever pipeline one of ranked_hybrid or hybrid",
+    )
 
 
 @configclass
@@ -162,12 +172,9 @@ class PromptsConfig(ConfigWizard):
     chat_template: str = configfield(
         "chat_template",
         default=(
-            "<s>[INST] <<SYS>>"
             "You are a helpful, respectful and honest assistant."
             "Always answer as helpfully as possible, while being safe."
             "Please ensure that your responses are positive in nature."
-            "<</SYS>>"
-            "[/INST] {context_str} </s><s>[INST] {query_str} [/INST]"
         ),
         help_txt="Prompt template for chat.",
     )

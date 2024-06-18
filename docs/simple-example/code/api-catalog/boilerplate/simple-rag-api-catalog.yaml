@@ -11,7 +11,7 @@ services:
     environment:
       APP_LLM_MODELNAME: ai-mixtral-8x7b-instruct
       APP_LLM_MODELENGINE: nvidia-ai-endpoints
-      APP_EMBEDDINGS_MODELNAME: ai-embed-qa-4
+      APP_EMBEDDINGS_MODELNAME: snowflake/arctic-embed-l
       APP_EMBEDDINGS_MODELENGINE: nvidia-ai-endpoints
       APP_TEXTSPLITTER_CHUNKSIZE: 1200
       APP_TEXTSPLITTER_CHUNKOVERLAP: 200

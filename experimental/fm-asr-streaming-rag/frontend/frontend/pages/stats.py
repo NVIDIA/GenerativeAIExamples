@@ -63,7 +63,6 @@ def _get_gpu_stats() -> callable:
             mem = nvmlDeviceGetMemoryInfo(handle)
             print_str += (f"| Device {i} | {name} | Mem Free: {mem.free/1024**2:5.2f}MB / {mem.total/1024**2:5.2f}MB | gpu-util: {util.gpu:3.0%} | gpu-mem: {util.memory:3.1%} |\n")
         return print_str
-        #return "TODO: implement this method."
     return _gpu_stats
 
 

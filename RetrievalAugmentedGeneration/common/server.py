@@ -37,7 +37,7 @@ from pydantic import BaseModel, Field, validator, constr
 from pymilvus.exceptions import MilvusException, MilvusUnavailableException
 from RetrievalAugmentedGeneration.common.tracing import llamaindex_instrumentation_wrapper
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO').upper())
 logger = logging.getLogger(__name__)
 
 # create the FastAPI server
@@ -193,7 +193,7 @@ async def request_validation_exception_handler(
 def health_check():
     """
     Perform a Health Check
-    
+
     Returns 200 when service is up. This does not check the health of downstream services.
     """
 
@@ -218,7 +218,7 @@ async def upload_document(request: Request, file: UploadFile = File(...)) -> JSO
         return JSONResponse(content={"message": "No files provided"}, status_code=200)
 
     try:
-        upload_folder = "uploaded_files"
+        upload_folder = "/tmp-data/uploaded_files"
         upload_file = os.path.basename(file.filename)
         if not upload_file:
             raise RuntimeError("Error parsing uploaded filename.")
@@ -285,6 +285,7 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
         def response_generator():
             resp_id = str(uuid4())
             if generator:
+                logger.debug(f"Generated response chunks\n")
                 for chunk in generator:
                     chain_response = ChainResponse()
                     response_choice = ChainResponseChoices(
@@ -296,11 +297,13 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
                     )
                     chain_response.id = resp_id
                     chain_response.choices.append(response_choice)
+                    logger.debug(response_choice)
                     yield "data: " + str(chain_response.json()) + "\n\n"
                 chain_response = ChainResponse()
                 response_choice = ChainResponseChoices(finish_reason="[DONE]")
                 chain_response.id = resp_id
                 chain_response.choices.append(response_choice)
+                logger.debug(response_choice)
                 yield "data: " + str(chain_response.json()) + "\n\n"
             else:
                 chain_response = ChainResponse()
@@ -412,7 +415,9 @@ async def delete_document(request: Request, filename: str) -> JSONResponse:
     try:
         example = app.example()
         if hasattr(example, "delete_documents") and callable(example.delete_documents):
-            example.delete_documents([filename])
+            status = example.delete_documents([filename])
+            if not status:
+                raise Exception(f"Error in deleting document {filename}")
             return JSONResponse(content={"message": f"Document {filename} deleted successfully"}, status_code=200)
 
         raise NotImplementedError("Example class has not implemented the delete_document method.")

@@ -24,3 +24,7 @@ docs/_*
 docs/notebooks
 docs/experimental
 docs/tools
+
+# Developing examples
+RetrievalAugmentedGeneration/examples/simple_rag_api_catalog/
+deploy/compose/simple-rag-api-catalog.yaml

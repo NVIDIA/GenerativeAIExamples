@@ -62,6 +62,7 @@ class RivaThread(threading.Thread):
         endpoint = f'http://{self.database_uri}/storeStreamingText'
         data = {
             'transcript': transcript,
+            'source_id': "Channel 0",
             'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         self._post_request(endpoint, data)

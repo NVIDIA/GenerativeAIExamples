@@ -21,16 +21,12 @@ import pickle
 import json
 from bot_config.utils import get_config
 from vectorstore.vectorstore_updater import update_vectorstore, create_vectorstore
-from langchain.document_loaders import DirectoryLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import DirectoryLoader, UnstructuredFileLoader,Docx2txtLoader, UnstructuredHTMLLoader, TextLoader, UnstructuredPDFLoader
+from langchain_text_splitters import CharacterTextSplitter, RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import DirectoryLoader, UnstructuredFileLoader, Docx2txtLoader, UnstructuredHTMLLoader, TextLoader, UnstructuredPDFLoader
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.embeddings import NeMoEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
-from continuous_eval.data_downloader import example_data_downloader
-from continuous_eval.evaluators import RetrievalEvaluator, GenerationEvaluator
 from llm.llm import create_llm
 import re
 import pandas as pd
@@ -39,10 +35,9 @@ from datasets import Dataset
 import matplotlib.pyplot as plt
 from PIL import Image
 import yaml
-from continuous_eval.metrics import PrecisionRecallF1, RankedRetrievalMetrics, DeterministicAnswerCorrectness, DeterministicFaithfulness, BertAnswerRelevance, BertAnswerSimilarity, DebertaAnswerScores
 from langchain_community.vectorstores import FAISS
 
-llm_2 = ChatNVIDIA(model="playground_steerlm_llama_70b")
+llm_2 = ChatNVIDIA(model="meta/llama3-70b-instruct")
 
 if yaml.safe_load(open('config.yaml', 'r'))['NREM']:
     # Embeddings with NeMo Retriever Embeddings Microservice (NREM)
@@ -53,7 +48,7 @@ if yaml.safe_load(open('config.yaml', 'r'))['NREM']:
 
 else:
     # Embeddings with NVIDIA AI Foundation Endpoints
-    nv_embedder = NVIDIAEmbeddings(model="ai-embed-qa-4")
+    nv_embedder = NVIDIAEmbeddings(model=yaml.safe_load(open('config.yaml', 'r'))['embedding_model'])
 
 
 prompt_template = ChatPromptTemplate.from_messages(
@@ -205,7 +200,7 @@ if st.button("Run synthetic data generation"):
         }'''
         instruction_prompt = 'Given the previous paragraph, create one high quality question answer pair. The answer should be brief while covering technical depth, and must be restricted to the content provided. Your output should be a JSON formatted string with the question answer pair. Restrict the question to the context information provided.'
         system_prompt="You are an expert ORAN assistant at NVIDIA. You have a deep technical understanding of ORAN's specifications, standards and processes. Your job is to generate FAQs from documents for other colleagues to use in the field while informing about ORAN to customers."
-        llm = create_llm("mixtral_8x7b", "NVIDIA")
+        llm = create_llm("mistralai/mixtral-8x7b-instruct-v0.1", "NVIDIA")
         langchain_prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
             ("human", "{sample_doc}\n{instruction_prompt}"),

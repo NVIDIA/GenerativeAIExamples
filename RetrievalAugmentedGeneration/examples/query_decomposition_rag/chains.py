@@ -16,7 +16,7 @@
 """
 This example showcases recursive task decomposition to perform RAG which requires multiple steps.
 The agent is a langchain custom LLM agent, which uses 2 tools - search and math.
-It uses OpenAI's GPT-4 model for sub-answer formation, tool prediction and math operations. It uses the deployed LLM for final answer formation.
+It uses Llama3 model for sub-answer formation, tool prediction and math operations.
 Search tool is a RAG pipeline, whereas the math tool uses an LLM call to perform mathematical calculations.
 """
 
@@ -55,7 +55,6 @@ from RetrievalAugmentedGeneration.common.base import BaseExample
 
 logger = logging.getLogger(__name__)
 
-DOCS_DIR = os.path.abspath("./uploaded_files")
 vector_store_path = "vectorstore.pkl"
 document_embedder = get_embedding_model()
 settings = get_config()
@@ -89,9 +88,10 @@ def fetch_context(ledger: Ledger) -> str:
     return context
 
 template = """Your task is to answer questions. If you cannot answer the question, you can request use for a tool and break the question into specific sub questions. Fill with Nil where no action is required. You should only return a JSON containing the tool and the generated sub questions. Consider the contextual information and only ask for information that you do not already have. Do not return any other explanations or text. The output should be a simple JSON structure! You are given two tools:
-- Search tool
-- Math tool
-
+- Search
+- Math
+Search tool quickly finds and retrieves relevant answers from a given context, providing accurate and precise information to meet search needs.
+Math tool performs essential operations, including multiplication, addition, subtraction, division, and greater than or less than comparisons, providing accurate results with ease. Utilize math tool when asked to find sum, difference of values.
 Do not pass sub questions to any tool if they already have an answer in the Contextual Information.
 If you have all the information needed to answer the question, mark the Tool_Request as Nil.
 
@@ -103,6 +103,32 @@ Question:
 
 {"Tool_Request": "<Fill>", "Generated Sub Questions": [<Fill>]}
 """
+
+math_tool_prompt = """Your task is to identify 2 variables and an operation from given questions. If you cannot answer the question, you can simply return "Not Possible". You should only return a JSON containing the `IsPossible`, `variable1`, `variable2`, and `operation`. Do not return any other explanations or text. The output should be a simple JSON structure!
+ You are given two options for `IsPossible`:
+- Possible
+- Not Possible
+ `variable1` and `variable2` should be real floating point numbers.
+ You are given four options for `operation symbols`:
+- '+' (addition)
+- '-' (subtraction)
+- '*' (multiplication)
+- '/' (division)
+- '=' (equal to)
+- '>' (greater than)
+- '<' (less than)
+- '>=' (greater than or equal to)
+- '<=' (less than or equal to)
+    Only return the symbols for the specified operations and nothing else.
+Contextual Information:
+{{ context }}
+
+Question:
+{{ question }}
+
+{"IsPossible": "<Fill>", "variable1": [<Fill>], "variable2": [<Fill>], "operation": [<Fill>]}
+"""
+
 
 class CustomPromptTemplate(BaseChatPromptTemplate):
     template: str
@@ -147,10 +173,10 @@ class CustomOutputParser(AgentOutputParser):
                 log=llm_output,
             )
 
-        if local_state["Tool_Request"] == "Search tool":
+        if local_state["Tool_Request"] == "Search":
             self.ledger.trace += 1
 
-        if local_state["Tool_Request"] in ["Search tool", "Math tool"]:
+        if local_state["Tool_Request"] in ["Search", "Math"]:
             return AgentAction(
                 tool=local_state["Tool_Request"],
                 tool_input={"sub_questions": local_state["Generated Sub Questions"]},
@@ -166,8 +192,7 @@ class QueryDecompositionChatbot(BaseExample):
             raise ValueError(f"{filename} is not a valid Text, PDF or Markdown file")
         try:
             # Load raw documents from the directory
-            # Data is copied to `DOCS_DIR` in common.server:upload_document
-            _path = os.path.join(DOCS_DIR, filename)
+            _path = filepath
             raw_documents = UnstructuredFileLoader(_path).load()
 
             if raw_documents:
@@ -206,6 +231,7 @@ class QueryDecompositionChatbot(BaseExample):
         augmented_user_input = (
             "\n\nQuestion: " + query + "\n"
         )
+        logger.info(f"Prompt used for response generation: {prompt_template.format(input=augmented_user_input)}")
         return chain.stream({"input": augmented_user_input}, config={"callbacks":[self.cb_handler]})
 
     def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
@@ -228,7 +254,7 @@ class QueryDecompositionChatbot(BaseExample):
             )
             llm = get_llm(**kwargs)
             chain = final_prompt_template | llm | StrOutputParser()
-
+            logger.info(f"Prompt used for final response generation: {final_prompt_template}")
             return chain.stream({}, config={"callbacks":[self.cb_handler]})
         except ValueError as e:
             logger.warning(f"Failed to get response because {e}")
@@ -244,8 +270,8 @@ class QueryDecompositionChatbot(BaseExample):
         self.kwargs = kwargs
 
         tools = [
-            Tool(name="Search tool", func=self.search, description="Searches for the answer from a given context."),
-            Tool(name="Math tool", func=self.math, description="Performs mathematical calculations."),
+            Tool(name="Search", func=self.search, description="The Search Tool is a powerful querying system that quickly finds and retrieves relevant answers from a given context, providing accurate and precise information to meet your search needs."),
+            Tool(name="Math", func=self.math, description="The Math Tool is a versatile calculator that performs essential mathematical operations, including multiplication, addition, subtraction, division, and greater than or less than comparisons, providing accurate results with ease."),
         ]
         tool_names = [tool.name for tool in tools]
 
@@ -295,7 +321,7 @@ class QueryDecompositionChatbot(BaseExample):
         # Currently it's raising an error during invoke.
         retriever = vs.as_retriever()
         result = retriever.get_relevant_documents(query, callbacks=[self.cb_handler])
-        logger.info(result)
+        logger.debug(result)
         return [hit.page_content for hit in result]
 
 
@@ -332,16 +358,28 @@ class QueryDecompositionChatbot(BaseExample):
         """
         Places an LLM call to answer mathematical subquestions which do not require search
         """
+        try:
+            prompt = f"{math_tool_prompt}\nQuestion: {sub_questions[0]}"
+            prompt += f"Context:\n{fetch_context(self.ledger)}\n"
+            logger.info(f"Performing Math LLM call with prompt: {prompt}")
+            llm = get_llm(**self.kwargs)
+            sub_answer = llm([HumanMessage(content=prompt)])
+            sub_answer = json.loads(sub_answer.content)
+            final_sub_answer= str(sub_answer['variable1'])+sub_answer['operation']+str(sub_answer['variable2'])
+            final_sub_answer=final_sub_answer+'='+str(eval(final_sub_answer))
+        except:
+            prompt = "Solve this mathematical question:\nQuestion: " + sub_questions[0]
+            prompt += f"Context:\n{fetch_context(self.ledger)}\n"
+            prompt += "Be concise and only return the answer."
 
-        prompt = "Solve this mathematical question:\nQuestion: " + sub_questions[0]
-        prompt += f"Context:\n{fetch_context(self.ledger)}\n"
-        prompt += "Be concise and only return the answer."
+            logger.info(f"Performing Math LLM call with prompt: {prompt}")
+            llm = get_llm(**self.kwargs)
+            sub_answer = llm([HumanMessage(content=prompt)])
+            final_sub_answer = sub_answer.content
 
-        logger.info(f"Performing Math LLM call with prompt: {prompt}")
-        llm = get_llm(**self.kwargs)
-        sub_answer = llm([HumanMessage(content=prompt)])
+
         self.ledger.question_trace.append(sub_questions[0])
-        self.ledger.answer_trace.append(sub_answer.content)
+        self.ledger.answer_trace.append(final_sub_answer)
 
         self.ledger.done = True
 

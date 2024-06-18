@@ -53,11 +53,11 @@ This example uses models from the NVIDIA API Catalog.
   - Multi-GPU
   - TRT-LLM
   - Model Location
-  - Triton
+  - NIM for LLMs
   - Vector Database
 
-* - ai-llama2-70b
-  - ai-embed-qa-4
+* - meta/llama3-8b-instruct
+  - snowflake-arctic-embed-l
   - LangChain
   - QA chatbot
   - NO
@@ -90,6 +90,14 @@ The following figure shows the sample topology:
 - Install Docker Engine and Docker Compose.
   Refer to the instructions for [Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
+- Login to Nvidia's docker registry. Please refer to [instructions](https://docs.nvidia.com/ngc/gpu-cloud/ngc-overview/index.html) to create account and generate NGC API key. This is needed for pulling in the secure base container used by all the examples.
+
+  ```console
+  $ docker login nvcr.io
+  Username: $oauthtoken
+  Password: <ngc-api-key>
+  ```
+
 - Optional: Enable NVIDIA Riva automatic speech recognition (ASR) and text to speech (TTS).
 
   - To launch a Riva server locally, refer to the [Riva Quick Start Guide](https://docs.nvidia.com/deeplearning/riva/user-guide/docs/quick-start-guide.html).
@@ -108,9 +116,9 @@ The following figure shows the sample topology:
     export RIVA_FUNCTION_ID="<riva-function-id>"
     ```
 
-## Get an API Key for the Llama 2 70B API Endpoint
+## Get an API Key for the Llama 3 8B API Endpoint
 
-```{include} query-decomposition.md
+```{include} multimodal-data.md
 :start-after: api-key-start
 :end-before: api-key-end
 ```
@@ -148,7 +156,11 @@ The following figure shows the sample topology:
 1. Start the Milvus vector database:
 
    ```console
-   $ docker compose --env-file deploy/compose/compose.env -f deploy/compose/docker-compose-vectordb.yaml up -d milvus
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/docker-compose-vectordb.yaml \
+       --profile llm-embedding \
+       up -d milvus
    ```
 
    *Example Output*
@@ -184,4 +196,4 @@ The following figure shows the sample topology:
 - Enable the **Use knowledge base** checkbox when you submit a question.
 - [](./vector-database.md)
 - Stop the containers by running `docker compose -f deploy/compose/rag-app-multiturn-chatbot.yaml down` and
-  `docker compose -f deploy/compose/docker-compose-vectordb.yaml down`.
+  `docker compose -f deploy/compose/docker-compose-vectordb.yaml --profile llm-embedding down`.

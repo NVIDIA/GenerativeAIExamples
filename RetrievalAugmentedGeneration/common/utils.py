@@ -52,13 +52,15 @@ try:
         from llama_index.core.indices.base_retriever import BaseRetriever
         from llama_index.core.indices.query.schema import QueryBundle
         from llama_index.core.schema import NodeWithScore
+    from RetrievalAugmentedGeneration.common.tracing import llama_index_cb_handler
+    from llama_index.core.callbacks import CallbackManager
 except Exception as e:
     logger.error(f"Llamaindex import failed with error: {e}")
 
 try:
     from langchain.text_splitter import SentenceTransformersTokenTextSplitter
-    from langchain.embeddings import HuggingFaceEmbeddings
-    from langchain.vectorstores import FAISS
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_community.vectorstores import FAISS
 except Exception as e:
     logger.error(f"Langchain import failed with error: {e}")
 
@@ -87,8 +89,6 @@ except Exception as e:
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain.llms.base import LLM
-from integrations.langchain.llms.triton_trt_llm import TensorRTLLM
-from integrations.langchain.embeddings.nemo_embed import NemoEmbeddings
 from RetrievalAugmentedGeneration.common import configuration
 
 if TYPE_CHECKING:
@@ -138,7 +138,8 @@ def set_service_context(**kwargs) -> None:
     llm = LangChainLLM(get_llm(**kwargs))
     embedding = LangchainEmbedding(get_embedding_model())
     service_context = ServiceContext.from_defaults(
-        llm=llm, embed_model=embedding
+        llm=llm, embed_model=embedding,
+        callback_manager=CallbackManager([llama_index_cb_handler])
     )
     set_global_service_context(service_context)
 
@@ -266,29 +267,17 @@ def get_llm(**kwargs) -> LLM | SimpleChatModel:
     settings = get_config()
 
     logger.info(f"Using {settings.llm.model_engine} as model engine for llm. Model name: {settings.llm.model_name}")
-    if settings.llm.model_engine == "triton-trt-llm":
-        trtllm = TensorRTLLM(  # type: ignore
-            server_url=settings.llm.server_url,
-            model_name=settings.llm.model_name,
-            temperature = kwargs.get('temperature', None),
-            top_p = kwargs.get('top_p', None),
-            tokens = kwargs.get('max_tokens', None)
-        )
-        unused_params = [key for key in kwargs.keys() if key not in ['temperature', 'top_p', 'max_tokens', 'stream']]
-        if unused_params:
-            logger.warning(f"The following parameters from kwargs are not supported: {unused_params} for {settings.llm.model_engine}")
-        return trtllm
-    elif settings.llm.model_engine == "nvidia-ai-endpoints":
+    if settings.llm.model_engine == "nvidia-ai-endpoints":
         unused_params = [key for key in kwargs.keys() if key not in ['temperature', 'top_p', 'max_tokens']]
         if unused_params:
             logger.warning(f"The following parameters from kwargs are not supported: {unused_params} for {settings.llm.model_engine}")
         if settings.llm.server_url:
             logger.info(f"Using llm model {settings.llm.model_name} hosted at {settings.llm.server_url}")
-            return ChatNVIDIA(model=settings.llm.model_name,
+            return ChatNVIDIA(base_url=f"http://{settings.llm.server_url}/v1",
+                            model=settings.llm.model_name,
                             temperature = kwargs.get('temperature', None),
                             top_p = kwargs.get('top_p', None),
-                            max_tokens = kwargs.get('max_tokens', None)
-                    ).mode("nim", base_url=f"http://{settings.llm.server_url}/v1")
+                            max_tokens = kwargs.get('max_tokens', None))
         else:
             logger.info(f"Using llm model {settings.llm.model_name} from api catalog")
             return ChatNVIDIA(model=settings.llm.model_name,
@@ -296,7 +285,7 @@ def get_llm(**kwargs) -> LLM | SimpleChatModel:
                             top_p = kwargs.get('top_p', None),
                             max_tokens = kwargs.get('max_tokens', None))
     else:
-        raise RuntimeError("Unable to find any supported Large Language Model server. Supported engines are triton-trt-llm, nvidia-ai-endpoints.")
+        raise RuntimeError("Unable to find any supported Large Language Model server. Supported engine name is nvidia-ai-endpoints.")
 
 
 @lru_cache
@@ -321,18 +310,12 @@ def get_embedding_model() -> Embeddings:
     elif settings.embeddings.model_engine == "nvidia-ai-endpoints":
         if settings.embeddings.server_url:
             logger.info(f"Using embedding model {settings.embeddings.model_name} hosted at {settings.embeddings.server_url}")
-            return NVIDIAEmbeddings(model=settings.embeddings.model_name).mode("nim", base_url=f"http://{settings.embeddings.server_url}/v1")
+            return NVIDIAEmbeddings(base_url=f"http://{settings.embeddings.server_url}/v1", model=settings.embeddings.model_name, truncate="END")
         else:
             logger.info(f"Using embedding model {settings.embeddings.model_name} hosted at api catalog")
-            return NVIDIAEmbeddings(model=settings.embeddings.model_name)
-    elif settings.embeddings.model_engine == "nemo-embed":
-        nemo_embed = NemoEmbeddings(
-            server_url=f"http://{settings.embeddings.server_url}/v1/embeddings",
-            model_name=settings.embeddings.model_name,
-        )
-        return nemo_embed
+            return NVIDIAEmbeddings(model=settings.embeddings.model_name, truncate="END")
     else:
-        raise RuntimeError("Unable to find any supported embedding model. Supported engine is huggingface.")
+        raise RuntimeError("Unable to find any supported embedding model. Supported engine is huggingface and nvidia-ai-endpoints.")
 
 
 def get_text_splitter() -> SentenceTransformersTokenTextSplitter:
@@ -376,7 +359,7 @@ def get_docs_vectorstore_langchain(vectorstore: VectorStore) -> List[str]:
         logger.error(f"Error occurred while retrieving documents: {e}")
     return []
 
-def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str]):
+def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str]) -> bool:
     """Delete documents from the vector index implemented in LangChain."""
 
     settings = get_config()
@@ -387,13 +370,21 @@ def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str
             in_memory_docstore = vectorstore.docstore._dict
             for filename in filenames:
                 ids_list = [doc_id for doc_id, doc_data in in_memory_docstore.items() if extract_filename(doc_data.metadata) == filename]
+                if not len(ids_list):
+                    logger.info("File does not exist in the vectorstore")
+                    return False
                 vectorstore.delete(ids_list)
                 logger.info(f"Deleted documents with filenames {filename}")
         elif settings.vector_store.name == "pgvector":
             with vectorstore._make_session() as session:
-                embedding_doc_store = session.query(vectorstore.EmbeddingStore.custom_id, vectorstore.EmbeddingStore.document, vectorstore.EmbeddingStore.cmetadata).all()
+                collection = vectorstore.get_collection(session)
+                filter_by = vectorstore.EmbeddingStore.collection_id == collection.uuid
+                embedding_doc_store = session.query(vectorstore.EmbeddingStore.custom_id, vectorstore.EmbeddingStore.document, vectorstore.EmbeddingStore.cmetadata).filter(filter_by).all()
             for filename in filenames:
                 ids_list = [doc_id for doc_id, doc_data, metadata in embedding_doc_store if extract_filename(metadata) == filename]
+                if not len(ids_list):
+                    logger.info("File does not exist in the vectorstore")
+                    return False
                 vectorstore.delete(ids_list)
                 logger.info(f"Deleted documents with filenames {filename}")
         elif settings.vector_store.name == "milvus":
@@ -401,10 +392,15 @@ def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str
             milvus_data = vectorstore.col.query(expr="pk >= 0", output_fields=["pk","source", "text"])
             for filename in filenames:
                 ids_list = [metadata["pk"] for metadata in milvus_data if extract_filename(metadata) == filename]
+                if not len(ids_list):
+                    logger.info("File does not exist in the vectorstore")
+                    return False
                 vectorstore.col.delete(f"pk in {ids_list}")
                 logger.info(f"Deleted documents with filenames {filename}")
+                return True
     except Exception as e:
         logger.error(f"Error occurred while deleting documents: {e}")
+        return False
 
 
 def get_docs_vectorstore_llamaindex() -> List[str]:
@@ -440,7 +436,7 @@ def get_docs_vectorstore_llamaindex() -> List[str]:
         return []
 
 
-def del_docs_vectorstore_llamaindex(filenames: List[str]):
+def del_docs_vectorstore_llamaindex(filenames: List[str]) -> bool:
     """Delete documents from the vector index implemented in LlamaIndex."""
 
     settings = get_config()
@@ -460,10 +456,13 @@ def del_docs_vectorstore_llamaindex(filenames: List[str]):
                 query_res = client.query(collection_name=collection_name, filter=f"filename == '{filename}'",
                                         output_fields=["id"])
                 if not query_res:
-                    return
+                    logger.info("File does not exist in the vectorstore")
+                    return False
 
                 ids = [entry.get('id') for entry in query_res]
                 res = client.delete(collection_name=collection_name, filter=f"id in {str(ids)}")
                 logger.info(f"Deleted documents with filenames {filename}")
+                return True
     except Exception as e:
         logger.error(f"Error occurred while deleting documents: {e}")
+        return False

@@ -153,7 +153,10 @@ class OpenTelemetryCallbackHandler(BaseCallbackHandler):
             span = self._event_map[event_id].span
             span.set_attribute("event_id", event_id)
             if payload is not None:
-                if event_type is CBEventType.QUERY:
+                if CBEventType.EXCEPTION in payload:
+                    span.set_status(Status(StatusCode.ERROR))
+                    span.record_exception(payload[EventPayload.EXCEPTION])
+                elif event_type is CBEventType.QUERY:
                     pass
                 elif event_type is CBEventType.RETRIEVE:
                     for i, node_with_score in enumerate(payload[EventPayload.NODES]):
@@ -163,8 +166,8 @@ class OpenTelemetryCallbackHandler(BaseCallbackHandler):
                         span.set_attribute(f"query.node.{i}.score", score)
                         span.set_attribute(f"query.node.{i}.text", node.text)
                 elif event_type is CBEventType.EMBEDDING:
-                    texts = payload[EventPayload.CHUNKS]
-                    vectors = payload[EventPayload.EMBEDDINGS]
+                    texts = payload.get(EventPayload.CHUNKS, [])
+                    vectors = payload.get(EventPayload.EMBEDDINGS, [])
                     total_chunk_tokens = 0
                     for text, vector in zip(texts, vectors) :
                         span.set_attribute(f"embedding_text_{texts.index(text)}", text) 
@@ -188,9 +191,7 @@ class OpenTelemetryCallbackHandler(BaseCallbackHandler):
                     span.set_attribute("total_tokens_used", token_counts.total_token_count)
                 elif event_type is CBEventType.NODE_PARSING:
                     span.set_attribute("node_parsing.num_nodes", len(payload[EventPayload.NODES]))
-                elif event_type is CBEventType.EXCEPTION:
-                    span.set_status(Status(StatusCode.ERROR))
-                    span.record_exception(payload[EventPayload.EXCEPTION])
+                    
             if self._event_map[event_id].thread_identity == threading.get_ident():
                 detach(self._event_map[event_id].token)
             self._event_map.pop(event_id, None)

@@ -27,7 +27,7 @@ backlinks: none
 
 ## Prerequisites
 
-- You deployed one of the samples, such as [](./api-catalog.md) or [](./local-gpu.md).
+- You deployed one of the samples, such as [](./api-catalog.md).
 
 ## Access the Web Application
 

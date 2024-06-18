@@ -90,8 +90,10 @@ class SimpleExample(BaseExample):
                 ids_list = [doc_id for doc_id, doc_data in in_memory_docstore.items() if extract_filename(doc_data.metadata) == filename]
                 if vector_store.delete(ids_list):
                     logger.info(f"Deleted document with file name: {filename}")
+                    return True
                 else:
                     logger.error(f"Failed to delete document: {filename}")
+                    return False
 
         except Exception as e:
             logger.error(f"Vector store not initialized. Error details: {e}")

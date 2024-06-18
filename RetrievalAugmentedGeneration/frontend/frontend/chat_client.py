@@ -34,7 +34,7 @@ class ChatClient:
         """Initialize the client."""
         self.server_url = server_url
         self._model_name = model_name
-        self.default_model = "llama2-7B-chat"
+        self.default_model = "meta/llama3-70b-instruct"
 
     @property
     def model_name(self) -> str:
@@ -83,13 +83,6 @@ class ChatClient:
                         }
                     ],
                     "use_knowledge_base": use_knowledge_base,
-                    "temperature": 0.2,
-                    "top_p": 0.7,
-                    "max_tokens": num_tokens,
-                    "seed": 42,
-                    "bad": ["string"],
-                    "stop": ["string"],
-                    "stream": True
         }
         url = f"{self.server_url}/generate"
         _LOGGER.debug(

@@ -203,7 +203,7 @@ You can use different model API endpoints with the same API key.
    $ docker compose --env-file deploy/compose/compose.env -f deploy/compose/rag-app-text-chatbot.yaml build
    ```
 
-4. Start the milvus container:
+4. Start the Milvus container:
 
    ```console
    $ docker compose -f deploy/compose/docker-compose-vectordb.yaml up -d milvus
@@ -214,7 +214,8 @@ You can use different model API endpoints with the same API key.
    ```console
    $ docker compose --env-file deploy/compose/compose.env -f deploy/compose/rag-app-text-chatbot.yaml up -d
    ```
-   NVIDIA Triton Inference Server can require 5 minutes to start. The `-d` flag starts the services in the background.
+
+   The inference server can require 5 minutes to start. The `-d` flag starts the services in the background.
 
    *Example Output*
 

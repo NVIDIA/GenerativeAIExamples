@@ -1,0 +1,7 @@
+langchain==0.2.1
+langchain-community==0.2.1
+sentence-transformers==2.2.2
+jupyterlab==4.0.8
+langchain-nvidia-ai-endpoints==0.0.20
+gradio==4.16.0
+faiss-gpu==1.7.2

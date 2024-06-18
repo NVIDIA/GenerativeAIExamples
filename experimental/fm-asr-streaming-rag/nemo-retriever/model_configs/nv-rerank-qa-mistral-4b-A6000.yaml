@@ -1,0 +1,17 @@
+models:
+  - name: "nv-rerank-qa-mistral-4b:1"
+    pytorch_model_name_or_path: "/models/nv-rerank-qa-mistral-4b_v1"
+    adapter: "ranking"
+    tokenizer:
+      num_instances: 1
+      script: "tools.triton.tokenizers:RerankingTokenizer"
+      max_queue_delay_microseconds: 100
+      parameters:
+        template_two_param: "question:{query} \n \n passage:{passage}"
+        max_seq_length: "512"
+    tensorrt:
+      num_instances: 1
+      max_shapes: [64, 512]
+      max_queue_delay_microseconds: 100
+      dtype: float16
+      override_layernorm_precision_to_fp32: true
