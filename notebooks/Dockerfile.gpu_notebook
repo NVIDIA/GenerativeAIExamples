@@ -1,5 +1,5 @@
 # Use a base image with Python
-FROM nvcr.io/nvidia/pytorch:23.05-py3 
+FROM nvcr.io/nvidia/pytorch:23.05-py3
 
 # Set working directory
 WORKDIR /app
@@ -13,10 +13,6 @@ COPY ./notebooks/dataset.zip .
 COPY ./notebooks/toy_data/* notebooks/toy_data/
 
 COPY ./notebooks/imgs/* notebooks/imgs/
-
-COPY ./integrations/langchain/llms/triton_trt_llm.py .
-
-COPY ./integrations/langchain/llms/nv_aiplay.py .
 
 COPY ./notebooks/requirements.txt .
 

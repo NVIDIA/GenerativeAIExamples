@@ -31,60 +31,49 @@ The Jupyter notebooks provide guidance to building knowledge-augmented chat bots
 
 The following Jupyter notebooks are provided with the AI workflow for the default canonical RAG example:
 
-- [LLM Streaming Client](../../notebooks/01-llm-streaming-client.ipynb)
-
-  This notebook demonstrates how to use a client to stream responses from an LLM deployed to NVIDIA Triton Inference Server with NVIDIA TensorRT-LLM (TRT-LLM). This deployment format optimizes the model for low latency and high throughput inference.
-
-- [Document Question-Answering with LangChain](../../notebooks/02_langchain_simple.ipynb)
-
-  This notebook demonstrates how to use LangChain to build a chat bot that references a custom knowledge base. LangChain provides a simple framework for connecting LLMs to your own data sources. It shows how to integrate a TensorRT-LLM to LangChain using a custom wrapper.
-
-- [Document Question-Answering with LlamaIndex](../../notebooks/03_llama_index_simple.ipynb)
-
-  This notebook demonstrates how to use LlamaIndex to build a chat bot that references a custom knowledge base. It contains the same functionality as the preceding notebook, but uses some LlamaIndex components instead of LangChain components. It also shows how the two frameworks can be used together.
-
-- [Advanced Document Question-Answering with LlamaIndex](../../notebooks/04_llamaindex_hier_node_parser.ipynb)
-
-  This notebook demonstrates how to use LlamaIndex to build a more complex retrieval for a chat bot. The retrieval method shown in this notebook works well for code documentation. The method retrieves more contiguous document blocks that preserve both code snippets and explanations of code.
-
-- [Upload Press Releases and Interact with REST FastAPI Server](../../notebooks/05_dataloader.ipynb)
+- [Upload Press Releases and Interact with REST FastAPI Server](../../notebooks/01_dataloader.ipynb)
 
   This notebook demonstrates how to use the REST FastAPI server to upload the knowledge base and then ask a question without and with the knowledge base.
 
-- [NVIDIA AI Endpoint Integration with LangChain](../../notebooks/07_Option(1)_NVIDIA_AI_endpoint_simple.ipynb)
+- [NVIDIA AI Endpoint Integration with LangChain](../../notebooks/02_Option(1)_NVIDIA_AI_endpoint_simple.ipynb)
 
   This notebook demonstrates how to build a Retrieval Augmented Generation (RAG) example using the NVIDIA AI endpoint integrated with Langchain, with FAISS as the vector store.
 
-- [RAG with LangChain and local LLM model](../../notebooks/07_Option(2)_minimalistic_RAG_with_langchain_local_HF_LLM.ipynb)
+- [RAG with LangChain and local LLM model](../../notebooks/02_Option(2)_minimalistic_RAG_with_langchain_local_HF_LLM.ipynb)
 
   This notebook demonstrates how to plug in a local LLM from Hugging Face Hub and build a simple RAG app using LangChain.
 
-- [NVIDIA AI Endpoint with LlamaIndex and LangChain](../../notebooks/08_Option(1)_llama_index_with_NVIDIA_AI_endpoint.ipynb)
+- [NVIDIA AI Endpoint with LlamaIndex and LangChain](../../notebooks/03_Option(1)_llama_index_with_NVIDIA_AI_endpoint.ipynb)
 
-  This notebook demonstrates how to plug in an NVIDIA AI Endpoint mixtral_8x7b and embedding nvolveqa_40k, bind these into LlamaIndex with these customizations.
+  This notebook demonstrates how to plug in an NVIDIA AI Endpoint ai-mixtral-8x7b-instruct and embedding ai-embed-qa-4, bind these into LlamaIndex with these customizations.
 
-- [Locally deployed model from Hugging Face integration with LlamaIndex and LangChain](../../notebooks/08_Option(2)_llama_index_with_HF_local_LLM.ipynb)
+- [Locally deployed model from Hugging Face integration with LlamaIndex and LangChain](../../notebooks/03_Option(2)_llama_index_with_HF_local_LLM.ipynb)
 
   This notebook demonstrates how to plug in a local LLM from Hugging Face Hub Llama-2-13b-chat-hf and all-MiniLM-L6-v2 embedding from Hugging Face, bind these to into LlamaIndex with these customizations.
 
-- [LangChain agent with tools plug in multiple models from  NVIDIA AI Endpoints](../../notebooks/09_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.ipynb)
+- [LangChain agent with tools plug in multiple models from  NVIDIA AI Endpoints](../../notebooks/04_Agent_use_tools_leveraging_NVIDIA_AI_endpoints.ipynb)
 
-  This notebook demonstrates how to use multiple NVIDIA AI Endpoint models such as mixtral_8x7b, Deplot, and Neva.
+  This notebook demonstrates how to use multiple NVIDIA AI Endpoint models such as ai-mixtral-8x7b-instruct, Deplot, and Neva.
 
-- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/10_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.ipynb)
+- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/05_RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.ipynb)
 
   This notebook demonstrates how to build a RAG using NVIDIA AI Endpoints for LangChain.
   The notebook creates a vector store by downloading web pages and generating their embeddings using FAISS.
   The notebook shows two different chat chains for querying the vector store.
 
-- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/11_LangGraph_HandlingAgent_IntermediateSteps.ipynb)
+- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/06_LangGraph_HandlingAgent_IntermediateSteps.ipynb)
 
   This notebook guides you through creating a basic agent executor using LangGraph. We demonstrate how to handle the logic of the intermediate steps from the agent leveraging different provided tools within langGraph.
 
 
-- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/12_Chat_wtih_nvidia_financial_reports.ipynb)
+- [LangChain with HTML documents and NVIDIA AI Endpoints](../../notebooks/07_Chat_with_nvidia_financial_reports.ipynb)
 
-  In this notebook, we are going to use milvus as vectorstore, the mixtral_8x7b as LLM and ai-embed-qa-4 embedding provided by NVIDIA_AI_Endpoint as LLM and embedding model, and build a simply RAG example for chatting with NVIDIA Financial Reports.
+  In this notebook, we are going to use milvus as vectorstore, the ai-mixtral-8x7b-instruct as LLM and ai-embed-qa-4 embedding provided by NVIDIA_AI_Endpoint as LLM and embedding model, and build a simply RAG example for chatting with NVIDIA Financial Reports.
+
+- [RAG with locally deployed models using NIMS](../../notebooks/08_RAG_Langchain_with_Local_NIM.ipynb)
+
+  In this notebook we demonstrate how to build a RAG using [NVIDIA Inference Microservices (NIM)](https://build.nvidia.com/explore/discover). We locally host a `Llama3-8b-instruct` using the NIM LLM container and deploy it using [ NVIDIA AI Endpoints for LangChain](https://python.langchain.com/docs/integrations/chat/nvidia_ai_endpoints/).
+  In order to run this notebook in a virtual environment, you need to launch the NIM Docker container in the background outside of the notebook environment prior to running the LangChain code in the notebook cells. Run the commands in the first 3 cells from a terminal then begin with the 4th cell (curl inference command) within the notebook environment.
 
 
 ## Running JupyterLab Server Individually

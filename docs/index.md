@@ -43,100 +43,66 @@ The chat bot also supports uploading documents to create a knowledge base.
      - | Embedding
      - | Framework
      - | Description
-     - | Multi-GPU
-     - | TensorRT-LLM
      - | Model
        | Location
-     - | Triton
-       | Inference
-       | Server
+     - | NIM
+       | for
+       | LLMs
      - | Vector
        | Database
 
-   * - ai-mixtral-8x7b-instruct
-     - ai-embed-qa-4
+   * - ai-llama3-70b
+     - snowflake-arctic-embed-l
      - LangChain
      - :doc:`api-catalog`
-     - NO
-     - NO
      - API Catalog
-     - NO
+     - No
      - Milvus or pgvector
 
-   * - llama-2
-     - UAE-Large-V1
-     - LlamaIndex
-     - :doc:`local-gpu`
-     - NO
-     - YES
-     - Local Model
-     - YES
-     - Milvus or pgvector
-
-   * - llama-2
-     - UAE-Large-V1
-     - LlamaIndex
-     - :doc:`multi-gpu`
-     - YES
-     - YES
-     - Local Model
-     - YES
-     - Milvus or pgvector
-
-   * - ai-llama2-70b
-     - ai-embed-qa-4
+   * - ai-llama3-70b
+     - snowflake-arctic-embed-l
      - LangChain
      - :doc:`query-decomposition`
-     - NO
-     - NO
      - API Catalog
-     - NO
+     - No
      - Milvus or pgvector
 
-   * - llama2-7b
-     - UAE-Large-V1
-     - LlamaIndex
-     - :doc:`quantized-llm-model`
-     - NO
-     - YES
-     - Local Model
-     - YES
-     - Milvus or pgvector
+   * - meta/llama3-70b-instruct for response generation
 
-   * - ai-llama3-70b for response generation
-
-       ai-llama3-70b for PandasAI
+       meta/llama3-70b-instruct for PandasAI
      - Not Applicable
      - PandasAI
      - :doc:`structured-data`
-     - NO
-     - NO
      - API Catalog
-     - NO
+     - No
      - Not Applicable
 
-   * - ai-mixtral-8x7b-instruct for response generation
+   * - ai-llama3-8b for response generation
 
        ai-google-Deplot for graph to text conversion
 
        ai-Neva-22B for image to text conversion
-     - ai-embed-qa-4
+     - snowflake-arctic-embed-l
      - Custom Python
      - :doc:`multimodal-data`
-     - NO
-     - NO
      - API Catalog
-     - NO
+     - No
      - Milvus or pgvector
 
-   * - ai-llama2-70b
-     - ai-embed-qa-4
+   * - ai-llama3-8b
+     - snowflake-arctic-embed-l
      - LangChain
      - :doc:`multi-turn`
-     - NO
-     - NO
      - API Catalog
-     - NO
+     - No
+     - Milvus or pgvector
+
+   * - meta-llama3-8b-instruct
+     - nv-embed-qa:4
+     - LangChain
+     - :doc:`nim-llms`
+     - Local LLM
+     - Yes
      - Milvus or pgvector
 
 ```
@@ -145,7 +111,7 @@ The chat bot also supports uploading documents to create a knowledge base.
 
 ```{include} ../README.md
 :start-after: '## Open Source Integrations'
-:end-before: '## Support, Feedback, and Contributing'
+:end-before: '## Related NVIDIA Projects'
 ```
 
 ```{toctree}
@@ -156,10 +122,7 @@ The chat bot also supports uploading documents to create a knowledge base.
 About the RAG Pipelines <self>
 support-matrix
 API Catalog Models <api-catalog>
-Local GPUs <local-gpu>
-Multi-GPU for Inference <multi-gpu>
 Query Decomposition <query-decomposition>
-Quantized Model <quantized-llm-model>
 Structured Data <structured-data>
 Multimodal Data <multimodal-data>
 Multi-turn <multi-turn>
@@ -193,7 +156,6 @@ notebooks/*
 :hidden:
 
 architecture
-llm-inference-server
 frontend
 jupyter-server
 chain-server

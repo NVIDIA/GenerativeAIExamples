@@ -1,0 +1,27 @@
+services:
+
+  jupyter-server:
+    container_name: notebook-server-dev-rag
+    image: notebook-server-dev-rag:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.notebook
+    ports:
+    - "8888:8888"
+    - "7860:7860"
+    expose:
+    - "8888"
+    - "7860"
+    env_file:
+    - compose.env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+networks:
+  default:
+    name: nvidia-llm

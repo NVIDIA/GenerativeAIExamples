@@ -20,11 +20,14 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from langchain_community.llms import HuggingFacePipeline
 import yaml
+import os
 
+NVIDIA_API_KEY = yaml.safe_load(open("config.yaml"))['nvidia_api_key']
+os.environ['NVIDIA_API_KEY'] = NVIDIA_API_KEY
 
 class NvidiaLLM:
     def __init__(self, model_name):
-        self.llm = ChatNVIDIA(model=model_name)
+        self.llm = ChatNVIDIA(model=model_name,  max_tokens = 4000)
 
 class NimLLM:
     def __init__(self, model_name):

@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+logger = logging.getLogger(__name__)
+
 from RetrievalAugmentedGeneration.example.llm.llm import create_llm
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -23,10 +26,11 @@ class LLMClient:
     def __init__(self, model_name="mixtral_8x7b", model_type="NVIDIA", is_response_generator=False, cb_handler=BaseCallbackHandler, **kwargs):
         self.llm = create_llm(model_name, model_type, is_response_generator, **kwargs)
         self.cb_handler = cb_handler
-        
+
     def chat_with_prompt(self, system_prompt, prompt):
         langchain_prompt = ChatPromptTemplate.from_messages([("system", system_prompt), ("user", "{input}")])
         chain = langchain_prompt | self.llm | StrOutputParser()
+        logger.info(f"Prompt used for response generation: {langchain_prompt.format(input=prompt)}")
         response = chain.stream({"input": prompt}, config={"callbacks": [self.cb_handler]})
         return response
 

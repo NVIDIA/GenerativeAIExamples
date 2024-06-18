@@ -147,7 +147,7 @@ if "vector_client" not in st.session_state or st.session_state.vector_client.col
         st.stop()
 # init the embedder
 if "query_embedder" not in st.session_state:
-    st.session_state.query_embedder = NVIDIAEmbedders(name="nvolveqa_40k", type="query")
+    st.session_state.query_embedder = NVIDIAEmbedders(name="ai-embed-qa-4", type="query")
 # init the retriever
 if "retriever" not in st.session_state:
     st.session_state.retriever = Retriever(embedder=st.session_state.query_embedder , vector_client=st.session_state.vector_client)

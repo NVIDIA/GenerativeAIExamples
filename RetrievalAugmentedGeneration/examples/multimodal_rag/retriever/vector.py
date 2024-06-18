@@ -155,7 +155,7 @@ class MilvusVectorClient(VectorClient):
         List all filenames in the collection.
         """
         # Assuming 'filename' is a field in the metadata
-
+        
         expr = "metadata['filename'] != ''"  # Expression to match all entities with a non-empty filename
         entities = self.vector_db.query(expr, output_fields=["metadata"])
         filenames = list(set([entity['metadata']['filename'] for entity in entities]))
@@ -169,4 +169,4 @@ class MilvusVectorClient(VectorClient):
         expr = f"metadata['filename'] == '{filename}'"
         self.vector_db.delete(expr)
         # Load the collection to make the deletion take effect
-        self.vector_db.load()
+        self.vector_db.load()  

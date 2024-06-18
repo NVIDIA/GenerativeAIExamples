@@ -31,6 +31,15 @@ NVIDIA NIM for LLMs provides the enterprise-ready approach for deploying large l
 
 If you are approved for [early access to NVIDIA NeMo Microservices](https://developer.nvidia.com/nemo-microservices), you can run the examples with NIM for LLMs.
 
+The following figure shows the sample topology:
+
+- The sample chat bot web application communicates with the chain server.
+  The chain server sends inference requests to a local NVIDIA NIM for LLMs microservice.
+- Optionally, you can deploy NVIDIA Riva. Riva can use automatic speech recognition to transcribe
+  your questions and use text-to-speech to speak the answers aloud.
+
+![Using NVIDIA NIM for LLMs.](./images/nim-llms-topology.png)
+
 
 ## Prerequisites
 
@@ -137,41 +146,39 @@ If you are approved for [early access to NVIDIA NeMo Microservices](https://deve
     ```
 
 
-## Deploy NIM for LLMs and NeMo Retriever Embedding
+## Build and Start the Containers
 
-- Deploy an LLM with NIM for LLMs, such as Llama-2-13b-chat-hf or Mixtral 8x7b Instruct.
-  Refer to the [Llama 2 70B Chat](https://docs.nvidia.com/ai-enterprise/nim-llm/latest/quickstart/llama2-70b-chat.html) quick start, or another quick start in the _NVIDIA NIM for LLMs_ documentation.
-
-- Deploy a text embedding model, such as NV-Embed-QA.
-  Refer to [Deploying Text Embedding Models](https://developer.nvidia.com/docs/nemo-microservices/embedding/source/deploy.html)
-  in the _NVIDIA NeMo Retriever Embedding_ documentation.
-
-
-## Build and Start the Chain Server and RAG Playground
+1. Create a `model-cache` directory to download and store the models
+    ```bash
+    mkdir -p model-cache
+    ```
 
 1. In the Generative AI Examples repository, edit the `deploy/compose/compose.env` file.
 
-   Add the following environment variables.
+   Add or update the following environment variables.
 
    ```bash
-   # Name of the deployed LLM model.
-   export APP_LLM_MODELNAME=<inference-model-name>
-
-   export APP_LLM_MODELENGINE=nvidia-ai-endpoints
+   # full path to the `model-cache` directory
+   # NOTE: This should be an absolute path and not relative path
+   export MODEL_DIRECTORY="/path/to/model/cache/directory/"
 
    # IP of system where llm is deployed.
-   export APP_LLM_SERVERURL="<ip-address>:<port>"
+   export APP_LLM_SERVERURL="nemollm-inference:8000"
 
    # Name of the deployed embedding model (NV-Embed-QA)
-   export APP_EMBEDDINGS_MODELNAME=<embedding-model-name>
+   export APP_EMBEDDINGS_MODELNAME="NV-Embed-QA"
 
    export APP_EMBEDDINGS_MODELENGINE=nvidia-ai-endpoints
+
    # IP of system where embedding model is deployed.
-   export APP_EMBEDDINGS_SERVERURL="<ip-address>:<port>"
+   export APP_EMBEDDINGS_SERVERURL="nemollm-embedding:9080"    # Or ranking-ms:8080 for the reranking example.
+
+   # GPU for use by Milvus
+   export VECTORSTORE_GPU_DEVICE_ID=<free-gpu-id>
    ...
    ```
 
-1. From the root of the repository, build the containers:
+1. Build the Chain Server and RAG Playground containers:
 
    ```console
    $ docker compose \
@@ -180,20 +187,10 @@ If you are approved for [early access to NVIDIA NeMo Microservices](https://deve
        build chain-server rag-playground
    ```
 
+   Avoid GPU memory errors by assigning a GPU to the Chain Server.
+   Update `device_ids` in the `chain-server` service of `deploy/compose/rag-app-text-chatbot.yaml` manifest to specify a unique GPU ID.
    You can specify a different Docker Compose file, such as `deploy/compose/rag-app-multiturn-chatbot.yaml`.
 
-1. Start the Chain Server and RAG Playground:
-
-   ```console
-   $ docker compose \
-       --env-file deploy/compose/compose.env \
-       -f deploy/compose/rag-app-text-chatbot.yaml \
-       up -d --no-deps chain-server rag-playground
-   ```
-
-   The `-d` argument starts the services in the background and the `--no-deps` argument avoids starting a second inference server.
-
-   `Note`: To avoid memory issues, deploy the chain server on a separate GPU from the LLM. Update `device_ids` in `chain-server` service of `deploy/compose/rag-app-text-chatbot.yaml` (or relevant Docker Compose file) to specify a different GPU
    ```yaml
         deploy:
           resources:
@@ -204,14 +201,45 @@ If you are approved for [early access to NVIDIA NeMo Microservices](https://deve
                   capabilities: [gpu]
    ```
 
+1. Start the Chain Server and RAG Playground:
+
+   ```console
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/rag-app-text-chatbot.yaml \
+       up -d --no-deps chain-server rag-playground
+   ```
+
+   The `-d` argument starts the services in the background and the `--no-deps` argument avoids starting the JupyterLab server.
+
+1. Start the NIM for LLMs and NeMo Embedding Microservices containers.
+
+   1. Export the `NGC_API_KEY` environment variable that the containers use to download models from NVIDIA NGC:
+
+      ```console
+      export NGC_API_KEY=M2...
+      ```
+
+      The NGC API key has a different value than the NVIDIA API key that the API catalog examples use.
+
+   1. Start the containers:
+
+      ```console
+      $ DOCKER_USER=$(id -u) docker compose \
+          --env-file deploy/compose/compose.env \
+          -f deploy/compose/docker-compose-nim-ms.yaml \
+          --profile llm-embedding \
+          up -d
+      ```
+
 1. Start the Milvus vector database:
 
    ```console
-   $ docker compose --env-file deploy/compose/compose.env -f deploy/compose/docker-compose-vectordb.yaml up -d milvus
-   ```
-   `Note`: To avoid memory issues, deploy the milvus on a separate GPU from the LLM. Update `VECTORSTORE_GPU_DEVICE_ID` in `deploy/compose/compose.env`
-   ```console
-   export VECTORSTORE_GPU_DEVICE_ID=<free-gpu-id>
+   $ docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/docker-compose-vectordb.yaml \
+       --profile llm-embedding \
+       up -d milvus
    ```
 
 1. Confirm the containers are running:
@@ -239,7 +267,17 @@ If you are approved for [early access to NVIDIA NeMo Microservices](https://deve
 1. Stop the vector database:
 
    ```console
-   $ docker compose -f deploy/compose/docker-compose-vectordb.yaml down
+   $ docker compose -f deploy/compose/docker-compose-vectordb.yaml --profile llm-embedding down
+   ```
+
+1. Stop the NIM for LLMs and NeMo Retriever Embedding Microservices:
+
+   ```console
+   $ DOCKER_USER=$(id -u) docker compose \
+       --env-file deploy/compose/compose.env \
+       -f deploy/compose/docker-compose-nim-ms.yaml \
+       --profile llm-embedding \
+       down
    ```
 
 1. Stop and remove the application containers:
@@ -251,7 +289,17 @@ If you are approved for [early access to NVIDIA NeMo Microservices](https://deve
 1. Stop the NIM for LLMs container and NeMo Retriever Embedding container by pressing Ctrl+C in each terminal.
 
 
+## Related Information
+
+- [_NVIDIA NIM for LLMs_](https://docs.nvidia.com/nim/large-language-models/latest/index.html)
+
+- [_NVIDIA NeMo Retriever Embedding_](https://developer.nvidia.com/docs/nemo-microservices/embedding/source/overview.html)
+
+- [_NVIDIA NeMo Retriever Reranking_](https://developer.nvidia.com/docs/nemo-microservices/reranking/source/overview.html)
+
+
 ## Next Steps
 
 - Use the [](./using-sample-web-application.md).
 - [](./vector-database.md)
+

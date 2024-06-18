@@ -1,9 +1,9 @@
 #!/bin/bash
-MODEL_DIR=/media/deustice/llm-models/
+MODEL_DIR=/path/to/llm/models/
 MODEL_PATH="${MODEL_DIR}/mistralai/Mistral-7B-Instruct-v0.2"            # HuggingFace Directory (git cloned)
 NIM_MODEL_PATH="${MODEL_DIR}/nim/mistralai/Mistral-7B-Instruct-v0.2"    # where i store my trt files.  this is output of model_repo_gnerator
 IMG=nvcr.io/ohlfw0olaadg/ea-participants/nemollm-inference-ms:24.02.rc3
-YAML=/home/deustice/Projects/streaming-fm-rag/nim/mistral-7b-config.yaml
+YAML=./configs/mistral-7b-config.yaml
 
 docker run --rm -it --gpus '"device=0"' \
   -v $NIM_MODEL_PATH:/model-store \

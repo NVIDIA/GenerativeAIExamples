@@ -17,8 +17,8 @@
 
 import os
 import llama_index
-from llama_index.core.callbacks.base import CallbackManager
-from langchain.callbacks.base import BaseCallbackHandler
+from langchain.callbacks.base import BaseCallbackHandler as langchain_base_cb_handler
+from llama_index.core.callbacks.simple_llm_handler import SimpleLLMHandler as llama_index_base_cb_handler
 from opentelemetry import trace, context
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
@@ -40,19 +40,22 @@ if os.environ.get("ENABLE_TRACING") == "true":
 trace.set_tracer_provider(provider)
 tracer = trace.get_tracer("chain-server")
 
+
 if os.environ.get("ENABLE_TRACING") == "true":
     # Configure Propagator used for processing trace context received by the Chain Server
     propagator = TraceContextTextMapPropagator()
 
-    # Configure Langchain OpenTelemetry callback handler
+    # Configure Langchain OpenTelemetry callback handler  
     langchain_cb_handler = langchain_otel_cb.OpenTelemetryCallbackHandler(tracer)
-
+    
     # Configure LlamaIndex OpenTelemetry callback handler
-    llama_index.global_handler = llama_index_otel_cb.OpenTelemetryCallbackHandler(tracer)
+    llama_index_cb_handler = llama_index_otel_cb.OpenTelemetryCallbackHandler(tracer)  
+    
 else:
     propagator = CompositePropagator([]) # No-op propagator
-    langchain_cb_handler = BaseCallbackHandler()
-
+    langchain_cb_handler = langchain_base_cb_handler() 
+    llama_index_cb_handler = llama_index_base_cb_handler()
+    
 set_global_textmap(propagator)
 
 # Wrapper Function to perform LlamaIndex instrumentation

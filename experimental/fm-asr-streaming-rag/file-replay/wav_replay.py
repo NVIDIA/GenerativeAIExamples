@@ -73,6 +73,12 @@ def parse_args() -> argparse.Namespace:
         help="Size in bytes of each UDP packet, plus 8 counting bytes at front"
     )
     parser.add_argument(
+        "--init-time",
+        type=float,
+        default=30,
+        help="Sleep time prior to starting, allows other containers to spin up."
+    )
+    parser.add_argument(
         "--total-time",
         type=float,
         default=0,
@@ -109,6 +115,13 @@ def fm_modulate(audio, fs_in, fs_out, deviation=100000):
     samples = cp.cos(phase_deviation) + 1j*cp.sin(phase_deviation)
     return samples.astype(cp.complex64)
 
+def send_packet(sock, data, dst_ip, dst_port):
+    try:
+        sock.sendto(data, (dst_ip, dst_port))
+        return None
+    except Exception as e:
+        return e
+
 def replay(file_name, fs_out, dst_ip, dst_port, pkt_size, chunk_time=2, total_time=0):
     file_path = os.path.join("files", file_name)
     fs_in = librosa.get_samplerate(file_path)
@@ -123,7 +136,7 @@ def replay(file_name, fs_out, dst_ip, dst_port, pkt_size, chunk_time=2, total_ti
     iq_data = samples.tobytes()
 
     if not total_time:
-        total_time = librosa.get_duration(filename=file_path)
+        total_time = librosa.get_duration(path=file_path)
 
     # Stream in file
     elapsed = 0
@@ -151,7 +164,11 @@ def replay(file_name, fs_out, dst_ip, dst_port, pkt_size, chunk_time=2, total_ti
                 # Send
                 header = struct.pack('Q', pkts_sent)
                 pkt_data = iq_data[i:i+pkt_size]
-                sock.sendto(header + pkt_data, (dst_ip, dst_port))
+                result = send_packet(sock, header + pkt_data, dst_ip, dst_port)
+                while result is ConnectionRefusedError:
+                    logger.info(f"Connection refused, sleeping 5s")
+                    time.sleep(5)
+                    result = send_packet(sock, header + pkt_data, dst_ip, dst_port)
 
                 pkts_sent += 1
                 bytes_sent += len(pkt_data)
@@ -183,7 +200,8 @@ if __name__ == "__main__":
         raise ValueError
 
     # Wait for other apps
-    time.sleep(10)
+    logger.info(f"Sleeping {args.init_time}s to allow time for SDR to spin up")
+    time.sleep(args.init_time)
     wait_for_dst(args.dst_ip, args.dst_port)
 
     # Do replay

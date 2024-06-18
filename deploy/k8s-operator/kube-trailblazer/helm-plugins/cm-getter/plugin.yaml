@@ -1,6 +1,0 @@
-name: cm-getter
-version: 0.0.1
-description: cm:// Helm getter for ConfigMap charts
-downloaders:
-- command: cm-getter
-  protocols: [cm, configmap]

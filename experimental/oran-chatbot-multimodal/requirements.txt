@@ -7,10 +7,11 @@ faiss-cpu
 fastapi==0.104.1
 gspread==6.0.0
 jupyterlab==4.0.8
-langchain==0.1.14
-langchain-community==0.0.31
-langchain-core==0.1.40
-langchain-nvidia-ai-endpoints==0.0.9
+langchain==0.2.5
+langchain-community==0.2.5
+langchain-core==0.2.7
+langchain-nvidia-ai-endpoints==0.1.1
+langchain-text-splitters==0.2.1
 llama-hub==0.0.43
 llama-index==0.9.22
 opencv-python==4.8.0.74
@@ -31,3 +32,4 @@ torch==2.1.2
 transformers==4.35.2
 unstructured[all-docs]==0.11.2
 uvicorn[standard]==0.24.0
+wheel

@@ -29,7 +29,6 @@ from RetrievalAugmentedGeneration.common.utils import get_config, get_llm, get_e
 from RetrievalAugmentedGeneration.common.tracing import langchain_instrumentation_class_wrapper
 
 logger = logging.getLogger(__name__)
-DOCS_DIR = os.path.abspath("./uploaded_files")
 vector_store_path = "vectorstore.pkl"
 document_embedder = get_embedding_model()
 text_splitter = None
@@ -49,8 +48,7 @@ class NvidiaAPICatalog(BaseExample):
             raise ValueError(f"{filename} is not a valid Text, PDF or Markdown file")
         try:
             # Load raw documents from the directory
-            # Data is copied to `DOCS_DIR` in common.server:upload_document
-            _path = os.path.join(DOCS_DIR, filename)
+            _path = filepath
             raw_documents = UnstructuredFileLoader(_path).load()
 
             if raw_documents:
@@ -92,6 +90,7 @@ class NvidiaAPICatalog(BaseExample):
         augmented_user_input = (
             "\n\nQuestion: " + query + "\n"
         )
+        logger.info(f"Prompt used for response generation: {prompt_template.format(input=augmented_user_input)}")
         return chain.stream({"input": augmented_user_input}, config={"callbacks":[self.cb_handler]})
 
     def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
@@ -127,6 +126,7 @@ class NvidiaAPICatalog(BaseExample):
                     retriever = vs.as_retriever()
                     docs = retriever.get_relevant_documents(query, callbacks=[self.cb_handler])
 
+                logger.debug(f"Retrieved documents are: {docs}")
                 if not docs:
                     logger.warning("Retrieval failed to get any relevant context")
                     return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
@@ -139,6 +139,7 @@ class NvidiaAPICatalog(BaseExample):
                     "Context: " + context + "\n\nQuestion: " + query + "\n"
                 )
 
+                logger.info(f"Prompt used for response generation: {prompt_template.format(input=augmented_user_input)}")
                 return chain.stream({"input": augmented_user_input}, config={"callbacks":[self.cb_handler]})
         except Exception as e:
             logger.warning(f"Failed to generate response due to exception {e}")

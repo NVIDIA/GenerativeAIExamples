@@ -39,6 +39,6 @@ class AppConfig(ConfigWizard):
     )
     model_name: str = configfield(
         "modelName",
-        default="llama2-7B-chat",
+        default="meta/llama3-70b-instruct",
         help_txt="The name of the hosted LLM model.",
     )

@@ -35,7 +35,7 @@ class NVIDIA(LLM):
     temperature: Optional[float] = 0.1
     max_tokens: Optional[int] = 1000
     top_p: Optional[float] = 1
-    model: Optional[str] = "llama2_13b"
+    model: Optional[str] = "meta/llama3-8b-instruct"
 
     _chat_model: "ChatNVIDIA" = None
 
@@ -44,7 +44,7 @@ class NVIDIA(LLM):
         settings = get_config()
         if settings.llm.server_url:
             logger.info(f"Using llm model {settings.llm.model_name} hosted at {settings.llm.server_url} in PandasAI")
-            self._chat_model = ChatNVIDIA(**self._default_params).mode("nim", base_url=f"http://{settings.llm.server_url}/v1")
+            self._chat_model = ChatNVIDIA(**self._default_params, base_url=f"http://{settings.llm.server_url}/v1")
         else:
             logger.info(f"Using llm model {settings.llm.model_name} from api catalog in PandasAI")
             self._chat_model = ChatNVIDIA(**self._default_params)

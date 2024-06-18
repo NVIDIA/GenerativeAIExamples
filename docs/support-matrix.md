@@ -29,9 +29,8 @@ backlinks: none
 
 Large Language Models are a heavily GPU-limited workflow.
 All LLMs are defined by the number of billions of parameters that make up their networks.
-These generative AI examples focus on the Llama 2 Chat models from Meta.
-These models are available in three different sizes: 7B, 13B, and 70B.
-All three models perform well, but the 13B model is a good balance of performance and GPU memory utilization.
+These generative AI examples focus on the Llama 3 Instruct models from Meta.
+These models are available in two sizes: 8B and 70B.
 
 ```{list-table}
 :header-rows: 1
@@ -39,20 +38,12 @@ All three models perform well, but the 13B model is a good balance of performanc
 * - Model
   - GPU Memory Requirement
 
-* - Llama-2-7B-Chat
+* - Meta Llama 3 8B Instruct
   - 30 GB
 
-* - Llama-2-13B-Chat
-  - 50 GB
-
-* - Llama-2-70B-Chat
+* - Meta Llama 3 70B Instruct
   - 320 GB
 
-* - Llama-2-7B-Chat AWQ Quantized
-  - 30 GB
-
-* - Nemotron-8B-Chat-SFT
-  - 100 GB
 ```
 
 These resources can be provided by multiple GPUs on the same machine.
@@ -80,17 +71,12 @@ The file size of the model varies according to the number of parameters in the m
 * - Model
   - Disk Storage
 
-* - Llama-2-7B-Chat
+* - Llama 3 8B Instruct
   - 30 GB
 
-* - Llama-2-13B-Chat
-  - 50 GB
+* - Llama 3 70B Instruct
+  - 140 GB
 
-* - Llama-2-70B-Chat
-  - 150 GB
-
-* - Nemotron-8B-Chat-SFT
-  - 50 GB
 ```
 
 The file space needed for the vector database varies by how many documents that you upload.

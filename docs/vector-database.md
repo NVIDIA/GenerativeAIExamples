@@ -51,7 +51,7 @@ Alternatively, you can deploy pgvector.
     The preceding example shows the default values for the database user, password, and database.
     To override the defaults, edit the values in the Docker Compose file, or set the values in the `compose.env` file.
 
-    `Note`: If you have existing setup remove `deploy/compose/volumes` directory to avoid pgvector crash. 
+    If you have existing setup remove `deploy/compose/volumes` directory to avoid pgvector crash.
 
 1. Optional: If a container for a vector database is running, stop the container:
 
@@ -86,7 +86,6 @@ Alternatively, you can deploy pgvector.
    1. Confirm the log output includes the vector database:
 
       ```output
-      INFO:example:Ingesting <file-name>.pdf in vectorDB
       INFO:RetrievalAugmentedGeneration.common.utils:Using pgvector as vector store
       INFO:RetrievalAugmentedGeneration.common.utils:Using PGVector collection: <example-name>
       ```
@@ -139,7 +138,6 @@ Alternatively, you can deploy pgvector.
    1. Confirm the log output includes the vector database:
 
       ```output
-      INFO:example:Ingesting <file-name>.pdf in vectorDB
       INFO:RetrievalAugmentedGeneration.common.utils:Using milvus as vector store
       INFO:RetrievalAugmentedGeneration.common.utils:Using milvus collection: <example-name>
       ```

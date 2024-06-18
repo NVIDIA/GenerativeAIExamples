@@ -47,3 +47,11 @@ Experimental examples are sample code and deployments for RAG pipelines that are
 
   This example shows the configuration changes to using Docker containers and local GPUs that are required
   to run the RAG-LLM pipelines in Azure Machine Learning.
+
+* [NVIDIA Developer RAG Chatbot](./rag-developer-chatbot)
+
+  This example shows how to create a developer-focused RAG chatbot using RAPIDS cuDF source code and API documentation as a representative example of a typical codebase.
+
+* [NVIDIA Event Driven RAG for CVE Analysis with NVIDIA Morpheus](./event-driven-rag-cve-analysis/)
+
+  This example demonstrates how NVIDIA Morpheus, NIMs, and RAG pipelines can be integrated to create LLM-based agent pipelines. These pipelines will be used to automatically and scalably traige and detect Common Vulnerabilities and Exposures (CVEs) in Docker containers using references to source code, dependencies, and information about the CVEs.

@@ -42,7 +42,6 @@ from RetrievalAugmentedGeneration.common.base import BaseExample
 from RetrievalAugmentedGeneration.common.tracing import langchain_instrumentation_class_wrapper
 from operator import itemgetter
 
-DOCS_DIR = os.path.abspath("./uploaded_files")
 document_embedder = get_embedding_model()
 text_splitter = None
 settings = get_config()
@@ -74,8 +73,7 @@ class MultiTurnChatbot(BaseExample):
             raise ValueError(f"{filename} is not a valid Text, PDF or Markdown file")
         try:
             # Load raw documents from the directory
-            # Data is copied to `DOCS_DIR` in common.server:upload_document
-            _path = os.path.join(DOCS_DIR, filename)
+            _path = filepath
             raw_documents = UnstructuredFileLoader(_path).load()
 
             if raw_documents:
@@ -103,23 +101,25 @@ class MultiTurnChatbot(BaseExample):
         # WAR: Disable chat history (UI consistency).
         chat_history = []
         conversation_history = [(msg.role, msg.content) for msg in chat_history]
-        user_message = [("user", settings.prompts.chat_template)]
+        system_message = [("system", settings.prompts.chat_template)]
+        user_message = [("user", "{query_str}")]
 
         # TODO: Enable this block once conversation history is enabled for llm chain
         # Checking if conversation_history is not None and not empty
         # prompt_template = ChatPromptTemplate.from_messages(
-        #     conversation_history + user_message
+        #     system_message + conversation_history + user_message
         # ) if conversation_history else ChatPromptTemplate.from_messages(
-        #     user_message
+        #     system_message + user_message
         # )
         prompt_template = ChatPromptTemplate.from_messages(
-            user_message
+            system_message + user_message
         )
 
         llm = get_llm(**kwargs)
         chain = prompt_template | llm | StrOutputParser()
 
-        return chain.stream({"context_str": "", "query_str": query}, config={"callbacks":[self.cb_handler]})
+        logger.info(f"Prompt used for response generation: {prompt_template.format(query_str=query)}")
+        return chain.stream({"query_str": query}, config={"callbacks":[self.cb_handler]})
 
     def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
         """Execute a Retrieval Augmented Generation chain using the components defined above."""
@@ -132,7 +132,7 @@ class MultiTurnChatbot(BaseExample):
         #         ("user", "{input}"),
         #     ]
         # )
-        
+
         # This is a workaround Prompt Template
         chat_prompt = ChatPromptTemplate.from_messages(
             [
@@ -171,7 +171,9 @@ class MultiTurnChatbot(BaseExample):
                     if not docs:
                         logger.warning("Retrieval failed to get any relevant context")
                         return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
-                    
+
+                    logger.debug(f"Retrieved docs are: {docs}")
+
                     chain = retrieval_chain | stream_chain
 
                     for chunk in chain.stream({"input": query}, config={"callbacks":[self.cb_handler]}):
@@ -204,6 +206,7 @@ class MultiTurnChatbot(BaseExample):
                         logger.warning("Retrieval failed to get any relevant context")
                         return iter(["No response generated from LLM, make sure your query is relavent to the ingested document."])
 
+                    logger.debug(f"Retrieved documents are: {docs}")
                     chain = retrieval_chain | stream_chain
                     for chunk in chain.stream({"input": query}, config={"callbacks":[self.cb_handler]}):
                         yield chunk

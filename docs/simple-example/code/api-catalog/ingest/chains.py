@@ -17,7 +17,6 @@ settings = get_config()
 import os
 from langchain.vectorstores import FAISS
 
-DOCS_DIR = os.path.abspath("./uploaded_files")
 vector_store_path = "vectorstore.pkl"
 vector_store = None
 # end-ingest-faiss
@@ -31,10 +30,8 @@ class SimpleExample(BaseExample):
         """Code to ingest documents"""
         try:
             global vector_store
-            # Files are copied to DOCS_DIR in the common.server:upload_document method.
-            _path = os.path.join(DOCS_DIR, filename)
 
-            raw_documents = UnstructuredFileLoader(_path).load()
+            raw_documents = UnstructuredFileLoader(data_dir).load()
             if raw_documents:
                 text_splitter = CharacterTextSplitter(chunk_size=settings.text_splitter.chunk_size,
                                                       chunk_overlap=settings.text_splitter.chunk_overlap)

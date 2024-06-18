@@ -1,14 +1,16 @@
 services:
   nemollm-inference:
     container_name: nemollm-inference-microservice
-    image: nvcr.io/ohlfw0olaadg/ea-participants/nim_llm:24.02
+    image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.0
     volumes:
-    - ${MODEL_DIRECTORY:?please update the env file and source it before running}:/model-store
-    command: nemollm_inference_ms --model ${APP_LLM_MODELNAME:-mixtral-8x7b-instruct} --openai_port 9999 --nemo_port 9998 --num_gpus=${NUM_GPU:-1}
+    - ${MODEL_DIRECTORY}:/opt/nim/.cache
+    user: ${DOCKER_USER}
     ports:
-    - "9999:9999"
+    - "8000:8000"
     expose:
-    - "9999"
+    - "8000"
+    environment:
+      NGC_API_KEY: ${NGC_API_KEY}
     shm_size: 20gb
     deploy:
       resources:
@@ -17,17 +19,20 @@ services:
             - driver: nvidia
               count: ${INFERENCE_GPU_COUNT:-all}
               capabilities: [gpu]
+    profiles: ["llm-embedding", "nemo-retriever"]
 
   nemollm-embedding:
     container_name: nemo-retriever-embedding-microservice
-    image: nvcr.io/ohlfw0olaadg/ea-participants/nemo-retriever-embedding-microservice:24.02
+    image: nvcr.io/ohlfw0olaadg/ea-participants/nemo-retriever-embedding-microservice:24.04
     volumes:
-    - ${EMBEDDING_MODEL_DIRECTORY:?please update the env file and source it before running}:/model-checkpoint-path
-    command:  bin/web -p 9080 -c /model-checkpoint-path/${EMBEDDING_MODEL_CKPT_NAME} -g model_config_templates/${EMBEDDING_MODEL_NAME}_template.yaml
+    - $MODEL_DIRECTORY:/model-checkpoint-path
+    - $MODEL_DIRECTORY/embedding/cache:/model-store/
+    command: ["/bin/bash", "-c", "[ -f /model-store/service_config.yaml ] && bin/web -m /model-store -p 9080 || bin/web -p 9080 -c /model-checkpoint-path/${EMBEDDING_MODEL_CKPT_NAME} -g model_config_templates/${APP_EMBEDDINGS_MODELNAME}_template.yaml"]
     ports:
     - "9080:9080"
     expose:
     - "9080"
+    user: ${DOCKER_USER}
     shm_size: 8gb
     deploy:
       resources:
@@ -43,6 +48,116 @@ services:
       timeout: 20s
       retries: 3
       start_period: 10m
+    depends_on:
+      nemollm-embedding-download-ngc:
+        condition: service_completed_successfully
+      nemollm-embedding-download-hf:
+        condition: service_completed_successfully
+    profiles: ["llm-embedding", "nemo-retriever"]
+
+  ranking-ms:
+    image: "nvcr.io/ohlfw0olaadg/ea-participants/nemo-retriever-reranking-microservice:24.04"
+    volumes:
+    - $MODEL_DIRECTORY:/model-checkpoint-path
+    - $MODEL_DIRECTORY/reranking/cache:/triton-model-repository/
+    command: ["/bin/bash", "-c", "[ -f /triton-model-repository/service_config.yaml ] && ./bin/web -p 8080 -r /triton-model-repository || bin/web -p 8080 -c /model-checkpoint-path/${RANKING_MODEL_CKPT_NAME} -g model_config_templates/${RANKING_MODEL_NAME}_template.yaml"]
+    ports:
+    - "1976:8080"
+    user: ${DOCKER_USER}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 20s
+      retries: 100
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${RANKING_MS_GPU_ID:-0}']
+              capabilities: [gpu]
+    depends_on:
+      ranking-model-download-ngc:
+        condition: service_completed_successfully
+      ranking-model-download-hf:
+        condition: service_completed_successfully
+    profiles: ["nemo-retriever"]
+
+  nemollm-embedding-download-ngc:
+    container_name: nemollm-embedding-download-ngc
+    image: nvcr.io/ohlfw0olaadg/ea-participants/ngc-cli:v3.41.2
+    user: ${DOCKER_USER}
+    entrypoint: ["bash", "/download_script.sh"]
+    volumes:
+    - source: $MODEL_DIRECTORY
+      target: /model-store
+      type: bind
+    - source: $DOWNLOAD_SCRIPT
+      target: /download_script.sh
+      type: bind
+    environment:
+      NGC_CLI_API_KEY: ${NGC_API_KEY}
+      NGC_CLI_ORG: ${NGC_CLI_ORG}
+      MODEL_PATH: ${EMBEDDING_MODEL_PATH}
+      MODEL_DOWNLOAD_PATH: /model-store/${EMBEDDING_MODEL_CKPT_NAME}
+      MODEL_TYPE: "embedding"
+    profiles: ["llm-embedding", "nemo-retriever"]
+
+  nemollm-embedding-download-hf:
+    container_name: nemollm-embedding-download-hf
+    image: bitnami/git:latest
+    user: ${DOCKER_USER}
+    entrypoint: ["bash", "/download_script.sh"]
+    volumes:
+    - source: $MODEL_DIRECTORY
+      target: /model-store
+      type: bind
+    - source: $DOWNLOAD_SCRIPT
+      target: /download_script.sh
+      type: bind
+    environment:
+      MODEL_PATH: ${EMBEDDING_MODEL_PATH}
+      MODEL_DOWNLOAD_PATH: /model-store/${EMBEDDING_MODEL_CKPT_NAME}
+      MODEL_TYPE: "embedding"
+    profiles: ["llm-embedding", "nemo-retriever"]
+
+  ranking-model-download-ngc:
+    container_name: ranking-model-download-ngc
+    image: nvcr.io/ohlfw0olaadg/ea-participants/ngc-cli:v3.41.2
+    user: ${DOCKER_USER}
+    entrypoint: ["bash", "/download_script.sh"]
+    volumes:
+    - source: $MODEL_DIRECTORY
+      target: /model-store
+      type: bind
+    - source: $DOWNLOAD_SCRIPT
+      target: /download_script.sh
+      type: bind
+    environment:
+      NGC_CLI_API_KEY: ${NGC_API_KEY}
+      NGC_CLI_ORG: ${NGC_CLI_ORG}
+      MODEL_PATH: ${RANKING_MODEL_PATH}
+      MODEL_DOWNLOAD_PATH: /model-store/${RANKING_MODEL_CKPT_NAME}
+      MODEL_TYPE: "reranking"
+    profiles: ["nemo-retriever"]
+
+  ranking-model-download-hf:
+    container_name: ranking-model-download-hf
+    image: bitnami/git:latest
+    user: ${DOCKER_USER}
+    entrypoint: ["bash", "/download_script.sh"]
+    volumes:
+    - source: $MODEL_DIRECTORY
+      target: /model-store
+      type: bind
+    - source: $DOWNLOAD_SCRIPT
+      target: /download_script.sh
+      type: bind
+    environment:
+      MODEL_PATH: ${RANKING_MODEL_PATH}
+      MODEL_DOWNLOAD_PATH: /model-store/${RANKING_MODEL_CKPT_NAME}
+      MODEL_TYPE: "reranking"
+    profiles: ["nemo-retriever"]
 
 networks:
   default:

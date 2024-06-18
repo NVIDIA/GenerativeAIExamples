@@ -1,9 +1,0 @@
-name: "file"
-version: "0.1.0"
-usage: "file:// protocol for charts and repositories."
-description: "file:// protocol for charts and repositories."
-command: "$HELM_PLUGIN_DIR/file-helper.sh"
-downloaders:
-- command: "file-downloader.sh"
-  protocols:
-  - "file"

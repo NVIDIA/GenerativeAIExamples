@@ -31,18 +31,6 @@ The following sections identify the environment variables and parameters that ar
 
 You can set environment variables in the `deploy/compose/compose.env` file.
 
-### LLM Server Configuration
-
-LLM Inference server hosts the Large Language Model (LLM) with Triton Inference Server backend.
-
-You can configure the server using the following environment variables:
-
-:MODEL_DIRECTORY: Specifies the path to the model directory where model checkpoints are stored.
-:MODEL_ARCHITECTURE: Defines the architecture of the model used for deployment.
-:MODEL_MAX_INPUT_LENGTH: Maximum allowed input length, with a default value of 3000.
-:QUANTIZATION: Specifies to enable activation-aware quantization for the LLM. By default, quantization is not enabled.
-:INFERENCE_GPU_COUNT: Specifies the GPUs to be used by Triton for model deployment, with the default setting being "all."
-
 ### Milvus
 
 Milvus is the default vector database server.
@@ -74,13 +62,10 @@ You can configure the server using the following environment variable:
 :APP_VECTORSTORE_URL: Specifies the URL of the vector database server.
 :APP_VECTORSTORE_NAME: Specifies the vendor name of the vector database. Values are `milvus` or `pgvector`.
 :COLLECTION_NAME: Specifies the example-specific collection in the vector database.
-:APP_LLM_SERVERURL: Specifies the URL of Triton Inference Server.
-:APP_LLM_MODELNAME: The model name used by the Triton server.
+:APP_LLM_SERVERURL: Specifies the URL of NVIDIA NIM for LLMs.
+:APP_LLM_MODELNAME: The model name used by NIM for LLMs.
 :APP_LLM_MODELENGINE: An enum that specifies the backend name hosting the model. Supported values are as follows:
-
-  `triton-trt-llm` to use locally deployed LLM models.
-
-  `nvidia-ai-endpoints` to use models hosted from NVIDIA API Catalog.
+  `nvidia-ai-endpoints` to use models hosted using NIM for LLMs in cloud based API Catalog or locally.
 :APP_RETRIEVER_TOPK: Number of relevant results to retrieve. The default value is `4`.
 :APP_RETRIEVER_SCORETHRESHOLD: The minimum confidence score for the retrieved values to be considered. The default value is `0.25`.
 :APP_PROMPTS_CHATTEMPLATE: Specifies the instructions to provide to the model.
@@ -89,7 +74,7 @@ You can configure the server using the following environment variable:
 :APP_PROMPTS_RAGTEMPLATE: Specifies the instructions to provide to the model.
   The prompt is combined with the user-supplied query and then presented to the model.
   The chain server uses this prompt when the query uses a knowledge base.
-
+:LOGLEVEL: Set the logging verbosity level for the logs printed by container. Chain server uses the standard python logging module. Possible values are NOTSET, DEBUG, INFO, WARN, ERROR, CRITICAL.
 
 ### RAG Playground
 
