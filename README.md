@@ -97,6 +97,14 @@ These are open source connectors for NVIDIA-hosted and self-hosted API endpoints
 - [Hybrid RAG Project on AI Workbench](https://github.com/NVIDIA/workbench-example-hybrid-rag): Run an NVIDIA AI Workbench example project for RAG.
 
 
+## What's new?
+- Tips for Building a RAG Pipeline with NVIDIA AI LangChain AI Endpoints by Amit Bleiweiss. [[Blog](https://developer.nvidia.com/blog/tips-for-building-a-rag-pipeline-with-nvidia-ai-langchain-ai-endpoints/), [notebook](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/notebooks/08_RAG_Langchain_with_Local_NIM.ipynb)]
+- Experimental examples:
+    - [How to create a developer-focused RAG chatbot using RAPIDS cuDF](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/experimental/rag-developer-chatbot)
+    - [NVIDIA Morpheus, NIMs, and RAG pipelines integrated to create LLM-based agent pipelines](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/experimental/event-driven-rag-cve-analysis)
+
+- Refer to the [releases page](https://github.com/NVIDIA/GenerativeAIExamples/releases) for information about previous releases.
+
 ## Support, Feedback, and Contributing
 
 We're posting these examples on GitHub to support the NVIDIA LLM community and facilitate feedback.
