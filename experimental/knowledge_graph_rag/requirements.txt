@@ -11,4 +11,4 @@ pymilvus==2.4.3
 Requests==2.32.3
 streamlit==1.30.0
 unstructured[all-docs]
-tqdm==4.66.1
+tqdm==4.66.3
