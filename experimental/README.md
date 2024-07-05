@@ -43,6 +43,10 @@ Experimental examples are sample code and deployments for RAG pipelines that are
 
   This example is able to ingest PDFs, PowerPoint slides, Word and other documents with complex data formats including text, images, slides and tables. It allows users to ask questions through a text interface and optionally with an image query, and it can respond with text and reference images, slides and tables in its response, along with source links and downloads.
 
+* [NVIDIA Knowledge Graph RAG](./knowledge_graph_rag)
+
+  This example implements a GPU-accelerated pipeline for creating and querying knowledge graphs using Retrieval-Augmented Generation (RAG). The approach leverages NVIDIA's AI technologies and RAPIDS ecosystem to process large-scale datasets efficiently. It allows users to interact through a chat interface and also visualize the corresponding knowledge graph, and perform evaluations against synthetic data generated with NVIDIA's Nemotron-4 340B model.
+
 * [Run RAG-LLM in Azure Machine Learning](./AzureML)
 
   This example shows the configuration changes to using Docker containers and local GPUs that are required
