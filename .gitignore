@@ -3,6 +3,7 @@ model-cache/
 notebooks/dataset/
 notebooks/toy_data/nv_embedding/
 notebooks/toy_data/jordan.png
+notebooks/embed
 
 # Python Exclusions
 .venv
