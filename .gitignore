@@ -1,3 +1,7 @@
+# temp files of examples
+model-cache/
+notebooks/dataset/
+
 # Python Exclusions
 .venv
 **__pycache__**
