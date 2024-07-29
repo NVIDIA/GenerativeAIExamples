@@ -1,6 +1,7 @@
 # temp files of examples
 model-cache/
 notebooks/dataset/
+notebooks/toy_data/nv_embedding/
 
 # Python Exclusions
 .venv
