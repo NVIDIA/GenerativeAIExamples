@@ -55,12 +55,12 @@ Before proceeding with this guide, make sure you meet the following prerequisite
     ```
 - Run the following command to build containers.
     ```
-        source experimental/developer-chatbot/compose.env;   docker compose -f experimental/rag-developer-chatbot/docker-compose-dev-rag.yaml build
+        source experimental/rag-developer-chatbot/compose.env;   docker compose -f experimental/rag-developer-chatbot/docker-compose-dev-rag.yaml build
     ```
 
 - Run the following command to start containers.
     ```
-         source experimental/developer-chatbot/compose.env;   docker compose -f experimental/rag-developer-chatbot/docker-compose-dev-rag.yaml up -d
+         source experimental/rag-developer-chatbot/compose.env;   docker compose -f experimental/rag-developer-chatbot/docker-compose-dev-rag.yaml up -d
     ```
     > ⚠️ **NOTE**: It will take a few minutes for the containers to come up. Adding the `-d` flag will have the services run in the background. ⚠️
 
