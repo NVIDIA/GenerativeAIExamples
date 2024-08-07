@@ -85,17 +85,22 @@ python3 -m virtualenv venv
 source venv/bin/activate
 ```
 
-### 4. Install the required packages
+### 4. Install external dependencies
+```bash
+sudo apt install poppler-utils ffmpeg libsm6 libxext6 tesseract-ocr libtesseract-dev
+```
+
+### 5. Install the required packages
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. Setup a hosted Milvus vector database
+### 6. Setup a hosted Milvus vector database
 
 Follow the instructions [here](https://milvus.io/docs/install_standalone-docker.md) to deploy a hosted Milvus instance for the vector database backend. Note that it must be Milvus 2.4 or better to support [hybrid search](https://milvus.io/docs/multi-vector-search.md). We do not support disabling this feature for previous versions of Milvus as of now.
 
-### 5. Launch the Streamlit frontend
+### 7. Launch the Streamlit frontend
 
 ```bash
 streamlit run app.py
@@ -103,7 +108,7 @@ streamlit run app.py
 
 Open the URL in your browser to access the UI and chatbot!
 
-### 6. Upload Docs and Train Model
+### 8. Upload Docs and Train Model
 
 Upload your own documents to a folder, or use an existing folder for the knowledge graph creation. Note that the implementation currently focuses on text from PDFs only. It can be extended to other text file formats using the Unstructured.io data loader in LangChain.
 
