@@ -1,0 +1,66 @@
+default: &default
+      system_prompt: >
+            You are an assistant to help answer user's question. Politely answer the question based on your knowledge.
+      few_shot_examples: 
+            # - role: user
+            #   content: |      
+            #       The odd numbers in this group add up to an even number: 4, 8, 9, 15, 12, 2, 1.
+
+            # - role: assistant
+            #   content: |
+            #       The answer is False.
+
+            # - role: user
+            #   content: |      
+            #       The odd numbers in this group add up to an even number: 17,  10, 19, 4, 8, 12, 24.
+
+            # - role: assistant
+            #   content: |
+            #       The answer is True.
+      temperature: 0.0
+      top_p: 0.7
+      max_tokens: 1024
+      seed: 42
+
+"meta/llama3-70b-instruct": 
+      system_prompt: >
+            You are an assistant to help answer user's question. Politely answer the question based on your knowledge.
+      # few_shot_examples: 
+      #       - role: user
+      #         content: |      
+      #             The odd numbers in this group add up to an even number: 4, 8, 9, 15, 12, 2, 1.
+
+      #       - role: assistant
+      #         content: |
+      #             The answer is False.
+
+      #       - role: user
+      #         content: |      
+      #             The odd numbers in this group add up to an even number: 17,  10, 19, 4, 8, 12, 24.
+
+      #       - role: assistant
+      #         content: |
+      #             The answer is True.
+      temperature: 0.0
+      top_p: 0.7
+      max_tokens: 1024
+      seed: 42
+"nvidia/nemotron-4-340b-instruct":
+      system_prompt: >
+            You are an assistant to help answer user's question. Politely answer the question based on your knowledge.
+      few_shot_examples: 
+            
+      temperature: 0.1
+      top_p: 0.7
+      max_tokens: 1024
+      seed: 42
+
+"microsoft/phi-3-mini-128k-instruct":
+      system_prompt: >
+            You are an assistant to help answer user's question. Politely answer the question based on your knowledge.
+      few_shot_examples: 
+            
+      temperature: 0.1
+      top_p: 0.7
+      max_tokens: 1024
+      seed: 42
