@@ -116,7 +116,7 @@ After service starts up, you can open the UI via http://localhost:80/
 If you want to test with a local dataset when the config.yaml is finalized, then you can load your test set and run the inference with the configuration to test. The sample scripts can refer [`test.py`](./test.py).
 
 ### Demo
-The demo customized 4007 as port number, to update the application port number instead of default 80, do following:
+To update the application port number instead of default 80, do following:
 - Update the port number in `chat_ui.py` line `UI_SERVER_PORT = int(os.getenv("UI_SERVER_PORT", 80))` 
 - Update the port number in `run_container.sh` line `docker run -d -p80:80 ***` 
 
