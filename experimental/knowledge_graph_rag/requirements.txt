@@ -9,6 +9,6 @@ numpy==1.24.1
 pandas==2.2.2
 pymilvus==2.4.3
 Requests==2.32.3
-streamlit==1.30.0
+streamlit==1.37.0
 unstructured[all-docs]
 tqdm==4.66.1
