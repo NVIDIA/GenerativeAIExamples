@@ -15,8 +15,8 @@
 
 from api_request import APIRequest
 import os
-# set up the base_url and api_key first
-os.environ['API_CATALOG_KEY'] = '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'
+# set up the base_url and api_key first replace nvapi-*** with your own key.
+os.environ['API_CATALOG_KEY'] = 'nvapi-***'
 os.environ['NIM_INFER_URL'] ="https://integrate.api.nvidia.com/v1"
 # load your dataset and parse the test set 
 input_texts = [
