@@ -59,3 +59,7 @@ Experimental examples are sample code and deployments for RAG pipelines that are
 * [NVIDIA Event Driven RAG for CVE Analysis with NVIDIA Morpheus](./event-driven-rag-cve-analysis/)
 
   This example demonstrates how NVIDIA Morpheus, NIMs, and RAG pipelines can be integrated to create LLM-based agent pipelines. These pipelines will be used to automatically and scalably traige and detect Common Vulnerabilities and Exposures (CVEs) in Docker containers using references to source code, dependencies, and information about the CVEs.
+
+* [LLM Prompt Design Helper using NIM](./llm-prompt-design-helper/)
+
+  This tool demonstrates how to utilize a user-friendly interface to interact with NVIDIA NIMs, including those available in the API catalog, self-deployed NIM endpoints, and NIMs hosted on Hugging Face. It also provides settings to integrate RAG pipelines with either local and temporary vector stores or self-hosted search engines. Developers can use this tool to design system prompts, few-shot prompts, and configure LLM settings.
