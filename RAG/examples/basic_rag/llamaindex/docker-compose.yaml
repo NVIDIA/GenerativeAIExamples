@@ -1,0 +1,99 @@
+include:
+  - path:
+    - ../../local_deploy/docker-compose-vectordb.yaml
+    - ../../local_deploy/docker-compose-nim-ms.yaml
+
+services:
+  chain-server:
+    container_name: chain-server
+    image: chain-server:${TAG:-latest}
+    build:
+      # Set context to repo's root directory
+      context: ../../../../
+      dockerfile: RAG/src/chain_server/Dockerfile
+      args:
+        # Build args, used to copy relevant directory inside the container relative to GenerativeAIExamples/RAG/examples
+        EXAMPLE_PATH: 'basic_rag/llamaindex'
+    volumes:
+      - ./prompt.yaml:/prompt.yaml
+    # start the server on port 8081
+    command: --port 8081 --host 0.0.0.0
+    environment:
+      # Path to example directory relative to GenerativeAIExamples/RAG/examples
+      EXAMPLE_PATH: 'basic_rag/llamaindex'
+      # URL on which vectorstore is hosted
+      APP_VECTORSTORE_URL: "http://milvus:19530"
+      # Type of vectordb used to store embedding supported type milvus, pgvector
+      APP_VECTORSTORE_NAME: "milvus"
+      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-nvidia/nv-embedqa-e5-v5}
+      # embedding model engine used for inference, supported type nvidia-ai-endpoints, huggingface
+      APP_EMBEDDINGS_MODELENGINE: ${APP_EMBEDDINGS_MODELENGINE:-nvidia-ai-endpoints}
+      # url on which embedding model is hosted. If "", Nvidia hosted API is used
+      APP_EMBEDDINGS_SERVERURL: ${APP_EMBEDDINGS_SERVERURL:-""}
+      # url on which llm model is hosted. If "", Nvidia hosted API is used
+      APP_LLM_SERVERURL: ${APP_LLM_SERVERURL:-""}
+      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-"meta/llama3-8b-instruct"}
+      # embedding model engine used for inference, supported type nvidia-ai-endpoints
+      APP_LLM_MODELENGINE: ${APP_LLM_MODELENGINE:-nvidia-ai-endpoints}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+      # vectorstore collection name to store embeddings 
+      COLLECTION_NAME: ${COLLECTION_NAME:-developer_rag}
+      APP_RETRIEVER_TOPK: 4
+      APP_RETRIEVER_SCORETHRESHOLD: 0.25
+      # observability server url
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      # enable observability in chain server
+      ENABLE_TRACING: false
+      # text splitter model name, it's fetched from huggingface
+      APP_TEXTSPLITTER_MODELNAME: Snowflake/snowflake-arctic-embed-l
+      APP_TEXTSPLITTER_CHUNKSIZE: 506
+      APP_TEXTSPLITTER_CHUNKOVERLAP: 200
+      # Log level for server, supported level NOTSET, DEBUG, INFO, WARN, ERROR, CRITICAL
+      LOGLEVEL: ${LOGLEVEL:-INFO}
+    ports:
+    - "8081:8081"
+    expose:
+    - "8081"
+    shm_size: 5gb
+    depends_on:
+      nemollm-embedding:
+        condition: service_healthy
+        required: false
+      nemollm-inference:
+        condition: service_healthy
+        required: false
+
+
+  rag-playground:
+    container_name: rag-playground
+    image: rag-playground:${TAG:-latest}
+    build:
+      # Set context to repo's root directory
+      context: ../../../../RAG/src/rag_playground/
+      dockerfile: Dockerfile
+      args:
+        # select UI type, supported model default, speech
+        PLAYGROUND_MODE: ${PLAYGROUND_MODE:-default}
+    command: --port 8090
+    environment:
+      # URL or chain server container
+      APP_SERVERURL: http://chain-server
+      APP_SERVERPORT: 8081
+      # model name displayed on UI
+      APP_MODELNAME: ${APP_LLM_MODELNAME:-"meta/llama3-8b-instruct"}
+      # observability server url
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      # enable observability in rag playground
+      ENABLE_TRACING: false
+    ports:
+    - "8090:8090"
+    expose:
+    - "8090"
+    depends_on:
+    - chain-server
+
+networks:
+  default:
+    name: nvidia-rag

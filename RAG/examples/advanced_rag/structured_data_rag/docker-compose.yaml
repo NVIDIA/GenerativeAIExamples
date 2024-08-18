@@ -1,0 +1,61 @@
+include:
+  - path:
+    - ../../local_deploy/docker-compose-nim-ms.yaml
+
+services:
+  chain-server:
+    container_name: chain-server
+    image: chain-server:${TAG:-latest}
+    build:
+      context: ../../../../
+      dockerfile: RAG/src/chain_server/Dockerfile
+      args:
+        EXAMPLE_PATH: 'advanced_rag/structured_data_rag'
+    volumes:
+      - ./prompt.yaml:/prompt.yaml
+    command: --port 8081 --host 0.0.0.0
+    environment:
+      EXAMPLE_PATH: 'advanced_rag/structured_data_rag'
+      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-meta/llama3-70b-instruct}
+      APP_LLM_MODELENGINE: nvidia-ai-endpoints
+      APP_LLM_SERVERURL: ${APP_LLM_SERVERURL:-""}
+      APP_LLM_MODELNAMEPANDASAI: ${APP_LLM_MODELNAME:-meta/llama3-70b-instruct}
+      APP_PROMPTS_CHATTEMPLATE: "You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Please ensure that your responses are positive in nature."
+      APP_PROMPTS_RAGTEMPLATE: "You are a helpful AI assistant named Envie. You will reply to questions only based on the context that you are provided. If something is out of context, you will refrain from replying and politely decline to respond to the user."
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+      COLLECTION_NAME: ${COLLECTION_NAME:-structured_data_rag}
+      CSV_NAME: PdM_machines
+      LOGLEVEL: ${LOGLEVEL:-INFO}
+    ports:
+    - "8081:8081"
+    expose:
+    - "8081"
+    shm_size: 5gb
+    depends_on:
+      nemollm-inference:
+        condition: service_healthy
+        required: false
+
+  rag-playground:
+    container_name: rag-playground
+    image: rag-playground:${TAG:-latest}
+    build:
+      context: ../../../../RAG/src/rag_playground/
+      dockerfile: Dockerfile
+      args:
+        PLAYGROUND_MODE: ${PLAYGROUND_MODE:-default}
+    command: --port 8090
+    environment:
+      APP_SERVERURL: http://chain-server
+      APP_SERVERPORT: 8081
+      APP_MODELNAME: ${APP_LLM_MODELNAME:-meta/llama3-70b-instruct}
+    ports:
+    - "8090:8090"
+    expose:
+    - "8090"
+    depends_on:
+    - chain-server
+
+networks:
+  default:
+    name: nvidia-rag

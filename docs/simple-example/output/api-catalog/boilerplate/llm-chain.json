@@ -1,4 +1,0 @@
-data: {"id":"57d16654-6cc0-474a-832b-7563bf4eb1ce","choices":[{"index":0,"message":{"role":"assistant","content":"TODO: Implement LLM call"},"finish_reason":""}]}
-
-data: {"id":"57d16654-6cc0-474a-832b-7563bf4eb1ce","choices":[{"index":0,"message":{"role":"assistant","content":""},"finish_reason":"[DONE]"}]}
-

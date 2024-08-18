@@ -1,39 +1,23 @@
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
 -->
 
 # Using the Sample Chat Web Application
 
-```{contents}
----
-depth: 2
-local: true
-backlinks: none
----
-```
+<!-- TOC -->
 
-## Prerequisites
+* [Access the Web Application](#access-the-web-application)
+* [Use Unstructured Documents as a Knowledge Base](#use-unstructured-documents-as-a-knowledge-base)
+* [Troubleshooting](#troubleshooting)
 
-- You deployed one of the samples, such as [](./api-catalog.md).
+<!-- /TOC -->
 
 ## Access the Web Application
 
-- Connect to the sample web application at `http://<host-ip>:8090`.
+- Connect to the sample web application at <http://localhost:8090>.
 
-  ![Sample chat web application](./images/sample-web-application.png)
+  ![Sample chat web application](images/sample-web-application.png)
 
 ## Use Unstructured Documents as a Knowledge Base
 
@@ -45,7 +29,7 @@ backlinks: none
 
    Alternatively, click on the microphone button to the right of the text box and ask the question verbally.
 
-   ![Grace query failure](../../notebooks/imgs/grace_noanswer_with_riva.png)
+   ![Grace query failure](../RAG/notebooks/langchain/data/imgs/grace_noanswer_with_riva.png)
 
 1. Upload the sample data to the knowledge base.
 
@@ -57,7 +41,7 @@ backlinks: none
 
 1. Reenter the question: "How many cores does the Grace superchip contain?"
 
-   ![Grace query success](../../notebooks/imgs/grace_answer_with_riva.png)
+   ![Grace query success](../RAG/notebooks/langchain/data/imgs/grace_answer_with_riva.png)
 
    ```{tip}
    The default prompts are optimized for Llama chat model.
@@ -68,13 +52,13 @@ backlinks: none
 
 If you receive the following "Media devices could not be accessed" error message when you first attempt to transcribe a voice query, perform the following steps.
 
-![Media device access error window.](./images/media-device-access-error.png)
+![Media device access error window.](images/media-device-access-error.png)
 
 1. Open another browser tab and enter `chrome://flags` in the location field.
 
 1. Enter `insecure origins treated as secure` in the search field.
 
-   ![Browser viewing the chrome://flags URL.](./images/chrome-flags-fix-media-device-access-error.png)
+   ![Browser viewing the chrome://flags URL.](images/chrome-flags-fix-media-device-access-error.png)
 
 1. Enter `http://<host-ip>:8090` in the text box and select **Enabled** from the menu.
 

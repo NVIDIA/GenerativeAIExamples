@@ -1,0 +1,15 @@
+arxiv==2.1.0
+langchain==0.2.6
+langchain_community==0.2.6
+langchain_core==0.2.10
+langchain_nvidia_ai_endpoints==0.1.2
+llama_index==0.10.50
+networkx==3.2.1
+numpy==1.24.1
+pandas==2.2.2
+pymilvus==2.4.3
+Requests==2.31.0
+streamlit==1.30.0
+unstructured[all-docs]
+tqdm==4.66.1
+pymilvus[model]==2.4.3

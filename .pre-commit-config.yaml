@@ -13,11 +13,15 @@ repos:
     rev: 19.10b0
     hooks:
       - id: black
+        files: ^RAG/
         args: ["--skip-string-normalization", "--line-length=119"]
         additional_dependencies: ['click==8.0.4']
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
       - id: isort
+        files: ^RAG/
         name: isort (python)
         args: ["--multi-line=3", "--trailing-comma", "--force-grid-wrap=0", "--use-parenthese", "--line-width=119", "--ws"]
+
+

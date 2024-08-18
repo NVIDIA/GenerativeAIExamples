@@ -1,0 +1,115 @@
+services:
+  pgvector:
+    container_name: pgvector
+    image: pgvector/pgvector:pg16
+    ports:
+    - 5432:5432
+    expose:
+    - "5432"
+    volumes:
+    - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/data:/var/lib/postgresql/data
+    environment:
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+    - POSTGRES_USER=${POSTGRES_USER:-postgres}
+    - POSTGRES_DB=${POSTGRES_DB:-api}
+    profiles: ["pgvector"]
+
+
+  etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.5
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/etcd:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    profiles: ["nemo-retriever", "milvus", ""]
+
+  minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2024-05-01T01-11-10Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "9011:9011"
+      - "9010:9010"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/minio:/minio_data
+    command: minio server /minio_data --console-address ":9011" --address ":9010"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9010/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    profiles: ["nemo-retriever", "milvus", ""]
+
+  milvus:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.4.5
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9010
+      KNOWHERE_GPU_MEM_POOL_SIZE: 2048;4096
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+    #   interval: 30s
+    #   start_period: 90s
+    #   timeout: 20s
+    #   retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - "etcd"
+      - "minio"
+    profiles: ["nemo-retriever", "milvus", ""]
+
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:8.12.0"
+    ports:
+      - 9200:9200
+    restart: on-failure
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+      - xpack.security.enabled=false
+      - xpack.license.self_generated.type=basic
+      - network.host=0.0.0.0
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    hostname: elasticsearch
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-f", "http://localhost:9200/_cat/health"]
+      interval: 10s
+      timeout: 1s
+      retries: 10
+    profiles: ["nemo-retriever"]
+
+  postgres:
+    image: postgres:16.1
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: pgadmin
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/postgres_data:/var/lib/postgresql/data:Z
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U postgres -d postgres'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    profiles: ["nemo-retriever"]
+
+networks:
+  default:
+    name: nvidia-rag

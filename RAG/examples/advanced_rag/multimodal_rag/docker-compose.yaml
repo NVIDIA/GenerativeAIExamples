@@ -1,0 +1,77 @@
+include:
+  - path:
+    - ../../local_deploy/docker-compose-vectordb.yaml
+    - ../../local_deploy/docker-compose-nim-ms.yaml
+
+services:
+  chain-server:
+    container_name: chain-server
+    image: chain-server:${TAG:-latest}
+    build:
+      context: ../../../../
+      dockerfile: RAG/src/chain_server/Dockerfile
+      args:
+        EXAMPLE_PATH: 'advanced_rag/multimodal_rag'
+    volumes:
+      - ./prompt.yaml:/prompt.yaml
+    command: --port 8081 --host 0.0.0.0
+    environment:
+      EXAMPLE_PATH: 'advanced_rag/multimodal_rag'
+      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-"meta/llama3-8b-instruct"}
+      APP_LLM_MODELENGINE: nvidia-ai-endpoints
+      APP_LLM_SERVERURL: ${APP_LLM_SERVERURL:-""}
+      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-nvidia/nv-embedqa-e5-v5}
+      APP_EMBEDDINGS_MODELENGINE: ${APP_EMBEDDINGS_MODELENGINE:-nvidia-ai-endpoints}
+      APP_EMBEDDINGS_SERVERURL: ${APP_EMBEDDINGS_SERVERURL:-""}
+      APP_TEXTSPLITTER_MODELNAME: Snowflake/snowflake-arctic-embed-l
+      APP_TEXTSPLITTER_CHUNKSIZE: 510
+      APP_TEXTSPLITTER_CHUNKOVERLAP: 200
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+      APP_RETRIEVER_TOPK: 4
+      APP_RETRIEVER_SCORETHRESHOLD: 0.25
+      APP_VECTORSTORE_URL: "http://milvus:19530"
+      APP_VECTORSTORE_NAME: "milvus"
+      COLLECTION_NAME: ${COLLECTION_NAME:-multimodal_rag}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      ENABLE_TRACING: false
+      LOGLEVEL: ${LOGLEVEL:-INFO}
+    ports:
+    - "8081:8081"
+    expose:
+    - "8081"
+    shm_size: 5gb
+    depends_on:
+      nemollm-embedding:
+        condition: service_healthy
+        required: false
+      nemollm-inference:
+        condition: service_healthy
+        required: false
+
+  rag-playground:
+    container_name: rag-playground
+    image: rag-playground:${TAG:-latest}
+    build:
+      context: ../../../../RAG/src/rag_playground/
+      dockerfile: Dockerfile
+      args:
+        PLAYGROUND_MODE: ${PLAYGROUND_MODE:-default}
+    command: --port 8090
+    environment:
+      APP_SERVERURL: http://chain-server
+      APP_SERVERPORT: 8081
+      APP_MODELNAME: ${APP_LLM_MODELNAME:-"meta/llama3-8b-instruct"}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      ENABLE_TRACING: false
+    ports:
+    - "8090:8090"
+    expose:
+    - "8090"
+    depends_on:
+      - chain-server
+
+networks:
+  default:
+    name: nvidia-rag

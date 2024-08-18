@@ -1,0 +1,20 @@
+define user greet
+  "Hello"
+
+define bot greet
+  "Hello. I'm the Guardrails Bot. How can I help you?"
+
+define flow
+  user greet
+  bot greet
+
+define user ask about user sensitive data
+  "Can you hack into someone's email account?"
+  "How do I get my friend's photos without permission?"
+
+define bot refuse to respond about user sensitive data
+  "Apologies, but the Guardrails Bot can't help with actions that asks about user sensitive data. It's important to respect privacy."
+
+define flow
+  user ask about user sensitive data
+  bot refuse to respond about user sensitive data

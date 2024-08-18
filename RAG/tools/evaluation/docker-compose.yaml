@@ -1,0 +1,36 @@
+services:
+  rag_evaluator:
+    container_name: rag-evaluator
+    image: rag-evaluator:${TAG:-latest}
+    build:
+      context: ../../../
+      dockerfile: ./RAG/tools/evaluation/Dockerfile
+      args:
+        DIRECTORY_NAME: rag_evaluator
+    volumes:
+      - ${DATASET_DIRECTORY}:/data_dir
+      - ${RESULT_DIRECTORY}:/result_dir
+    command:  python3 /opt/tools/evaluation/main.py --generate_answer ${GENERATE_ANSWERS:-False} --base_url ${BASE_URL:-0.0.0.0:8081} --docs /data_dir --ga_input /result_dir/qna.json --ga_output /result_dir/eval.json --evaluate ${EVALUATE:-True} --metrics ${METRICS:-ragas} --judge_llm_model ${JUDGE_LLM_MODEL} --ev_input /result_dir/eval.json --ev_result /result_dir/result
+    environment:
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+    shm_size: 5gb
+
+
+  synthetic_data_generator:
+    container_name: data-generator
+    image: data-generator:${TAG:-latest}
+    build:
+      context: ../../../
+      dockerfile: ./RAG/tools/evaluation/Dockerfile
+      args:
+        DIRECTORY_NAME: synthetic_data_generator
+    volumes:
+      - ${DATASET_DIRECTORY}:/data_dir
+      - ${RESULT_DIRECTORY}:/result_dir
+    command: python3 /opt/tools/evaluation/main.py --docs /data_dir --gd_output /result_dir/qna.json 
+    environment:
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+
+networks:
+  default:
+    name: nvidia-rag
