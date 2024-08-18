@@ -15,7 +15,7 @@
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 import concurrent.futures
-from preprocessor import extract_triples
+from utils.preprocessor import extract_triples
 from tqdm import tqdm
 from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter

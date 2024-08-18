@@ -25,6 +25,9 @@ from utils.lc_graph import process_documents, save_triples_to_csvs
 from vectorstore.search import SearchHandler
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
+import nltk
+nltk.download('averaged_perceptron_tagger')
+
 def load_data(input_dir, num_workers):
     reader = SimpleDirectoryReader(input_dir=input_dir)
     documents = reader.load_data(num_workers=num_workers)
