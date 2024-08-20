@@ -16,10 +16,6 @@
 # This is a simple standalone implementation showing rag pipeline using Nvidia AI Foundational models.
 # It uses a simple Streamlit UI and one file implementation of a minimalistic RAG pipeline.
 
-############################################
-# Component #1 - Document Loader
-############################################
-
 import streamlit as st
 import os
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
@@ -50,8 +46,7 @@ with st.sidebar:
 
 # Component #2 - Embedding Model and LLM
 llm = ChatNVIDIA(model="meta/llama3-70b-instruct")
-document_embedder = NVIDIAEmbeddings(model="NV-Embed-QA", model_type="passage")
-#query_embedder = NVIDIAEmbeddings(model="NV-Embed-QA", model_type="query")
+document_embedder = NVIDIAEmbeddings(model="nvidia/nv-embedqa-e5-v5", model_type="passage")
 
 # Component #3 - Vector Database Store
 with st.sidebar:
