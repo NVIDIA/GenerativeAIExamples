@@ -1,0 +1,4 @@
+# docker compose volumes
+volumes
+# evaluation data directories
+evaluation/datadir/

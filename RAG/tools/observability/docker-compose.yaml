@@ -1,0 +1,47 @@
+services: 
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector-contrib:0.102.0
+    restart: always
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ${OPENTELEMETRY_CONFIG_FILE}:/etc/otel-collector-config.yaml
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.52
+    container_name: jaeger
+    command:
+      - "--config-file=/etc/jaeger.yaml"
+    environment:
+      - SPAN_STORAGE_TYPE=cassandra
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    restart: always
+    ports:
+      - "16686:16686"
+      - "4317"
+      - "4318"
+    expose:
+      - "4318"
+      - "4317"
+    volumes:
+      - ${JAEGER_CONFIG_FILE}:/etc/jaeger.yaml
+    depends_on:
+      - cassandra-schema
+    
+  cassandra:
+    image: cassandra:4.0
+    container_name: cassandra
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/cassandra:/var/lib/cassandra
+
+  cassandra-schema:
+    image: jaegertracing/jaeger-cassandra-schema
+    depends_on:
+      - cassandra
+
+networks:
+  default:
+    name: nvidia-rag

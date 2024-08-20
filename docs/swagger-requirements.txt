@@ -1,8 +1,0 @@
-attr==0.3.2
-deepmerge==1.1.0
-importlib_resources==5.12.0
-jsonschema==2.5.1
-mistune==2.0.5
-picobox==2.2.0
-sphinx_mdinclude==0.5.3
-swagger-plugin-for-sphinx==3.4.0
