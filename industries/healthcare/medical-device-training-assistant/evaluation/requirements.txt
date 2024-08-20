@@ -1,0 +1,6 @@
+langchain==0.1.9
+unstructured[all-docs]==0.11.2
+sentence-transformers==2.2.2
+ragas==0.1.7
+langchain-core==0.1.29
+langchain-nvidia-ai-endpoints==0.1.1

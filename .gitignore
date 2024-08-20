@@ -3,14 +3,10 @@
 **__pycache__**
 
 # Helm Exclusions
-**/charts/*.tgz
-
-# project temp files
-deploy/*.log
-deploy/*.txt
+**/helm-charts/*.tgz
 
 # Docker Compose exclusions
-volumes/
+RAG/examples/**/volumes
 uploaded_files/
 
 # Visual Studio Code
@@ -26,5 +22,10 @@ docs/experimental
 docs/tools
 
 # Developing examples
-RetrievalAugmentedGeneration/examples/simple_rag_api_catalog/
-deploy/compose/simple-rag-api-catalog.yaml
+RAG/examples/simple_rag_api_catalog/
+RAG/examples/simple-rag-api-catalog.yaml
+
+# Notebook checkpoints
+RAG/notebooks/langchain/.ipynb_checkpoints
+RAG/notebooks/langchain/data/nv_embedding
+RAG/notebooks/langchain/data/save_embedding

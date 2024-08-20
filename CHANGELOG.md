@@ -4,6 +4,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.8.0] - 2024-08-19
+
+This release completely refactors the directory structure of the repository for a more seamless and intuitive developer journey. It also adds support to deploy latest accelerated embedding and reranking models across the cloud, data center, and workstation using [NVIDIA NeMo Retriever NIM microservices](https://docs.nvidia.com/nim/index.html#nemo-retriever).
+
+### Added
+- [End-to-end RAG examples](./RAG/examples/) enhancements
+  - [Single-command deployment](./README.md#try-it-now) for all the examples using Docker Compose.
+  - All end to end RAG examples are now more encapsulated with documentation, code and deployment assets residing in dedicated example specific directory.
+  - Segregated examples into [basic and advanced RAG](./RAG/examples/) with dedicated READMEs.
+  - Added reranker model support to [multi-turn RAG example](./RAG/examples/advanced_rag/multi_turn_rag/).
+  - Added [dedicated prompt configuration file for every example](./docs/prompt-customization.md).
+  - Removed Python dev packages from containers to enhance security.
+  - Updated to latest version of [langchain-nvidia-ai-endpoints](https://python.langchain.com/v0.2/docs/integrations/providers/nvidia/).
+- [Speech support using RAG Playground]((./docs/riva-asr-tts.md))
+  - Added support to access [RIVA speech models from NVIDIA API Catalog](https://build.nvidia.com/explore/speech).
+  - Speech support in RAG Playground is opt-in.
+- Documentation enhancements
+  - Added more comprehensive [how-to guides](./README.md#how-to-guides) for end to end RAG examples.
+  - Added [example specific architecture diagrams](./RAG/examples/basic_rag/langchain/) in each example directory.
+- Added a new industry specific [top level directory](./industries/)
+  - Added [health care domain specific Medical Device Training Assistant RAG](./industries/healthcare/medical-device-training-assistant/).
+- Added notebooks showcasing new usecases
+  - [Basic langchain based RAG pipeline](./RAG/notebooks/langchain/langchain_basic_RAG.ipynb) using latest NVIDIA API Catalog connectors.
+  - [Basic llamaindex based RAG pipeline](./RAG/notebooks/llamaindex/llamaindex_basic_RAG.ipynb) using latest NVIDIA API Catalog connectors.
+  - [NeMo Guardrails with basic langchain RAG](./RAG/notebooks/langchain/NeMo_Guardrails_with_LangChain_RAG/).
+  - [NVIDIA NIM microservices using NeMo Guardrails based RAG](./RAG/notebooks/langchain/Using_NVIDIA_NIMs_with_NeMo_Guardrails/).
+  - [Using NeMo Evaluator using Llama 3.1 8B Instruct](./RAG/notebooks/nemo/Nemo%20Evaluator%20Llama%203.1%20Workbook/).
+  - [Agentic RAG pipeline with Nemo Retriever and NIM for LLMs](./RAG/notebooks/langchain/agentic_rag_with_nemo_retriever_nim.ipynb).
+- Added new `community` (before `experimental`) example
+  - Create a simple web interface to interact with different [selectable NIM endpoints](./community/llm-prompt-design-helper/). The provided interface of this project supports designing a system prompt to call the LLM.
+
+### Changed
+- Major restructuring and reorganisation of the assets within the repository
+  - Top level `experimental` directory has been renamed as `community`.
+  - Top level `RetrievalAugmentedGeneration` directory has been renamed as just `RAG`.
+  - The Docker Compose files inside top level `deploy` directory has been migrated to example-specific directories under `RAG/examples`. The vector database and on-prem NIM microservices deployment files are under `RAG/examples/local_deploy`.
+  - Top level `models` has been renamed to `finetuning`.
+  - Top level `notebooks` directory has been moved to under `RAG/notebooks` and has been organised framework wise.
+  - Top level `tools` directory has been migrated to `RAG/tools`.
+  - Top level `integrations` directory has been moved into `RAG/src`.
+  - `RetreivalAugmentedGeneration/common` is now residing under `RAG/src/chain_server`.
+  - `RetreivalAugmentedGeneration/frontend` is now residing under `RAG/src/rag_playground/default`.
+  -  `5 mins RAG No GPU` example under top level `examples` directory, is now under `community`.
+
+### Deprecated
+  - Github pages based documentation is now replaced with markdown based documentation.
+  - Top level `examples` directory has been removed.
+  - Following notebooks were removed
+    - [02_Option(1)_NVIDIA_AI_endpoint_simple.ipynb](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/notebooks/02_Option(1)_NVIDIA_AI_endpoint_simple.ipynb)
+    - [notebooks/02_Option(2)_minimalistic_RAG_with_langchain_local_HF_LLM.ipynb](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/notebooks/02_Option(2)_minimalistic_RAG_with_langchain_local_HF_LLM.ipynb)
+    - [notebooks/03_Option(1)_llama_index_with_NVIDIA_AI_endpoint.ipynb](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/notebooks/03_Option(1)_llama_index_with_NVIDIA_AI_endpoint.ipynb)
+    - [notebooks/03_Option(2)_llama_index_with_HF_local_LLM.ipynb](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/notebooks/03_Option(2)_llama_index_with_HF_local_LLM.ipynb)
+
+
 ## [0.7.0] - 2024-06-18
 
 This release switches all examples to use cloud hosted GPU accelerated LLM and embedding models from [Nvidia API Catalog](https://build.nvidia.com) as default. It also deprecates support to deploy on-prem models using NeMo Inference Framework Container and adds support to deploy accelerated generative AI models across the cloud, data center, and workstation using [latest Nvidia NIM-LLM](https://docs.nvidia.com/nim/large-language-models/latest/introduction.html).
@@ -17,7 +71,7 @@ This release switches all examples to use cloud hosted GPU accelerated LLM and e
   - Improved accuracy of image parsing by using [tesseract-ocr](https://pypi.org/project/tesseract-ocr/)
 - Added a [new notebook showcasing RAG usecase using accelerated NIM based on-prem deployed models](./notebooks/08_RAG_Langchain_with_Local_NIM.ipynb)
 - Added a [new experimental example](./experimental/rag-developer-chatbot/) showcasing how to create a developer-focused RAG chatbot using RAPIDS cuDF source code and API documentation.
-- Added a [new experimental example](./experimental/event-driven-rag-cve-analysis/) demonstrating how NVIDIA Morpheus, NIMs, and RAG pipelines can be integrated to create LLM-based agent pipelines.
+- Added a [new experimental example](./experimental/event-driven-rag-cve-analysis/) demonstrating how NVIDIA Morpheus, NIM microservices, and RAG pipelines can be integrated to create LLM-based agent pipelines.
 
 ### Changed
 - All examples now use llama3 models from [Nvidia API Catalog](https://build.nvidia.com/search?term=llama3) as default. Summary of updated examples and the model it uses is available [here](https://nvidia.github.io/GenerativeAIExamples/latest/index.html#developer-rag-examples).
