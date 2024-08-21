@@ -1,0 +1,31 @@
+Subject: Hello All
+"Hi all, please enter your credentials in the link below. Thanks! -Vice President"
+Timestamp: July 17th, 5:40am
+Sent to users: june@domain.com, bob@domain.com
+
+Subject: Urgent: Your Account Will Be Deactivated!
+"Dear User,
+We noticed some suspicious activity in your account. To avoid deactivation, please verify your information by clicking on the link below.
+Verify Now
+Thank you,
+-IT Support Team"
+Timestamp: July 18th, 2:15pm
+Sent to users: jane@domain.com, mike@domain.com
+
+Subject: Important: Update Your Payment Information
+"Hi there,
+We were unable to process your last payment. Please update your payment information within 24 hours to avoid service interruption.
+Update Payment
+Best,
+-Billing Department"
+Timestamp: July 19th, 9:00am
+Sent to users: laura@domain.com, tom@domain.com
+
+Subject: Confirm Your Email for Account Verification
+"Hi,
+For security purposes, we need you to confirm your email address. Please click the link below to complete the verification process.
+Confirm Email
+Sincerely,
+-Account Services"
+Timestamp: July 22nd, 8:20am
+Sent to users: lisa@domain.com, kevin@domain.com
