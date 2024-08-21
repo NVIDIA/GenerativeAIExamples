@@ -1,0 +1,9 @@
+Suspected attribution: China
+
+Target sectors: Multiple, including government, international financial organization, and aerospace and defense organizations, as well as high tech, construction and engineering, telecommunications, media, and insurance.
+
+Overview: APT31 is a China-nexus cyber espionage actor focused on obtaining information that can provide the Chinese government and state-owned enterprises with political, economic, and military advantages.
+
+Associated malware: SOGU, LUCKYBIRD, SLOWGYRO, DUCKFAT
+
+Attack vectors: APT31 has exploited vulnerabilities in applications such as Java and Adobe Flash to compromise victim environments.
