@@ -19,9 +19,13 @@ The example implements a GPU-accelerated pipeline for creating and querying know
 - Build an Agentic RAG Pipeline with Llama 3.1 and NVIDIA NeMo Retriever NIM microservices [[Blog](https://developer.nvidia.com/blog/build-an-agentic-rag-pipeline-with-llama-3-1-and-nvidia-nemo-retriever-nims/), [notebook](RAG/notebooks/langchain/agentic_rag_with_nemo_retriever_nim.ipynb)]
 - [NVIDIA Morpheus, NIM microservices, and RAG pipelines integrated to create LLM-based agent pipelines](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/experimental/event-driven-rag-cve-analysis)
 
-
 #### RAG with local NIM deployment and Langchain
 - Tips for Building a RAG Pipeline with NVIDIA AI LangChain AI Endpoints by Amit Bleiweiss. [[Blog](https://developer.nvidia.com/blog/tips-for-building-a-rag-pipeline-with-nvidia-ai-langchain-ai-endpoints/), [notebook](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/notebooks/08_RAG_Langchain_with_Local_NIM.ipynb)]
+
+#### NeMo Guardrails with RAG
+- Notebook for demonstrating how to integrate NeMo Guardrails with a basic RAG pipeline in LangChain to ensure safe and accurate LLM responses using NVIDIA NIM microservices. [[Blog](https://developer.nvidia.com/blog/securing-generative-ai-deployments-with-nvidia-nim-and-nvidia-nemo-guardrails/), [notebook](RAG/notebooks/langchain/NeMo_Guardrails_with_LangChain_RAG/using_nemo_guardrails_with_LangChain_RAG.ipynb)]
+
+
 
 
 For more details view the [releases](https://github.com/NVIDIA/GenerativeAIExamples/releases/).
