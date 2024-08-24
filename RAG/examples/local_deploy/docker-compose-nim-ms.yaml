@@ -1,7 +1,7 @@
 services:
   nemollm-inference:
     container_name: nemollm-inference-microservice
-    image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.0
+    image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.3
     volumes:
     - ${MODEL_DIRECTORY}:/opt/nim/.cache
     user: "${USERID}"
@@ -29,7 +29,7 @@ services:
 
   nemollm-embedding:
     container_name: nemo-retriever-embedding-microservice
-    image: nvcr.io/nim/nvidia/nv-embedqa-e5-v5:1.0.0
+    image: nvcr.io/nim/nvidia/nv-embedqa-e5-v5:1.0.1
     volumes:
     - ${MODEL_DIRECTORY}:/opt/nim/.cache
     ports:
@@ -57,7 +57,7 @@ services:
 
   ranking-ms:
     container_name: nemo-retriever-ranking-microservice
-    image: nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.0
+    image: nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.1
     volumes:
     - ${MODEL_DIRECTORY}:/opt/nim/.cache
     ports:
