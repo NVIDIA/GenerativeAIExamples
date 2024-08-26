@@ -29,6 +29,7 @@ services:
       - frontend
       - backend
     command: mlflow server --gunicorn-opts "--log-level debug" --backend-store-uri sqlite:////opt/mlflow/dbdata/mlflow.db --serve-artifacts --artifacts-destination /opt/mlflow/artifacts --host 0.0.0.0
+    # Run the container with this command to upgrade if needed: mlflow db upgrade sqlite:////opt/mlflow/dbdata/mlflow.db
     volumes:
       - db_data:/opt/mlflow/dbdata
       - mlflow_data:/opt/mlflow/artifacts
