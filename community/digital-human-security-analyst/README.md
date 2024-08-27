@@ -30,7 +30,7 @@ __This project will walk you through a broad sample of NVIDIA technologies, and 
 
 This demo of the Analyst Morpheus project is running in Unreal Engine 5.4, using the default Metahuman model Omar.
 
-[![Analyst Morpheus Demo](./readme_media/demo_cover.png)](https://www.dropbox.com/scl/fi/462ofahibkys4xaudc18h/analyst_morpheus_langchain_demo.mp4?rlkey=nrhpfkbxtcllzir6yjii6vpb2&dl=0)
+[![Analyst Morpheus Demo](./readme_media/demo_cover.png)](./readme_media/analyst_morpheus_langchain_demo_small.mp4)
 
 
 ## Technical Overview
