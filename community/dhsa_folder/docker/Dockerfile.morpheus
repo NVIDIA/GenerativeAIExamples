@@ -1,0 +1,21 @@
+ARG MORPHEUS_CONTAINER=nvcr.io/nvidia/morpheus/morpheus
+ARG MORPHEUS_CONTAINER_VERSION=v24.03.00-runtime
+
+FROM ${MORPHEUS_CONTAINER}:${MORPHEUS_CONTAINER_VERSION} as base
+
+# Install the jupyter specific requirements
+RUN source activate morpheus \
+   && mamba install -y -c conda-forge \
+        ipywidgets=8.0.7 \
+        nb_conda_kernels=2.3.1 \
+    && pip install flask[async]==3.0.0 progress==1.6 \
+        graphviz==0.10 jupyterlab \
+    && apt update \
+    && apt install -y graphviz libgraphviz-dev \
+    && conda clean -afy \
+    && rm -rf /var/lib/apt/lists/*
+
+ENTRYPOINT [ "/opt/conda/bin/tini", "--", "/workspace/docker/entrypoint.sh" ]
+
+SHELL ["/bin/bash", "-c"]
+

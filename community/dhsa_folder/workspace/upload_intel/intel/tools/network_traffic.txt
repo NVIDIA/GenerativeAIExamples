@@ -1,0 +1,27 @@
+At 6:12 AM on July 17, 2024, the endpoint with IP 192.168.1.100, used by june@domain.com, connected to the IP 203.0.113.45 on port 80 using the TCP protocol. The destination URL was elom.su.
+
+At 6:15 AM on July 17, 2024, the endpoint with IP 192.168.1.100 connected to the IP 198.51.100.10 on port 80 using the TCP protocol. The destination URL was elom.su.
+
+At 6:20 AM on July 17, 2024, the endpoint with IP 192.168.1.100 connected to the IP 198.51.100.10 on port 80 using the TCP protocol. The destination URL was elom.su.
+
+At 6:30 AM on July 17, 2024, the endpoint with IP 192.168.1.100 connected to the IP 198.51.100.10 on port 80 using the TCP protocol. The destination URL was elom.su.
+
+At 6:45 AM on July 17, 2024, the endpoint with IP 192.168.1.100 connected to the IP 203.0.113.45 on port 443 using the TCP protocol. The destination URL was helloworld.com.
+
+At 7:00 AM on July 17, 2024, the endpoint with IP 192.168.1.100 connected to the IP 198.51.100.10 on port 80 using the TCP protocol. The destination URL was elom.su.
+
+At 7:15 AM on July 17, 2024, the endpoint with IP 192.168.1.100 connected to the IP 198.51.100.10 on port 80 using the TCP protocol. The destination URL was elom.su.
+
+At 6:12 AM on July 17, 2024, the endpoint with IP 192.168.1.102 connected to the IP 203.0.113.45 on port 80 using the TCP protocol. The connection had 1024 bytes sent and 2048 bytes received. The destination URL was pets.com.
+
+At 6:15 AM on July 17, 2024, the endpoint with IP 192.168.1.102 connected to the IP 203.0.113.45 on port 443 using the TCP protocol. The connection had 2048 bytes sent and 4096 bytes received. The destination URL was pets.com.
+
+At 6:20 AM on July 17, 2024, the endpoint with IP 192.168.1.102 connected to the IP 198.51.100.10 on port 80 using the TCP protocol. The connection had 512 bytes sent and 1024 bytes received. The destination URL was http://randomsite.net.
+
+At 6:30 AM on July 17, 2024, the endpoint with IP 192.168.1.102 connected to the IP 203.0.113.45 on port 80 using the TCP protocol. The connection had 1024 bytes sent and 2048 bytes received. The destination URL was pets.com.
+
+At 6:45 AM on July 17, 2024, the endpoint with IP 192.168.1.102 connected to the IP 203.0.113.45 on port 443 using the TCP protocol. The connection had 2048 bytes sent and 4096 bytes received. The destination URL was pets.com.
+
+At 7:00 AM on July 17, 2024, the endpoint with IP 192.168.1.102 connected to the IP 192.0.2.20 on port 80 using the TCP protocol. The connection had 512 bytes sent and 1024 bytes received. The destination URL was http://helloworld.org.
+
+At 7:15 AM on July 17, 2024, the endpoint with IP 192.168.1.102 connected to the IP 203.0.113.45 on port 80 using the TCP protocol. The connection had 1024 bytes sent and 2048 bytes received. The destination URL was pets.com.

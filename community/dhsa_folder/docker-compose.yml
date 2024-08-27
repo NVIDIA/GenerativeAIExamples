@@ -1,0 +1,101 @@
+# SPDX-FileCopyrightText: Copyright (c) 2022-2024, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+version: '3.3'
+
+services:
+
+  mlflow:
+    restart: always
+    build: ./mlflow
+    image: mlflow_server
+    container_name: mlflow_server_security_analyst
+    ports:
+      - "5000:5000"
+    networks:
+      - frontend
+      - backend
+    command: mlflow server --gunicorn-opts "--log-level debug" --backend-store-uri sqlite:////opt/mlflow/dbdata/mlflow.db --serve-artifacts --artifacts-destination /opt/mlflow/artifacts --host 0.0.0.0
+    # Run the container with this command to upgrade if needed: mlflow db upgrade sqlite:////opt/mlflow/dbdata/mlflow.db
+    volumes:
+      - db_data:/opt/mlflow/dbdata
+      - mlflow_data:/opt/mlflow/artifacts
+
+  # nim-llm:
+  #   image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.0
+  #   runtime: nvidia
+  #   ulimits: 
+  #     memlock: -1
+  #     stack: 67108864
+  #   environment:
+  #     - NGC_API_KEY=${NGC_API_KEY}
+  #     - CUDA_VISIBLE_DEVICES=4
+  #   ports:
+  #     - 8000:8000
+  #   networks:
+  #     - frontend
+  #     - backend
+  #   volumes:
+  #     - type: bind
+  #       source: /raid/nim/cache
+  #       target: /nim/.cache
+
+  jupyter:
+    restart: always
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.morpheus
+      args:
+        - MORPHEUS_CONTAINER=${MORPHEUS_CONTAINER:-nvcr.io/nvidia/morpheus/morpheus}
+        - MORPHEUS_CONTAINER_VERSION=${MORPHEUS_CONTAINER_VERSION:-v24.03.02-runtime}
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['2']
+            capabilities: [gpu]
+    image: morpheus_jupyter
+    container_name: jupyter_security_analyst
+    ports:
+      - "8888:8888"
+    networks:
+      - frontend
+      - backend
+    command: jupyter-lab --no-browser --allow-root --ip='*'
+    volumes:
+      - .:/workspace/examples/digital_fingerprinting/production/morpheus
+    depends_on:
+      - mlflow
+      # - nim-llm
+    profiles:
+      - dev
+    cap_add:
+      - sys_nice
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - OPENAI_API_KEY=${NGC_API_KEY}
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+
+volumes:
+  db_data:
+  mlflow_data:
