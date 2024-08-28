@@ -1,0 +1,198 @@
+APT30
+
+Suspected attribution: China
+
+Target sectors: Members of the Association of Southeast Asian Nations (ASEAN)
+
+Overview: APT30 is noted not only for sustained activity over a long period of time but also for successfully modifying and adapting source code to maintain the same tools, tactics and infrastructure since at least 2005. Evidence shows that the group prioritizes targets, most likely works in shifts in a collaborative environment and builds malware from a coherent development plan. The group has had the capability to infect air-gapped networks since 2005.
+
+Associated malware: SHIPSHAPE, SPACESHIP, FLASHFLOOD
+
+Attack vectors: APT30 uses a suite of tools that includes downloaders, backdoors, a central controller and several components designed to infect removable drives and cross air-gapped networks to steal data. APT30 frequently registers its own DNS domains for malware CnC activities.
+
+APT27
+
+Suspected attribution: China
+
+Target sectors: APT27 has targeted multiple organizations headquartered around the globe, including North and South America, Europe, and the Middle East. These organizations fall into a range of different industries, including business services, high tech, government, and energy; however a notable number are in the aerospace and transport or travel industries.
+
+Overview: APT27 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make a particular organization competitive within its field.
+
+Associated malware: PANDORA, SOGU, ZXSHELL, GHOST, WIDEBERTH, QUICKPULSE, FLOWERPOT
+
+Attack vectors: APT27 often uses spear phishing as its initial compromise method. APT27 threat actors are not known for using original zero-day exploits, but they may leverage those exploits once they have been made public. In at least one case, APT27 actors used a compromised account at one victim organization to send a spear phishing email to other intended victims in the similar industries. Additionally, APT27 may compromise vulnerable web applications in order to gain an initial foothold.
+
+APT26
+
+Suspected attribution: China
+
+Target sectors: Aerospace, Defense, and Energy sectors, among others.
+
+Overview: APT26 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make a particular organization competitive within its field.
+
+Associated malware: SOGU, HTRAN, POSTSIZE, TWOCHAINS, BEACON
+
+Attack vectors: The group frequently uses strategic web compromises to gain access to target networks and custom backdoors once they are inside a victim environment.
+
+APT25
+
+AKA: Uncool, Vixen Panda, Ke3chang, Sushi Roll, Tor
+
+Suspected attribution: China
+
+Target sectors: The defense industrial base, media, financial services, and transportation sectors in the U.S. and Europe.
+
+Overview: APT25 engages in cyber operations where the goal is data theft.
+
+Associated malware: LINGBO, PLAYWORK, MADWOFL, MIRAGE, TOUGHROW, TOYSNAKE, SABERTOOTH
+
+Attack vectors: APT25 has historically used spear phishing in their operations, including messages containing malicious attachments and malicious hyperlinks. APT25 threat actors typically do not use zero-day exploits but may leverage those exploits once they have been made public.
+
+APT24
+
+AKA: PittyTiger
+
+Suspected attribution: China
+
+Target sectors: APT24 has targeted a wide variety of industries, including organizations in the government, healthcare, construction and engineering, mining, nonprofit, and telecommunications industries.
+
+Overview: This group is known to have targeted organizations headquartered in countries including the U.S. and Taiwan. APT24 has historically used the RAR archive utility to encrypt and compress stolen data prior to transferring it out of the network. Data theft exfiltrated from this actor mainly focused on documents with political significance, suggesting its intent is to monitor the positions of various nation states on issues applicable to China’s ongoing territorial or sovereignty dispute.
+
+Associated malware: PITTYTIGER, ENFAL, TAIDOOR
+
+Attack vectors: APT24 has used phishing emails that use military, renewable energy, or business strategy themes as lures. Further, APT24 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make a particular organization competitive within its field.
+
+APT23
+
+Suspected attribution: China
+
+Target sectors: Media and government in the U.S. and the Philippines
+
+Overview: APT23 has stolen information that has political and military significance, rather than intellectual property. This suggests that APT23 may perform data theft in support of more traditional espionage operations.
+
+Associated malware: NONGMIN
+
+Attack vectors: APT23 has used spear phishing messages to compromise victim networks, including education-related phishing lures. APT23 actors are not known to use zero-day exploits, but this group has leveraged those exploits once they have been made public.
+
+APT22
+
+AKA: Barista
+
+Suspected attribution: China
+
+Target sectors: A broad set of political, military, and economic entities in East Asia, Europe, and the U.S.
+
+Overview: We believe APT22 has a nexus to China and has been operational since at least early 2014, carrying out intrusions and attack activity against public and private sector entities, including dissidents.
+
+Associated malware: PISCES, SOGU, FLATNOTE, ANGRYBELL, BASELESS, SEAWOLF, LOGJAM
+
+Attack vectors: APT22 threat actors have used strategic web compromises in order to passively exploit targets of interest. APT22 actors have also identified vulnerable public-facing web servers on victim networks and uploaded webshells to gain access to the victim network.
+
+APT21
+
+AKA: Zhenbao
+
+Suspected attribution: China
+
+Target sectors: Government
+
+Overview: APT21 leverages strategic Russian-language attachments themed with national security issues in lure documents. Historically, social engineering content is indicative of a cyber espionage operation attempting to gain unauthorized access to privileged information concerning state security in Russia. An analysis of APT21 techniques suggests that another of their focus areas is dissident groups which seek greater autonomy or independence from China, such as those from Tibet or Xinjiang.
+
+Associated malware: SOGU, TEMPFUN, Gh0st, TRAVELNET, HOMEUNIX, ZEROTWO
+
+Attack vectors: APT21 leverages spear phishing email messages with malicious attachment, links to malicious files, or web pages. They have also used strategic web compromises (SWCs) to target potential victims. APT21 frequently uses two backdoors known as TRAVELNET and TEMPFUN. Significantly, APT21 typically primarily uses custom backdoors, rarely using publicly available tools.
+
+APT20
+
+AKA: Twivy
+
+Suspected attribution: China
+
+Target sectors: Construction and engineering, health care, non-profit organizations, defense industrial bas eand chemical research and production companies.
+
+Overview: APT20 engages in cyber operations where the goal is data theft. APT20 conducts intellectual property theft but also appears interested in stealing data from or monitoring the activities of individuals with particular political interests. Based on available data, we assess that this is a freelancer group with some nation state sponsorship located in China.
+
+Associated malware: QIAC, SOGU, Gh0st, ZXSHELL, Poison Ivy, BEACON, HOMEUNIX, STEW
+
+Attack vectors: APT20's use of strategic web compromises provides insight into a second set of likely targets. Many of APT20's SWCs have been hosted on web sites (including Chinese-language websites) that deal with issues such as democracy, human rights, freedom of the press, ethnic minorities in China, and other issues.
+
+APT19
+
+Also known as: Codoso Team
+
+Suspected attribution: China
+
+Target sectors: Legal and investment
+
+Overview: A group likely composed of freelancers, with some degree of sponsorship by the Chinese government.
+
+Associated malware: BEACON, COBALTSTRIKE
+
+Attack vectors: In 2017, APT19 used three different techniques to attempt to compromise targets. In early May, the phishing lures leveraged RTF attachments that exploited the Microsoft Windows vulnerability described in CVE 2017-0199. Toward the end of May, APT19 switched to using macro-enabled Microsoft Excel (XLSM) documents. In the most recent versions, APT19 added an application whitelisting bypass to the XLSM documents. At least one observed phishing lure delivered a Cobalt Strike payload.
+
+APT18
+
+Also known as: Wekby
+
+Suspected attribution: China
+
+Target sectors: Aerospace and Defense, Construction and Engineering, Education, Health and Biotechnology, High Tech, Telecommunications, Transportation
+
+Overview: Very little has been released publicly about this group.
+
+Associated malware: Gh0st RAT
+
+Attack vectors: Frequently developed or adapted zero-day exploits for operations, which were likely planned in advance. Used data from Hacking Team leak, which demonstrated how the group can shift resources (i.e. selecting targets, preparing infrastructure, crafting messages, updating tools) to take advantage of unexpected opportunities like newly exposed exploits.
+
+Additional Resources: Blog – Demonstrating Hustle, Chinese APT Groups Quickly Use Zero-Day Vulnerability (CVE-2015-5119) Following Hacking Team Leak
+
+APT17
+
+Also known as: Tailgator Team, Deputy Dog
+
+Suspected attribution: China
+
+Target sectors: U.S. government, and international law firms and information technology companies
+
+Overview: Conducts network intrusion against targeted organizations.
+
+Associated malware: BLACKCOFFEE
+
+Attack vectors: The threat group took advantage of the ability to create profiles and post in forums to embed encoded CnC for use with a variant of the malware it used. This technique can make it difficult for network security professionals to determine the true location of the CnC, and allow the CnC infrastructure to remain active for a longer period.
+
+APT16
+
+Suspected attribution: China
+
+Target sectors: Japanese and Taiwanese organizations in the high-tech, government services, media and financial services industries
+
+Overview: China-based group concerned with Taiwan political and journalistic matters.
+
+Associated malware: IRONHALO, ELMER
+
+Attack vectors: Spearphishing emails sent to Taiwanese media organizations and webmail addresses. Lure documents contained instructions for registration and subsequent listing of goods on a Taiwanese auction website.
+
+APT15
+
+Suspected attribution: China
+
+Target sectors: Global targets in the trade, economic and financial, energy, and military sectors in support of Chinese government interests.
+
+Overview: APT15 has targeted organizations headquartered in multiple locations, including a number of European countries, the U.S., and South Africa. APT15 operators share resources, including backdoors as well as infrastructure, with other Chinese APTs.
+
+Associated malware: ENFAL, BALDEAGLE, NOISEMAKER, MIRAGE
+
+Attack vectors: APT15 typically uses well-developed spearphishing emails for Initial Compromise against global targets in various sectors that are of interest to the Chinese government. Significantly, APT15 use backdoors and infrastructure that is not unique to the group, making attribution challenging.
+
+APT14
+
+Suspected attribution: China
+
+Target sectors: Government, telecommunications, and construction and engineering.
+
+Overview: APT14 engages in cyber operations where the goal is data theft, with a possible focus on military and maritime equipment, operations, and policies. We believe that the stolen data, especially encryption and satellite communication equipment specifications, could be used to enhance military operations, such as intercepting signals or otherwise interfering with military satellite communication networks.
+
+Associated malware: Gh0st, POISONIVY, CLUBSEAT, GROOVY
+
+Attack vectors: APT14 threat actors do not tend to use zero-day exploits but may leverage those exploits once they have been made public. They may leverage a custom SMTP mailer tool to send their spear phishing messages. APT14 phishing messages are often crafted to appear to originate from trusted organizations.
+

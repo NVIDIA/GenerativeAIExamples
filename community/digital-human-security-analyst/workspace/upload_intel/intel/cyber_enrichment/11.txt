@@ -1,0 +1,99 @@
+APT9
+
+Suspected attribution: Based on available data, we assess that this is a freelancer group with some nation-state sponsorship, possibly China.
+
+Target sectors: Organizations headquartered in multiple countries and in industries such as health care and pharmaceuticals, construction and engineering, and aerospace and defense.
+
+Overview: APT9 engages in cyber operations where the goal is data theft, usually focusing on the data and projects that make a particular organization competitive within its field.
+
+Associated malware: SOGU, HOMEUNIX, PHOTO, FUNRUN, Gh0st, ZXSHEL
+
+Attack vectors: APT9 was historically very active in the pharmaceuticals and biotechnology industry. We have observed this actor use spearphishing, valid accounts, as well as remote services for Initial Access. On at least one occasion, Mandiant observed APT9 at two companies in the biotechnology industry and suspect that APT9 actors may have gained initial access to one of the companies by using a trusted relationship between the two companies. APT9 use a wide range of backdoors, including publicly available backdoors, as well as backdoors that are believed to be custom, but are used by multiple APT groups.
+
+APT8
+
+Suspected attribution: China
+
+Target sectors: A broad range of industries, including media and entertainment, construction and engineering, and aerospace and defense.
+
+Overview: APT8 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make an organization competitive within its field. We assess that this is a freelancer group located in China with some nation-state sponsorship. APT8 has targeted organizations headquartered in multiple countries, including the U.S., Germany, the U.K., India, and Japan.
+
+Associated malware: HASH, FLYZAP, GOLFPRO, SAFEPUTT
+
+Attack vectors: APT8 actors often use spear phishing email messages with malicious attachments or links, or it exploits vulnerable Internet-facing web servers to compromise target organizations. In addition, in multiple intrusions APT8 actors sent malicious links to potential victims via chat or instant messaging programs.
+
+APT7
+
+Suspected attribution: China
+
+Target sectors: Construction, engineering, aerospace, and defense industrial base.
+
+Overview: APT7 engages in cyber operations where the goal is intellectual property theft, usually focusing on data and projects that make an organization competitive within its field. This group is known to have targeted organizations headquartered in the U.S. and U.K.
+
+Associated malware: DIGDUG, TRACKS
+
+Attack vectors: APT7 threat actors have used access to one organization to infiltrate another organization under the same corporate parent. This is a form of lateral movement, but in this case was also the initial compromise method for the second organization.
+
+APT6
+
+Suspected attribution: China
+
+Target sectors: Transportation, Automotive, Construction and Engineering, Telecommunications, Electronic, Construction and Materials.
+
+Overview: APT6 engages in cyber operations where the goal is data theft, most likely data and projects that make an organization competitive within its field. APT6 targeted organizations headquartered in the U.S and U.K.
+
+Associated malware: BELUGA, EXCHAIN, PUPTENT
+
+Attack vectors: APT6 utilizes several custom backdoors, including some used by other APT groups as well as those that are unique to the group.
+
+APT5
+
+Suspected attribution: China
+
+Target sectors: Regional telecommunication providers, Asia-based employees of global telecommunications and tech firms, high-tech manufacturing, and military application technology in the U.S., Europe, and Asia.
+
+Overview: APT5 has been active since at least 2007. APT5 has targeted or breached organizations across multiple industries, but its focus appears to be on telecommunications and technology companies, especially information about satellite communications. As early as 2014, Mandiant Incident Response discovered APT5 making unauthorized code modifications to files in the embedded operating system of another technology platform. In 2015, APT5 compromised a U.S. telecommunications organization providing services and technologies for private and government entities. During this intrusion, the actors downloaded and modified some of the router images related to the company’s network routers. Also during this time, APT5 stole files related to military technology from a South Asian defense organization. Observed filenames suggest the actors were interested in product specifications, emails concerning technical products, procurement bids and proposals, and documents on unmanned aerial vehicles (UAVs).
+
+Associated malware: BRIGHTCREST, SWEETCOLA, SPIRITBOX, PALEJAB, WIDERIM, WINVAULT, HAPPYSAD, BIRDWORLD, FARCRY, CYFREE, FULLSILO, HELLOTHEWORLD, HAZELNUT, GIF89A, SCREENBIND, SHINYFUR, TRUCKBED, LEOUNCIA, FREESWIM, PULLTAB, HIREDHELP, NEDDYHORSE, PITCHFORK, BRIGHTCOMB, ENCORE, TABCTENG, SHORTLEASH, CLEANACT, BRIGHTCYAN, DANCEPARTY, HALFBACK, PUSHBACK, COOLWHIP, LOWBID, TIGHTROPE, DIRTYWORD, AURIGA, KEYFANG, Poison Ivy
+
+Attack vectors: It appears to be a large threat group that consists of several subgroups, often with distinct tactics and infrastructure. The group uses malware with keylogging capabilities to specifically target telecommunication companies' corporate networks, employees and executives. APT5 has shown significant interest in compromising networking devices and manipulating the underlying software that supports these appliances.
+
+APT4
+
+Description:
+Also known as: Maverick Panda, Sykipot Group, Wisp
+
+Suspected attribution: China
+
+Target sectors: Aerospace and Defense, Industrial Engineering, Electronics, Automotive, Government, Telecommunications, and Transportation.
+
+Overview: APT4 appears to target the Defense Industrial Base (DIB) at a higher rate of frequency than other commercial organizations. However, APT4's history of targeted intrusions is wide in scope.
+
+Associated malware: GETKYS, LIFESAVER, CCHIP, SHYLILT, SWEETTOOTH, PHOTO, SOGO
+
+Attack vectors: APT4 actors often leverage spear phishing messages using U.S. government, Department of Defense, or defense industrial base themes. APT4 actors may repurpose valid content from government or U.S. DoD web sites within their message bodies to lend them legitimacy.
+
+APT2
+
+Suspected attribution: China
+
+Target sectors: Military and Aerospace.
+
+Overview: This group was first observed in 2010. APT2 engages in cyber operations where the goal is intellectual property theft, usually focusing on the data and projects that make an organization competitive within its field
+
+Associated malware: MOOSE, WARP
+
+Attack vectors: Spearphishing emails that exploit CVE-2012-0158.
+
+APT1
+
+Also known as: Unit 61398, Comment Crew
+Suspected attribution: China’s People’s Liberation Army (PLA) General Staff Department’s (GSD) 3rd Department (总参三部二局), which is most commonly known by its Military Unit Cover Designator (MUCD) as Unit 61398 (61398部队).
+
+Target sectors: Information Technology, Aerospace, Public Administration, Satellites and Telecommunications, Scientific Research and Consulting, Energy, Transportation, Construction and Manufacturing, Engineering Services, High-tech Electronics, International Organizations, Legal Services Media, Advertising and Entertainment, Navigation, Chemicals, Financial Services, Food and Agriculture, Healthcare, Metals and Mining, Education
+
+Overview: APT1 has systematically stolen hundreds of terabytes of data from at least 141 organizations, and has demonstrated the capability and intent to steal from dozens of organizations simultaneously. The group focuses on compromising organizations across a broad range of industries in English-speaking countries. The size of APT1’s infrastructure implies a large organization with at least dozens, but potentially hundreds of human operators.
+
+Associated malware: TROJAN.ECLTYS, BACKDOOR.BARKIOFORK, BACKDOOR.WAKEMINAP, TROJAN.DOWNBOT, BACKDOOR.DALBOT, BACKDOOR.REVIRD, TROJAN.BADNAME, BACKDOOR.WUALESS
+
+Attack vectors: The most commonly observed method of initial compromise is spear phishing. The spear phishing emails contain either a malicious attachment or a hyperlink to a malicious file. The subject line and the text in the email body are usually relevant to the recipient. APT1 also creates webmail accounts using real peoples’ names. While APT1 intruders occasionally use publicly available backdoors such as Poison Ivy and Gh0st RAT, the vast majority of the time they use what appear to be their own custom backdoors. Throughout their stay in the network (which could be years), APT1 usually installs new backdoors as they claim more systems in the environment. Then, if one backdoor is discovered and deleted, they still have other backdoors they can use. We usually detect multiple families of APT1 backdoors scattered around a victim network when APT1 has been present for more than a few weeks.
