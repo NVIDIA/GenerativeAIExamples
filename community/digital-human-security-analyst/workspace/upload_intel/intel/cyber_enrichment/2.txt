@@ -1,0 +1,7 @@
+Target sectors: U.S. Western Europe, and Middle Eastern military, diplomatic, and government personnel, organizations in the media, energy, and defense Industrial base, and engineering, business services, and telecommunications sectors.
+
+Overview: APT35 (aka Newscaster Team) is an Iranian government-sponsored cyber espionage team that conducts long-term, resource-intensive operations to collect strategic intelligence. Mandiant Threat Intelligence has observed APT35 operations dating back to 2014. APT35 has historically relied on marginally sophisticated tools, including publicly available webshells and penetration testing tools, suggesting a relatively nascent development capability. However, the breadth and scope of APT35's operations, particularly as it relates to its complex social engineering efforts, likely indicates that the group is well resourced in other areas.
+
+Associated malware: ASPXSHELLSV, BROKEYOLK, PUPYRAT, TUNNA, MANGOPUNCH, DRUBOT, HOUSEBLEND
+
+Attack vectors: APT35 typically relies on spearphishing to initially compromise an organization, often using lures related to health care, job postings, resumes, or password policies. However, we have also observed the group using compromised accounts with credentials harvested from prior operations, strategic web compromises, and password spray attacks against externally facing web applications as additional techniques to gain initial access.
