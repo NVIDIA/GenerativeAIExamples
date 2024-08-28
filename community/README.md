@@ -55,11 +55,6 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
   This example demonstrates how NVIDIA Morpheus, NIM microservices, and RAG pipelines can be integrated to create LLM-based agent pipelines. These pipelines will be used to automatically and scalably traige and detect Common Vulnerabilities and Exposures (CVEs) in Docker containers using references to source code, dependencies, and information about the CVEs.
 
-* [Digital Human Security Analyst with NVIDIA Morpheus](./digital-human-security-analyst/)
-
-  In this example, we create a RAG enabled co-pilot for Security Operation Center analysts, with speech and facial animation. This tutorial can be applied to any use case where data retrieval and synthesis can be simple but tedious (ie. writing reports from multiple numerical datasources, or customer service requiring data lookup). We cover data ingestion, multi-step agentic reasoning, RAG, speech input/output, and digital human face animation using the [Morpheus cybersecurity SDK](https://developer.nvidia.com/morpheus-cybersecurity), [LLM NIMs](https://build.nvidia.com/meta/llama-3_1-8b-instruct), [NeMo Retriever](https://www.nvidia.com/en-us/ai-data-science/products/nemo/), [Riva Speech Services](https://developer.nvidia.com/riva), and [ACE Audio2Face](https://build.nvidia.com/nvidia/audio2face) respectively.
-
-
 * [NVIDIA Knowledge Graph RAG](./knowledge_graph_rag)
 
   This example implements a GPU-accelerated pipeline for creating and querying knowledge graphs using Retrieval-Augmented Generation (RAG). The approach leverages NVIDIA's AI technologies and RAPIDS ecosystem to process large-scale datasets efficiently. It allows users to interact through a chat interface and also visualize the corresponding knowledge graph, and perform evaluations against synthetic data generated with NVIDIA's Nemotron-4 340B model.
