@@ -45,20 +45,33 @@ pip install -r requirements.txt
 export NVIDIA_API_KEY="your-api-key-here"
 ```
 
+5. Refer this [tutorial](https://milvus.io/docs/install_standalone-docker-compose-gpu.md) to install and start the GPU-accelerated Milvus container:
+
+```
+sudo docker compose up -d
+```
+
+
 ## Usage
 
-1. Run the Streamlit app:
+1. Ensure the Milvus container is running:
+
+```bash
+docker ps
+```
+
+2. Run the Streamlit app:
 ```
 streamlit run app.py
 ```
 
-2. Open the provided URL in your web browser.
+3. Open the provided URL in your web browser.
 
-3. Choose between uploading files or specifying a directory path containing your documents.
+4. Choose between uploading files or specifying a directory path containing your documents.
 
-4. Process the files by clicking the "Process Files" or "Process Directory" button.
+5. Process the files by clicking the "Process Files" or "Process Directory" button.
 
-5. Once processing is complete, use the chat interface to query your documents.
+6. Once processing is complete, use the chat interface to query your documents.
 
 ## File Structure
 
@@ -74,6 +87,7 @@ To utilize GPU acceleration in the vector database, ensure that:
 1. Your system has a compatible NVIDIA GPU.
 2. You're using the GPU-enabled version of Milvus (as shown in the setup instructions).
 3. There are enough concurrent requests to justify GPU usage. GPU acceleration typically shows significant benefits under high load conditions.
+
 It's important to note that GPU acceleration will only be used when the incoming requests are extremely high. For more detailed information on GPU indexing and search in Milvus, refer to the [official Milvus GPU Index documentation](https://milvus.io/docs/gpu_index.md).
 
 To connect the GPU-accelerated Milvus with LlamaIndex, update the MilvusVectorStore configuration in app.py:
