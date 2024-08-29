@@ -45,7 +45,7 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
 * [NVIDIA Multimodal RAG Assistant](./multimodal_assistant)
 
-  This example is able to ingest PDFs, PowerPoint slides, Word and other documents with complex data formats including text, images, slides and tables. It allows users to ask questions through a text interface and optionally with an image query, and it can respond with text and reference images, slides and tables in its response, along with source links and downloads.
+  This example is able to ingest PDFs, PowerPoint slides, Word and other documents with complex data formats including text, images, slides and tables, orchestrated with Langchain. It allows users to ask questions through a text interface and optionally with an image query, and it can respond with text and reference images, slides and tables in its response, along with source links and downloads. Refer to this [example](./multimodal-rag) for the LlamaIndex version that uses [integration](https://docs.llamaindex.ai/en/stable/examples/llm/nvidia_nim/) with NVIDIA Inference Microservices (NIMs) of the Multimodal RAG Assistant.
 
 * [NVIDIA Developer RAG Chatbot](./rag-developer-chatbot)
 
