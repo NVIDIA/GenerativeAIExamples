@@ -37,6 +37,8 @@
 
    Navigate to the `dataset.zip` file that is located in the `notebooks` directory. Unzip the archive and upload the PDFs.
 
+1. If you want to remove a file from knowledge base, select the file name from **Knowledge Base** tab and click **Delete**.
+
 1. Return to **Converse** tab and select **[X] Use knowledge base**.
 
 1. Reenter the question: "How many cores does the Grace superchip contain?"
