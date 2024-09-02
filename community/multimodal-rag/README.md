@@ -4,13 +4,13 @@
 
 This Streamlit application implements a Multimodal Retrieval-Augmented Generation (RAG) system. It processes various types of documents including text files, PDFs, PowerPoint presentations, and images. The app leverages Large Language Models and Vision Language Models to extract and index information from these documents, allowing users to query the processed data through an interactive chat interface.
 
-The system utilizes LlamaIndex for efficient indexing and retrieval of information, NVIDIA Inference Microservices (NIMs) for high-performance inference capabilities, and Milvus as a vector database for efficient storage and retrieval of embedding vectors. This combination of technologies enables the application to handle complex multimodal data, perform advanced queries, and deliver rapid, context-aware responses to user inquiries.
+The system utilizes LlamaIndex for efficient indexing and retrieval of information, NIM microservices for high-performance inference capabilities, and Milvus as a vector database for efficient storage and retrieval of embedding vectors. This combination of technologies enables the application to handle complex multimodal data, perform advanced queries, and deliver rapid, context-aware responses to user inquiries.
 
 ## Features
 
 - **Multi-format Document Processing**: Handles text files, PDFs, PowerPoint presentations, and images.
 - **Advanced Text Extraction**: Extracts text from PDFs and PowerPoint slides, including tables and embedded images.
-- **Image Analysis**: Uses a VLM (NeVA) to describe images and Google's DePlot for processing graphs/charts on NVIDIA Inference Microservices (NIMs).
+- **Image Analysis**: Uses a VLM (NeVA) to describe images and Google's DePlot for processing graphs/charts on NIM microservices.
 - **Vector Store Indexing**: Creates a searchable index of processed documents using Milvus vector store.
 - **Interactive Chat Interface**: Allows users to query the processed information through a chat-like interface.
 
