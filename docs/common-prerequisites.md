@@ -26,7 +26,7 @@
 - Install Docker Engine and Docker Compose.
   Refer to the instructions for [Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
-  Ensure the Docker Compose plugin version is 2.20 or higher.
+  Ensure the Docker Compose plugin version is 2.29.1 or higher.
   Run `docker compose version` to confirm.
   Refer to [Install the Compose plugin](https://docs.docker.com/compose/install/linux/)
   in the Docker documentation for more information.
