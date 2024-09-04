@@ -7,7 +7,7 @@
 
 # NVIDIA Generative AI Examples
 This repository serves as a starting point for generative AI developers looking to integrate with the NVIDIA software ecosystem to accelerate their generative AI systems.
-Whether you are building RAG pipelines, agentic workflows, or finetuning models, this repository will help you integrate NVIDIA, seamlesly and natively, with your development stack.
+Whether you are building RAG pipelines, agentic workflows, or finetuning models, this repository will help you integrate NVIDIA, seamlessly and natively, with your development stack.
 
 ## What's new?
 
