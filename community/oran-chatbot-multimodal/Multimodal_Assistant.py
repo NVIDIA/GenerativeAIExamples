@@ -35,7 +35,7 @@ from retriever.vector import MilvusVectorClient, QdrantClient
 from retriever.retriever import Retriever, get_relevant_docs, get_relevant_docs_mq
 from utils.feedback import feedback_kwargs
 
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIARerank
 from langchain_core.messages import HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -400,52 +400,66 @@ if len(prompt) > 0 and submitted == True:
             if rag_type == 1: 
                 augmented_queries = augment_multiple_query(transformed_query["text"])
                 queries = [transformed_query["text"]] + augmented_queries[2:]
-                print("Queries are = ", queries)
+                # print("Queries are = ", queries)
                 retrieved_documents = []
                 retrieved_metadatas = []
+                relevant_docs = []
                 for query in queries:
                     ret_docs,cons,srcs = get_relevant_docs(CORE_DIR, query)
                     for doc in ret_docs:
                         retrieved_documents.append(doc.page_content)
                         retrieved_metadatas.append(doc.metadata['source'])
+                        relevant_docs.append(doc)
                 print("length of retrieved docs: ", len(retrieved_documents))
                 #Remove all duplicated documents and retain the original metadata
                 unique_documents = []
                 unique_documents_metadata = []
-                for document,source in zip(retrieved_documents,retrieved_metadatas):
+                unique_relevant_documents = []
+                for idx, (document,source) in enumerate(zip(retrieved_documents,retrieved_metadatas)):
                         if document not in unique_documents:
                             unique_documents.append(document)
                             unique_documents_metadata.append(source)
+                            unique_relevant_documents.append(relevant_docs[idx])
                 
                 if len(retrieved_documents) == 0:
                     context = ""
                     print("not context found context")
                 else: 
                     print("length of unique docs: ", len(unique_documents))
-                    #Instantiate the cross-encoder model and get scores for each retrieved document
-                    cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2') # ('BAAI/bge-reranker-large')('cross-encoder/ms-marco-MiniLM-L-6-v2')
-                    pairs = [[prompt, doc] for doc in unique_documents]
-                    scores = cross_encoder.predict(pairs)
-                    #Sort the scores from highest to least
-                    order_ids =  np.argsort(scores)[::-1]
-                    # print(order_ids)
+                    #Instantiate the re-ranker model and get scores for each retrieved document
                     new_updated_documents = []
                     new_updated_sources = []
-                    #Get the top 6 scores
-                    if len(order_ids)>=10:
-                        for i in range(10):
-                            new_updated_documents.append(unique_documents[order_ids[i]])
-                            new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                    if not config_yaml['Reranker_NIM']:
+                        print("\n\nReranking with Cross-encoder model: ", config_yaml['reranker_model'])
+                        cross_encoder = CrossEncoder(config_yaml['reranker_model']) 
+                        pairs = [[prompt, doc] for doc in unique_documents]
+                        scores = cross_encoder.predict(pairs)
+                        #Sort the scores from highest to least
+                        order_ids =  np.argsort(scores)[::-1]
+                        #Get the top 10 scores
+                        if len(order_ids)>=10:
+                            for i in range(10):
+                                new_updated_documents.append(unique_documents[order_ids[i]])
+                                new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                        else:
+                            for i in range(len(order_ids)):
+                                new_updated_documents.append(unique_documents[order_ids[i]])
+                                new_updated_sources.append(unique_documents_metadata[order_ids[i]])
                     else:
-                        for i in range(len(order_ids)):
-                            new_updated_documents.append(unique_documents[order_ids[i]])
-                            new_updated_sources.append(unique_documents_metadata[order_ids[i]])
+                        print("\n\nReranking with Retriever Text Reranking NIM model: ", config_yaml["reranker_model_name"])
+                        # Initialize and connect to the running NeMo Retriever Text Reranking NIM 
+                        reranker = NVIDIARerank(model=config_yaml["reranker_model_name"],
+                                                base_url=config_yaml["reranker_api_endpoint_url"], top_n=10)
+                        reranked_chunks = reranker.compress_documents(query=transformed_query["text"], documents=unique_relevant_documents)
+                        for chunks in reranked_chunks:
+                            metadata = chunks.metadata
+                            page_content = chunks.page_content
+                            new_updated_documents.append(page_content)
+                            new_updated_sources.append(metadata['source'])
                         
-                    print(new_updated_sources)
-                    print(len(new_updated_documents))
+                    print("Reranking of completed for ", len(new_updated_documents), " chunks")   
 
                     context = ""
-                    # sources = ""
                     sources = {}
                     for doc in new_updated_documents:
                             context += doc + "\n\n"
@@ -455,7 +469,7 @@ if len(prompt) > 0 and submitted == True:
                                 sources[src] = {"doc_content": sources[src]["doc_content"]+"\n\n"+new_updated_documents[i], "doc_metadata": src}   
                             else:
                                 sources[src] = {"doc_content": new_updated_documents[i], "doc_metadata": src}   
-                    print("length of source docs: ", len(sources))
+                    print("Length of unique source docs: ", len(sources))
                     #Send the top 10 results along with the query to LLM
                 
             if rag_type == 2: 
@@ -486,7 +500,7 @@ if len(prompt) > 0 and submitted == True:
 
                     print("length of unique docs: ", len(unique_documents))
                     #Instantiate the cross-encoder model and get scores for each retrieved document
-                    cross_encoder = CrossEncoder('BAAI/bge-reranker-large') #('cross-encoder/ms-marco-MiniLM-L-6-v2')
+                    cross_encoder = CrossEncoder(config_yaml['reranker_model'])
                     pairs = [[prompt, doc] for doc in unique_documents]
                     scores = cross_encoder.predict(pairs)
                     #Sort the scores from highest to least
@@ -544,7 +558,7 @@ if len(prompt) > 0 and submitted == True:
 
                     print("length of unique docs: ", len(unique_documents))
                     #Instantiate the cross-encoder model and get scores for each retrieved document
-                    cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2') #('BAAI/bge-reranker-large') 
+                    cross_encoder = CrossEncoder(config_yaml['reranker_model']) 
                     pairs = [[prompt, doc] for doc in unique_documents]
                     scores = cross_encoder.predict(pairs)
                     #Sort the scores from highest to least
