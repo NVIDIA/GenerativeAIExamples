@@ -6,7 +6,7 @@ docx2txt
 faiss-cpu
 fastapi==0.104.1
 gspread==6.0.0
-jupyterlab==4.0.8
+jupyterlab==4.2.5
 langchain==0.2.5
 langchain-community==0.2.5
 langchain-core==0.2.7

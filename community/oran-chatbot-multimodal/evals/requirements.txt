@@ -5,7 +5,7 @@ sentence-transformers==2.2.2
 llama-index==0.9.13
 llama-hub==0.0.43
 pymilvus==2.3.1
-jupyterlab==4.0.8
+jupyterlab==4.2.5
 ragas==0.0.21
 seaborn==0.13.0
 transformers
