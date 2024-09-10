@@ -12,7 +12,7 @@ llama-index-vector-stores-milvus==0.1.6
 llama-index-vector-stores-postgres==0.1.5
 pymilvus==2.4.0
 dataclass-wizard==0.22.3
-opencv-python==4.8.0.74
+opencv-python==4.8.1.78
 minio==7.2.5
 asyncpg==0.29.0
 psycopg2-binary==2.9.9
