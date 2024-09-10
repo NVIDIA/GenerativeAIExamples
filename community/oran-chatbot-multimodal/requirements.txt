@@ -14,7 +14,7 @@ langchain-nvidia-ai-endpoints==0.1.6
 langchain-text-splitters==0.2.1
 llama-hub==0.0.43
 llama-index==0.9.22
-opencv-python==4.8.0.74
+opencv-python==4.8.1.78
 pandas==2.2.0
 Pillow==10.2.0
 pydantic==2.5.3
