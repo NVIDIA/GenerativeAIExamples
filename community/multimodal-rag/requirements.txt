@@ -1,6 +1,5 @@
 pymupdf==1.22.5
 streamlit==1.38.0
-fitz==0.0.1.dev2
 python-pptx==1.0.2
 Pillow==10.4.0
 requests==2.32.3
