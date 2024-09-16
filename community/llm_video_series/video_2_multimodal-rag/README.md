@@ -11,7 +11,7 @@ The system utilizes LlamaIndex for efficient indexing and retrieval of informati
 - **Multi-format Document Processing**: Handles text files, PDFs, PowerPoint presentations, and images.
 - **Advanced Text Extraction**: Extracts text from PDFs and PowerPoint slides, including tables and embedded images.
 - **Image Analysis**: Uses a VLM (NeVA) to describe images and Google's DePlot for processing graphs/charts on NIM microservices.
-- **Vector Store Indexing**: Creates a searchable index of processed documents using Milvus vector store.
+- **Vector Store Indexing**: Creates a searchable index of processed documents using Milvus vector store. This folder is auto generated on execution.
 - **Interactive Chat Interface**: Allows users to query the processed information through a chat-like interface.
 
 ## Setup
