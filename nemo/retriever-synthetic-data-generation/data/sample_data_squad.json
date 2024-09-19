@@ -1,0 +1,34 @@
+{
+    "data": [
+        {
+            "paragraphs": [
+                {
+                    "document_id": "IT Helpdesk Ticketing System Overview",
+                    "context": "The IT Helpdesk Ticketing System is a tool used by the IT Helpdesk team to manage and track support requests from users. The system allows users to submit tickets for various IT-related issues, such as password resets, software installation, hardware troubleshooting, and network connectivity problems.",
+                    "qas": []
+                }
+            ]
+        },
+        {
+            "paragraphs": [
+                {
+                    "document_id": "IT Helpdesk: Remote Access and VPN Guide",
+                    "context": "This guide provides instructions on how to set up remote access and connect to the corporate network using a Virtual Private Network (VPN).\n\nTo set up remote access, follow these steps:\n\nInstall the VPN client on your device. You can download the client from the company's intranet or request it from the IT Helpdesk.\nOpen the VPN client and enter your credentials. Your username and password can be found in the company's Active Directory or by contacting the IT Helpdesk.                    Connect to the VPN by selecting the appropriate server. The server name and address can be found in the company's intranet or by contacting the IT Helpdesk.\nOnce connected, you will have access to the corporate network and its resources.",
+                    "qas": [
+                        {
+                            "id": 1,
+                            "question": "What is the purpose of the VPN in the remote access setup?",
+                            "answers": [
+                                {
+                                    "question_id": 1,
+                                    "document_id": "IT Helpdesk: Remote Access and VPN Guide",
+                                    "text": "In addition to remote access, the VPN also provides an extra layer of security for your connection to the corporate network. It encrypts your data and protects it from unauthorized access, ensuring the confidentiality and integrity of your information"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
