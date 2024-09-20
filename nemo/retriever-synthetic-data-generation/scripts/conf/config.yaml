@@ -1,0 +1,166 @@
+input_file: ${input_file}
+input_format: ${input_format}  # squad or rawdoc
+output_dir: ${output_dir}
+api_key: ${api_key}
+max_examples: 20     # Remove this line to use the entire dataset
+use_original: false  # Set true if input file contains original questions and would like to evaluate using the original data
+
+pre_processors:
+  - 
+    _target_: nemo_retriever_sdg.DummyPreprocessor
+
+qa_generator:
+  _target_: nemo_retriever_sdg.SimpleQAGenerator
+  api_key: ${api_key}
+  model: mistralai/mixtral-8x7b-instruct-v0.1
+  base_url: https://integrate.api.nvidia.com/v1
+  max_examples: ${max_examples}
+  qa_generations_file: null
+  generate_config:
+    temperature: 0.6
+    top_p: 1.0
+    max_tokens: 2048
+    stream: true
+    parse_response: true
+    num_questions: 5
+    squad_format: true
+    system_prompt: |
+      You are a data annotator trying to generate questions and corresponding answers based on input document. Use the following guidelines:
+
+      - Generate questions that could be answered by a piece of information in the input document.
+      - Generate questions in a scenario where you are not already looking at the input document.
+      - Avoid vague questions such as what is the purpose of the document, what does the document refer to, what does the pointer above refer to
+      - Generate questions that refer to specific statements in the document or specific entities in the document.
+      - Generate questions that are relevant to the idea expressed in the input document, and the input document contains the complete answer to your question.
+      - Generate questions that provide specific context that can lead to the specific answer contained in the input document.
+      - Generate questions that are varied and different from each other. You can change up the phrasing, vocabulary, complexity, and the type of questions you ask throughout the task.
+      - DO NOT copy and paste exact phrasing from the test. Formulate questions in your own words. 
+      - Generate answers to the questions as well.
+      - Provide an explanation as to why the generated question is good. Use the following example questions and answers for reference. 
+      - Generated Questions should start with Question: 
+      - Generated Answers should start with Answer:
+      - Explanations should start with Explanation:
+      
+      Examples:
+
+      Input document:
+      We witnessed a flurry of defaults in 2015-2016 dominated by aggressive 2012-2014 vintage energy sector issuance. High cost producers with inadequate liquidity found bankruptcy to be their only option in the face of $30 oil. 2016 was the fifth highest default volume year on record with 80% of defaults occurring in commodity credits. The default rate for energy issuers was approximately  20%. We believe that most of the  aggressive credits in these sectors have now restructured (the average energy bond trades at $98 today, up from $56 in February, 2016).
+
+
+      Question:
+      Which year has the highest default volume of all times?
+      Explanation:
+      This question is NOT a good question. Because the text doesn’t contain the answer to the question.
+
+      Question:
+      How much is the average energy bond trading at today?
+      Explanation:
+      This is NOT a good question. The word “today” is not specific. We are unsure when the text is written.
+
+      Question:
+      What is the price of oil in the 2015-2016 period?
+      Explanation:
+      This is NOT a good question. Sure, the text did mention the oil price in this time period. But it is a rough number, and is used in a rhetorical manner. The point here is not to provide the specific oil price. Therefore, the given text is not a good answer to this question. A paragraph (or a chart) that specifically talks about oil prices would be better suited to answer this question.
+
+      Question:
+      In 2016, what is the composition of defaults in different sectors?
+      Explanation:
+      This question is a good question! It is a specific question, and has the complete answer in the text. The answer in this case would be “80% of defaults occurring in commodity credits. The default rate for energy issuers was approximately  20%”.
+
+      Question:
+      What are the causes of the high default volume in 2015-2016?
+      Explanation:
+      This is a good question! The answer to this question lies in this sentence - “High cost producers with inadequate liquidity found bankruptcy to be their only option in the face of $30 oil.”
+
+      Question:
+      What is the purpose of the document?
+      Explaination:
+      This is a bad question! Its too generic and vague. It assumes that document is being looked at when the question is being asked.
+
+      Question:
+      What is the common statistic mentioned in the document?
+      Explaination:
+      This is a bad question! Its too generic and vague. It assumes that document is being looked at when the question is being asked.
+      
+    user_prompt_template: |
+      Generate {num_questions} questions and corresponding answers based on Input Document.
+
+      Input Document:
+      {document}   
+
+easiness_filter:
+  _target_: nemo_retriever_sdg.EasinessFilter
+  filter_cfg:
+    nim_model: nvidia/nv-embedqa-e5-v5
+    base_url: "https://integrate.api.nvidia.com/v1"
+    api_key: ${api_key}
+    truncate: "END"
+    percentile: 70  # Percentile for threshold calculation (float) [0, 100]
+    batch_size: 1
+
+## * Example config to use HF embedding model for easiness filter * ##
+# easiness_filter:
+#   _target_: nemo_retriever_sdg.EasinessFilter
+#   filter_cfg:
+#     filter_threshold: 0.75
+#     embedding_model: "intfloat/e5-large-unsupervised"
+#     batch_size: 8    
+    
+answerability_filter:
+  _target_: nemo_retriever_sdg.AnswerabilityFilter
+  filter_cfg:
+    base_url: "https://integrate.api.nvidia.com/v1"
+    api_key: ${api_key}
+    model_name: "meta/llama3-70b-instruct"
+    num_criteria: 4  # Number of criteria to parse from the response. It must be alined with the prompt template
+    system_prompt: |
+      You are an evaluator who is rating questions to given context passages based on the given criteria. Assess the given question for clarity and answerability given enough domain knowledge, consider the following evaluation criterion:
+      Criterion 1 - Can the question be understood and answered without needing additional context or access to external references not provided within the question itself? Questions should be self-contained, meaning they do not rely on specific documents, tables, or prior knowledge not shared within the question.
+      Criterion 2 - Is it clear what type of answer or information the question seeks? The question should convey its purpose without ambiguity, allowing for a direct and relevant response.
+      Criterion 3 - Does the content in the context contain information that can answer the question or part of the question?
+      Criterion 4 - Does the content in the context completely answer the question?
+      
+      Provide your response in a mandatory dictionary format, and a short explanation of the rating like
+      {
+      \"criterion_1_explanation\": "<Brief explanation of why criterion_1 was satisfied or not satisfied>",
+      \"criterion_1\": "<Y/N>",
+      \"criterion_2_explanation\":  "<State the purpose of the question and justify why it was satisfied or not satisfied>",
+      \"criterion_2\": "<Y/N>",
+      \"criterion_3_explanation\": "<Show what parts of the content contain relevant information to the question if this criterion is satisfied, state why the information is irrelevant if unsatisfied>",
+      \"criterion_3\": "<Y/N>",
+      \"criterion_4_explanation\": "<Extract spans from the content that help completely answer the question if criterion is satisfied, state what parts are missing if not satisfied>",
+      \"criterion_4\": "<Y/N>"
+      }
+      Provide only the dictionary response and nothing else.    
+    
+    user_prompt_template: |
+      Context Passage:
+      {context}
+      Question:
+      {question}
+      
+filters:
+  - 
+    ${easiness_filter}
+  -
+    ${answerability_filter}
+
+post_processors:
+  - 
+    _target_: nemo_retriever_sdg.DivergenceCalculator
+
+analyzers:
+  -
+    _target_: nemo_retriever_sdg.QuestionLengthAnalyzer
+  -
+    _target_: nemo_retriever_sdg.LexicalDivergenceAnalyzer
+
+evaluators:
+  -
+    _target_: nemo_retriever_sdg.BEIREvaluator
+    model_names:
+      - "sentence-transformers/gtr-t5-large"
+      - "BAAI/bge-large-en-v1.5"
+      - "intfloat/e5-large-unsupervised"
+    score_function: "cos_sim" # "dot" or "cos_sim"
+    batch_size: 16
