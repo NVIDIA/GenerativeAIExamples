@@ -3,66 +3,53 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 
-# Common Prerequisites for RAG Examples
-<!-- TOC -->
+# Prerequisites
 
-* [Clone the Repository and Install Software](#clone-the-repository-and-install-software)
-* [Get an API Key for the Accessing Models on the API Catalog](#get-an-api-key-for-the-accessing-models-on-the-api-catalog)
-* [Get an NVIDIA NGC API Key](#get-an-nvidia-ngc-api-key)
+1. Clone the Generative AI examples Git repository using Git LFS:
 
-<!-- /TOC -->
+    ```console
+    sudo apt -y install git-lfs
+    git clone git@github.com:NVIDIA/GenerativeAIExamples.git
+    cd GenerativeAIExamples/
+    git lfs pull
+    ```
 
-## Clone the Repository and Install Software
+2. Install Docker Engine. Refer to these instructions for [Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
-- Clone the Generative AI examples Git repository using Git LFS:
+3. Install Docker Compose. Refer to these instructions to [install the Compose plugin](https://docs.docker.com/compose/install/linux/).
 
-  ```console
-  sudo apt -y install git-lfs
-  git clone git@github.com:NVIDIA/GenerativeAIExamples.git
-  cd GenerativeAIExamples/
-  git lfs pull
-  ```
+    a. Ensure the Docker Compose plugin version is 2.20 or higher.
 
-- Install Docker Engine and Docker Compose.
-  Refer to the instructions for [Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
+    b. After you get the Docker Compose plugin installed, run `docker compose version` to confirm.
+  
+4. Optional: You can run some containers with GPU acceleration, such as Milvus and NVIDIA NIM for LLMs. To configure Docker for GPU-accelerated containers, [install](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) the NVIDIA Container Toolkit.
 
-  Ensure the Docker Compose plugin version is 2.29.1 or higher.
-  Run `docker compose version` to confirm.
-  Refer to [Install the Compose plugin](https://docs.docker.com/compose/install/linux/)
-  in the Docker documentation for more information.
+5. Get an API key to access models in the API Catalog. You can use different model API endpoints with the same API key.
 
-- Optional: You can run some containers with GPU acceleration, such as Milvus and NVIDIA NIM for LLMs.
-  To configure Docker for GPU-accelerated containers, [install](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) the NVIDIA Container Toolkit.
+    a. Navigate to [https://build.nvidia.com/explore/discover](https://build.nvidia.com/explore/discover).
 
-## Get an API Key for the Accessing Models on the API Catalog
+    b. Find the **Llama 3.1 70B Instruct** card and click the card.
 
-Perform the following steps if you do not already have an API key.
-You can use different model API endpoints with the same API key.
+    ![Llama 3 70B Instruct model card](images/llama3-70b-instruct-model-card.png)
 
-1. Navigate to <https://build.nvidia.com/explore/discover>.
+    c. Click **Get API Key**.
 
-2. Find the **Llama 3 70B Instruct** card and click the card.
+    ![API section of the model page.](images/llama3-70b-instruct-get-api-key.png)
 
-   ![Llama 3 70B Instruct model card](images/llama3-70b-instruct-model-card.png)
+    d. Click **Generate Key**.
 
-3. Click **Get API Key**.
+    ![Generate key window.](images/api-catalog-generate-api-key.png)
 
-   ![API section of the model page.](images/llama3-70b-instruct-get-api-key.png)
+    e. Click **Copy Key** and then save the API key. The key begins with the letters ``nvapi-``.
 
-4. Click **Generate Key**.
+    ![Key Generated window.](images/key-generated.png)
 
-   ![Generate key window.](images/api-catalog-generate-api-key.png)
+6. Get an NGC license. Choose one of the following methods.
 
-5. Click **Copy Key** and then save the API key.
-   The key begins with the letters nvapi-.
+    a. Try before you buy and [request a 90-day trial](https://enterpriseproductregistration.nvidia.com/?LicType=EVAL&ProductFamily=NVAIEnterprise). For more information, refer to the [NVIDIA AI Enterprise Overview](https://www.nvidia.com/en-us/data-center/products/ai-enterprise/).
 
-   ![Key Generated window.](images/key-generated.png)
+    b. Create an account with the [NVIDIA Developer Program](https://developer.nvidia.com/login). For more information, refer to the [NVIDIA Developer Program Overview](https://developer.nvidia.com/developer-program).
 
-## Get an NVIDIA NGC API Key
+7. Get an NVIDIA NGC API key. The NVIDIA NGC API key is required to log in to the NVIDIA container registry, nvcr.io, and to pull secure base container images used in the examples. Refer to these instructions to [generate an NGC API key](https://docs.nvidia.com/ngc/gpu-cloud/ngc-user-guide/index.html#generating-api-key).
 
-The NVIDIA NGC API Key is required to log in to the NVIDIA container registry, nvcr.io, and to pull secure base container images used in the RAG examples.
-
-Refer to [Generating NGC API Keys](https://docs.nvidia.com/ngc/gpu-cloud/ngc-user-guide/index.html#generating-api-key)
-in the _NVIDIA NGC User Guide_ for more information.
-
-After you get your NGC API key, you can run `docker login nvcr.io` to confirm the key is valid.
+    a. After you get your NGC API key, you can run `docker login nvcr.io` to confirm the key is valid.
