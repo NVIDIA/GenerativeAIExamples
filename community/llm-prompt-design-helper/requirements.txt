@@ -1,6 +1,6 @@
-gradio==4.37.1
+gradio==4.43.0
 openai==1.35.4
-langchain-nvidia-ai-endpoints==0.1.2
+langchain-nvidia-ai-endpoints
 langchain==0.2.6
 langchain-community
 langchain-openai
@@ -8,4 +8,4 @@ wget
 beautifulsoup4==4.12.0
 faiss-gpu
 pypdf~=3.12
-unstructured==0.11.0
+unstructured
