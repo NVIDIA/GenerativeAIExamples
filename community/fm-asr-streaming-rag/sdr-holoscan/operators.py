@@ -21,7 +21,6 @@ from enum import Enum
 
 import cupy as cp
 import cupyx.scipy.signal as cusignal
-import riva.client.proto.riva_asr_pb2 as rasr
 
 from holoscan.core import Operator, OperatorSpec
 from common import setup_logging, SignalEmission
@@ -334,10 +333,13 @@ class PcmToAsrOp(Operator):
     A seperate running thread that is reading the same shared buffer picks up the data and
     sends to Riva.
     """
+    riva_fs = 16000           # sample rate for Riva (Hz)
+    buffer_limit = 2*riva_fs  # 1 second of data for 16-bit PCM
     def __init__(self, fragment, shared_pcm_buffer, *args, **kwargs):
         super().__init__(fragment, *args, **kwargs)
         self.logger = setup_logging(self.name)
         self.shared_pcm_buffer = shared_pcm_buffer
+        self.pcm_bytes = bytes()
 
     def setup(self, spec: OperatorSpec):
         spec.input("signal_in")
@@ -347,7 +349,9 @@ class PcmToAsrOp(Operator):
 
         # Put 16-bit PCM byte array on shared Riva buffer
         pcm_data = float_to_pcm(signal_in.data, cp.int16)
-        byte_array = cp.asnumpy(pcm_data).tobytes()
-        self.shared_pcm_buffer.put(
-            rasr.StreamingRecognizeRequest(audio_content=byte_array)
-        )
+        self.pcm_bytes += cp.asnumpy(pcm_data).tobytes()
+        if len(self.pcm_bytes) < self.buffer_limit:
+            return
+
+        self.shared_pcm_buffer.put(self.pcm_bytes)
+        self.pcm_bytes = bytes()

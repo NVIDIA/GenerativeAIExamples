@@ -13,11 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import datetime
+import requests
 from common import get_logger
 from database import TimestampDatabase
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 logger = get_logger(__name__)
+
+FRONTEND_URI = os.environ.get('FRONTEND_URI', None)
 
 #todo: Multi-thread to handle multiple concurrent streams
 #todo: Add time-triggered embedding (i.e. embed after N seconds if no updates)
@@ -44,5 +49,15 @@ class TextAccumulator:
         self.accumulators[source_id], new_docs = docs[-1], docs[:-1]
         self.timestamp_db.insert_docs(new_docs, source_id)
         self.db_interface.add_docs(new_docs, source_id)
+
+        for doc in new_docs:
+            endpoint = f"http://{FRONTEND_URI}/app/update_finalized_transcript"
+            time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            try:
+                client_response = requests.post(endpoint, json={'transcript': f"[{time}] {doc}"})
+                logger.debug(f'Posted update_finalized_transcript: {client_response._content}')
+                logger.debug("--------------------------")
+            except requests.exceptions.ConnectionError:
+                logger.error(f"Failed to connect to the '{endpoint}' endpoint")
 
         return {"status": f"Added {len(new_docs)} entries"}

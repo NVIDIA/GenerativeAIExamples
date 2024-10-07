@@ -14,15 +14,17 @@
 # limitations under the License.
 
 import os
+import requests
+import pydantic
 
 from accumulator import TextAccumulator
-from retriever import NemoRetrieverInterface, NvidiaApiInterface
+from retriever import NVRetriever
 from chains import RagChain
 from common import (
+    LLM_URI,
     get_logger,
     TextEntry,
-    LLMConfig,
-    USE_NEMO_RETRIEVER
+    LLMConfig
 )
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
@@ -35,11 +37,7 @@ logger = get_logger(__name__)
 app = FastAPI()
 
 # Create retriever and accumulators
-if USE_NEMO_RETRIEVER:
-    db_interface = NemoRetrieverInterface()
-else:
-    db_interface = NvidiaApiInterface()
-
+db_interface = NVRetriever()
 text_accumulator = TextAccumulator(
     db_interface,
     chunk_size=int(os.environ.get('DB_CHUNK_SIZE', 256)),
@@ -48,10 +46,12 @@ text_accumulator = TextAccumulator(
 
 @app.get("/availableNvidiaModels")
 async def available_nvidia_models(request: Request) -> JSONResponse:
-    models = [m.id for m in ChatNVIDIA.get_available_models() if m.model_type == 'chat']
-    return JSONResponse({
-        "models": models
-    })
+    try:
+        all_models = ChatNVIDIA(base_url=f"http://{LLM_URI}/v1").available_models
+        chat_models = [m.id for m in all_models if m.model_type == 'chat']
+    except (requests.exceptions.ConnectionError, pydantic.v1.error_wrappers.ValidationError):
+        chat_models = []
+    return JSONResponse({"models": chat_models})
 
 @app.get("/serverStatus")
 async def server_status():

@@ -30,8 +30,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(_LOG_LEVEL)
 PATH = "/converse"
 TITLE = "Converse"
-OUTPUT_TOKENS = 250
-MAX_DOCS = 5
+MAX_DOCS = int(os.environ.get('MAX_DOCS_RETR', 8))
 
 _LOCAL_CSS = """
 
@@ -48,7 +47,7 @@ _LOCAL_CSS = """
 """
 
 BACKEND_MAPPING = {
-    "Local NVIDIA NIM": "triton-trt-llm",
+    "Local NVIDIA NIM": "local-nim",
     "NVIDIA API Endpoint": "nvai-api-endpoint"
 }
 
@@ -64,15 +63,15 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
     # Setup model options
     backend_options = []
 
-    # Add local NIM if running
-    nim_model = os.environ.get('NIM_LLM_DISPLAY', None)
-    if os.environ.get('DEPLOY_LOCAL_NIM', 'False').lower() in ('true', '1'):
-        backend_options.append(f"Local NVIDIA NIM - {nim_model}")
-
-    # Get NVIDIA API Endpoint model options
+    # Get NIM options
     response = requests.get(f"{client.server_url}/availableNvidiaModels")
     for model in response.json()["models"]:
-        backend_options.append(f"NVIDIA API Endpoint - {model}")
+        backend_options.append(f"Local NVIDIA NIM - {model}")
+
+    # Default NVIDIA API Endpoint model options
+    backend_options.append(f"NVIDIA API Endpoint - mistralai/mistral-7b-instruct-v0.3")
+    backend_options.append(f"NVIDIA API Endpoint - meta/llama-3.1-8b-instruct")
+    backend_options.append(f"NVIDIA API Endpoint - meta/llama-3.1-405b-instruct")
 
     with gr.Blocks(title=TITLE, theme=kui_theme, css=kui_styles + _LOCAL_CSS) as page:
 
@@ -125,7 +124,7 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
                             maximum=1,
                             value=1,
                             label="Temperature",
-                            step=0.05,
+                            step=0.01,
                             interactive=True
                         )
                         tokens_slider = gr.Slider(
@@ -138,8 +137,8 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
                         )
                         entries_slider = gr.Slider(
                             minimum=1,
-                            maximum=25,
-                            value=25,
+                            maximum=MAX_DOCS,
+                            value=min(6, MAX_DOCS),
                             label="Retrieval Max Entries",
                             step=1,
                             interactive=True
