@@ -10,3 +10,4 @@ llama-index-llms-nvidia==0.1.4
 llama-index-embeddings-nvidia==0.1.4
 llama-index-vector-stores-milvus==0.1.20
 pymilvus==2.4.4
+python-pptx==1.0.2
