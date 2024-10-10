@@ -53,11 +53,11 @@ docker pull nvcr.io/nvidia/nemo:24.01.gemma
 The best way to run this notebook is from within the container. You can do that by launching the container with the following command
 
 ```bash
-docker run -it --rm --gpus all --ipc host --network host -v $(pwd):/workspace nvcr.io/nvidia/nemo:24.01.gemma
+docker run -it --rm  --gpus all -p 8888:8888 -v $(pwd):/workspace nvcr.io/nvidia/nemo:24.01.gemma
 ```
 
 Then, from within the container, start the jupyter server with
 
 ```bash
-jupyter lab --no-browser --port=8080 --allow-root --ip 0.0.0.0
+jupyter lab --ip 0.0.0.0 --no-browser --allow-root
 ```
