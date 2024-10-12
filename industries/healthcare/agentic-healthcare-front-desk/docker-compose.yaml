@@ -1,0 +1,92 @@
+services:
+  chain-server:
+    container_name: chain-server-healthcare-assistant
+    image: chain-server-healthcare-assistant:${TAG:-latest}
+    env_file:
+    - path: ./vars.env
+      required: true 
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    entrypoint: python3 chain_server/chain_server.py --assistant intake --port 8081
+    ports:
+    - "8081:8081"
+    expose:
+    - "8081"
+    volumes:
+      - ./images:/images
+    shm_size: 5gb
+
+
+  patient-intake-ui:
+    container_name: patient-intake-ui
+    image: patient-intake-ui:${TAG:-latest}
+    env_file:
+    - path: ./vars.env
+      required: true 
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    entrypoint: python3 graph_definitions/graph_patient_intake_only.py --port 7860
+    ports:
+    - "7860:7860"
+    expose:
+    - "7860"
+    volumes:
+      - ./images:/images
+    shm_size: 5gb
+
+
+  appointment-making-ui:
+    container_name: appointment-making-ui
+    image: appointment-making-ui:${TAG:-latest}
+    env_file:
+    - path: ./vars.env
+      required: true 
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    entrypoint: python3 graph_definitions/graph_appointment_making_only.py --port 7860
+    ports:
+    - "7860:7860"
+    expose:
+    - "7860"
+    volumes:
+      - ./images:/images
+    shm_size: 5gb
+
+  medication-lookup-ui:
+    container_name: medication-lookup-ui
+    image: medication-lookup-ui:${TAG:-latest}
+    env_file:
+    - path: ./vars.env
+      required: true 
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    entrypoint: python3 graph_definitions/graph_medication_lookup_only.py --port 7860
+    ports:
+    - "7860:7860"
+    expose:
+    - "7860"
+    volumes:
+      - ./images:/images
+    shm_size: 5gb
+
+  full-agent-ui:
+    container_name: full-agent-ui
+    image: full-agent-ui:${TAG:-latest}
+    env_file:
+    - path: ./vars.env
+      required: true 
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    entrypoint: python3 graph_definitions/graph.py --port 7860
+    ports:
+    - "7860:7860"
+    expose:
+    - "7860"
+    volumes:
+      - ./images:/images
+    shm_size: 5gb
