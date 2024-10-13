@@ -10,6 +10,15 @@ In this repository, we demonstrate the following:
 The agentic tool calling capability in each of the customer care assistants is powered by LLM NIMs - NVIDIA Inference Microservices. With the agentic capability, you can write your own tools to be utilized by LLMs.
 
 ## Running the chain server or simple UI 
+### Compute Requirements
+To get the healthcare assistant(s) up and running as either a chain server of an interactive UI with text and voice, there are no local GPU requirements. The LLMs utilized in LangGraph in this repo are by default set to calling NVIDIA AI Endpoints, as seen in the directory[`graph_definitions/`](./graph_definitions/).
+```python
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
+llm_model = "meta/llama-3.1-70b-instruct"
+assistant_llm = ChatNVIDIA(model=llm_model)
+```
+You will need an NVIDIA API KEY to call NVIDIA AI Endpoints. If you would like to host your own LLM NIM instance instead of calling NVIDIA AI Endpoints with an API key, please refer to the documentation of the LLM NIM on how to host, and add a `base_url` parameter to point to your own instance when specifying `ChatNVIDIA`.
+
 ### Add your API keys
 In the file `vars.env`, add two API keys of your own:
 ```

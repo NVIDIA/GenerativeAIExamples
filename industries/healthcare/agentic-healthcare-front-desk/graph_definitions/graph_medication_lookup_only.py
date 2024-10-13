@@ -49,7 +49,7 @@ from utils.ui import launch_demo_ui
 #################
 patient_id = '14867dba-fb11-4df3-9829-8e8e081b39e6' # test patient id from looking through https://launch.smarthealthit.org/
 save_graph_to_png = True
-specialized_llm_model = "meta/llama-3.1-70b-instruct"
+llm_model = "meta/llama-3.1-70b-instruct"
 env_var_file = "vars.env"
 
 
@@ -69,7 +69,7 @@ RIVA_ASR_FUNCTION_ID = os.getenv("RIVA_ASR_FUNCTION_ID", None)
 RIVA_TTS_FUNCTION_ID = os.getenv("RIVA_TTS_FUNCTION_ID", None)
 
 ### define which llm to use
-specialized_assistant_llm = ChatNVIDIA(model=specialized_llm_model)#, base_url=base_url
+assistant_llm = ChatNVIDIA(model=llm_model)#, base_url=base_url
 
 ########################
 ### Define the tools ###
@@ -160,7 +160,7 @@ medication_prompt = ChatPromptTemplate.from_messages(
 )
 
 medication_tools = [get_patient_medications, get_patient_dob, medication_instruction_search_tool] # to add later
-medication_runnable = medication_prompt | specialized_assistant_llm.bind_tools(medication_tools)
+medication_runnable = medication_prompt | assistant_llm.bind_tools(medication_tools)
 
 
 

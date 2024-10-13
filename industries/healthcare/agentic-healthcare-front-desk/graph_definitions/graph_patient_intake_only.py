@@ -37,7 +37,7 @@ from utils.ui import launch_demo_ui
 patient_id = '14867dba-fb11-4df3-9829-8e8e081b39e6' # test patient id from looking through https://launch.smarthealthit.org/
 save_graph_to_png = True
 
-specialized_llm_model = "meta/llama-3.1-70b-instruct"
+llm_model = "meta/llama-3.1-70b-instruct"
 env_var_file = "vars.env"
 
 
@@ -55,7 +55,7 @@ RIVA_ASR_FUNCTION_ID = os.getenv("RIVA_ASR_FUNCTION_ID", None)
 RIVA_TTS_FUNCTION_ID = os.getenv("RIVA_TTS_FUNCTION_ID", None)
 
 ### define which llm to use
-specialized_assistant_llm = ChatNVIDIA(model=specialized_llm_model) # base_url=base_url
+assistant_llm = ChatNVIDIA(model=llm_model) # base_url=base_url
 
 ########################
 ### Define the tools ###
@@ -128,7 +128,7 @@ patient_intake_prompt = ChatPromptTemplate.from_messages(
 )
 
 patient_intake_tools = [print_gathered_patient_info]
-patient_intake_runnable = patient_intake_prompt | specialized_assistant_llm.bind_tools(patient_intake_tools)
+patient_intake_runnable = patient_intake_prompt | assistant_llm.bind_tools(patient_intake_tools)
 
 
 builder = StateGraph(State)
