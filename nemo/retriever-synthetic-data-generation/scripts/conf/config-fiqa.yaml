@@ -80,13 +80,8 @@ qa_generator:
 easiness_filter:
   _target_: nemo_retriever_sdg.EasinessFilter
   filter_cfg:
-<<<<<<< HEAD
     filter_threshold: 0.75
     embedding_model: "intfloat/e5-large-unsupervised"
-=======
-    filter_threshold: 0.95
-    embedding_model: "BAAI/bge-large-en-v1.5"
->>>>>>> 3d49ef8 (added config-nq and config-fiqa)
     batch_size: 16
 
 answerability_filter:
