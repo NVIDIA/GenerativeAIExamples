@@ -167,4 +167,4 @@ Example tools and tutorials to enhance LLM development and productivity when usi
 
 ## Community
 We're posting these examples on GitHub to support the NVIDIA LLM community and facilitate feedback.
-We invite contributions! Open a GitHub issue or pull request! Check out the [community](./community/README.md) examples and notebooks.
+We invite contributions! Open a GitHub issue or pull request! See [contributing](docs/contributing.md) Check out the [community](./community/README.md) examples and notebooks.
