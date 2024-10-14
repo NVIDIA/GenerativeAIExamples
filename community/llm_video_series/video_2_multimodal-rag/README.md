@@ -19,7 +19,7 @@ The system utilizes LlamaIndex for efficient indexing and retrieval of informati
 1. Clone the repository:
 ```
 git clone https://github.com/NVIDIA/GenerativeAIExamples.git
-cd GenerativeAIExamples/community/multimodal_rag
+cd GenerativeAIExamples/community/llm_video_series/video_2_multimodal-rag
 ```
 
 2. (Optional) Create a conda environment or a virtual environment:
