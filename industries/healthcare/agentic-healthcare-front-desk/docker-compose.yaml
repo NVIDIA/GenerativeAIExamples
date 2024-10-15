@@ -14,7 +14,7 @@ services:
     expose:
     - "8081"
     volumes:
-      - ./images:/images
+      - ./graph_definitions/graph_images:/graph_images
     shm_size: 5gb
 
 
@@ -33,7 +33,7 @@ services:
     expose:
     - "7860"
     volumes:
-      - ./images:/images
+      - ./graph_definitions/graph_images:/graph_images
     shm_size: 5gb
 
 
@@ -52,7 +52,7 @@ services:
     expose:
     - "7860"
     volumes:
-      - ./images:/images
+      - ./graph_definitions/graph_images:/graph_images
     shm_size: 5gb
 
   medication-lookup-ui:
@@ -70,7 +70,7 @@ services:
     expose:
     - "7860"
     volumes:
-      - ./images:/images
+      - ./graph_definitions/graph_images:/graph_images
     shm_size: 5gb
 
   full-agent-ui:
@@ -88,5 +88,5 @@ services:
     expose:
     - "7860"
     volumes:
-      - ./images:/images
+      - ./graph_definitions/graph_images:/graph_images
     shm_size: 5gb

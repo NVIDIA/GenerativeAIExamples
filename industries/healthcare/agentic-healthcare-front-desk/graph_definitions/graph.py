@@ -707,7 +707,7 @@ full_graph = builder.compile(
 
 if save_graph_to_png:
     
-    with open("/images/appgraph.png", "wb") as png:
+    with open("/graph_images/appgraph.png", "wb") as png:
         png.write(full_graph.get_graph(xray=True).draw_mermaid_png())
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

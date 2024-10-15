@@ -240,7 +240,7 @@ appt_graph = builder.compile(
 
 if save_graph_to_png:
     
-    with open("/images/appgraph_appointment.png", "wb") as png:
+    with open("/graph_images/appgraph_appointment.png", "wb") as png:
         png.write(appt_graph.get_graph(xray=True).draw_mermaid_png())
 
 if __name__ == "__main__":

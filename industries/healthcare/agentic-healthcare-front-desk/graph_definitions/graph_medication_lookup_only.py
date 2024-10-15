@@ -204,7 +204,7 @@ medication_lookup_graph = builder.compile(checkpointer=memory)
 
 if save_graph_to_png:
     
-    with open("/images/appgraph_medication_lookup.png", "wb") as png:
+    with open("/graph_images/appgraph_medication_lookup.png", "wb") as png:
         png.write(medication_lookup_graph.get_graph(xray=True).draw_mermaid_png())
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

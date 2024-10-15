@@ -33,7 +33,7 @@ First, modify the [`docker-compose.yaml`](./docker-compose.yaml) file to specify
 ```yaml
 entrypoint: python3 chain_server/chain_server.py --assistant intake --port 8081
 ```
-The `--assistant` arg has 4 choices: `full`, `intake`, `appointment`, `medication`, corresponding to the four assistants with their graphs shown in [`images/`](./images/).
+The `--assistant` arg has 4 choices: `full`, `intake`, `appointment`, `medication`, corresponding to the four assistants with their graphs shown in [`graph_definitions/graph_images/`](./graph_definitions/graph_images/).
 Next, start the chain server container:
 ```sh
 docker compose up -d chain-server

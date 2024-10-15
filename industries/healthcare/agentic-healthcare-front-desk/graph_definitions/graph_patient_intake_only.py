@@ -170,7 +170,7 @@ intake_graph = builder.compile(checkpointer=memory)
 
 if save_graph_to_png:
     
-    with open("/images/appgraph_patient_intake.png", "wb") as png:
+    with open("/graph_images/appgraph_patient_intake.png", "wb") as png:
         png.write(intake_graph.get_graph(xray=True).draw_mermaid_png())
 
 
