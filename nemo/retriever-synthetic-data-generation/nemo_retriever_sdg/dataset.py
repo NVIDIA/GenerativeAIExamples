@@ -72,15 +72,26 @@ class Corpus:
         """Load rawdoc format
         {"text": "...", "title": "..."}
         {"text": "...", "title": "..."}
+        or
+        {"_id": "...", "text": "...", "title": "..."}
+        {"_id": "...", "text": "...", "title": "..."}
         ...
         """
         examples = []
         for example in [json.loads(line) for line in open(name, "r")]:
-            examples.append({"paragraphs": [
-                                {"context": example["text"],
-                                 "document_id": example["title"],
-                                 "qas": []}],
-                            })
+            if "_id" in example:
+                examples.append({"paragraphs": [
+                                    {"context": example["text"],
+                                     "document_id": example["_id"],
+                                     "title": example["title"],
+                                     "qas": []}],
+                                })
+            else: 
+                examples.append({"paragraphs": [
+                                    {"context": example["text"],
+                                     "title": example["title"],
+                                     "qas": []}],
+                                })
         return cls({"data": examples, "version": "2.0"})
 
     def to_json(self, output_path: str):
@@ -174,7 +185,10 @@ class Corpus:
             qrels = []
             qid = 0
             for i, example in enumerate(self.data["data"]):
-                doc_id = "doc{}".format(i + 1) # "doc1", "doc2", "doc3", ... "docN"
+                if "document_id" in example['paragraphs'][0]:
+                    doc_id = example['paragraphs'][0]['document_id'] #doc_id
+                else:
+                    doc_id = "doc{}".format(i + 1) # "doc1", "doc2", "doc3", ... "docN"
                 title = example["paragraphs"][0]["document_id"] # Title
                 text = example["paragraphs"][0]["context"]
                 # TODO: Add information as metadata
