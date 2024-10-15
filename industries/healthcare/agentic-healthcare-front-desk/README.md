@@ -78,16 +78,18 @@ e. Click **Copy Key** and then save the API key. The key begins with the letters
 
 As illustrated in the diagrams in the beginning, in this repo, we could run two types of applications, one is a chain server that connects the healthcare agent to ACE, the other one is a simple voice/text Gradio UI for the healthcare agent.
 
-### Step 1: Add your API keys
+Regardless of the type of application you'd like to run, first, please add your API Keys.
+
+### Add Your API keys Prior to Running
 In the file `vars.env`, add two API keys of your own:
 ```
 NVIDIA_API_KEY="nvapi-" 
 TAVILY_API_KEY="tvly-"
 ```
-Note the Tavily key is only required if you want to run the full graph or the medication lookup graph. Get your API Key from the Tavily website. This is used in the tool named `medication_instruction_search_tool` in [`graph.py`](./graph_definitions/graph.py) or [`graph_medication_lookup_only.py`](./graph_definitions/graph_medication_lookup_only.py).
+Note the Tavily key is only required if you want to run the full graph or the medication lookup graph. Get your API Key from the [Tavily website](https://app.tavily.com/). This is used in the tool named `medication_instruction_search_tool` in [`graph.py`](./graph_definitions/graph.py) or [`graph_medication_lookup_only.py`](./graph_definitions/graph_medication_lookup_only.py).
 
-### Step 2: Run a specific service with Docker Compose
-#### Option 1. If running the chain server to connect to ACE
+### Connecting to ACE (Option 1)
+#### Run the chain server that serves the LangGraph agents
 First, modify the [`docker-compose.yaml`](./docker-compose.yaml) file to specify the assistant you want to run.
 ```yaml
 entrypoint: python3 chain_server/chain_server.py --assistant intake --port 8081
@@ -109,7 +111,7 @@ To bring down the chain server:
 docker compose down chain-server
 ```
 
-##### Connecting to ACE
+#### Connecting the chain server to ACE
 Connect to this chain server from your ACE stack by specifying the `<host url>:<port number>` of the chain server. If you're running on a cloud service provider's instance, please ensure that the instance has a publicly accessible URL and the port is exposed. 
 
 For the steps of standing up your digital human ACE stack, please see the [Digital Human Blueprint Card](https://build.nvidia.com/nvidia/digital-humans-for-customer-service/blueprintcard), [GitHub repo for NIM Agent Blueprint: Digital Human for Customer Service](https://github.com/NVIDIA-NIM-Agent-Blueprints/digital-human), and [ACE Documentation](https://docs.nvidia.com/ace/latest/index.html).
@@ -117,7 +119,7 @@ For the steps of standing up your digital human ACE stack, please see the [Digit
 The ACE connection that makes requests to the chain server will have a web interface that looks like this, and the avatar is customizable.
 ![](./images/ace_ferret_avatar.png)
 
-#### Option 2. If running the simple voice/text Gradio UI
+### Running the simple voice/text Gradio UI (Option 2)
 To spin up a simple Gradio based web UI that allows us to converse with one of the agents via voice or typing, run one of these following services.
 
 ##### 2.1 The patient intake agent 
