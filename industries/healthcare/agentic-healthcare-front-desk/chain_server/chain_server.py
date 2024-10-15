@@ -2,7 +2,7 @@ import uvicorn
 import argparse
 
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -139,6 +139,11 @@ class ChainResponse(BaseModel):
     id: str = Field(default="", max_length=100000, pattern=r'[\s\S]*')
     choices: List[ChainResponseChoices] = Field(default=[], max_items=256)
 
+class HealthResponse(BaseModel):
+    message: str = Field(max_length=4096, pattern=r'[\s\S]*', default="")
+class HealthCheck(BaseModel):
+    status: str = "OK"
+
 def get_new_thread_id():
     return str(uuid.uuid4())
 thread_id = get_new_thread_id()
@@ -262,7 +267,15 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
         return StreamingResponse(
             iter(["data: " + str(chain_response.json()) + "\n\n"]), media_type="text/event-stream", status_code=500
         )
-
+    
+@app.get("/health", 
+         tags=["healthcheck"], 
+         summary="Perform a Health Check", 
+         response_description="Return HTTP Status Code 200 (OK)", 
+         status_code=status.HTTP_200_OK, 
+         response_model=HealthCheck)
+def get_health() -> HealthCheck:
+    return HealthCheck(status="OK")
 
 
 if __name__ == "__main__":
