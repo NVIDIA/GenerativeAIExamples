@@ -1,3 +1,25 @@
+# Agentic Healthcare Front Desk
+
+An agentic healthcare front desk can assist patients and the healthcare professionals in various scanarios: it can assist with the new patient intake process, going over each of the fields in a enw patient form with the patients; it can assist with the appointment scheduling process, looking up available appointments and booking them for patients after conversing with the patient to find out their needs; it can help look up the patient's medications and general information on the medications, and more.
+
+The front desk assistant contains agentic LLM NIM with tools calling capabilities implemented in the LangGraph framework.
+
+Follow along this repository to see how you can create your own digital human for Healthcare front desk that combines NVIDIA NIM, ACE Microservices, RIVA ASR and TTS.
+
+We will offer two options for interacting with the agentic healthcare front desk: with a text / voice based Gradio UI or with a digital human avatar you can converse with.
+![](./images/repo_overview_structure_diagram.png)
+
+[NVIDIA ACE](https://developer.nvidia.com/ace) is a suite of real-time AI solutions for end-to-end development of interactive avatars and digital human applications at-scale. Its customizable microservices offer the fastest and most versatile solution for bringing avatars to life at-scale. The image below from the GitHub repository for `NIM Agent Blueprint: Digital Human for Customer Service` show the components in the ACE stack on the left side of the dotted line. The components shown on the right side of the dotted line starting from `Fast API` is replaced by our own components in the agentic healthcare front desk.
+
+![](./images/ACE_diagram.png)
+
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Prerequisites](#prerequisites)
+3. [Run Instructions](#run-instructions)
+4. [Customization](#customization)
+
+
 ## Introduction
 In this repository, we demonstrate the following:
 * A customer care agent in Langgraph that has three specialist assistants: patient intake, medication assistance, and appointment making, with corresponding tools.
@@ -9,17 +31,54 @@ In this repository, we demonstrate the following:
 
 The agentic tool calling capability in each of the customer care assistants is powered by LLM NIMs - NVIDIA Inference Microservices. With the agentic capability, you can write your own tools to be utilized by LLMs.
 
-## Running the chain server or simple UI 
-### Compute Requirements
-To get the healthcare assistant(s) up and running as either a chain server of an interactive UI with text and voice, there are no local GPU requirements. The LLMs utilized in LangGraph in this repo are by default set to calling NVIDIA AI Endpoints, as seen in the directory[`graph_definitions/`](./graph_definitions/).
+## Prerequisites
+### Hardware 
+There are no local GPU requirements for running any application in this repo. The LLMs utilized in LangGraph in this repo are by default set to calling NVIDIA AI Endpoints, as seen in the directory [`graph_definitions/`](./graph_definitions/), and require a valid NVIDIA API KEY.
 ```python
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-llm_model = "meta/llama-3.1-70b-instruct"
+llm_model = "meta/llama-3.1-70b-instruct" 
 assistant_llm = ChatNVIDIA(model=llm_model)
 ```
-You will need an NVIDIA API KEY to call NVIDIA AI Endpoints. If you would like to host your own LLM NIM instance instead of calling NVIDIA AI Endpoints with an API key, please refer to the documentation of the LLM NIM on how to host, and add a `base_url` parameter to point to your own instance when specifying `ChatNVIDIA`.
+You can experiment with other LLMs available on build.nvidia.com by changing the `model` param for `ChatNVIDIA` in the Python files in the directory [`graph_definitions/`](./graph_definitions/).
 
-### Add your API keys
+If instead of calling NVIDIA AI Endpoints with an API key, you would like to host your own LLM NIM instance, please refer to the [Docker tab of the LLM NIM](https://build.nvidia.com/meta/llama-3_1-70b-instruct?snippet_tab=Docker) on how to host, and add a `base_url` parameter to point to your own instance when specifying `ChatNVIDIA`. For the hardware configuration of self hosting the LLM, please refer to the [documentation for LLM support matrix](https://docs.nvidia.com/nim/large-language-models/latest/support-matrix.html).
+
+### NVIDIA API KEY
+You will need an NVIDIA API KEY to call NVIDIA AI Endpoints.  You can use different model API endpoints with the same API key, so even if you change the LLM specification in `ChatNVIDIA(model=llm_model)` you can still use the same API KEY.
+
+a. Navigate to [https://build.nvidia.com/explore/discover](https://build.nvidia.com/explore/discover).
+
+b. Find the **Llama 3.1 70B Instruct** card and click the card.
+
+![Llama 3 70B Instruct model card](./images/llama31-70b-instruct-model-card.png)
+
+c. Click **Get API Key**.
+
+![API section of the model page.](./images/llama31-70b-instruct-get-api-key.png)
+Log in if you haven't already.
+
+d. Click **Generate Key**.
+
+![Generate key window.](./images/api-catalog-generate-api-key.png)
+
+e. Click **Copy Key** and then save the API key. The key begins with the letters ``nvapi-``.
+
+![Key Generated window.](./images/key-generated.png)
+
+
+### Software
+
+- Linux operating systems (Ubuntu 22.04 or later recommended)
+- [Docker](https://docs.docker.com/engine/install/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+
+
+## Run Instructions
+
+As illustrated in the diagrams in the beginning, in this repo, we could run two types of applications, one is a chain server that connects the healthcare agent to ACE, the other one is a simple voice/text Gradio UI for the healthcare agent.
+
+### Step 1: Add your API keys
 In the file `vars.env`, add two API keys of your own:
 ```
 NVIDIA_API_KEY="nvapi-" 
@@ -27,8 +86,8 @@ TAVILY_API_KEY="tvly-"
 ```
 Note the Tavily key is only required if you want to run the full graph or the medication lookup graph. Get your API Key from the Tavily website. This is used in the tool named `medication_instruction_search_tool` in [`graph.py`](./graph_definitions/graph.py) or [`graph_medication_lookup_only.py`](./graph_definitions/graph_medication_lookup_only.py).
 
-### Run a specific service with Docker Compose
-#### 1. If running the chain server to connect to ACE
+### Step 2: Run a specific service with Docker Compose
+#### Option 1. If running the chain server to connect to ACE
 First, modify the [`docker-compose.yaml`](./docker-compose.yaml) file to specify the assistant you want to run.
 ```yaml
 entrypoint: python3 chain_server/chain_server.py --assistant intake --port 8081
@@ -55,7 +114,10 @@ Connect to this chain server from your ACE stack by specifying the `<host url>:<
 
 For the steps of standing up your digital human ACE stack, please see the [Digital Human Blueprint Card](https://build.nvidia.com/nvidia/digital-humans-for-customer-service/blueprintcard), [GitHub repo for NIM Agent Blueprint: Digital Human for Customer Service](https://github.com/NVIDIA-NIM-Agent-Blueprints/digital-human), and [ACE Documentation](https://docs.nvidia.com/ace/latest/index.html).
 
-#### 2. If running the simple voice/text UI
+The ACE connection that makes requests to the chain server will have a web interface that looks like this, and the avatar is customizable.
+![](./images/ace_ferret_avatar.png)
+
+#### Option 2. If running the simple voice/text Gradio UI
 To spin up a simple Gradio based web UI that allows us to converse with one of the agents via voice or typing, run one of these following services.
 
 ##### 2.1 The patient intake agent 
@@ -152,3 +214,10 @@ If you receive the following `"Media devices could not be accessed"` error messa
 
 1. Retry your request on the web UI.
 
+## Customization
+To customize for your own agentic LLM in LangGraph with your own tools, the [LangGraph tutorial on customer support](https://langchain-ai.github.io/langgraph/tutorials/customer-support/customer-support/) is helpful, where you'll find detailed explanations and steps of creating tools and agentic LLM in LangGraph. Afterwards, you can create your own file similar to the graph files in [`graph_definitions/`](./graph_definitions/) which can connect to the simple voice/text Gradio UI by calling [`launch_demo_ui`](./graph_definitions/graph_patient_intake_only.py#L184), or can be imported by the [chain server](./chain_server/chain_server.py#L31) which is the connection point for ACE.
+
+To customize the ACE connection to the agent, which will be necessary since the chain server will be up at your own URL, please see the ACE [GitHub](https://github.com/NVIDIA-NIM-Agent-Blueprints/digital-human/tree/main/customize) and [documentation](https://docs.nvidia.com/ace/latest/workflows/tokkio/text/Tokkio_LLM_RAG_Bot.html#customizing-the-pipeline).
+
+
+To customize the ACE avatar and other configurations, please refer to the [ACE Documentation](https://docs.nvidia.com/ace/latest/index.html).
