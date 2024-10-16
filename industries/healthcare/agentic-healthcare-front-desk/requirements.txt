@@ -15,4 +15,3 @@ python-dotenv==1.0.1
 nvidia-riva-client==2.14.0
 pycountry==23.12.11
 bleach==6.1.0
-nemoguardrails==0.9.1.1
