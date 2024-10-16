@@ -1,0 +1,36 @@
+@font-face {
+  font-family: "nvidia-sans";
+  src: url("/file=../fonts/NVIDIASansWebWOFFFontFiles/WOFF2/NVIDIASans_W_Bd.woff2")
+    format("woff2");
+  font-style: bold;
+}
+
+@font-face {
+  font-family: "nvidia-sans";
+  src: url("/file=../fonts/NVIDIASansWebWOFFFontFiles/WOFF2/NVIDIASans_W_Rg.woff2")
+    format("woff2");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "nvidia-sans";
+  src: url("/file=../fonts/NVIDIASansWebWOFFFontFiles/WOFF2/NVIDIASans_W_It.woff2")
+    format("woff2");
+  font-style: italic;
+}
+
+.header {
+  padding: 60px;
+  text-align: center;
+  color: #76b900;
+  font-size: 30px;
+}
+
+#chatbot {
+  flex-grow: 2;
+  overflow: auto;
+}
+
+footer {
+  visibility: hidden;
+}
