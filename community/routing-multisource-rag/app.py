@@ -26,43 +26,47 @@ load_dotenv()
 
 workflow = QueryFlow(timeout=45, verbose=False)
 
+
 @cl.on_chat_start
 async def on_chat_start():
-    
+
     cl.user_session.set("message_history", [])
 
     workflow = QueryFlow(timeout=90, verbose=False)
 
     cl.user_session.set("workflow", workflow)
-    
+
+
 @cl.set_starters
 async def set_starters():
     return [
-            cl.Starter(
-                label="Compare GPU specifications",
-                message="Write a table with up to 10 rows comparing the technical specs for the A100 and H100 GPUs",
-                icon="/avatars/servers",
-            ),
-            cl.Starter(
-                label="Write Docker Compose",
-                message="Write a Docker Compose file for deploying a web app with a Redis cache and Postgres database",
-                icon="/avatars/screen",
-            ),
-            cl.Starter(
-                label="What NIMs are available?",
-                message="Summarize the different large language models that have NVIDIA inference microservices (NIMs) available for them. List as many as you can.",
-                icon="/avatars/container",
-            ),
-            cl.Starter(
-                label="Summarize BioNemo use cases",
-                message="Write a table summarizing how customers are using bionemo. Use one sentence per customer and include columns for customer, industry, and use case. Make the table between 5 to 10 rows and relatively narrow.",
-                icon="/avatars/dna",
-            ),
-        ]
+        cl.Starter(
+            label="Compare GPU specifications",
+            message="Write a table with up to 10 rows comparing the technical specs for the A100 and H100 GPUs",
+            icon="/avatars/servers",
+        ),
+        cl.Starter(
+            label="Write Docker Compose",
+            message="Write a Docker Compose file for deploying a web app with a Redis cache and Postgres database",
+            icon="/avatars/screen",
+        ),
+        cl.Starter(
+            label="What NIMs are available?",
+            message="Summarize the different large language models that have NVIDIA inference microservices (NIMs) available for them. List as many as you can.",
+            icon="/avatars/container",
+        ),
+        cl.Starter(
+            label="Summarize BioNemo use cases",
+            message="Write a table summarizing how customers are using bionemo. Use one sentence per customer and include columns for customer, industry, and use case. Make the table between 5 to 10 rows and relatively narrow.",
+            icon="/avatars/dna",
+        ),
+    ]
+
 
 @cl.on_chat_end
 def end():
     logging.info("Chat ended.")
+
 
 @cl.on_message
 async def main(user_message: cl.Message, count_tokens: bool = True):
@@ -78,12 +82,12 @@ async def main(user_message: cl.Message, count_tokens: bool = True):
 
     # In case the chat workflow needs extra time to start up,
     # we block until it's ready.
-   
+
     assistant_message = cl.Message(content="")
 
     token_count = 0
-    with cl.Step(name='Mistral Large 2', type="tool"):
-      
+    with cl.Step(name="Mistral Large 2", type="tool"):
+
         response, source_nodes = await workflow.run(
             query=user_message.content,
             chat_messages=message_history,
@@ -100,17 +104,13 @@ async def main(user_message: cl.Message, count_tokens: bool = True):
 
         msg_time = time.time() - msg_start_time
         if count_tokens:
-            token_count = len(
-                Settings.tokenizer(assistant_message.content)
-            )
+            token_count = len(Settings.tokenizer(assistant_message.content))
             assistant_message.content += ""
             assistant_message.content += "<small style='font-size: 70%; opacity: 0.5'>{} tokens generated in {:.1f} s. </small>".format(
-                    token_count, msg_time
-                )
+                token_count, msg_time
+            )
 
         logging.info(f"Message generated in {msg_time:.1f} seconds.")
-
-
 
     message_history += [
         {"role": "user", "content": user_message.content},

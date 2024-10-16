@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext
-from llama_index.vector_stores.milvus import MilvusVectorStore
+from llama_index.core import SimpleDirectoryReader, StorageContext, VectorStoreIndex
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
+from llama_index.vector_stores.milvus import MilvusVectorStore
+
 from config import config
 
 # Load the documents; note that for multipage PDFs, this will load all pages as separate documents
@@ -23,7 +24,9 @@ print(f"Loading documents from {config.data_dir}...")
 documents = SimpleDirectoryReader(input_dir=config.data_dir).load_data()
 
 print(f"Loaded {len(documents)} documents from {config.data_dir}!")
-vector_store = MilvusVectorStore(uri=config.milvus_path, dim=config.embedding_model_dim, overwrite=True)
+vector_store = MilvusVectorStore(
+    uri=config.milvus_path, dim=config.embedding_model_dim, overwrite=True
+)
 embed_model = NVIDIAEmbedding(config.embedding_model_name)
 storage_context = StorageContext.from_defaults(vector_store=vector_store)
 

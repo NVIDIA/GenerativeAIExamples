@@ -14,7 +14,6 @@
 # limitations under the License.
 
 
-
 """
 LlamaIndex Workflows are event-driven workflows in which we define the event types and the steps that process them.
 Some sharp edges around workflows:
@@ -36,8 +35,6 @@ from llama_index.core import Document, Settings
 from llama_index.core.llms import ChatMessage
 from llama_index.core.program import LLMTextCompletionProgram
 from llama_index.core.schema import Document, NodeWithScore
-from llama_index.vector_stores.milvus import MilvusVectorStore
-
 from llama_index.core.vector_stores import VectorStoreQuery
 from llama_index.core.workflow import (
     Context,
@@ -50,6 +47,7 @@ from llama_index.core.workflow import (
 from llama_index.embeddings.nvidia import NVIDIAEmbedding
 from llama_index.llms.nvidia import NVIDIA
 from llama_index.llms.perplexity import Perplexity
+from llama_index.vector_stores.milvus import MilvusVectorStore
 from pydantic import BaseModel, Field
 
 import prompts
@@ -57,16 +55,19 @@ from config import WorkflowConfig
 
 config = WorkflowConfig()
 
+
 class RoutingChoice(BaseModel):
     use_search: bool = Field(
         default=True,
         description="Whether to use the search engine to answer the query",
     )
 
+
 class CustomHTTPClient(httpx.AsyncClient):
     def __init__(self, *args, **kwargs):
         kwargs["timeout"] = httpx.Timeout(20.0)
         super().__init__(*args, **kwargs)
+
 
 httpx.AsyncClient = CustomHTTPClient
 
@@ -74,8 +75,14 @@ logger = logging.getLogger(__name__)
 
 chat_llm = NVIDIA(config.chat_model_name, api_key=config.nvidia_api_key)
 routing_llm = NVIDIA(config.routing_model_name, api_key=config.nvidia_api_key)
-perplexity_llm = Perplexity(config.perplexity_model_name, api_key=config.perplexity_api_key) if config.perplexity_api_key else None
-embed_model = NVIDIAEmbedding(config.embedding_model_name, api_key=config.nvidia_api_key)
+perplexity_llm = (
+    Perplexity(config.perplexity_model_name, api_key=config.perplexity_api_key)
+    if config.perplexity_api_key
+    else None
+)
+embed_model = NVIDIAEmbedding(
+    config.embedding_model_name, api_key=config.nvidia_api_key
+)
 
 routing_program = LLMTextCompletionProgram.from_defaults(
     output_cls=RoutingChoice,
@@ -84,31 +91,39 @@ routing_program = LLMTextCompletionProgram.from_defaults(
 )
 
 vector_store = vector_store = MilvusVectorStore(
-    uri=config.milvus_path,  dim=config.embedding_model_dim
+    uri=config.milvus_path, dim=config.embedding_model_dim
 )
 
+
 class ShortcutEvent(Event):
-    nodes: list[
-        Document
-    ] = []  # should always be empty; this just short-circuits around the RAG
+    nodes: list[Document] = (
+        []
+    )  # should always be empty; this just short-circuits around the RAG
+
 
 class RawQueryEvent(Event):
     raw_query: str
 
+
 class TransformedQueryEvent(Event):
     transformed_query: str
+
 
 class EmbeddedQuery(Event):
     embedding: list[float]
 
+
 class MilvusQueryEvent(Event):
     nodes: list[Document]
+
 
 class PerplexityQueryEvent(Event):
     nodes: list[Document]
 
+
 class NodeCollectEvent(Event):
     nodes: list[Document]
+
 
 class QueryFlow(Workflow):
     """
@@ -122,14 +137,12 @@ class QueryFlow(Workflow):
         self, ctx: Context, ev: StartEvent
     ) -> ShortcutEvent | RawQueryEvent:
         start_time = time()
-     
+
         ctx.data["chat_messages"] = ev.chat_messages
         ctx.data["raw_query"] = ev.query
 
         # Use the structured output model to determine whether to use search
-        with cl.Step(
-            name="query router", type="tool"
-        ) as step:
+        with cl.Step(name="query router", type="tool") as step:
             start_time = time()
             step.input = {"user_query": ev.query}
             routing_choice = await routing_program.acall(query=ev.query)
@@ -137,7 +150,7 @@ class QueryFlow(Workflow):
                 "use_search": routing_choice.use_search,
                 "time_elapsed": round(time() - start_time, 3),
             }
-            
+
         if routing_choice.use_search:
             return RawQueryEvent(raw_query=ev.query)
         else:
@@ -147,9 +160,7 @@ class QueryFlow(Workflow):
     async def rewrite_query(
         self, ctx: Context, rq: RawQueryEvent
     ) -> TransformedQueryEvent:
-        with cl.Step(
-            name="query rewrite", type="tool"
-        ) as step:
+        with cl.Step(name="query rewrite", type="tool") as step:
             start_time = time()
             step.input = {"raw_query": rq.raw_query}
 
@@ -157,13 +168,13 @@ class QueryFlow(Workflow):
             history_str = ""
             for msg in ctx.data["chat_messages"][-2:-1]:
                 history_str += f"{msg['role']}: {msg['content']}\n"
-                
+
             prompt = prompts.QUERY_REWRITE_PROMPT.format(
-                    query=rq.raw_query, history_str=history_str
-                )
+                query=rq.raw_query, history_str=history_str
+            )
 
             response = await chat_llm.acomplete(prompt)
-            transformed_query = str(response)    
+            transformed_query = str(response)
 
             step.output = {
                 "chat_context": history_str,
@@ -177,16 +188,12 @@ class QueryFlow(Workflow):
 
     @step()
     async def embed_query(self, tq: TransformedQueryEvent) -> EmbeddedQuery:
-        with cl.Step(
-            name="vector embedding", type="tool"
-        ) as step:
+        with cl.Step(name="vector embedding", type="tool") as step:
             start_time = time()
             step.input = tq.transformed_query
             embedding = await embed_model.aget_query_embedding(tq.transformed_query)
             step.output = {
-                "embedding_preview": str(embedding[0:5])
-                + "..."
-                + str(embedding[-5:]),
+                "embedding_preview": str(embedding[0:5]) + "..." + str(embedding[-5:]),
                 "time_elapsed": round(time() - start_time, 3),
             }
             return EmbeddedQuery(embedding=embedding)
@@ -197,11 +204,11 @@ class QueryFlow(Workflow):
     ) -> MilvusQueryEvent:
         start_time = time()
 
-        with cl.Step(
-            name="Milvus search", type="tool"
-        ) as step:
-           
-            vector_query = VectorStoreQuery(query_embedding=eq.embedding, similarity_top_k=config.similarity_top_k)
+        with cl.Step(name="Milvus search", type="tool") as step:
+
+            vector_query = VectorStoreQuery(
+                query_embedding=eq.embedding, similarity_top_k=config.similarity_top_k
+            )
             nodes = vector_store.query(vector_query).nodes
             step.output = {
                 "retrieved_nodes": [n.text for n in nodes],
@@ -211,17 +218,15 @@ class QueryFlow(Workflow):
         return MilvusQueryEvent(nodes=nodes)
 
     @step()
-    async def pplx_retrieve(
-        self, tq: TransformedQueryEvent
-    ) -> PerplexityQueryEvent:
+    async def pplx_retrieve(self, tq: TransformedQueryEvent) -> PerplexityQueryEvent:
         # This always returns a list with a single node
-        with cl.Step(
-            name="Perplexity search", type="tool"
-        ) as step:
+        with cl.Step(name="Perplexity search", type="tool") as step:
             start_time = time()
 
             if not perplexity_llm:
-                logger.warning("No Perplexity API key found. Skipping Perplexity search.")
+                logger.warning(
+                    "No Perplexity API key found. Skipping Perplexity search."
+                )
                 return PerplexityQueryEvent(nodes=[])
 
             messages = [
@@ -232,10 +237,9 @@ class QueryFlow(Workflow):
             try:
                 # Use asyncio.wait_for to implement the timeout
                 response = await asyncio.wait_for(
-                    perplexity_llm.achat(messages),
-                    timeout=config.perplexity_timeout
+                    perplexity_llm.achat(messages), timeout=config.perplexity_timeout
                 )
-               
+
                 node = Document(
                     text=response.message.content,
                     metadata={config.source_field_name: "perplexity"},
@@ -243,16 +247,18 @@ class QueryFlow(Workflow):
                 nodes = [
                     NodeWithScore(
                         node=node,
-                        score=0.5, # Doesn't really matter, but we just set it here.
+                        score=0.5,  # Doesn't really matter, but we just set it here.
                     )
                 ]
             except asyncio.TimeoutError:
-                logger.error(f"Timeout error retrieving from Perplexity after {config.perplexity_timeout} seconds")
+                logger.error(
+                    f"Timeout error retrieving from Perplexity after {config.perplexity_timeout} seconds"
+                )
                 nodes = []
             except Exception as e:
                 logger.error(f"Error retrieving from Perplexity: {str(e)}")
                 nodes = []
-                
+
             logger.info(f"Retrieved {len(nodes)} nodes from Perplexity")
             step.input = {"query": tq.transformed_query}
             step.output = {
@@ -266,7 +272,7 @@ class QueryFlow(Workflow):
     async def collect_nodes(
         self,
         ctx: Context,
-        qe: MilvusQueryEvent | PerplexityQueryEvent ,
+        qe: MilvusQueryEvent | PerplexityQueryEvent,
     ) -> NodeCollectEvent:
         ready = ctx.collect_events(
             qe,
@@ -304,13 +310,9 @@ class QueryFlow(Workflow):
         prompt_without_chunks = prompts.SYSTEM_PROMPT_TEMPLATE.format(
             context_str="", query=ctx.data["raw_query"], history_str=""
         )
-        prompt_length_before_chunks = len(
-            Settings.tokenizer(prompt_without_chunks)
-        )
+        prompt_length_before_chunks = len(Settings.tokenizer(prompt_without_chunks))
 
-        current_length = (
-            prompt_length_before_chunks + config.max_tokens_generated
-        )
+        current_length = prompt_length_before_chunks + config.max_tokens_generated
 
         context_string = ""
         logger.info(
@@ -352,9 +354,7 @@ class QueryFlow(Workflow):
         history_string = ""
 
         if "chat_messages" in ctx.data:
-            for msg in ctx.data["chat_messages"][
-                -config.n_messages_in_history :
-            ]:
+            for msg in ctx.data["chat_messages"][-config.n_messages_in_history :]:
                 history_string += f"{msg['role']}: {msg['content']}\n"
 
             tokens_in_msg_history = len(self.tokenizer(history_string))
@@ -377,9 +377,7 @@ class QueryFlow(Workflow):
             )
         )
 
-        with cl.Step(
-            name="response synthesis", type="tool"
-        ) as step:
+        with cl.Step(name="response synthesis", type="tool") as step:
             start_time = time()
             step.input = final_prompt
 

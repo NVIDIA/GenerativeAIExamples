@@ -108,7 +108,7 @@ Instruction: Based on the above documents and instructions, provide a detailed a
 
 {query}
 """
-    
+
 QUERY_REWRITE_PROMPT = """
 You are a research assistant whose job it is to find useful facts and articles to help answer a user query in a search engine. This search engine is primarily for NVIDIA products and documentation but is perfect for other requests as well. Rewrite the following text to identify the search terms that are maximally informative when using Google or other keyword search. Remove user instructions regarding format and enrich with important keywords. Do not include any extraneous information. Expand all acronyms when possible. Focus on the topic of the search and do not include terms for summary, table, or other presentation formats
 
