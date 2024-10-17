@@ -1,0 +1,8 @@
+chainlit==1.2.0
+llama-index-embeddings-nvidia==0.1.5
+llama-index-llms-nvidia==0.1.4
+llama-index-llms-perplexity==0.1.5
+llama-index-readers-file==0.1.33
+llama-index-vector-stores-milvus==0.1.23
+pydantic==1.10.16
+pymilvus>=2.4.2
