@@ -133,3 +133,4 @@ analyzers:
     _target_: nemo_retriever_sdg.QuestionLengthAnalyzer
   -
     _target_: nemo_retriever_sdg.LexicalDivergenceAnalyzer
+
