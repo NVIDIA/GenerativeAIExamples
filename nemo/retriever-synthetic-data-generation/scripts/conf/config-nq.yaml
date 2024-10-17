@@ -124,14 +124,9 @@ answerability_filter:
 filters:
   -
     ${answerability_filter}
-<<<<<<< HEAD
-  - 
+  -
     ${easiness_filter}
-=======
-  # - 
-  #   ${easiness_filter}
->>>>>>> 3d49ef8 (added config-nq and config-fiqa)
-  
+
 
 post_processors:
   - 
