@@ -41,8 +41,8 @@ async def on_chat_start():
 async def set_starters():
     return [
         cl.Starter(
-            label="Compare GPU specifications",
-            message="Write a table with up to 10 rows comparing the technical specs for the A100 and H100 GPUs",
+            label="Write a haiku about CPUs",
+            message="Write a haiku about CPUs.",
             icon="/avatars/servers",
         ),
         cl.Starter(
@@ -103,13 +103,6 @@ async def main(user_message: cl.Message, count_tokens: bool = True):
         )
 
         msg_time = time.time() - msg_start_time
-        if count_tokens:
-            token_count = len(Settings.tokenizer(assistant_message.content))
-            assistant_message.content += ""
-            assistant_message.content += "<small style='font-size: 70%; opacity: 0.5'>{} tokens generated in {:.1f} s. </small>".format(
-                token_count, msg_time
-            )
-
         logging.info(f"Message generated in {msg_time:.1f} seconds.")
 
     message_history += [
