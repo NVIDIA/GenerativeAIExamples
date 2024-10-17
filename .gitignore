@@ -29,3 +29,6 @@ RAG/examples/simple-rag-api-catalog.yaml
 RAG/notebooks/langchain/.ipynb_checkpoints
 RAG/notebooks/langchain/data/nv_embedding
 RAG/notebooks/langchain/data/save_embedding
+
+# IntelliJ's project specific settings file
+.idea
