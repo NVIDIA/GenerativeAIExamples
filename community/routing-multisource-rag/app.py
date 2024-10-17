@@ -97,11 +97,7 @@ async def main(user_message: cl.Message, count_tokens: bool = True):
             token_count += 1
             chars = chunk.delta
             await assistant_message.stream_token(chars)
-
-        assistant_message.content += (
-            "\n<small style='font-size: 30%; opacity: 0.5'> </small> "
-        )
-
+            
         msg_time = time.time() - msg_start_time
         logging.info(f"Message generated in {msg_time:.1f} seconds.")
 
