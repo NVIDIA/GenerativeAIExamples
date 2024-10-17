@@ -16,9 +16,8 @@
 ROUTING_PROMPT = """
     Below is a user query or statement. You have the option to use a document database to help answer the query.
 
-    This document database connects to several sources including:
-    - Internal NVIDIA documentation on products, marketing, onboarding, and more
-    - A Google Search restricted to the NVIDIA.com domain
+    This document database connects to sources including:
+    - NVIDIA documentation on products
     - Access to Perplexity, a general-purpose web search engine that can answer questions on many topics
 
     If the user is just making small talk or asking for help with tasks that do not require outside information, then you should not use the document database.
@@ -90,20 +89,6 @@ Additionally, here is the previous conversation history with the user:
 
 {history_str}
 
-
-- If you use a source, make sure to cite it using hyperlinks to show the display name linking to the source URL. Write the source as a HTML link like this: <a href="https://source-url.com">Source display name</a>. ONLY do this if it is not in a table. If you have a Markdown table, put the sources below. Avoid Markdown footnotes.
-
-- Group answers into sections for each source. MINIMIZE THE OVERALL NUMBER OF CITATIONS. If you have multiple answers from the same source, group them together.
-
-- If you need to use a source for a table, put the source below the table in a separate cell. Do NOT include sources in the table itself. Instead do something like this:
-
-| Header 1 | Header 2 |
-| -------- | -------- |
-| Cell 1   | Cell 2   |
-
-
-
-
 Instruction: Based on the above documents and instructions, provide a detailed answer for the user question below or engage them in dialogue.
 
 {query}
@@ -117,10 +102,7 @@ Examples:
 Raw text: Make a table showing customer wins using gpus for bio
 Transformed text: "Examples of usage of graphics processing units (GPUs) in biology and bioinformatics for customer success"
 
-Raw text: When does GB200 go GA in EMEA?
-Transformed text: Timeline for general availability of NVIDIA GB200 in Europe, Middle East, and Africa
-
-Raw text: Write an email to Walmart about how they benefit from our DGX servers
+Raw text: Write an email to Walmart about how they benefit from DGX servers
 Transformed text: Walmart usage of NVIDIA DGX servers
 
 Raw text: What happened to the president of Iran?
@@ -128,9 +110,6 @@ Transformed text: Recent events involving the president of Iran
 
 Raw text: What is the pricing for G5 XLarge aws instance in ohio
 Transformed text: Pricing for NVIDIA G5 XLarge AWS instance in Ohio region.
-
-Raw text: Explain the POC process for cosell cloud
-Transformed text: Proof of concept for cloud computing co-selling
 
 Raw text: Write a table in Markdown summarizing how customers are using bionemo. Use one row per customer and don't repeat any use cases.
 Transformed text: Customer NVIDIA BioNemo use cases
