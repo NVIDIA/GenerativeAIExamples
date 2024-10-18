@@ -9,8 +9,8 @@ Follow along this repository to see how you can create your own digital human fo
 We will offer two options for interacting with the agentic healthcare front desk: with a text / voice based Gradio UI or with a digital human avatar you can converse with.
 ![](./images/repo_overview_structure_diagram.png)
 
-[!IMPORTANT]
-Integration with ACE is under active development and will be available soon.
+> [!IMPORTANT]
+> Integration with ACE is under active development and will be available soon.
 
 [NVIDIA ACE](https://developer.nvidia.com/ace) is a suite of real-time AI solutions for end-to-end development of interactive avatars and digital human applications at-scale. Its customizable microservices offer the fastest and most versatile solution for bringing avatars to life at-scale. The image below from the GitHub repository for `NIM Agent Blueprint: Digital Human for Customer Service` show the components in the ACE stack on the left side of the dotted line. The components shown on the right side of the dotted line starting from `Fast API` will be replaced by our own components in the agentic healthcare front desk.
 
