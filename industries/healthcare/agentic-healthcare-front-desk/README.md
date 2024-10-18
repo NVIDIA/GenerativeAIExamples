@@ -1,5 +1,7 @@
 # Agentic Healthcare Front Desk
 
+![](./images/architecture_diagram.png)
+
 An agentic healthcare front desk can assist patients and the healthcare professionals in various scanarios: it can assist with the new patient intake process, going over each of the fields in a enw patient form with the patients; it can assist with the appointment scheduling process, looking up available appointments and booking them for patients after conversing with the patient to find out their needs; it can help look up the patient's medications and general information on the medications, and more.
 
 The front desk assistant contains agentic LLM NIM with tools calling capabilities implemented in the LangGraph framework.
