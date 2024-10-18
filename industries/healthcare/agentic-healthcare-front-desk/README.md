@@ -9,7 +9,10 @@ Follow along this repository to see how you can create your own digital human fo
 We will offer two options for interacting with the agentic healthcare front desk: with a text / voice based Gradio UI or with a digital human avatar you can converse with.
 ![](./images/repo_overview_structure_diagram.png)
 
-[NVIDIA ACE](https://developer.nvidia.com/ace) is a suite of real-time AI solutions for end-to-end development of interactive avatars and digital human applications at-scale. Its customizable microservices offer the fastest and most versatile solution for bringing avatars to life at-scale. The image below from the GitHub repository for `NIM Agent Blueprint: Digital Human for Customer Service` show the components in the ACE stack on the left side of the dotted line. The components shown on the right side of the dotted line starting from `Fast API` is replaced by our own components in the agentic healthcare front desk.
+[!IMPORTANT]
+Integration with ACE is under active development and will be available soon.
+
+[NVIDIA ACE](https://developer.nvidia.com/ace) is a suite of real-time AI solutions for end-to-end development of interactive avatars and digital human applications at-scale. Its customizable microservices offer the fastest and most versatile solution for bringing avatars to life at-scale. The image below from the GitHub repository for `NIM Agent Blueprint: Digital Human for Customer Service` show the components in the ACE stack on the left side of the dotted line. The components shown on the right side of the dotted line starting from `Fast API` will be replaced by our own components in the agentic healthcare front desk.
 
 ![](./images/ACE_diagram.png)
 
@@ -27,7 +30,7 @@ In this repository, we demonstrate the following:
 * A customer care agent in Langgraph for appointment making only.
 * A customer care agent in Langgraph for medication lookup only.
 * A Gradio based UI that allows us to use voice or typing to converse with any of the four agents.
-* A chain server that allows ACE to connect to any of the four agents.
+* A chain server.
 
 The agentic tool calling capability in each of the customer care assistants is powered by LLM NIMs - NVIDIA Inference Microservices. With the agentic capability, you can write your own tools to be utilized by LLMs.
 
@@ -76,11 +79,11 @@ e. Click **Copy Key** and then save the API key. The key begins with the letters
 
 ## Run Instructions
 
-As illustrated in the diagrams in the beginning, in this repo, we could run two types of applications, one is a chain server that connects the healthcare agent to ACE, the other one is a simple voice/text Gradio UI for the healthcare agent.
+As illustrated in the diagrams in the beginning, in this repo, we could run two types of applications, one is a FastAPI-based chain server, the other one is a simple voice/text Gradio UI for the healthcare agent. In this documentation, we will be showing how to use the Gradio UI, with instructions for connecting the chain server to ACE coming soon.
 
 Regardless of the type of application you'd like to run, first, please add your API Keys.
 
-### Add Your API keys Prior to Running
+### 1. Add Your API keys Prior to Running
 In the file `vars.env`, add two API keys of your own:
 ```
 NVIDIA_API_KEY="nvapi-" 
@@ -88,38 +91,7 @@ TAVILY_API_KEY="tvly-"
 ```
 Note the Tavily key is only required if you want to run the full graph or the medication lookup graph. Get your API Key from the [Tavily website](https://app.tavily.com/). This is used in the tool named `medication_instruction_search_tool` in [`graph.py`](./graph_definitions/graph.py) or [`graph_medication_lookup_only.py`](./graph_definitions/graph_medication_lookup_only.py).
 
-### Connecting to ACE (Option 1)
-#### Run the chain server that serves the LangGraph agents
-First, modify the [`docker-compose.yaml`](./docker-compose.yaml) file to specify the assistant you want to run.
-```yaml
-entrypoint: python3 chain_server/chain_server.py --assistant intake --port 8081
-```
-The `--assistant` arg has 4 choices: `full`, `intake`, `appointment`, `medication`, corresponding to the four assistants with their graphs shown in [`graph_definitions/graph_images/`](./graph_definitions/graph_images/).
-Next, start the chain server container:
-```sh
-docker compose up -d chain-server
-# or to build at this command:
-docker compose up --build -d chain-server 
-```
-
-Note this will be running on port 8081 by default. If you need to run on a different port, modify the [`docker-compose.yaml`](./docker-compose.yaml) file's `chain-server` section and replace all mentions of 8081 with your own port number.
-
-You can test your chain server by running a request demonstrated in [test_chain_server.ipynb](./chain_server/test_chain_server.ipynb).
-
-To bring down the chain server:
-```sh
-docker compose down chain-server
-```
-
-#### Connecting the chain server to ACE
-Connect to this chain server from your ACE stack by specifying the `<host url>:<port number>` of the chain server. If you're running on a cloud service provider's instance, please ensure that the instance has a publicly accessible URL and the port is exposed. 
-
-For the steps of standing up your digital human ACE stack, please see the [Digital Human Blueprint Card](https://build.nvidia.com/nvidia/digital-humans-for-customer-service/blueprintcard), [GitHub repo for NIM Agent Blueprint: Digital Human for Customer Service](https://github.com/NVIDIA-NIM-Agent-Blueprints/digital-human), and [ACE Documentation](https://docs.nvidia.com/ace/latest/index.html).
-
-The ACE connection that makes requests to the chain server will have a web interface that looks like this, and the avatar is customizable.
-![](./images/ace_ferret_avatar.png)
-
-### Running the simple voice/text Gradio UI (Option 2)
+### 2. Running the simple voice/text Gradio UI
 To spin up a simple Gradio based web UI that allows us to converse with one of the agents via voice or typing, run one of these following services.
 
 ##### 2.1 The patient intake agent 
@@ -217,9 +189,5 @@ If you receive the following `"Media devices could not be accessed"` error messa
 1. Retry your request on the web UI.
 
 ## Customization
-To customize for your own agentic LLM in LangGraph with your own tools, the [LangGraph tutorial on customer support](https://langchain-ai.github.io/langgraph/tutorials/customer-support/customer-support/) is helpful, where you'll find detailed explanations and steps of creating tools and agentic LLM in LangGraph. Afterwards, you can create your own file similar to the graph files in [`graph_definitions/`](./graph_definitions/) which can connect to the simple voice/text Gradio UI by calling [`launch_demo_ui`](./graph_definitions/graph_patient_intake_only.py#L184), or can be imported by the [chain server](./chain_server/chain_server.py#L31) which is the connection point for ACE.
+To customize for your own agentic LLM in LangGraph with your own tools, the [LangGraph tutorial on customer support](https://langchain-ai.github.io/langgraph/tutorials/customer-support/customer-support/) is helpful, where you'll find detailed explanations and steps of creating tools and agentic LLM in LangGraph. Afterwards, you can create your own file similar to the graph files in [`graph_definitions/`](./graph_definitions/) which can connect to the simple voice/text Gradio UI by calling [`launch_demo_ui`](./graph_definitions/graph_patient_intake_only.py#L184), or can be imported by the [chain server](./chain_server/chain_server.py#L31).
 
-To customize the ACE connection to the agent, which will be necessary since the chain server will be up at your own URL, please see the ACE [GitHub](https://github.com/NVIDIA-NIM-Agent-Blueprints/digital-human/tree/main/customize) and [documentation](https://docs.nvidia.com/ace/latest/workflows/tokkio/text/Tokkio_LLM_RAG_Bot.html#customizing-the-pipeline).
-
-
-To customize the ACE avatar and other configurations, please refer to the [ACE Documentation](https://docs.nvidia.com/ace/latest/index.html).
