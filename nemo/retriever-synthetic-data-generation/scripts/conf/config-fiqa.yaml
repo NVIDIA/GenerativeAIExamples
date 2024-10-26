@@ -18,7 +18,7 @@ qa_generator:
   # mistralai/mixtral-8x22b-instruct-v0.1
   base_url: https://integrate.api.nvidia.com/v1
   max_examples: ${max_examples}
-  generate_config:ß
+  generate_config:
     temperature: 0.5
     top_p: 1.0
     max_tokens: 2048
@@ -120,13 +120,8 @@ answerability_filter:
 filters:
   -
     ${answerability_filter}
-<<<<<<< HEAD
-  - 
+  -
     ${easiness_filter}
-=======
-  # - 
-  #   ${easiness_filter}
->>>>>>> 3d49ef8 (added config-nq and config-fiqa)
   
 
 post_processors:
@@ -138,3 +133,4 @@ analyzers:
     _target_: nemo_retriever_sdg.QuestionLengthAnalyzer
   -
     _target_: nemo_retriever_sdg.LexicalDivergenceAnalyzer
+
