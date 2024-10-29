@@ -76,9 +76,9 @@ services:
       resources:
         reservations:
           devices:
-          - driver: nvidia
-            device_ids: ['${FRONTEND_GPU:-0}']
-            capabilities: [gpu]
+            - driver: nvidia
+              device_ids: ['${FRONTEND_GPU:-0}']
+              capabilities: [gpu]
 
   server:
     container_name: fm-asr-chain-server
@@ -110,6 +110,6 @@ services:
       resources:
         reservations:
           devices:
-          - driver: nvidia
-            device_ids: ['${CHAIN_GPU:-0}']
-            capabilities: [gpu]
+            - driver: nvidia
+              device_ids: ['${CHAIN_GPU:-0}']
+              capabilities: [gpu]

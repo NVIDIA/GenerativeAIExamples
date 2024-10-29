@@ -76,8 +76,7 @@ services:
     command:
       - "/bin/sh"
       - "-c"
-      - "opentelemetry-instrument \
-        uvicorn retrieval.main:app --host 0.0.0.0 --port 8000"
+      - "opentelemetry-instrument uvicorn retrieval.main:app --host 0.0.0.0 --port 8000"
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -99,9 +98,7 @@ services:
     image: nvcr.io/ohlfw0olaadg/ea-participants/nemo-retriever-embedding-microservice:24.02
     ports:
       - "${NEMO_EMBEDDING_PORT:-1985}:8080"
-    command: ./bin/web -p 8080 -n 1  -g
-      model_config_templates/NV-Embed-QA_template.yaml -c
-      /models/nv-embed-qa_v4/NV-Embed-QA-4.nemo
+    command: ./bin/web -p 8080 -n 1  -g model_config_templates/NV-Embed-QA_template.yaml -c /models/nv-embed-qa_v4/NV-Embed-QA-4.nemo
     volumes:
       - ${NEMO_RET_DIR?:source compose.env}/models:/models:ro
     healthcheck:
@@ -149,9 +146,7 @@ services:
       - ETCD_SNAPSHOT_COUNT=50000
     volumes:
       - ${NEMO_RET_DIR?:source compose.env}/volumes/etcd:/etcd:Z
-    command:
-      etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls
-      http://0.0.0.0:2379 --data-dir /etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
     healthcheck:
       test: ["CMD", "etcdctl", "endpoint", "health"]
       interval: 30s
@@ -254,11 +249,11 @@ services:
     volumes:
       - ${NEMO_RET_DIR?:source compose.env}/config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "13133:13133" # health check
-      - "4317:4317" # OTLP over gRPC receiver
-      - "55679:55679" # UI
+      - "13133:13133"  # health check
+      - "4317:4317"  # OTLP over gRPC receiver
+      - "55679:55679"  # UI
 
   zipkin:
     image: openzipkin/zipkin:3.0.6
     ports:
-      - "9411:9411" # Zipkin UI and API
+      - "9411:9411"  # Zipkin UI and API

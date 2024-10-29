@@ -7,13 +7,13 @@ services:
       context: .
       dockerfile: Dockerfile.notebook
     ports:
-    - "8888:8888"
-    - "7860:7860"
+      - "8888:8888"
+      - "7860:7860"
     expose:
-    - "8888"
-    - "7860"
+      - "8888"
+      - "7860"
     env_file:
-    - compose.env
+      - compose.env
     deploy:
       resources:
         reservations:

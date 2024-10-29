@@ -2,12 +2,11 @@ input_file: ${input_file}
 input_format: ${input_format}  # squad or rawdoc
 output_dir: ${output_dir}
 api_key: ${api_key}
-max_examples: 20     # Remove this line to use the entire dataset
+max_examples: 20  # Remove this line to use the entire dataset
 use_original: false  # Set true if input file contains original questions and would like to evaluate using the original data
 
 pre_processors:
-  - 
-    _target_: nemo_retriever_sdg.DummyPreprocessor
+  - _target_: nemo_retriever_sdg.DummyPreprocessor
 
 qa_generator:
   _target_: nemo_retriever_sdg.SimpleQAGenerator
@@ -34,18 +33,17 @@ qa_generator:
       - Generate questions that are relevant to the idea expressed in the input document, and the input document contains the complete answer to your question.
       - Generate questions that provide specific context that can lead to the specific answer contained in the input document.
       - Generate questions that are varied and different from each other. You can change up the phrasing, vocabulary, complexity, and the type of questions you ask throughout the task.
-      - DO NOT copy and paste exact phrasing from the test. Formulate questions in your own words. 
+      - DO NOT copy and paste exact phrasing from the test. Formulate questions in your own words.
       - Generate answers to the questions as well.
-      - Provide an explanation as to why the generated question is good. Use the following example questions and answers for reference. 
-      - Generated Questions should start with Question: 
+      - Provide an explanation as to why the generated question is good. Use the following example questions and answers for reference.
+      - Generated Questions should start with Question:
       - Generated Answers should start with Answer:
       - Explanations should start with Explanation:
-      
+
       Examples:
 
       Input document:
       We witnessed a flurry of defaults in 2015-2016 dominated by aggressive 2012-2014 vintage energy sector issuance. High cost producers with inadequate liquidity found bankruptcy to be their only option in the face of $30 oil. 2016 was the fifth highest default volume year on record with 80% of defaults occurring in commodity credits. The default rate for energy issuers was approximately  20%. We believe that most of the  aggressive credits in these sectors have now restructured (the average energy bond trades at $98 today, up from $56 in February, 2016).
-
 
       Question:
       Which year has the highest default volume of all times?
@@ -81,12 +79,12 @@ qa_generator:
       What is the common statistic mentioned in the document?
       Explaination:
       This is a bad question! Its too generic and vague. It assumes that document is being looked at when the question is being asked.
-      
+
     user_prompt_template: |
       Generate {num_questions} questions and corresponding answers based on Input Document.
 
       Input Document:
-      {document}   
+      {document}
 
 easiness_filter:
   _target_: nemo_retriever_sdg.EasinessFilter
@@ -104,8 +102,8 @@ easiness_filter:
 #   filter_cfg:
 #     filter_threshold: 0.75
 #     embedding_model: "intfloat/e5-large-unsupervised"
-#     batch_size: 8    
-    
+#     batch_size: 8
+
 answerability_filter:
   _target_: nemo_retriever_sdg.AnswerabilityFilter
   filter_cfg:
@@ -119,7 +117,7 @@ answerability_filter:
       Criterion 2 - Is it clear what type of answer or information the question seeks? The question should convey its purpose without ambiguity, allowing for a direct and relevant response.
       Criterion 3 - Does the content in the context contain information that can answer the question or part of the question?
       Criterion 4 - Does the content in the context completely answer the question?
-      
+
       Provide your response in a mandatory dictionary format, and a short explanation of the rating like
       {
       \"criterion_1_explanation\": "<Brief explanation of why criterion_1 was satisfied or not satisfied>",
@@ -131,36 +129,30 @@ answerability_filter:
       \"criterion_4_explanation\": "<Extract spans from the content that help completely answer the question if criterion is satisfied, state what parts are missing if not satisfied>",
       \"criterion_4\": "<Y/N>"
       }
-      Provide only the dictionary response and nothing else.    
-    
+      Provide only the dictionary response and nothing else.
+
     user_prompt_template: |
       Context Passage:
       {context}
       Question:
       {question}
-      
+
 filters:
-  - 
-    ${easiness_filter}
-  -
-    ${answerability_filter}
+  - ${easiness_filter}
+  - ${answerability_filter}
 
 post_processors:
-  - 
-    _target_: nemo_retriever_sdg.DivergenceCalculator
+  - _target_: nemo_retriever_sdg.DivergenceCalculator
 
 analyzers:
-  -
-    _target_: nemo_retriever_sdg.QuestionLengthAnalyzer
-  -
-    _target_: nemo_retriever_sdg.LexicalDivergenceAnalyzer
+  - _target_: nemo_retriever_sdg.QuestionLengthAnalyzer
+  - _target_: nemo_retriever_sdg.LexicalDivergenceAnalyzer
 
 evaluators:
-  -
-    _target_: nemo_retriever_sdg.BEIREvaluator
+  - _target_: nemo_retriever_sdg.BEIREvaluator
     model_names:
       - "sentence-transformers/gtr-t5-large"
       - "BAAI/bge-large-en-v1.5"
       - "intfloat/e5-large-unsupervised"
-    score_function: "cos_sim" # "dot" or "cos_sim"
+    score_function: "cos_sim"  # "dot" or "cos_sim"
     batch_size: 16

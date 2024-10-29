@@ -64,7 +64,7 @@ services:
     command: ["milvus", "run", "standalone"]
     hostname: milvus
     security_opt:
-    - seccomp:unconfined
+      - seccomp:unconfined
     environment:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000
@@ -146,7 +146,7 @@ services:
     depends_on:
       - kafka
     container_name: init-kafka
-    entrypoint: [ '/bin/sh', '-c' ]
+    entrypoint: ['/bin/sh', '-c']
     command: |
       "
       # blocks until kafka is reachable
@@ -160,7 +160,7 @@ services:
       kafka-topics --bootstrap-server kafka:19092 --list
       "
     networks:
-     - default
+      - default
 
   streaming-ingest-dev:
     restart: always
@@ -177,9 +177,9 @@ services:
       resources:
         reservations:
           devices:
-          - driver: nvidia
-            device_ids: ['0']
-            capabilities: [gpu]
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
     image: streaming_ingest_morpheus_jupyter
     container_name: streaming-ingest-dev
     ports:
@@ -215,9 +215,9 @@ services:
       resources:
         reservations:
           devices:
-          - driver: nvidia
-            device_ids: ['0']
-            capabilities: [gpu]
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
     networks:
       - default
     environment:
@@ -268,14 +268,14 @@ services:
       "--model-control-mode=explicit",
       "--load-model",
       "all-MiniLM-L6-v2",
-      ]
+    ]
     deploy:
       resources:
         reservations:
           devices:
-          - driver: nvidia
-            device_ids: ['0']
-            capabilities: [gpu]
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "curl", "-f", "localhost:8000/v2/health/ready"]
       interval: 30s

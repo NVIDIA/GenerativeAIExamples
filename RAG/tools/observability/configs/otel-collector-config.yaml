@@ -4,7 +4,7 @@ receivers:
       grpc:
         endpoint: 0.0.0.0:4317
       http:
-        # endpoint: 0.0.0.0:4318
+      # endpoint: 0.0.0.0:4318
 
 processors:
   tail_sampling:
@@ -51,4 +51,3 @@ service:
       receivers: [otlp]
       exporters: [otlp]
       processors: [tail_sampling, transform]
-

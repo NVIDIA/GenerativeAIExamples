@@ -3,17 +3,16 @@ services:
     container_name: pgvector
     image: pgvector/pgvector:pg16
     ports:
-    - 5432:5432
+      - 5432:5432
     expose:
-    - "5432"
+      - "5432"
     volumes:
-    - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/data:/var/lib/postgresql/data
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/data:/var/lib/postgresql/data
     environment:
-    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
-    - POSTGRES_USER=${POSTGRES_USER:-postgres}
-    - POSTGRES_DB=${POSTGRES_DB:-api}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-api}
     profiles: ["pgvector"]
-
 
   etcd:
     container_name: milvus-etcd
@@ -73,7 +72,7 @@ services:
       - "9091:9091"
     depends_on:
       - "etcd"
-      - "minio" 
+      - "minio"
     profiles: ["nemo-retriever", "milvus", ""]
 
   elasticsearch:

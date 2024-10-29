@@ -1,7 +1,7 @@
 include:
   - path:
-    - ../../local_deploy/docker-compose-vectordb.yaml
-    - ../../local_deploy/docker-compose-nim-ms.yaml
+      - ../../local_deploy/docker-compose-vectordb.yaml
+      - ../../local_deploy/docker-compose-nim-ms.yaml
 
 services:
   chain-server:
@@ -40,7 +40,7 @@ services:
       APP_TEXTSPLITTER_CHUNKSIZE: 506
       APP_TEXTSPLITTER_CHUNKOVERLAP: 200
       NVIDIA_API_KEY: ${NVIDIA_API_KEY}
-      # vectorstore collection name to store embeddings 
+      # vectorstore collection name to store embeddings
       COLLECTION_NAME: ${COLLECTION_NAME:-nvidia_api_catalog}
       APP_RETRIEVER_TOPK: 4
       APP_RETRIEVER_SCORETHRESHOLD: 0.25
@@ -52,9 +52,9 @@ services:
       # Log level for server, supported level NOTSET, DEBUG, INFO, WARN, ERROR, CRITICAL
       LOGLEVEL: ${LOGLEVEL:-INFO}
     ports:
-    - "8081:8081"
+      - "8081:8081"
     expose:
-    - "8081"
+      - "8081"
     shm_size: 5gb
     depends_on:
       nemollm-embedding:
@@ -86,11 +86,11 @@ services:
       # enable observability in rag playground
       ENABLE_TRACING: false
     ports:
-    - "8090:8090"
+      - "8090:8090"
     expose:
-    - "8090"
+      - "8090"
     depends_on:
-    - chain-server
+      - chain-server
 
 networks:
   default:

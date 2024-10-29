@@ -1,7 +1,7 @@
 include:
   - path:
-    - ../../local_deploy/docker-compose-vectordb.yaml
-    - ../../local_deploy/docker-compose-nim-ms.yaml
+      - ../../local_deploy/docker-compose-vectordb.yaml
+      - ../../local_deploy/docker-compose-nim-ms.yaml
 
 services:
   chain-server:
@@ -37,9 +37,9 @@ services:
       ENABLE_TRACING: false
       LOGLEVEL: ${LOGLEVEL:-INFO}
     ports:
-    - "8081:8081"
+      - "8081:8081"
     expose:
-    - "8081"
+      - "8081"
     shm_size: 5gb
     depends_on:
       nemollm-embedding:
@@ -66,9 +66,9 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       ENABLE_TRACING: false
     ports:
-    - "8090:8090"
+      - "8090:8090"
     expose:
-    - "8090"
+      - "8090"
     depends_on:
       - chain-server
 

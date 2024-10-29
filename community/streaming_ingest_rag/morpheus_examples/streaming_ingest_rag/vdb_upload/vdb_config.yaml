@@ -32,11 +32,11 @@ vdb_pipeline:
     - type: rss
       name: "rss_cve"
       config:
-        batch_size: 128 # Number of rss feeds per batch
+        batch_size: 128  # Number of rss feeds per batch
         cache_dir: "./.cache/http"
         cooldown_interval_sec: 600
-        enable_cache: False
-        enable_monitor: True
+        enable_cache: false
+        enable_monitor: true
         feed_input:
           - "https://www.theregister.com/security/headlines.atom"
           - "https://isc.sans.edu/dailypodcast.xml"
@@ -71,7 +71,7 @@ vdb_pipeline:
           - "https://blog.google/threat-analysis-group/rss/"
           - "https://intezer.com/feed/"
         interval_sec: 600
-        output_batch_size: 2048 # Number of chunked documents per output batch
+        output_batch_size: 2048  # Number of chunked documents per output batch
         request_timeout_sec: 2.0
         run_indefinitely: true
         stop_after_sec: 0
@@ -89,9 +89,9 @@ vdb_pipeline:
           chunk_size: 512
           num_threads: 10
           chunk_overlap: 51
-        enable_monitor: True
+        enable_monitor: true
         filenames:
-          - "./morpheus/data/randomly_generated_cybersecurity_text.txt" # will need to supply
+          - "./morpheus/data/randomly_generated_cybersecurity_text.txt"  # will need to supply
         vdb_resource_name: "vdb_pdf"
         watch: false
 
@@ -105,10 +105,10 @@ vdb_pipeline:
           csv:
             chunk_overlap: 51
             chunk_size: 1024
-            text_column_names: # For CSV files, the data from each text_column_name will be concatenated together.
+            text_column_names:  # For CSV files, the data from each text_column_name will be concatenated together.
               - "raw"  # Requires same schema for all CSV files.
               - "request_header_referer"
-        enable_monitor: True
+        enable_monitor: true
         filenames:
           - "./models/datasets/training-data/log-parsing-training-data.csv"
         vdb_resource_name: "vdb_csv"
@@ -118,7 +118,7 @@ vdb_pipeline:
       name: "custom_source_text"
       config:
         batch_size: 1024
-        enable_monitor: True
+        enable_monitor: true
         extractor_config:
           chunk_size: 512
           chunk_overlap: 51
@@ -144,7 +144,7 @@ vdb_pipeline:
     batch_size: 5120
     resource_name: "VDBGENERAL"  # Identifier for the resource in the vector database
     embedding_size: 384
-    recreate: True  # Whether to recreate the resource if it already exists
+    recreate: true  # Whether to recreate the resource if it already exists
     service: "milvus"  # Specify the type of vector database
     uri: "http://localhost:19530"  # URI for connecting to the Vector Database server
     resource_schemas:
@@ -184,7 +184,7 @@ vdb_pipeline:
             - name: embedding
               dtype: FLOAT_VECTOR
               description: Embedding vectors representing the data entry
-              dim: 384 # Size of the embeddings to store in the vector database
+              dim: 384  # Size of the embeddings to store in the vector database
           description: Collection schema for diverse data sources
       vdb_pdf:
         index_conf:
@@ -222,7 +222,7 @@ vdb_pipeline:
             - name: embedding
               dtype: FLOAT_VECTOR
               description: Embedding vectors representing the data entry
-              dim: 384 # Size of the embeddings to store in the vector database
+              dim: 384  # Size of the embeddings to store in the vector database
           description: Collection schema for diverse data sources
       vdb_csv:
         index_conf:
@@ -260,7 +260,7 @@ vdb_pipeline:
             - name: embedding
               dtype: FLOAT_VECTOR
               description: Embedding vectors representing the data entry
-              dim: 384 # Size of the embeddings to store in the vector database
+              dim: 384  # Size of the embeddings to store in the vector database
           description: Collection schema for diverse data sources
       vdb_rss:
         index_conf:
@@ -298,5 +298,5 @@ vdb_pipeline:
             - name: embedding
               dtype: FLOAT_VECTOR
               description: Embedding vectors representing the data entry
-              dim: 384 # Size of the embeddings to store in the vector database
+              dim: 384  # Size of the embeddings to store in the vector database
           description: Collection schema for diverse data sources

@@ -38,7 +38,7 @@ vdb_pipeline:
           module_output_id: "output"
           transform_type: web_scraper
         deserialize_config:
-          output_batch_size: 2048 # Number of chunked documents per output batch
+          output_batch_size: 2048  # Number of chunked documents per output batch
         kafka_config:
           max_batch_size: 64
           bootstrap_servers: "kafka:19092"
@@ -65,13 +65,13 @@ vdb_pipeline:
       config:
         stage_config:
           enable_monitor: true
-          run_indefinitely: true # TODO map to kafka source
+          run_indefinitely: true  # TODO map to kafka source
           namespace: "morpheus_examples_llm"
           module_id: "kafka_source_pipe"
           module_output_id: "output"
           transform_type: raw_chunker
         deserialize_config:
-          output_batch_size: 2048 # Number of chunked documents per output batch
+          output_batch_size: 2048  # Number of chunked documents per output batch
         kafka_config:
           max_batch_size: 256
           bootstrap_servers: "kafka:19092"
@@ -88,7 +88,7 @@ vdb_pipeline:
           chunk_size: 512
           payload_column: "payload"
         vdb_config:
-          vdb_resource_name: "vdb_kafka_raw"          
+          vdb_resource_name: "vdb_kafka_raw"
 
   tokenizer:
     model_kwargs:
@@ -100,11 +100,11 @@ vdb_pipeline:
     model_name: "bert-base-uncased-hash"
 
   vdb:
-    batch_size: 16384 # Vector DB max batch size
+    batch_size: 16384  # Vector DB max batch size
     resource_name: "vdb_kafka_raw"  # Identifier for the resource in the vector database
     embedding_size: 384
-    write_time_interval: 20 # Max time between successive uploads
-    recreate: False  # Whether to recreate the resource if it already exists
+    write_time_interval: 20  # Max time between successive uploads
+    recreate: false  # Whether to recreate the resource if it already exists
     service: "milvus"  # Specify the type of vector database
     uri: "http://milvus:19530"  # URI for connecting to the Vector Database server
     resource_schemas:
@@ -153,45 +153,5 @@ vdb_pipeline:
             - name: embedding
               dtype: FLOAT_VECTOR
               description: Embedding vectors representing the data entry
-              dim: 384 # Size of the embeddings to store in the vector database
-          description: Collection schema for diverse data sources            
-
-      vdb_kafka_scrape:
-        index_conf:
-          field_name: embedding
-          metric_type: L2
-          index_type: HNSW
-          params:
-            M: 8
-            efConstruction: 64
-
-        schema_conf:
-          enable_dynamic_field: true
-          schema_fields:
-            - name: id
-              dtype: INT64
-              description: Primary key for the collection
-              is_primary: true
-              auto_id: true
-            - name: title
-              dtype: VARCHAR
-              description: Title or heading of the data entry
-              max_length: 65_535
-            - name: source
-              dtype: VARCHAR
-              description: Source or origin of the data entry
-              max_length: 65_535
-            - name: summary
-              dtype: VARCHAR
-              description: Brief summary or abstract of the data content
-              max_length: 65_535
-            - name: content
-              dtype: VARCHAR
-              description: Main content or body of the data entry
-              max_length: 65_535
-            - name: embedding
-              dtype: FLOAT_VECTOR
-              description: Embedding vectors representing the data entry
-              dim: 384 # Size of the embeddings to store in the vector database
+              dim: 384  # Size of the embeddings to store in the vector database
           description: Collection schema for diverse data sources
-               

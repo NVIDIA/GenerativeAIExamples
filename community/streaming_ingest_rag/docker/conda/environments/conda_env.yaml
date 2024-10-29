@@ -18,7 +18,7 @@ channels:
   - defaults
 dependencies:
   - arxiv=1.4
-  - onnx # required for triton model export
+  - onnx  # required for triton model export
   - pip
   - pypdf=3.16
   - newspaper3k=0.2
@@ -35,9 +35,9 @@ dependencies:
 
   ####### Pip Dependencies (keep sorted!) #######
   - pip:
-    - farm-haystack[file-conversion]
-    - grpcio-status==1.58 # To keep in sync with 1.58 grpcio which is installed for Morpheus
-    - langchain==0.0.310
-    - pymilvus==2.3.2 # The conda package is woefully out of date and incorrect
-    - sentence_transformers==2.3.0
-    - PyMuPDF==1.23.21
+      - farm-haystack[file-conversion]
+      - grpcio-status==1.58  # To keep in sync with 1.58 grpcio which is installed for Morpheus
+      - langchain==0.0.310
+      - pymilvus==2.3.2  # The conda package is woefully out of date and incorrect
+      - sentence_transformers==2.3.0
+      - PyMuPDF==1.23.21

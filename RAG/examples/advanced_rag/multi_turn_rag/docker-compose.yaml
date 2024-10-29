@@ -1,7 +1,7 @@
 include:
   - path:
-    - ../../local_deploy/docker-compose-vectordb.yaml
-    - ../../local_deploy/docker-compose-nim-ms.yaml
+      - ../../local_deploy/docker-compose-vectordb.yaml
+      - ../../local_deploy/docker-compose-nim-ms.yaml
 
 services:
   chain-server:
@@ -28,7 +28,7 @@ services:
       APP_TEXTSPLITTER_MODELNAME: Snowflake/snowflake-arctic-embed-l
       APP_TEXTSPLITTER_CHUNKSIZE: 506
       APP_TEXTSPLITTER_CHUNKOVERLAP: 200
-      APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-"nvidia/nv-rerankqa-mistral-4b-v3"} # Leave it blank to avoid using ranking
+      APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-"nvidia/nv-rerankqa-mistral-4b-v3"}  # Leave it blank to avoid using ranking
       APP_RANKING_MODELENGINE: ${APP_RANKING_MODELENGINE:-nvidia-ai-endpoints}
       APP_RANKING_SERVERURL: ${APP_RANKING_SERVERURL:-""}
       NVIDIA_API_KEY: ${NVIDIA_API_KEY}
@@ -43,9 +43,9 @@ services:
       ENABLE_TRACING: false
       LOGLEVEL: ${LOGLEVEL:-INFO}
     ports:
-    - "8081:8081"
+      - "8081:8081"
     expose:
-    - "8081"
+      - "8081"
     shm_size: 5gb
     depends_on:
       nemollm-embedding:
@@ -75,11 +75,11 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       ENABLE_TRACING: false
     ports:
-    - "8090:8090"
+      - "8090:8090"
     expose:
-    - "8090"
+      - "8090"
     depends_on:
-    - chain-server
+      - chain-server
 
 networks:
   default:
