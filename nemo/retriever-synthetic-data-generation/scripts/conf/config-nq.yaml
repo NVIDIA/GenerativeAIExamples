@@ -6,8 +6,7 @@ max_examples: 1500
 use_original: false  # Set true if input file contains original questions and would like to evaluate using the original data
 
 pre_processors:
-  - 
-    _target_: nemo_retriever_sdg.DummyPreprocessor
+  - _target_: nemo_retriever_sdg.DummyPreprocessor
 
 qa_generator:
   _target_: nemo_retriever_sdg.SimpleQAGenerator
@@ -28,13 +27,13 @@ qa_generator:
     num_questions: 3
     squad_format: true
     system_prompt: |
-      Generate questions that are relevant to the input document provided. 
+      Generate questions that are relevant to the input document provided.
       Follow these General Instructions:
        - Questions must be completely answered by the input document.
        - Questions must be relevant to the input document.
        - Do not generate questions which requires looking at the input document to comprehend the question
        - Generate questions and answers to the generated questions.
-       - Generated Questions should start with Question: 
+       - Generated Questions should start with Question:
        - Generated Answers should start with Answer:
       Follow this chain of thought when formulating questions:
       Step 1: Identify key phrases and entities in the input document
@@ -42,12 +41,12 @@ qa_generator:
 
       Compress any compounded questions to shorter questions to sound realistic. Questions can also be in the form of short phrases.
       Use the following examples as guidelines.
-      
+
       Examples:
 
       Input document:
       In November 2013, Senate Democrats led by Harry Reid used the nuclear option to eliminate the 60 - vote rule on executive branch nominations and federal judicial appointments, but not for the Supreme Court. In April 2017, Senate Republicans led by Mitch McConnell extended the nuclear option to Supreme Court and the nomination of Neil Gorsuch ending the debate.
-      
+
       Question:
       who changed the senate rules for supreme court nominees?
 
@@ -74,12 +73,12 @@ qa_generator:
 
       Question:
       what is the symbol for hugs and kisses?
-      
+
     user_prompt_template: |
       Generate {num_questions} questions and corresponding answers based on Input Document.
 
       Input Document:
-      {document}   
+      {document}
 
 easiness_filter:
   _target_: nemo_retriever_sdg.EasinessFilter
@@ -101,7 +100,7 @@ answerability_filter:
       Criterion 2 - Is it clear what type of answer or information the question seeks? The question should convey its purpose without ambiguity, allowing for a direct and relevant response.
       Criterion 3 - Does the content in the context contain information that can answer the question or part of the question?
       Criterion 4 - Does the content in the context completely answer the question?
-      
+
       Provide your response in a mandatory dictionary format, and a short explanation of the rating like
       {
       \"criterion_1_explanation\": "<Brief explanation of why criterion_1 was satisfied or not satisfied>",
@@ -113,28 +112,21 @@ answerability_filter:
       \"criterion_4_explanation\": "<Extract spans from the content that help completely answer the question if criterion is satisfied, state what parts are missing if not satisfied>",
       \"criterion_4\": "<Y/N>"
       }
-      Provide only the dictionary response and nothing else.    
-    
+      Provide only the dictionary response and nothing else.
+
     user_prompt_template: |
       Context Passage:
       {context}
       Question:
       {question}
-      
-filters:
-  -
-    ${answerability_filter}
-  -
-    ${easiness_filter}
 
+filters:
+  - ${answerability_filter}
+  - ${easiness_filter}
 
 post_processors:
-  - 
-    _target_: nemo_retriever_sdg.DivergenceCalculator
+  - _target_: nemo_retriever_sdg.DivergenceCalculator
 
 analyzers:
-  -
-    _target_: nemo_retriever_sdg.QuestionLengthAnalyzer
-  -
-    _target_: nemo_retriever_sdg.LexicalDivergenceAnalyzer
-
+  - _target_: nemo_retriever_sdg.QuestionLengthAnalyzer
+  - _target_: nemo_retriever_sdg.LexicalDivergenceAnalyzer

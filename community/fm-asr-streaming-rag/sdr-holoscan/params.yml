@@ -14,30 +14,30 @@
 # limitations under the License.
 
 sensor:
-    sample_rate: 1_000_000  # Sample rate of sensor (Hz)
+  sample_rate: 1_000_000  # Sample rate of sensor (Hz)
 
 network_rx:
-    ip_addr: "0.0.0.0"
-    dst_port: 5005
-    l4_proto: "udp"
-    batch_size: 47104  # Bytes to accumulate before emitting
-    header_bytes: 8
-    max_payload_size: 1472
+  ip_addr: "0.0.0.0"
+  dst_port: 5005
+  l4_proto: "udp"
+  batch_size: 47104  # Bytes to accumulate before emitting
+  header_bytes: 8
+  max_payload_size: 1472
 
 pkt_format:
-    log_period: 5  # Log bandwidth processed every N (seconds)
+  log_period: 5  # Log bandwidth processed every N (seconds)
 
 lowpassfilt:
-    cutoff: 100_000  # Cutoff frequency of filter (Hz)
-    numtaps: 101
+  cutoff: 100_000  # Cutoff frequency of filter (Hz)
+  numtaps: 101
 
 resample:
-    sample_rate_out: 16_000  # Sample rate required by Riva ASR (16KHz PCM)
-    gain: 10.0
+  sample_rate_out: 16_000  # Sample rate required by Riva ASR (16KHz PCM)
+  gain: 10.0
 
 riva:
-    src_lang_code: "en-US"
-    uri: "localhost:50051"       # Riva server URI ("riva_speech_api_port" in riva/config.sh)
-    automatic_punctuation: true
-    verbatim_transcripts: false
-    sample_rate: 16000           # Sample rate required by Riva ASR (16KHz PCM)
+  src_lang_code: "en-US"
+  uri: "localhost:50051"  # Riva server URI ("riva_speech_api_port" in riva/config.sh)
+  automatic_punctuation: true
+  verbatim_transcripts: false
+  sample_rate: 16000  # Sample rate required by Riva ASR (16KHz PCM)

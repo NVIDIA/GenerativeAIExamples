@@ -15,24 +15,24 @@
 
 name: morpheus
 channels:
-    - rapidsai
-    - nvidia
-    - nvidia/label/dev # For pre-releases of MRC. Should still default to full releases if available
-    - conda-forge
+  - rapidsai
+  - nvidia
+  - nvidia/label/dev  # For pre-releases of MRC. Should still default to full releases if available
+  - conda-forge
 dependencies:
-    ####### Morpheus Dependencies (keep sorted!) #######
-    - boto3
-    - dask
-    - dill
-    - distributed
-    - kfp
-    - librdkafka
-    - mlflow>=2.10.0,<3
-    - nodejs=18.*
-    - nvtabular=23.06
-    - papermill
-    - s3fs>=2023.6
+  ####### Morpheus Dependencies (keep sorted!) #######
+  - boto3
+  - dask
+  - dill
+  - distributed
+  - kfp
+  - librdkafka
+  - mlflow>=2.10.0,<3
+  - nodejs=18.*
+  - nvtabular=23.06
+  - papermill
+  - s3fs>=2023.6
 
-    ##### Pip Dependencies (keep sorted!) #######
-    - pip:
-        - python-logging-loki
+  ##### Pip Dependencies (keep sorted!) #######
+  - pip:
+      - python-logging-loki

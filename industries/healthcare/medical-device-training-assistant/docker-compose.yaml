@@ -1,7 +1,7 @@
 include:
   - path:
-    - docker-compose-vectordb.yaml
-    - docker-compose-nim-ms.yaml
+      - docker-compose-vectordb.yaml
+      - docker-compose-nim-ms.yaml
 
 services:
   chain-server:
@@ -28,7 +28,7 @@ services:
       APP_TEXTSPLITTER_MODELNAME: Snowflake/snowflake-arctic-embed-l
       APP_TEXTSPLITTER_CHUNKSIZE: 506
       APP_TEXTSPLITTER_CHUNKOVERLAP: 200
-      APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-"nvidia/nv-rerankqa-mistral-4b-v3"} # Leave it blank to avoid using ranking
+      APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-"nvidia/nv-rerankqa-mistral-4b-v3"}  # Leave it blank to avoid using ranking
       APP_RANKING_MODELENGINE: ${APP_RANKING_MODELENGINE:-nvidia-ai-endpoints}
       APP_RANKING_SERVERURL: ${APP_RANKING_SERVERURL:-""}
       NVIDIA_API_KEY: ${NVIDIA_API_KEY}
@@ -42,9 +42,9 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       LOGLEVEL: ${LOGLEVEL:-INFO}
     ports:
-    - "8081:8081"
+      - "8081:8081"
     expose:
-    - "8081"
+      - "8081"
     shm_size: 5gb
     depends_on:
       nemollm-embedding:
@@ -56,7 +56,6 @@ services:
       ranking-ms:
         condition: service_healthy
         required: false
-
 
   rag-playground:
     container_name: rag-playground
@@ -75,8 +74,8 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       ENABLE_TRACING: false
       # if locally hosting Riva:
-      #RIVA_API_URI: <riva-ip-address>:50051
-      #TTS_SAMPLE_RATE: 48000
+      # RIVA_API_URI: <riva-ip-address>:50051
+      # TTS_SAMPLE_RATE: 48000
       # if using Riva API Endpoint on NVIDIA API Catalog
       RIVA_API_URI: grpc.nvcf.nvidia.com:443
       NVIDIA_API_KEY: ${NVIDIA_API_KEY}
@@ -85,11 +84,11 @@ services:
       TTS_SAMPLE_RATE: 48000
 
     ports:
-    - "8090:8090"
+      - "8090:8090"
     expose:
-    - "8090"
+      - "8090"
     depends_on:
-    - chain-server
+      - chain-server
 
 networks:
   default:

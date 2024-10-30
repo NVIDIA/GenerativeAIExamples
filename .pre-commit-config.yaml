@@ -23,5 +23,7 @@ repos:
         files: ^RAG/
         name: isort (python)
         args: ["--multi-line=3", "--trailing-comma", "--force-grid-wrap=0", "--use-parenthese", "--line-width=119", "--ws"]
-
-
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.13.0
+    hooks:
+      - id: yamlfmt

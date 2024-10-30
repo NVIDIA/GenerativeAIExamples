@@ -3,12 +3,12 @@ services:
     container_name: nemollm-inference-microservice
     image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.3
     volumes:
-    - ${MODEL_DIRECTORY}:/opt/nim/.cache
+      - ${MODEL_DIRECTORY}:/opt/nim/.cache
     user: "${USERID}"
     ports:
-    - "8000:8000"
+      - "8000:8000"
     expose:
-    - "8000"
+      - "8000"
     environment:
       NGC_API_KEY: ${NGC_API_KEY}
     shm_size: 20gb
@@ -31,11 +31,11 @@ services:
     container_name: nemo-retriever-embedding-microservice
     image: nvcr.io/nim/nvidia/nv-embedqa-e5-v5:1.0.1
     volumes:
-    - ${MODEL_DIRECTORY}:/opt/nim/.cache
+      - ${MODEL_DIRECTORY}:/opt/nim/.cache
     ports:
-    - "9080:8000"
+      - "9080:8000"
     expose:
-    - "8000"
+      - "8000"
     environment:
       NGC_API_KEY: ${NGC_API_KEY}
     user: "${USERID}"
@@ -59,11 +59,11 @@ services:
     container_name: nemo-retriever-ranking-microservice
     image: nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.1
     volumes:
-    - ${MODEL_DIRECTORY}:/opt/nim/.cache
+      - ${MODEL_DIRECTORY}:/opt/nim/.cache
     ports:
-    - "1976:8000"
+      - "1976:8000"
     expose:
-    - "8000"
+      - "8000"
     environment:
       NGC_API_KEY: ${NGC_API_KEY}
     user: "${USERID}"

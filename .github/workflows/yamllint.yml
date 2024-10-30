@@ -1,0 +1,14 @@
+---
+name: Yaml Lint
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+jobs:
+  lintAllTheThings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: yaml-lint
+        uses: ibiqlik/action-yamllint@v3

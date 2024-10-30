@@ -1,6 +1,6 @@
 ## Default settings
 nvidia_api_key: "nvapi--***"
-## Set these to required models endpoints from NVIDIA NGC 
+## Set these to required models endpoints from NVIDIA NGC
 llm_model: "mistralai/mixtral-8x7b-instruct-v0.1"
 embedding_model: "nvidia/nv-embedqa-e5-v5"
 reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
