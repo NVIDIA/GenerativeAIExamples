@@ -59,17 +59,21 @@ def get_reranker(local: bool=True):
     at https://build.nvidia.com
     """
     if local:
-        return NVIDIARerank(
-            base_url=f"http://{RERANKING_URI}/v1",
-            model=RERANKING_MODEL,
-            top_n=MAX_DOCS
-        )
-    else:
-        return NVIDIARerank(
-            model=RERANKING_MODEL,
-            api_key=NVIDIA_API_KEY,
-            top_n=MAX_DOCS
-        )
+        try:
+            return NVIDIARerank(
+                base_url=f"http://{RERANKING_URI}/v1",
+                model=RERANKING_MODEL,
+                top_n=MAX_DOCS
+            )
+        except Exception as e:
+            logger.warning(f"Caught exception '{e}' when loading local "
+                           "NVIDIARerank, using build.nvidia.com version")
+
+    return NVIDIARerank(
+        model=RERANKING_MODEL,
+        api_key=NVIDIA_API_KEY,
+        top_n=MAX_DOCS
+    )
 
 def get_embedder(local: bool=True):
     """
@@ -77,17 +81,21 @@ def get_embedder(local: bool=True):
     at https://build.nvidia.com
     """
     if local:
-        return NVIDIAEmbeddings(
-            base_url=f"http://{EMBEDDING_URI}/v1",
-            model=EMBEDDING_MODEL,
-            truncate="NONE"
-        )
-    else:
-        return NVIDIAEmbeddings(
-            model=EMBEDDING_MODEL,
-            api_key=NVIDIA_API_KEY,
-            truncate="NONE"
-        )
+        try:
+            return NVIDIAEmbeddings(
+                base_url=f"http://{EMBEDDING_URI}/v1",
+                model=EMBEDDING_MODEL,
+                truncate="NONE"
+            )
+        except Exception as e:
+            logger.warning(f"Caught exception '{e}' when loading local "
+                           "NVIDIAEmbeddings, using build.nvidia.com version")
+
+    return NVIDIAEmbeddings(
+        model=EMBEDDING_MODEL,
+        api_key=NVIDIA_API_KEY,
+        truncate="NONE"
+    )
 
 def classify(question, chain, pydantic_obj: BaseModel):
     """ Parse a question into structured pydantic_obj
