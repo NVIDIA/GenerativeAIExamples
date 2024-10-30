@@ -521,7 +521,7 @@ def get_docs_vectorstore_langchain(vectorstore: VectorStore) -> List[str]:
         elif settings.vector_store.name == "milvus":
             # Getting all the ID's > 0
             if vectorstore.col:
-                milvus_data = vectorstore.col.query(expr="pk >= 0", output_fields=["pk", "source", "text"])
+                milvus_data = vectorstore.col.query(expr="pk >= 0", output_fields=["pk", "source"])
                 filenames = set([extract_filename(metadata) for metadata in milvus_data])
                 return filenames
     except Exception as e:
@@ -586,7 +586,7 @@ def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str
                 logger.info(f"Deleted documents with filenames {filename}")
         elif settings.vector_store.name == "milvus":
             # Getting all the ID's > 0
-            milvus_data = vectorstore.col.query(expr="pk >= 0", output_fields=["pk", "source", "text"])
+            milvus_data = vectorstore.col.query(expr="pk >= 0", output_fields=["pk", "source"])
             for filename in filenames:
                 # get ids with filename in metadata
                 ids_list = [metadata["pk"] for metadata in milvus_data if extract_filename(metadata) == filename]
