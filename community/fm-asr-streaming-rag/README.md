@@ -91,6 +91,8 @@ The deployment folder is intended to be used with Docker Compose. All compose fi
 
 There are helper scripts for starting and stopping the containers in `deploy/scripts`. For containers being deployed non-locally, the scripts will handle deployment on the remote machines via SSH for the `nims` and `milvus` compose files. The containers in `docker-compose.yaml` and `file-replay` are expected to be deployed on the local host and remote deployment would require altering the scripts or manual deployment.
 
+Open `localhost:8090/converse` in a browser to view the frontend.
+
 ## Folder organization
 - `chain-server`: Implementation of LangChain connectors to LLM inference, embeddings, retrieval and reranking of database documents, and interaction with user queries / intent detection.
 
