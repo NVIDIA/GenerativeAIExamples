@@ -47,6 +47,8 @@ class RivaThread(threading.Thread):
         self._riva_client = riva.client.ASRService(self._riva_auth)
         self._riva_config = self._gen_config()
         self._kill = threading.Event()
+        self._lock = threading.Lock()
+        self._stop_generator = False
 
     def run(self):
         while not self._kill.is_set():
@@ -54,8 +56,15 @@ class RivaThread(threading.Thread):
             try:
                 self.extract_transcripts(responses)
             except Exception as e:
-                self.logger.error(f"Riva thread exception {e}")
-                raise
+                # Riva exception, acquire a thread lock and restart the Riva gRPC stream
+                self.logger.error(f"Riva thread exception {e}, restarting gRPC connection")
+                self._stop_generator = True
+                with self._lock:
+                    self._stop_generator = False
+                    continue
+
+    def stop(self):
+        self._kill.set()
 
     def _post_request(self, endpoint, data):
         try:
@@ -143,10 +152,11 @@ class RivaThread(threading.Thread):
 
     def _request_generator(self):
         yield rasr.StreamingRecognizeRequest(streaming_config=self._riva_config)
-        while True:
+        while not self._stop_generator:
             yield rasr.StreamingRecognizeRequest(audio_content=self.buffer.get())
 
     def make_riva_request(self):
+        self.logger.info("Creating gRPC stub with Riva client StreamingRecognize")
         responses = self._riva_client.stub.StreamingRecognize(
             self._request_generator(),
             metadata=self._riva_client.auth.get_auth_metadata()
