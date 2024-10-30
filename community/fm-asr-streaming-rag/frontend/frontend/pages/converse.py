@@ -65,13 +65,19 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
 
     # Get NIM options
     response = requests.get(f"{client.server_url}/availableNvidiaModels")
-    for model in response.json()["models"]:
+    for model in response.json()["local_models"]:
         backend_options.append(f"Local NVIDIA NIM - {model}")
+    for model in response.json()["cloud_models"]:
+        backend_options.append(f"NVIDIA API Endpoint - {model}")
 
-    # Default NVIDIA API Endpoint model options
-    backend_options.append(f"NVIDIA API Endpoint - mistralai/mistral-7b-instruct-v0.3")
-    backend_options.append(f"NVIDIA API Endpoint - meta/llama-3.1-8b-instruct")
-    backend_options.append(f"NVIDIA API Endpoint - meta/llama-3.1-405b-instruct")
+    # Set default
+    if len(response.json()["local_models"]):
+        default_model = backend_options[0]  # use local NIM
+    else:
+        # No local NIMs, use selected API endpoint
+        default_model = "NVIDIA API Endpoint - meta/llama3-8b-instruct"
+        if default_model not in backend_options:
+            default_model = backend_options[0]  # fallback in case of error
 
     with gr.Blocks(title=TITLE, theme=kui_theme, css=kui_styles + _LOCAL_CSS) as page:
 
@@ -104,7 +110,7 @@ def build_page(client: chat_client.ChatClient) -> gr.Blocks:
                     with gr.Column():
                         backend_dropdown = gr.Dropdown(
                             choices=backend_options,
-                            value=backend_options[0],
+                            value=default_model,
                             label="LLM Backend / Model",
                             interactive=True
                         )

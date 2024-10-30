@@ -46,12 +46,15 @@ text_accumulator = TextAccumulator(
 
 @app.get("/availableNvidiaModels")
 async def available_nvidia_models(request: Request) -> JSONResponse:
+    local_models = []
+    cloud_models = []
     try:
         all_models = ChatNVIDIA(base_url=f"http://{LLM_URI}/v1").available_models
-        chat_models = [m.id for m in all_models if m.model_type == 'chat']
+        local_models = [m.id for m in all_models if m.model_type == 'chat']
     except (requests.exceptions.ConnectionError, pydantic.v1.error_wrappers.ValidationError):
-        chat_models = []
-    return JSONResponse({"models": chat_models})
+        pass
+    cloud_models = [m.id for m in ChatNVIDIA().available_models if m.model_type == 'chat']
+    return JSONResponse({"local_models": local_models, "cloud_models": cloud_models})
 
 @app.get("/serverStatus")
 async def server_status():
