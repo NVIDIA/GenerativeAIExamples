@@ -15,8 +15,7 @@ This repository is a starting point for developers looking to integrate with the
 * [What's New?](#whats-new)
   * [Knowledge Graph RAG](#knowledge-graph-rag)
   * [Agentic Workflows with Llama 3.1](#agentic-workflows-with-llama-31)
-  * [RAG with Local NIM Deployment and LangChain]
-  (#rag-with-local-nim-deployment-and-langchain)
+  * [RAG with Local NIM Deployment and LangChain](#rag-with-local-nim-deployment-and-langchain)
   * [Vision NIM Workflows](#vision-nim-workflows)
 * [Try it Now!](#try-it-now)
 * [RAG](#rag)
