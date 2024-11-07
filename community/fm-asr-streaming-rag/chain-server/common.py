@@ -24,8 +24,13 @@ from pydantic import BaseModel, Field
 from typing import Literal
 from langchain_community.utils.math import cosine_similarity
 
-USE_NEMO_RETRIEVER = os.environ.get('USE_NEMO_RETRIEVER', 'False').lower() in ('true', '1')
-NVIDIA_API_KEY = os.environ.get('NVIDIA_API_KEY', 'null')
+NVIDIA_API_KEY  = os.environ.get('NVIDIA_API_KEY', 'null')
+LLM_URI         = os.environ.get('LLM_URI', None)
+RERANKING_MODEL = os.environ.get('RERANK_MODEL', None)
+RERANKING_URI   = os.environ.get('RERANK_URI', None)
+EMBEDDING_MODEL = os.environ.get('EMBED_MODEL', None)
+EMBEDDING_URI   = os.environ.get('EMBED_URI', None)
+MAX_DOCS        = int(os.environ.get('MAX_DOCS_RETR', 8))
 
 def get_logger(name):
     LOG_LEVEL = logging.getLevelName(os.environ.get('CHAIN_LOG_LEVEL', 'WARN').upper())
@@ -51,7 +56,7 @@ class LLMConfig(BaseModel):
     )
     # Model choice
     name: str = Field("Name of LLM instance to use")
-    engine: str = Field("Name of engine ['nvai-api-endpoint', 'triton-trt-llm']")
+    engine: str = Field("Name of engine ['nvai-api-endpoint', 'local-nim']")
     # Chain parameters
     use_knowledge_base: bool = Field(
         description="Whether to use a knowledge base", default=True
@@ -95,11 +100,7 @@ def nvapi_embedding(text):
     return embeddings
 
 VALID_TIME_UNITS = ["seconds", "minutes", "hours", "days"]
-TIME_VECTORS = None # Lazy loading in 'sanitize_time_unit'
-if USE_NEMO_RETRIEVER:
-    embedding_service = nemo_embedding
-else:
-    embedding_service = nvapi_embedding
+TIME_VECTORS = nvapi_embedding(VALID_TIME_UNITS)
 
 def sanitize_time_unit(time_unit):
     """
@@ -111,10 +112,7 @@ def sanitize_time_unit(time_unit):
     if time_unit in VALID_TIME_UNITS:
         return time_unit
 
-    if TIME_VECTORS is None:
-        TIME_VECTORS = embedding_service(VALID_TIME_UNITS)
-
-    unit_embedding = embedding_service([time_unit])
+    unit_embedding = nvapi_embedding([time_unit])
     similarity = cosine_similarity(unit_embedding, TIME_VECTORS)
     return VALID_TIME_UNITS[np.argmax(similarity)]
 

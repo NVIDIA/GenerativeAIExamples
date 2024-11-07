@@ -22,6 +22,7 @@ PARAM_FILE = os.path.join(os.path.dirname(__file__), 'params.yml')
 LOG_LEVEL  = logging.getLevelName(os.environ.get('SDR_LOG_LEVEL', 'WARN').upper())
 FRONTEND_URI = os.environ.get('FRONTEND_URI', 'localhost:6001')
 DATABASE_URI = os.environ.get('DATABASE_URI', '0.0.0.0:8081')
+ASR_URI = os.environ.get('ASR_URI', '0.0.0.0:50051')
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

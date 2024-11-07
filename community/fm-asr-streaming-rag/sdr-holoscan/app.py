@@ -21,7 +21,7 @@ Ingests UDP packets with baseband I/Q data
 from holoscan.core import Application
 from queue import Queue
 
-from common import PARAM_FILE, FRONTEND_URI, DATABASE_URI, wait_for_uri
+from common import PARAM_FILE, FRONTEND_URI, DATABASE_URI, ASR_URI, wait_for_uri
 from riva_asr import RivaThread
 import operators as op
 
@@ -50,7 +50,7 @@ class AsrStreamingApp(Application):
 
     def run(self):
         # Wait for connections
-        wait_for_uri(self.kwargs("riva")["uri"])
+        wait_for_uri(ASR_URI)
         wait_for_uri(FRONTEND_URI)
         wait_for_uri(DATABASE_URI)
 
@@ -58,6 +58,7 @@ class AsrStreamingApp(Application):
         self.riva_handler = RivaThread(
             self.pcm_buffer,
             self.kwargs("riva"),
+            asr_uri=ASR_URI,
             frontend_uri=FRONTEND_URI,
             database_uri=DATABASE_URI
         )

@@ -30,7 +30,7 @@ import datetime
 import numpy as np
 
 from common import get_logger
-from datetime import datetime
+from datetime import datetime, timedelta
 from langchain.docstore.document import Document
 
 logger = get_logger(__name__)
@@ -87,8 +87,8 @@ class TimestampDatabase:
     def past(self, tstamp, window=90):
         """ Return entries within 'window' seconds of tstamp
         """
-        tstart = tstamp - datetime.timedelta(seconds=window)
-        tend = tstamp + datetime.timedelta(seconds=window)
+        tstart = tstamp - timedelta(seconds=window)
+        tend = tstamp + timedelta(seconds=window)
         self.cursor.execute('SELECT * FROM messages WHERE timestamp BETWEEN ? AND ?', (tstart, tend))
         docs = self.cursor.fetchall()
         return [self.reformat(doc) for doc in docs]

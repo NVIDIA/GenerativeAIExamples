@@ -49,7 +49,7 @@ game tonight?", "What is the weather forecast for tonight?".
 recent timeframe. Examples: "Can you summarize the last hour of content?", "What have the main \
 topics been over the last 5 minutes?", "Tell me the main stories of the past 2 hours.".
 - 'TimeWindow': If the user is asking about the focus of the conversation from a specified time in \
-the past. Examples: "What were they talking about 15 minutes ago?", "What was the focus an hour ago?".
+the past. Examples: "What were they talking about 15 minutes ago?", "What was the focus an hour ago?", "What are they talking about right now?".
 - If the user's intent is not clear, or if the intent cannot be confidently determined, classify \
 this as 'Unknown'.
 
@@ -101,11 +101,17 @@ f"'{recency_examples[0]}' --> '{format_json(recency_examples_obj[0].model_dump_j
 f"'{recency_examples[1]}' --> '{format_json(recency_examples_obj[1].model_dump_json())}'\n" +
 f"'{recency_examples[2]}' --> '{format_json(recency_examples_obj[2].model_dump_json())}'\n" + """
 
-Convert the user input below into this JSON format.
+Convert the user input below into this JSON format. Make sure you use valid JSON and \
+don't worry about escaping quotes, just give valid JSON blobs.
 """)
 
 SUMMARIZATION_PROMPT = """\
 You are a sophisticated summarization tool designed to condense large blocks \
 of text into a concise summary. Given the user text, reduce the character \
 count by distilling into only the most important information.
+
+Do not say you are summarizing, i.e. do not say "Here's a summary...", just \
+condense the text to the best of your abilities.
+
+Summary:
 """
