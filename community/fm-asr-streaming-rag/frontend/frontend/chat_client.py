@@ -41,6 +41,7 @@ class ChatClient:
         self._riva_output_box = None
         self._buffer = deque(maxlen=50)
         self._lock = threading.Lock()
+        self._prev_buffer = ""
         self._running_buffer = ""
         self._finalized_buffer = deque(maxlen=50)
         self._timetag_len = len(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] ')
@@ -110,10 +111,13 @@ class ChatClient:
             for chunk in req.iter_content():
                 yield chunk.decode("UTF-8", "ignore")
 
-    def update_running_buffer(self, transcript):
+    def update_running_buffer(self, transcript, is_final):
         with self._lock:
             # Strip datetime tag and set
-            self._running_buffer = transcript[self._timetag_len:]
+            live_transcript = transcript[self._timetag_len:]
+            self._running_buffer = f"{self._prev_buffer} {live_transcript}"
+            if is_final:
+                self._prev_buffer = self._running_buffer
         yield "Updated transcript buffer"
 
     def update_finalized_buffer(self, transcript):
@@ -121,6 +125,8 @@ class ChatClient:
             # Insert a newline after the datetime tag
             tag, text = transcript[:self._timetag_len], transcript[self._timetag_len:]
             transcript = f"{tag}\n{text}"
+            self._prev_buffer = ""
+            self._running_buffer = ""
             self._finalized_buffer.append(f"{transcript}\n\n")
         yield "Updated transcript buffer"
 

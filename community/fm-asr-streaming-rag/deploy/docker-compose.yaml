@@ -17,25 +17,26 @@ services:
   sdr:
     container_name: fm-asr-sdr-holoscan
     image: fm-asr-sdr-holoscan:latest
+    restart: "no"
     build:
       context: ${PROJECT_DIR?:source compose.env}/sdr-holoscan
       dockerfile: Dockerfile
 
-    restart: "no"
-
+    # Environment variables and command
     environment:
       TZ: ${TIMEZONE:-America/New_York}
       SDR_LOG_LEVEL: ${SDR_LOG_LEVEL:-WARN}
       FRONTEND_URI: ${FRONTEND_URI}
       DATABASE_URI: ${CHAIN_SERVER_HOST}:${CHAIN_SERVER_PORT}
+      ASR_URI: ${ASR_URL}:${ASR_PORT}
 
     working_dir: /workspace/
     command: "python sdr-holoscan/app.py"
 
+    # Connectivity and devices
     network_mode: host
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
-      - "/dev/snd:/dev/snd"
 
     # Enable GPU usage
     runtime: nvidia
@@ -61,10 +62,9 @@ services:
       TZ: ${TIMEZONE:-America/New_York}
       FRONTEND_LOG_LEVEL: ${FRONTEND_LOG_LEVEL:-WARN}
       FRONTEND_URI: ${FRONTEND_URI}
-      APP_SERVERURL: http://localhost
+      APP_SERVERURL: http://${CHAIN_SERVER_HOST}
       APP_SERVERPORT: ${CHAIN_SERVER_PORT}
-      DEPLOY_LOCAL_NIM: ${DEPLOY_LOCAL_NIM}
-      NIM_LLM_DISPLAY: ${NIM_LLM_DISPLAY}
+      MAX_DOCS_RETR: ${MAX_DOCS_RETR:-}
 
     ports:
       - "${CHAIN_SERVER_PORT}:${CHAIN_SERVER_PORT}"
@@ -72,15 +72,16 @@ services:
       - "${CHAIN_SERVER_PORT}"
     network_mode: host
 
+    # For viewing GPU stats
     deploy:
       resources:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['${FRONTEND_GPU:-0}']
+            device_ids: ['all']
             capabilities: [gpu]
 
-  server:
+  chain-server:
     container_name: fm-asr-chain-server
     image: fm-asr-chain-server:latest
     build:
@@ -91,14 +92,17 @@ services:
 
     environment:
       TZ: ${TIMEZONE:-America/New_York}
-      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
       CHAIN_LOG_LEVEL: ${CHAIN_LOG_LEVEL:-WARN}
       DB_CHUNK_SIZE: ${DB_CHUNK_SIZE:-256}
       DB_CHUNK_OVERLAP: ${DB_CHUNK_OVERLAP:-32}
-      NEMO_RETRIEVER_URI: ${NEMO_RETRIEVER_URI}
-      NIM_LLM_PORT: ${NIM_LLM_PORT}
-      NEMO_EMBEDDING_PORT: ${NEMO_EMBEDDING_PORT}
-      USE_NEMO_RETRIEVER: ${USE_NEMO_RETRIEVER}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      NVIDIA_CLI_API_KEY: ${NVIDIA_CLI_API_KEY:-}
+      MAX_DOCS_RETR: ${MAX_DOCS_RETR:-}
+      MILVUS_STANDALONE_URI: ${MILVUS_STANDALONE_URI}
+      FRONTEND_URI: ${FRONTEND_URI}
+      LLM_URI: "${LLM_URL:-}:${LLM_PORT:-}"
+      RERANK_URI: "${RERANK_URL:-}:${RERANK_PORT:-}"
+      EMBED_URI: "${EMBED_URL:-}:${EMBED_PORT:-}"
 
     ports:
       - "8081:8081"
@@ -106,10 +110,36 @@ services:
       - "8081"
     network_mode: host
 
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            device_ids: ['${CHAIN_GPU:-0}']
-            capabilities: [gpu]
+  gnuradio:
+    # Setup image and container info
+    container_name: gnuradio
+    image: gnuradio:latest
+    restart: "no"
+    build:
+      context: ${PROJECT_DIR?:source compose.env}/gnuradio
+      dockerfile: Dockerfile
+      args:
+        MY_UID: ${MY_UID}
+
+    # Set up environment to work with X-forwarding
+    volumes:
+      - $HOME/.Xauthority:/root/.Xauthority:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/${MY_UID}:/run/user/${MY_UID}
+
+    # Environment variables and command
+    environment:
+      TZ: ${TIMEZONE:-America/New_York}
+      DISPLAY: ${DISPLAY}
+      XAUTHORITY: /root/.Xauthority
+
+    working_dir: /workspace/
+    entrypoint: "./entrypoint.sh ${GNU_GRC_FILE?:source compose.env} ${GNU_USE_GUI:-0}"
+
+    # Connectivity and devices
+    network_mode: host
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+      - "/dev/snd:/dev/snd"
+    group_add:
+      - audio

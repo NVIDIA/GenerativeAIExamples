@@ -13,30 +13,89 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import json
 import re
 
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings, NVIDIARerank
 from pydantic import BaseModel
 
-from common import get_logger, LLMConfig
+from common import (
+    get_logger,
+    LLMConfig,
+    NVIDIA_API_KEY,
+    LLM_URI,
+    RERANKING_MODEL,
+    RERANKING_URI,
+    EMBEDDING_MODEL,
+    EMBEDDING_URI,
+    MAX_DOCS
+)
 
 logger = get_logger(__name__)
 
 def get_llm(config: LLMConfig):
-    client = ChatNVIDIA(
-        model=config.name,
-        temperature=config.temperature,
-        max_tokens=config.num_tokens
-    )
-    if config.engine == "triton-trt-llm":
-        nim_llm_port = os.environ.get('NIM_LLM_PORT', 9999)
-        return client.mode("nim", base_url=f"http://0.0.0.0:{nim_llm_port}/v1")
+    """
+    Returns LLM client matching given config. If not using local NIM, uses
+    API endpointat https://build.nvidia.com
+    """
+    if config.engine == "local-nim":
+        return ChatNVIDIA(
+            base_url=f"http://{LLM_URI}/v1",
+            model=config.name,
+            temperature=config.temperature
+        )
     elif config.engine == "nvai-api-endpoint":
-        return client
+        return ChatNVIDIA(
+            model=config.name,
+            api_key=NVIDIA_API_KEY,
+            temperature=config.temperature
+        )
     else:
         raise ValueError(f"Unknown engine {config.engine}")
+
+def get_reranker(local: bool=True):
+    """
+    Returns LLM reranking client. If not using local NIM, uses API endpoint
+    at https://build.nvidia.com
+    """
+    if local:
+        try:
+            return NVIDIARerank(
+                base_url=f"http://{RERANKING_URI}/v1",
+                model=RERANKING_MODEL,
+                top_n=MAX_DOCS
+            )
+        except Exception as e:
+            logger.warning(f"Caught exception '{e}' when loading local "
+                           "NVIDIARerank, using build.nvidia.com version")
+
+    return NVIDIARerank(
+        model=RERANKING_MODEL,
+        api_key=NVIDIA_API_KEY,
+        top_n=MAX_DOCS
+    )
+
+def get_embedder(local: bool=True):
+    """
+    Returns LLM embedding client. If not using local NIM, uses API endpoint
+    at https://build.nvidia.com
+    """
+    if local:
+        try:
+            return NVIDIAEmbeddings(
+                base_url=f"http://{EMBEDDING_URI}/v1",
+                model=EMBEDDING_MODEL,
+                truncate="NONE"
+            )
+        except Exception as e:
+            logger.warning(f"Caught exception '{e}' when loading local "
+                           "NVIDIAEmbeddings, using build.nvidia.com version")
+
+    return NVIDIAEmbeddings(
+        model=EMBEDDING_MODEL,
+        api_key=NVIDIA_API_KEY,
+        truncate="NONE"
+    )
 
 def classify(question, chain, pydantic_obj: BaseModel):
     """ Parse a question into structured pydantic_obj
@@ -48,12 +107,14 @@ def classify(question, chain, pydantic_obj: BaseModel):
     except ValueError:
         try:
             # If failed, look for valid JSON inside output
-            logger.warning(f"Failed to parse initial output {output}")
+            logger.warning(fr"Failed to parse initial output '{output}'")
             sanitized_output = sanitize_json(output)
+            logger.warning(fr"Sanitized output '{sanitized_output}'")
             result = pydantic_obj.model_validate_json(sanitized_output)
         except ValueError:
             # Neither approach worked, return None
-            logger.error(f"Error parsing output into {pydantic_obj}: '{output}'")
+            logger.error(f"Error parsing output into {pydantic_obj}: "
+                         rf"'{output}'")
             result = None
     logger.info(f"Result: {result}")
     return result
@@ -76,6 +137,7 @@ def sanitize_json(text: str, pydantic_obj: BaseModel=None):
 def replace_special(text_in: str):
     text_out = text_in.replace("\'", "\"")
     text_out = text_out.replace("\_", "_")
+    text_out = text_out.replace("\\", "")
     return text_out
 
 def find_first_valid_json(text: str, pydantic_obj: BaseModel=None):

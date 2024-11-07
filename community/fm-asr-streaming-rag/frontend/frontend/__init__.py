@@ -97,9 +97,10 @@ class DemoAppAPI(MethodView):
         """ Updates the Riva partial transcript """
         data = request.get_json()
         transcript = data.get('transcript')
+        is_final = data.get('is_final', False)
         return app.response_class(
             stream_with_context(
-                self._client.update_running_buffer(transcript)
+                self._client.update_running_buffer(transcript, is_final)
             )
         )
 

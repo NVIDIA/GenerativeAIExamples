@@ -37,10 +37,17 @@ def build_page() -> gr.Blocks:
         # create the page header
         gr.Markdown(f"# {TITLE}")
 
-        # TODO: Code to display stats
-        _ = gr.Textbox(value = _get_cpu_stats(), label = "CPU Stats", interactive=False, every=2)
-        _ = gr.Textbox(value = _get_gpu_stats(), label = "GPU Stats", interactive=False, every=2)
-
+        try:
+            _ = gr.Textbox(value = _get_cpu_stats(), label = "CPU Stats", interactive=False, every=2)
+            _ = gr.Textbox(value = _get_gpu_stats(), label = "GPU Stats", interactive=False, every=2)
+        except UnicodeDecodeError as e:
+            # With certain CUDA driver / WSL configurations, there is a known NVML bug
+            # For more information, see: https://github.com/gpuopenanalytics/pynvml/issues/53
+            _ = gr.Textbox(
+                value="GPU stats not viewable right now",
+                label="Unimplemented",
+                interactive=False
+            )
 
     page.queue()
     return page

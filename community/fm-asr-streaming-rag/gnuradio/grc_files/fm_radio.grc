@@ -66,7 +66,7 @@ blocks:
     start: 88e6
     step: 100e3
     stop: 108e6
-    value: 89.7e6
+    value: 88.5e6
     widget: counter_slider
   states:
     bus_sink: false
@@ -131,9 +131,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [680, 428.0]
+    coordinate: [880, 428.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: audio_sink_0
   id: audio_sink
   parameters:
@@ -148,9 +148,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1296, 428.0]
+    coordinate: [1496, 428.0]
     rotation: 0
-    state: enabled
+    state: disabled
+- name: blocks_correctiq_0
+  id: blocks_correctiq
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [664, 440.0]
+    rotation: 0
+    state: true
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
   parameters:
@@ -166,9 +181,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1104, 436.0]
+    coordinate: [1304, 436.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: low_pass_filter_0
   id: low_pass_filter
   parameters:
@@ -190,7 +205,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [472, 388.0]
+    coordinate: [440, 388.0]
     rotation: 0
     state: enabled
 - name: network_udp_sink_0
@@ -210,7 +225,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [376, 540.0]
+    coordinate: [872, 564.0]
     rotation: 0
     state: enabled
 - name: note_0
@@ -317,7 +332,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [416, 276.0]
+    coordinate: [880, 268.0]
     rotation: 0
     state: enabled
 - name: rational_resampler_xxx_0
@@ -337,9 +352,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [888, 412.0]
+    coordinate: [1088, 412.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: rtlsdr_source_0
   id: rtlsdr_source
   parameters:
@@ -717,12 +732,13 @@ blocks:
 
 connections:
 - [analog_wfm_rcv_0, '0', rational_resampler_xxx_0, '0']
+- [blocks_correctiq_0, '0', analog_wfm_rcv_0, '0']
+- [blocks_correctiq_0, '0', network_udp_sink_0, '0']
+- [blocks_correctiq_0, '0', qtgui_freq_sink_x_0, '0']
 - [blocks_multiply_const_vxx_0, '0', audio_sink_0, '0']
-- [low_pass_filter_0, '0', analog_wfm_rcv_0, '0']
+- [low_pass_filter_0, '0', blocks_correctiq_0, '0']
 - [rational_resampler_xxx_0, '0', blocks_multiply_const_vxx_0, '0']
 - [rtlsdr_source_0, '0', low_pass_filter_0, '0']
-- [rtlsdr_source_0, '0', network_udp_sink_0, '0']
-- [rtlsdr_source_0, '0', qtgui_freq_sink_x_0, '0']
 
 metadata:
   file_format: 1

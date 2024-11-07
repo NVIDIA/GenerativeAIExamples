@@ -26,7 +26,14 @@ from common import setup_logging
 
 
 class RivaThread(threading.Thread):
-    def __init__(self, buffer: Queue, params, frontend_uri=None, database_uri=None):
+    def __init__(
+        self,
+        buffer: Queue,
+        params,
+        asr_uri=None,
+        frontend_uri=None,
+        database_uri=None
+    ):
         threading.Thread.__init__(self)
         self.buffer = buffer
         self.params = params
@@ -36,10 +43,12 @@ class RivaThread(threading.Thread):
         self._prev_partial_transcript = None
 
         # Riva handlers
-        self._riva_auth = riva.client.Auth(uri=params['uri'])
+        self._riva_auth = riva.client.Auth(uri=asr_uri)
         self._riva_client = riva.client.ASRService(self._riva_auth)
         self._riva_config = self._gen_config()
         self._kill = threading.Event()
+        self._lock = threading.Lock()
+        self._stop_generator = False
 
     def run(self):
         while not self._kill.is_set():
@@ -47,8 +56,15 @@ class RivaThread(threading.Thread):
             try:
                 self.extract_transcripts(responses)
             except Exception as e:
-                self.logger.error(f"Riva thread exception {e}")
-                raise
+                # Riva exception, acquire a thread lock and restart the Riva gRPC stream
+                self.logger.error(f"Riva thread exception {e}, restarting gRPC connection")
+                self._stop_generator = True
+                with self._lock:
+                    self._stop_generator = False
+                    continue
+
+    def stop(self):
+        self._kill.set()
 
     def _post_request(self, endpoint, data):
         try:
@@ -67,10 +83,10 @@ class RivaThread(threading.Thread):
         }
         self._post_request(endpoint, data)
 
-    def _frontend_export(self, cmd, transcript):
+    def _frontend_export(self, cmd, transcript, final):
         endpoint = f"http://{self.frontend_uri}/app/{cmd}"
         time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        data = {'transcript': f"[{time}] {transcript}"}
+        data = {'transcript': f"[{time}] {transcript}", 'is_final': final}
         self._post_request(endpoint, data)
 
     def _export_final_transcript(self, transcript):
@@ -78,7 +94,7 @@ class RivaThread(threading.Thread):
         """
         self.logger.debug(f"Final: {transcript}")
         self._database_export(transcript)
-        self._frontend_export("update_finalized_transcript", transcript)
+        self._frontend_export("update_running_transcript", transcript, True)
 
     def _export_partial_transcript(self, transcript):
         """ Update frontend with partial transcript
@@ -88,7 +104,7 @@ class RivaThread(threading.Thread):
 
         self._prev_partial_transcript = transcript
         self.logger.debug(f"Partial: {transcript}")
-        self._frontend_export("update_running_transcript", transcript)
+        self._frontend_export("update_running_transcript", transcript, False)
 
     def extract_transcripts(self, responses):
         if not responses:
@@ -136,10 +152,11 @@ class RivaThread(threading.Thread):
 
     def _request_generator(self):
         yield rasr.StreamingRecognizeRequest(streaming_config=self._riva_config)
-        while True:
-            yield self.buffer.get()
+        while not self._stop_generator:
+            yield rasr.StreamingRecognizeRequest(audio_content=self.buffer.get())
 
     def make_riva_request(self):
+        self.logger.info("Creating gRPC stub with Riva client StreamingRecognize")
         responses = self._riva_client.stub.StreamingRecognize(
             self._request_generator(),
             metadata=self._riva_client.auth.get_auth_metadata()
