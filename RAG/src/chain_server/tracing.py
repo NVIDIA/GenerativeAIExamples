@@ -29,9 +29,6 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
-from RAG.tools.observability.langchain import opentelemetry_callback as langchain_otel_cb
-from RAG.tools.observability.llamaindex import opentelemetry_callback as llama_index_otel_cb
-
 # Configure tracer used by the Chain Server to create spans
 resource = Resource.create({SERVICE_NAME: "chain-server"})
 provider = TracerProvider(resource=resource)
@@ -45,11 +42,37 @@ if os.environ.get("ENABLE_TRACING") == "true":
     # Configure Propagator used for processing trace context received by the Chain Server
     propagator = TraceContextTextMapPropagator()
 
-    # Configure Langchain OpenTelemetry callback handler
-    langchain_cb_handler = langchain_otel_cb.OpenTelemetryCallbackHandler(tracer)
+    # Define Langchain OpenTelemetry callback handler
+    class LangchainOpenTelemetryCallbackHandler(langchain_base_cb_handler):
+        def __init__(self, tracer):
+            super().__init__()
+            self.tracer = tracer
 
-    # Configure LlamaIndex OpenTelemetry callback handler
-    llama_index_cb_handler = llama_index_otel_cb.OpenTelemetryCallbackHandler(tracer)
+        def on_start(self, *args, **kwargs):
+            with self.tracer.start_as_current_span("LangchainOperation") as span:
+                span.set_attributes({"operation": "start"})
+        
+        def on_end(self, *args, **kwargs):
+            with self.tracer.start_as_current_span("LangchainOperationEnd") as span:
+                span.set_attributes({"operation": "end"})
+
+    langchain_cb_handler = LangchainOpenTelemetryCallbackHandler(tracer)
+
+    # Define LlamaIndex OpenTelemetry callback handler
+    class LlamaIndexOpenTelemetryCallbackHandler(llama_index_base_cb_handler):
+        def __init__(self, tracer):
+            super().__init__()
+            self.tracer = tracer
+
+        def on_start(self, *args, **kwargs):
+            with self.tracer.start_as_current_span("LlamaIndexOperation") as span:
+                span.set_attributes({"operation": "start"})
+        
+        def on_end(self, *args, **kwargs):
+            with self.tracer.start_as_current_span("LlamaIndexOperationEnd") as span:
+                span.set_attributes({"operation": "end"})
+
+    llama_index_cb_handler = LlamaIndexOpenTelemetryCallbackHandler(tracer)
 
 else:
     propagator = CompositePropagator([])  # No-op propagator
