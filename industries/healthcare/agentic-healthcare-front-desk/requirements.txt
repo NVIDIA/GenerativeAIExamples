@@ -5,7 +5,7 @@ pydantic_core==2.20.1
 fastapi==0.112.1
 langchain==0.2.14
 langgraph==0.2.4
-langchain-community==0.2.12
+langchain-community==0.2.19
 tavily-python==0.4.0
 pandas==2.2.2
 fhirclient==4.2.0
