@@ -15,8 +15,6 @@ multi_turn_rag_template: |
     You are a document chatbot. Help the user as they ask questions about documents.
     User message just asked: {input}\n\n
     For this, we have retrieved the following potentially-useful info:
-    Conversation History Retrieved:
-    {history}\n\n
     Document Retrieved:
     {context}\n\n
     Answer only from retrieved data. Make your response conversational.

@@ -127,15 +127,31 @@ class MultiTurnChatbot(BaseExample):
         #     ]
         # )
 
-        # This is a workaround Prompt Template
+        logger.info(f"Chat history: {chat_history}")
+
+        conversation_history = [(msg.role, msg.content) for msg in chat_history]
+        system_message = [("system", prompts.get("multi_turn_rag_template", ""))]
+        user_message = [("user", "{input}")]
+
+        # Checking if conversation_history is not None and not empty
         chat_prompt = ChatPromptTemplate.from_messages(
-            [("user", prompts.get("multi_turn_rag_template") + "User Query: {input}"),]
+            system_message + conversation_history + user_message
+        ) if conversation_history else ChatPromptTemplate.from_messages(
+            system_message + user_message
         )
+
+        logger.info(f"Formulated chat prompt template: {chat_prompt}")
+
+        #chat_prompt = ChatPromptTemplate.from_messages(system_message + user_message)
+        # This is a workaround Prompt Template
+        # chat_prompt = ChatPromptTemplate.from_messages(
+        #     [("user", prompts.get("multi_turn_rag_template") + "User Query: {input}"),]
+        # )
 
         llm = get_llm(**kwargs)
         stream_chain = chat_prompt | llm | StrOutputParser()
 
-        convstore = create_vectorstore_langchain(document_embedder, collection_name="conv_store")
+        # convstore = create_vectorstore_langchain(document_embedder, collection_name="conv_store")
 
         resp_str = ""
         # TODO Integrate chat_history
@@ -161,15 +177,16 @@ class MultiTurnChatbot(BaseExample):
                         }
                     )
 
-                    history_chain = RunnableAssign(
-                        {
-                            "history": itemgetter("input")
-                            | convstore.as_retriever(
-                                search_type="similarity_score_threshold",
-                                search_kwargs={"score_threshold": settings.retriever.score_threshold, "k": top_k},
-                            )
-                        }
-                    )
+                    # history_chain = RunnableAssign(
+                    #     {
+                    #         "history": itemgetter("input")
+                    #         | convstore.as_retriever(
+                    #             search_type="similarity_score_threshold",
+                    #             search_kwargs={"score_threshold": settings.retriever.score_threshold, "k": top_k},
+                    #         )
+                    #     }
+                    # )
+
                     if ranker:
                         logger.info(
                             f"Narrowing the collection from {top_k} results and further narrowing it to {settings.retriever.top_k} with the reranker."
@@ -181,17 +198,17 @@ class MultiTurnChatbot(BaseExample):
                                 )
                             }
                         )
-                        history_reranker = RunnableAssign(
-                            {
-                                "history": lambda input: ranker.compress_documents(
-                                    query=input['input'], documents=input['history']
-                                )
-                            }
-                        )
+                        # history_reranker = RunnableAssign(
+                        #     {
+                        #         "history": lambda input: ranker.compress_documents(
+                        #             query=input['input'], documents=input['history']
+                        #         )
+                        #     }
+                        # )
 
-                        retrieval_chain = context_chain | context_reranker | history_chain | history_reranker
+                        retrieval_chain = context_chain | context_reranker #| history_chain | history_reranker
                     else:
-                        retrieval_chain = context_chain | history_chain
+                        retrieval_chain = context_chain #| history_chain
                     # Handling Retrieval failure
                     docs = retrieval_chain.invoke({"input": query}, config={"callbacks": [self.cb_handler]})
                     if not docs:
@@ -210,7 +227,7 @@ class MultiTurnChatbot(BaseExample):
                         yield chunk
                         resp_str += chunk
 
-                    self.save_memory_and_get_output({"input": query, "output": resp_str}, convstore)
+                    #self.save_memory_and_get_output({"input": query, "output": resp_str}, convstore)
 
                     return chain.stream(query, config={"callbacks": [self.cb_handler]})
 
@@ -223,9 +240,9 @@ class MultiTurnChatbot(BaseExample):
                         {"context": itemgetter("input") | ds.as_retriever(search_kwargs={"k": top_k})}
                     )
 
-                    history_chain = RunnableAssign(
-                        {"history": itemgetter("input") | convstore.as_retriever(search_kwargs={"k": top_k})}
-                    )
+                    # history_chain = RunnableAssign(
+                    #     {"history": itemgetter("input") | convstore.as_retriever(search_kwargs={"k": top_k})}
+                    # )
                     if ranker:
                         logger.info(
                             f"Narrowing the collection from {top_k} results and further narrowing it to {settings.retriever.top_k} with the reranker."
@@ -237,17 +254,17 @@ class MultiTurnChatbot(BaseExample):
                                 )
                             }
                         )
-                        history_reranker = RunnableAssign(
-                            {
-                                "history": lambda input: ranker.compress_documents(
-                                    query=input['input'], documents=input['history']
-                                )
-                            }
-                        )
+                        # history_reranker = RunnableAssign(
+                        #     {
+                        #         "history": lambda input: ranker.compress_documents(
+                        #             query=input['input'], documents=input['history']
+                        #         )
+                        #     }
+                        # )
 
-                        retrieval_chain = context_chain | context_reranker | history_chain | history_reranker
+                        retrieval_chain = context_chain | context_reranker #| history_chain | history_reranker
                     else:
-                        retrieval_chain = context_chain | history_chain
+                        retrieval_chain = context_chain #| history_chain
 
                     # Handling Retrieval failure
                     docs = retrieval_chain.invoke({"input": query}, config={"callbacks": [self.cb_handler]})
@@ -265,7 +282,7 @@ class MultiTurnChatbot(BaseExample):
                         yield chunk
                         resp_str += chunk
 
-                    self.save_memory_and_get_output({"input": query, "output": resp_str}, convstore)
+                    #self.save_memory_and_get_output({"input": query, "output": resp_str}, convstore)
 
                     return chain.stream(query, config={"callbacks": [self.cb_handler]})
 
