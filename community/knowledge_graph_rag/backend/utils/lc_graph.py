@@ -42,7 +42,7 @@ def process_documents(directory, llm, update_progress=None,triplets=True, chunk_
     document_data = [{"id": i, "content": doc.page_content} for i, doc in enumerate(documents)]
     df = pd.DataFrame(document_data)
     #df.to_csv('documents.csv', index=False)
-    df = pd.DataFrame(document_data)
+    # df = pd.DataFrame(document_data)
 
     # Define the data directory and ensure it exists
     data_directory = os.path.join(os.getcwd(), 'data')

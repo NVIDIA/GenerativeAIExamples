@@ -48,7 +48,8 @@ def has_pdf_files(directory):
     return False
 
 def app():
-    cwd = os.getcwd()
+    ### mitesh: put absolute path.
+    cwd = os.path.abspath('../backend/')#os.getcwd()
     directories = [d for d in os.listdir(cwd) if os.path.isdir(os.path.join(cwd, d)) and not d.startswith('.') and '__' not in d]
     selected_dir = st.selectbox("Select a directory:", directories, index=0)
     directory = os.path.join(cwd, selected_dir)

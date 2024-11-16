@@ -67,7 +67,8 @@ def has_pdf_files(directory):
     return False
 
 def app():
-    cwd = os.getcwd()
+    # cwd = os.getcwd()
+    cwd = os.path.abspath('../backend/')
     directories = [d for d in os.listdir(cwd) if os.path.isdir(os.path.join(cwd, d)) and not d.startswith('.') and '__' not in d]
     selected_dir = st.selectbox("Select a directory:", directories, index=0)
     directory = os.path.join(cwd, selected_dir)
@@ -203,6 +204,8 @@ def app():
     if os.path.exists(COMBINED_RESULTS_PATH):
         with st.container():
             st.markdown("### 4. Run comparative evals for saved Q&A data")
+            eval_select = st.selectbox("Choose evaluation type ? ", ("Nemotron", "RAGAS"),)
+            st.write("You selected: ", eval_select)
             if st.button("Run Scoring"):
                 combined_results = pd.read_csv(COMBINED_RESULTS_PATH).to_dict(orient="records")
                 score_response = None
@@ -211,12 +214,33 @@ def app():
                 total_items = len(combined_results)
                 progress_bar = st.progress(0)
 
-
-                score_response = requests.post(
-                    f"{BACKEND_URL}/evaluation/run-scoring/",
-                    json={"combined_results": combined_results}, 
-                    stream=True
-                )
+                if eval_select == "Nemotron":
+                    st.write("evaluating with " + eval_select)
+                    st.write("Evaluations will be done using: nemotron-4-340b-reward")
+                    SCORE_FILE = "combined_results_with_scores_nemotron.csv"
+                    score_response = requests.post(
+                        f"{BACKEND_URL}/evaluation/run-scoring/",
+                        json={"combined_results": combined_results}, 
+                        stream=True
+                    )
+                elif eval_select == "RAGAS":
+                    st.write("evaluating with " + eval_select)
+                    st.write("Evaluations will be done using: Llama3-70b-instruct LLM and nv-embed-v1 embedding model")
+                    SCORE_FILE = "combined_results_with_scores_RAGAS.csv"
+                    score_response = requests.post(
+                        f"{BACKEND_URL}/evaluation/run-scoring-RAGAS/",
+                        json={"combined_results": combined_results}, 
+                        stream=True
+                    )
+                # elif eval_select == "LLM-AS-A-JUDGE":
+                #     st.write("evaluating with " + eval_select)
+                #     st.write("WIP")
+                #     SCORE_FILE = "combined_results_with_scores_LLM-AS-A-JUDGE.csv"
+                #     # score_response = requests.post(
+                #     #     f"{BACKEND_URL}/evaluation/run-scoring_llm_as_a_judge/",
+                #     #     json={"combined_results": combined_results}, 
+                #     #     stream=True
+                #     # )
                 if score_response.status_code == 200:
                     for index,line in enumerate(score_response.iter_lines()):
                         if line:
@@ -234,9 +258,9 @@ def app():
                             except json.JSONDecodeError:
                                 st.error("Error decoding JSON response.")
                     # Success message displayed after processing all lines
-                    st.success("Scoring completed and results saved to 'combined_results_with_scores.csv.")
+                    st.success("Scoring completed and results saved to " + SCORE_FILE)
                     # Save the final results to a CSV file
-                    COMBINED_RESULTS_PATH_WITH_SCORES=os.path.join(DATA_DIR, "combined_results_with_scores.csv")
+                    COMBINED_RESULTS_PATH_WITH_SCORES=os.path.join(DATA_DIR, SCORE_FILE)
                     pd.DataFrame(results).to_csv(COMBINED_RESULTS_PATH_WITH_SCORES, index=False)
                     progress_bar.progress(100)
                 else:
