@@ -5,6 +5,7 @@ datasets
 docx2txt
 faiss-cpu
 fastapi==0.104.1
+huggingface_hub==0.25
 gspread==6.0.0
 jupyterlab==4.0.8
 langchain==0.2.5
