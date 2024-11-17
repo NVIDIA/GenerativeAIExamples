@@ -1,9 +1,0 @@
-[client]
-showErrorDetails = false
-
-[theme]
-primaryColor = "#76b900"
-backgroundColor = "white"
-
-[browser]
-gatherUsageStats = false
