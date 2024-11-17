@@ -16,6 +16,7 @@ This repository is a starting point for developers looking to integrate with the
   * [Knowledge Graph RAG](#knowledge-graph-rag)
   * [Agentic Workflows with Llama 3.1](#agentic-workflows-with-llama-31)
   * [RAG with Local NIM Deployment and LangChain](#rag-with-local-nim-deployment-and-langchain)
+  * [Vision NIM Workflows](#vision-nim-workflows)
 * [Try it Now!](#try-it-now)
 * [RAG](#rag)
   * [RAG Notebooks](#rag-notebooks)
@@ -49,6 +50,23 @@ This example implements a GPU-accelerated pipeline for creating and querying kno
 - Tips for Building a RAG Pipeline with NVIDIA AI LangChain AI Endpoints by Amit Bleiweiss. [[Blog](https://developer.nvidia.com/blog/tips-for-building-a-rag-pipeline-with-nvidia-ai-langchain-ai-endpoints/), [Notebook](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/notebooks/08_RAG_Langchain_with_Local_NIM.ipynb)]
 
 For more information, refer to the [Generative AI Example releases](https://github.com/NVIDIA/GenerativeAIExamples/releases/).
+
+### Vision NIM Workflows
+A collection of Jupyter notebooks, sample code and reference applications built with Vision NIMs.
+
+To pull the vision NIM workflows, clone this repository recursively:
+```
+git clone https://github.com/nvidia/GenerativeAIExamples --recurse-submodules
+```
+
+The workflows will then be located at [GenerativeAIExamples/vision_workflows](vision_workflows/README.md)
+
+Follow the links below to learn more:
+- [Learn how to use VLMs to automatically monitor a video stream for custom events.](nim_workflows/vlm_alerts/README.md)
+- [Learn how to search images with natural language using NV-CLIP.](nim_workflows/nvclip_multimodal_search/README.md)
+- [Learn how to combine VLMs, LLMs and CV models to build a robust text extraction pipeline.](nim_workflows/vision_text_extraction/README.md)
+- [Learn how to use embeddings with NVDINOv2 and a Milvus VectorDB to build a few shot classification model.](nim_workflows/nvdinov2_few_shot/README.md)
+
 
 ## Try it Now!
 
