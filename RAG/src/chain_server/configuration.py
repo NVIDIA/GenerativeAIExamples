@@ -40,7 +40,7 @@ class VectorStoreConfig(ConfigWizard):
         "nprobe", default=16, help_txt="Number of units to query",  # IVF Flat milvus
     )
     index_type: str = configfield(
-        "index_type", default="IVF_FLAT", help_txt="Index of the vector db",  # IVF Flat for milvus
+        "index_type", default="GPU_IVF_FLAT", help_txt="Index of the vector db",  # IVF Flat for milvus
     )
 
 

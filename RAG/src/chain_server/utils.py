@@ -314,13 +314,17 @@ def create_vectorstore_langchain(document_embedder: "Embeddings", collection_nam
         )
     elif config.vector_store.name == "milvus":
         logger.info(f"Using milvus collection: {collection_name}")
-        # vectorstore url can be updated using environment variable APP_VECTORSTORE_URL, it should be in http://ip:port format
+        if not collection_name:
+            collection_name = os.getenv('COLLECTION_NAME', "vector_db")
+        logger.info(f"Using milvus collection: {collection_name}")
         url = urlparse(config.vector_store.url)
         vectorstore = Milvus(
             document_embedder,
             connection_args={"host": url.hostname, "port": url.port},
             collection_name=collection_name,
-            auto_id=True,
+            index_params={"index_type": config.vector_store.index_type, "metric_type": "L2", "nlist": config.vector_store.nlist},
+            search_params={"nprobe": config.vector_store.nprobe},
+            auto_id = True
         )
     else:
         raise ValueError(f"{config.vector_store.name} vector database is not supported")

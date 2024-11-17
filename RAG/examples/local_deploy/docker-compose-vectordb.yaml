@@ -54,7 +54,7 @@ services:
 
   milvus:
     container_name: milvus-standalone
-    image: milvusdb/milvus:v2.4.12
+    image: milvusdb/milvus:v2.4.15-gpu
     command: ["milvus", "run", "standalone"]
     environment:
       ETCD_ENDPOINTS: etcd:2379
@@ -74,6 +74,13 @@ services:
     depends_on:
       - "etcd"
       - "minio"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: ["gpu"]
+              device_ids: ['${VECTORSTORE_GPU_DEVICE_ID:-0}']
     profiles: ["nemo-retriever", "milvus", ""]
 
   elasticsearch:
