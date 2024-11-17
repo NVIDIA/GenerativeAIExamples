@@ -1,13 +1,17 @@
-# Tutorial for a Generic RAG-Based Chatbot
+# RAG in 5 Minutes
 
-This is a tutorial for how to build your own generic RAG chatbot. It is intended as a foundation for building more complex, domain-specific RAG bots. Note that no GPU is needed to run this as it is using NIMs from the NVIDIA catalog.
+This implementation is tied to the [YouTube video on NVIDIA Developer](https://youtu.be/N_OOfkEWcOk).
 
-## Acknowledgements
+This is a simple standalone implementation showing a minimal RAG pipeline that uses models available from [NVIDIA API Catalog](https://catalog.ngc.nvidia.com/ai-foundation-models).
+The catalog enables you to experience state-of-the-art LLMs accelerated by NVIDIA.
+Developers get free credits for 10K requests to any of the models.
 
- - This implementation is based on [Rag in 5 Minutes](https://github.com/NVIDIA/GenerativeAIExamples/tree/4e86d75c813bcc41d4e92e430019053920d08c94/community/5_mins_rag_no_gpu), with changes primarily made to the UI.
- - Alyssa Sawyer also contributed to updating and further developing this repo during her intern project, [Resume RAG Bot](https://github.com/alysawyer/resume-rag-nv), at NVIDIA.
+The example uses an [integration package to LangChain](https://python.langchain.com/docs/integrations/providers/nvidia) to access the models.
+NVIDIA engineers develop, test, and maintain the open source integration.
+This example uses a simple [Streamlit](https://streamlit.io/) based user interface and has a one-file implementation.
+Because the example uses the models from the NVIDIA API Catalog, you do not need a GPU to run the example.
 
-## Steps
+### Steps
 
 1. Create a python virtual environment and activate it:
 
@@ -16,10 +20,10 @@ This is a tutorial for how to build your own generic RAG chatbot. It is intended
    source genai/bin/activate
    ```
 
-1. From the root of this repository, install the requirements:
+1. From the root of this repository, `GenerativeAIExamples`, install the requirements:
 
    ```console
-   pip install -r requirements.txt
+   pip install -r community/5_mins_rag_no_gpu/requirements.txt
    ```
 
 1. Add your NVIDIA API key as an environment variable:
@@ -28,15 +32,17 @@ This is a tutorial for how to build your own generic RAG chatbot. It is intended
    export NVIDIA_API_KEY="nvapi-*"
    ```
 
-   If you don't already have an API key, visit the [NVIDIA API Catalog](https://build.ngc.nvidia.com/explore/), select on any model, then click on `Get API Key`. 
+   If you don't already have an API key, visit the [NVIDIA API Catalog](https://build.ngc.nvidia.com/explore/), select on any model, then click on `Get API Key`.
 
 1. Run the example using Streamlit:
 
    ```console
-   streamlit run main.py
+   streamlit run community/5_mins_rag_no_gpu/main.py
    ```
 
 1. Test the deployed example by going to `http://<host_ip>:8501` in a web browser.
 
-   Click **Browse Files** and select the documents for your knowledge base.
+   Click **Browse Files** and select your knowledge source.
    After selecting, click **Upload!** to complete the ingestion process.
+
+You are all set now! Try out queries related to the knowledge base using text from the user interface.

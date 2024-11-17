@@ -1,13 +1,5 @@
-streamlit
+streamlit==1.30.0
 faiss-cpu==1.7.4
+langchain==0.1.20
 unstructured[all-docs]==0.11.2
-langchain
-langchain-community
-langchain-core
 langchain-nvidia-ai-endpoints
-langchain-text-splitters
-nltk==3.8.1
-numpy==1.23.5
-onnx==1.16.1 
-onnxruntime==1.15.1
-python-magic
