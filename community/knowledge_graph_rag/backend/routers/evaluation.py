@@ -22,12 +22,12 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from concurrent.futures import ThreadPoolExecutor
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
-from langchain.chains import GraphQAChain
+from langchain.chains import GraphQAChain, LLMChain
 from vectorstore.search import SearchHandler
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.graphs.networkx_graph import NetworkxEntityGraph
-from utils.preprocessor import generate_qa_pair
+from utils.preprocessor import generate_qa_pair, judge_prompt_template
 from utils.lc_graph import process_documents, save_triples_to_csvs
 from llama_index.core import SimpleDirectoryReader
 from openai import OpenAI
@@ -36,7 +36,7 @@ import csv
 import json
 import time
 import logging
-import os
+import re 
 
 from datasets import Dataset
 from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
@@ -360,6 +360,8 @@ async def run_scoring_RAGAS(request: ScoreRequest):
     async def score_generator():
         for row in combined_results:
             try:
+                # MITESH TO FIX IT 
+                # res_gtRAG = get_RAGAS_evaluation(row['question'], row['gt_answer'], row['text_RAG_context_response'], row['gt_answer'], llm, embeddings, metrics)
                 res_textRAG = get_RAGAS_evaluation(row['question'], row['textRAG_answer'], row['text_RAG_context_response'], row['gt_answer'], llm, embeddings, metrics)
                 res_graphRAG = get_RAGAS_evaluation(row['question'], row['graphRAG_answer'], row['graph_RAG_context_response'], row['gt_answer'], llm, embeddings, metrics)
                 res_combinedRAG = get_RAGAS_evaluation(row['question'], row['combined_answer'], row['combined_RAG_context_response'], row['gt_answer'], llm, embeddings, metrics)
@@ -374,3 +376,62 @@ async def run_scoring_RAGAS(request: ScoreRequest):
                 yield json.dumps({"error": str(e)}) + "\n"
 
     return StreamingResponse(score_generator(), media_type="text/event-stream")
+
+
+def get_llm_as_a_judge_scores(question, answer, llm, QA_PROMPT):
+    
+    formatted_prompt = QA_PROMPT.format(question=question, answer=answer)
+    result = llm.invoke(formatted_prompt)
+    res = result.content 
+    try:
+        match = re.search(r'Evaluation:(.*?)Total rating:', res, flags=re.DOTALL)
+        if match:
+            eval_res = match.group(1).strip()
+        else:
+            eval_res = "no match found"
+        match = re.search(r'Total rating:\s*(\d+(?:\.\d+)?)', res, flags=re.DOTALL)
+        if match:
+            eval_score = float(match.group(1).strip())  # Extract the first group and strip whitespace
+        else:
+            eval_score = 0.0
+        content_dict = {}
+        content_dict['llm_judge_evaluation'] = eval_res
+        content_dict['llm_judge_score'] = eval_score
+        return content_dict
+    except:
+        return None
+
+@router.post("/run-scoring_llm_as_a_judge/")
+async def run_scoring_llm_as_a_judge(request: ScoreRequest):
+    combined_results = request.combined_results
+    
+    ## RAGAS evaluation uses your own LLM and embeddings model
+    llm = ChatNVIDIA( model="meta/llama3-70b-instruct", temperature=0.2, max_tokens=300,)
+    QA_PROMPT = judge_prompt_template()
+    # llm = LangchainLLMWrapper(langchain_llm=llm)
+    # Create the LLMChain
+    # chain = LLMChain(llm=llm, prompt=judge_prompt_template)
+    
+    score_columns = ['gt', 'textRAG', 'graphRAG', 'combinedRAG']
+    # metrics = [answer_relevancy, context_precision]
+
+    async def score_generator():
+        for row in combined_results:
+            try:
+                
+                res_gt = get_llm_as_a_judge_scores(row["question"], row["gt_answer"], llm, QA_PROMPT)
+                res_textRAG = get_llm_as_a_judge_scores(row["question"], row["textRAG_answer"], llm, QA_PROMPT)
+                res_graphRAG = get_llm_as_a_judge_scores(row["question"], row["graphRAG_answer"], llm, QA_PROMPT)
+                res_combinedRAG = get_llm_as_a_judge_scores(row["question"], row["combined_answer"], llm, QA_PROMPT)
+
+                for score_type, res in zip(score_columns, [res_gt, res_textRAG, res_graphRAG, res_combinedRAG]):
+                     if res:
+                        for k, val in res.items():
+                            row[f'{score_type}_{k}'] = val#res.get(value,None)
+                yield json.dumps(row) + "\n"
+                await asyncio.sleep(0.1)  # Simulate processing delay
+            except Exception as e:
+                yield json.dumps({"error": str(e)}) + "\n"
+
+    return StreamingResponse(score_generator(), media_type="text/event-stream")
+                

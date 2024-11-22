@@ -204,7 +204,7 @@ def app():
     if os.path.exists(COMBINED_RESULTS_PATH):
         with st.container():
             st.markdown("### 4. Run comparative evals for saved Q&A data")
-            eval_select = st.selectbox("Choose evaluation type ? ", ("Nemotron", "RAGAS"),)
+            eval_select = st.selectbox("Choose evaluation type ? ", ("Nemotron", "RAGAS", "LLM-AS-A-JUDGE"),)
             st.write("You selected: ", eval_select)
             if st.button("Run Scoring"):
                 combined_results = pd.read_csv(COMBINED_RESULTS_PATH).to_dict(orient="records")
@@ -232,15 +232,16 @@ def app():
                         json={"combined_results": combined_results}, 
                         stream=True
                     )
-                # elif eval_select == "LLM-AS-A-JUDGE":
-                #     st.write("evaluating with " + eval_select)
-                #     st.write("WIP")
-                #     SCORE_FILE = "combined_results_with_scores_LLM-AS-A-JUDGE.csv"
-                #     # score_response = requests.post(
-                #     #     f"{BACKEND_URL}/evaluation/run-scoring_llm_as_a_judge/",
-                #     #     json={"combined_results": combined_results}, 
-                #     #     stream=True
-                #     # )
+                elif eval_select == "LLM-AS-A-JUDGE":
+                    st.write("evaluating with " + eval_select)
+                    st.write("llama3-70b-instruct will be used as Judge")
+                    # st.write("WIP")
+                    SCORE_FILE = "combined_results_with_scores_LLM-AS-A-JUDGE.csv"
+                    score_response = requests.post(
+                        f"{BACKEND_URL}/evaluation/run-scoring_llm_as_a_judge/",
+                        json={"combined_results": combined_results}, 
+                        stream=True
+                    )
                 if score_response.status_code == 200:
                     for index,line in enumerate(score_response.iter_lines()):
                         if line:
