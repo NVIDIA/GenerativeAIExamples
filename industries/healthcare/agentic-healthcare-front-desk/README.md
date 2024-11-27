@@ -12,7 +12,7 @@ We will offer two options for interacting with the agentic healthcare front desk
 ![](./images/repo_overview_structure_diagram.png)
 
 > [!NOTE]  
-> Currently, there is an higher latency expected during LLM tool calling. Interaction with the agent could take a few seconds for non tool calling responses, and could take much higher (30+ seconds) for tool calling responses. An improvement to this issue is in development for the LLM NIMs, please stay tuned.
+> Currently, there is an higher latency expected during LLM tool calling. Interaction with the agent could take a few seconds for non tool calling responses, and could take much higher (30+ seconds) for tool calling responses. If you're utilizing the NVIDIA AI Endpoints for the LLM, which is the default for this repo, latency can vary depending on the traffic to the endpoints. An improvement to this tool call latency issue is in development for the LLM NIMs, please stay tuned.
 
 > [!IMPORTANT]
 > Integration with ACE is under active development and will be available soon.
