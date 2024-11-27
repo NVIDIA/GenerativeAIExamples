@@ -11,6 +11,9 @@ Follow along this repository to see how you can create your own digital human fo
 We will offer two options for interacting with the agentic healthcare front desk: with a text / voice based Gradio UI or with a digital human avatar you can converse with.
 ![](./images/repo_overview_structure_diagram.png)
 
+> [!NOTE]  
+> Currently, there is an higher latency expected during LLM tool calling. Interaction with the agent could take a few seconds for non tool calling responses, and could take much higher (30+ seconds) for tool calling responses. An improvement to this issue is in development for the LLM NIMs, please stay tuned.
+
 > [!IMPORTANT]
 > Integration with ACE is under active development and will be available soon.
 
@@ -46,7 +49,7 @@ assistant_llm = ChatNVIDIA(model=llm_model)
 ```
 You can experiment with other LLMs available on build.nvidia.com by changing the `model` param for `ChatNVIDIA` in the Python files in the directory [`graph_definitions/`](./graph_definitions/).
 
-If instead of calling NVIDIA AI Endpoints with an API key, you would like to host your own LLM NIM instance, please refer to the [Docker tab of the LLM NIM](https://build.nvidia.com/meta/llama-3_1-70b-instruct?snippet_tab=Docker) on how to host, and add a `base_url` parameter to point to your own instance when specifying `ChatNVIDIA`. For the hardware configuration of self hosting the LLM, please refer to the [documentation for LLM support matrix](https://docs.nvidia.com/nim/large-language-models/latest/support-matrix.html).
+If instead of calling NVIDIA AI Endpoints with an API key, you would like to host your own LLM NIM instance, please refer to the [Docker tab of the LLM NIM](https://build.nvidia.com/meta/llama-3_1-70b-instruct?snippet_tab=Docker) on how to host, and add a [`base_url` parameter](https://python.langchain.com/docs/integrations/chat/nvidia_ai_endpoints/#working-with-nvidia-nims) to point to your own instance when specifying `ChatNVIDIA` in the Python files in the directory [`graph_definitions/`](./graph_definitions/). For the hardware configuration of self hosting the LLM, please refer to the [documentation for LLM support matrix](https://docs.nvidia.com/nim/large-language-models/latest/support-matrix.html).
 
 ### NVIDIA API KEY
 You will need an NVIDIA API KEY to call NVIDIA AI Endpoints.  You can use different model API endpoints with the same API key, so even if you change the LLM specification in `ChatNVIDIA(model=llm_model)` you can still use the same API KEY.
