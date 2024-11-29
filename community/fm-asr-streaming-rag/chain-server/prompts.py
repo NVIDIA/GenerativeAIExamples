@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from pydantic import BaseModel
-from common import UserIntent, TimeResponse
+from utils import UserIntent, TimeResponse
 
 def format_schema(pydantic_obj: BaseModel):
     return str(

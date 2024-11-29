@@ -15,9 +15,14 @@
 
 import json
 import re
+import json
+import numpy as np
 
+from datetime import timedelta
 from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings, NVIDIARerank
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from langchain_community.utils.math import cosine_similarity
+from typing import Literal
 
 from common import (
     get_logger,
@@ -96,6 +101,45 @@ def get_embedder(local: bool=True):
         api_key=NVIDIA_API_KEY,
         truncate="NONE"
     )
+
+embed_client = get_embedder()
+VALID_TIME_UNITS = ["seconds", "minutes", "hours", "days"]
+TIME_VECTORS = embed_client.embed_documents(VALID_TIME_UNITS)
+
+def sanitize_time_unit(time_unit):
+    """
+    For cases where an LLM returns a time unit that doesn't match one of the
+    discrete options, find the closest with cosine similarity.
+
+    Example: 'min' -> 'minutes'
+    """
+    if time_unit in VALID_TIME_UNITS:
+        return time_unit
+
+    unit_embedding = embed_client.embed_documents([time_unit])
+    similarity = cosine_similarity(unit_embedding, TIME_VECTORS)
+    return VALID_TIME_UNITS[np.argmax(similarity)]
+
+"""
+Pydantic classes that are used to detect user intent and plan accordingly
+"""
+class TimeResponse(BaseModel):
+    timeNum: float = Field("The number of time units the user asked about")
+    timeUnit: str = Field("The unit of time the user asked about")
+
+    def to_seconds(self):
+        """ Return the total number of seconds this represents
+        """
+        self.timeUnit = sanitize_time_unit(self.timeUnit)
+        return timedelta(**{self.timeUnit: self.timeNum}).total_seconds()
+
+class UserIntent(BaseModel):
+    intentType: Literal[
+        "SpecificTopic",
+        "RecentSummary",
+        "TimeWindow",
+        "Unknown"
+    ] = Field("The intent of user's query")
 
 def classify(question, chain, pydantic_obj: BaseModel):
     """ Parse a question into structured pydantic_obj

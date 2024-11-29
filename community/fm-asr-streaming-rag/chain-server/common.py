@@ -14,15 +14,10 @@
 # limitations under the License.
 
 import logging
-import requests
-import json
 import os
-import numpy as np
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Literal
-from langchain_community.utils.math import cosine_similarity
 
 NVIDIA_API_KEY  = os.environ.get('NVIDIA_API_KEY', 'null')
 LLM_URI         = os.environ.get('LLM_URI', None)
@@ -65,74 +60,3 @@ class LLMConfig(BaseModel):
     temperature: float = Field("Temperature of the LLM response")
     max_docs: int = Field("Maximum number of documents to return")
     num_tokens: int = Field("The maximum number of tokens in the response")
-
-def nemo_embedding(text):
-    """
-    Uses the NeMo Embedding MS to convert text to embeddings
-    - ex: embeddings = nemo_embedding(['Chunk A', 'Chunk B'])
-    """
-    port = os.environ.get('NEMO_EMBEDDING_PORT', 1985)
-    url = f"http://localhost:{port}/v1/embeddings"
-    payload = json.dumps({
-        "input": text,
-        "model": "NV-Embed-QA",
-        "input_type": "query"
-    })
-    headers = {'Content-Type': 'application/json'}
-    response = requests.request("POST", url, headers=headers, data=payload)
-    embeddings = [chunk['embedding'] for chunk in response.json()['data']]
-    return embeddings
-
-def nvapi_embedding(text):
-    session = requests.Session()
-    url = "https://ai.api.nvidia.com/v1/retrieval/nvidia/embeddings"
-    headers = {
-        "Authorization": f"Bearer {NVIDIA_API_KEY}",
-        "Accept": "application/json",
-    }
-    payload = {
-        "input": text,
-        "input_type": "passage",
-        "model": "NV-Embed-QA"
-    }
-    response = session.post(url, headers=headers, json=payload)
-    embeddings = [chunk['embedding'] for chunk in response.json()['data']]
-    return embeddings
-
-VALID_TIME_UNITS = ["seconds", "minutes", "hours", "days"]
-TIME_VECTORS = nvapi_embedding(VALID_TIME_UNITS)
-
-def sanitize_time_unit(time_unit):
-    """
-    For cases where an LLM returns a time unit that doesn't match one of the
-    discrete options, find the closest with cosine similarity.
-
-    Example: 'min' -> 'minutes'
-    """
-    if time_unit in VALID_TIME_UNITS:
-        return time_unit
-
-    unit_embedding = nvapi_embedding([time_unit])
-    similarity = cosine_similarity(unit_embedding, TIME_VECTORS)
-    return VALID_TIME_UNITS[np.argmax(similarity)]
-
-"""
-Pydantic classes that are used to detect user intent and plan accordingly
-"""
-class TimeResponse(BaseModel):
-    timeNum: float = Field("The number of time units the user asked about")
-    timeUnit: str = Field("The unit of time the user asked about")
-
-    def to_seconds(self):
-        """ Return the total number of seconds this represents
-        """
-        self.timeUnit = sanitize_time_unit(self.timeUnit)
-        return timedelta(**{self.timeUnit: self.timeNum}).total_seconds()
-
-class UserIntent(BaseModel):
-    intentType: Literal[
-        "SpecificTopic",
-        "RecentSummary",
-        "TimeWindow",
-        "Unknown"
-    ] = Field("The intent of user's query")
