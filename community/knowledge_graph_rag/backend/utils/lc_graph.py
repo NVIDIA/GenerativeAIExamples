@@ -33,7 +33,7 @@ def process_document(doc, llm):
 
 def process_documents(directory, llm, update_progress=None,triplets=True, chunk_size=500, chunk_overlap=100):    
     with st.spinner("Loading and splitting documents"):
-        loader = DirectoryLoader(directory)
+        loader = DirectoryLoader(directory,  glob="*.pdf")
         raw_docs = loader.load()
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         documents = text_splitter.split_documents(raw_docs)

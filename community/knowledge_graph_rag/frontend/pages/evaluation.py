@@ -235,7 +235,6 @@ def app():
                 elif eval_select == "LLM-AS-A-JUDGE":
                     st.write("evaluating with " + eval_select)
                     st.write("llama3-70b-instruct will be used as Judge")
-                    # st.write("WIP")
                     SCORE_FILE = "combined_results_with_scores_LLM-AS-A-JUDGE.csv"
                     score_response = requests.post(
                         f"{BACKEND_URL}/evaluation/run-scoring_llm_as_a_judge/",
