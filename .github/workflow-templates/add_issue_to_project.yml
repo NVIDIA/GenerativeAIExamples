@@ -1,0 +1,25 @@
+name: Add new issue/PR to project
+# This action automatically takes all issues and PRs created in the repo and
+# adds them to a specific GitHub project
+
+on:
+  issues:
+    types:
+      - opened
+      
+  pull_request_target:
+    types:
+      - opened
+
+jobs:
+  add-to-project:
+    name: Add issue or PR to project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@latest
+        with:
+        # copy the URL to the project-url field
+        # you will need a personal access token, or to create a GitHub app to support this action
+        # https://github.com/actions/add-to-project#creating-a-pat-and-adding-it-to-your-repository
+          project-url: PROJECT_URL_LINK
+          github-token: ${{ secrets.__PROJECTSECRET__ }}

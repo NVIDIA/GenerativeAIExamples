@@ -1,0 +1,45 @@
+name: Add issue to project
+on:
+  issues:
+    types:
+      - opened
+jobs:
+  track_issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get project data
+        env:
+          # Need a PAT or GH App to authenticate
+          # https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/automating-projects-using-actions
+          GH_TOKEN: ${{ secrets.YOUR_SECRET }}
+          # ex: https://github.com/orgs/rapidsai/projects/41
+          # use ORGANIZATION: rapidsai, PROJECT_NUMBER 41
+          ORGANIZATION: YOUR_ORG
+          PROJECT_NUMBER: YOUR_PROJECT_NUMBER
+        run: |
+          gh api graphql -f query='
+            query($user: String!, $number: Int!) {
+              user(login: $user){
+                projectV2(number: $number) {
+                  id
+                }
+              }
+            }' -f user=$USER -F number=$PROJECT_NUMBER > project_data.json
+          echo 'PROJECT_ID='$(jq '.data.user.projectV2.id' project_data.json) >> $GITHUB_ENV
+                    
+      - name: Add issue to project
+        env:
+          # Replace with your secret here too
+          GITHUB_TOKEN: ${{ secrets.YOUR_SECRET }}
+          ISSUE_ID: ${{ github.event.issue.node_id }}
+        run: |
+          item_id="$( gh api graphql -f query='
+            mutation($project:ID!, $issue:ID!) {
+              addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
+                item {
+                  id
+                }
+              }
+            }' -f project=$PROJECT_ID -f issue=$ISSUE_ID --jq '.data.addProjectV2ItemById.item.id')"
+           
+           echo 'ITEM_ID='$item_id >> $GITHUB_ENV

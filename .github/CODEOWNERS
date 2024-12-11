@@ -1,0 +1,17 @@
+#cpp code owners
+cpp/               @<org>/<repo>-cpp-codeowners
+
+#python code owners
+python/            @<org>/<repo>-python-codeowners
+
+#cmake code owners
+**/CMakeLists.txt  @<org>/<repo>-cmake-codeowners
+**/cmake/          @<org>/<repo>-cmake-codeowners
+
+#build/ops code owners
+.github/           @<org>/ops-codeowners 
+ci/                @<org>/ops-codeowners
+conda/             @<org>/ops-codeowners
+**/Dockerfile      @<org>/ops-codeowners
+**/.dockerignore   @<org>/ops-codeowners
+docker/            @<org>/ops-codeowners
