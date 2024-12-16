@@ -18,6 +18,7 @@ import os
 import json
 import ast
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain.prompts import PromptTemplate
 
 if not os.environ.get("NVIDIA_API_KEY", "").startswith("nvapi-"):
     nvapi_key = getpass.getpass("Enter your NVIDIA API key: ")
@@ -68,7 +69,7 @@ The relationships 'r' between these entities must be represented by one of the f
 
 Remember to conduct entity disambiguation, consolidating different phrases or acronyms that refer to the same entity (for instance, "MIT" and "Massachusetts Institute of Technology" should be unified as "MIT"). Simplify each entity of the triplet to be less than four words. However, always make sure it is a sensible entity name and not a single letter or NAN value.
 
-From this text, your output Must be in python lis tof tuple with each tuple made up of ['h', 'type', 'r', 'o', 'type'], each element of the tuple is the string, where the relationship 'r' must be in the given relation verbs set above. Only output the list. As an Example, consider the following news excerpt: 
+From this text, your output Must be in python list of tuple with each tuple made up of ['h', 'type', 'r', 'o', 'type'], each element of the tuple is the string, where the relationship 'r' must be in the given relation verbs set above. Only output the list. As an Example, consider the following news excerpt: 
                         Input :'Apple Inc. is set to introduce the new iPhone 14 in the technology sector this month. The product's release is likely to positively impact Apple's stock value.'
                         OUTPUT : ```
                             [('Apple Inc.', 'COMP', 'Introduce', 'iPhone 14', 'PRODUCT'),
@@ -80,7 +81,40 @@ From this text, your output Must be in python lis tof tuple with each tuple made
     response = chain.invoke({"input": text})
     print(response)
     return process_response(response)
-    
+
+def judge_prompt_template():
+    judge_prompt = """
+    You will be given a user_question and system_answer couple.
+    Your task is to provide a 'total rating' scoring how well the system_answer answers the user concerns expressed in the user_question.
+    Give your answer on a scale of 1 to 4, where 1 means that the system_answer is not helpful at all, and 4 means that the system_answer completely and helpfully addresses the user_question.
+
+    Here is the scale you should use to build your answer:
+    1: The system_answer is terrible: completely irrelevant to the question asked, or very partial
+    2: The system_answer is mostly not helpful: misses some key aspects of the question
+    3: The system_answer is mostly helpful: provides support, but still could be improved
+    4: The system_answer is excellent: relevant, direct, detailed, and addresses all the concerns raised in the question
+
+    Provide your feedback as follows:
+
+    Feedback:::
+    Evaluation: (your rationale for the rating, as a text)
+    Total rating: (your rating, as a number between 1 and 4)
+
+    You MUST provide values for 'Evaluation:' and 'Total rating:' in your answer.
+
+    Now here are the question and answer.
+
+    Question: {question}
+    Answer: {answer}
+
+    Provide your feedback. If you give a correct rating, I'll tip you $200.
+    Feedback:::
+    Evaluation:
+    """
+    prompt_template = PromptTemplate(input_variables=["question", "answer"], template=judge_prompt)
+
+    return prompt_template
+
 def generate_qa_pair(text, llm):
     prompt = ChatPromptTemplate.from_messages(
     [("system", """You are a synthetic data generation model responsible for creating high quality question and answer pairs from text content provided to you. Given the paragraph as an input, create one high quality and highly complex question answer pair. The question should require a large portion of the context and multi-step advanced reasoning to answer. Make sure it is something a human may ask while reading this document. The answer should be highly detailed and comprehensive. Your output should be in a json format of one question answer pair. Restrict the question to the context information provided. Do not print anything else. The output MUST be JSON parseable."""), ("user", "{input}")])

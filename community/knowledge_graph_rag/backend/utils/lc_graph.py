@@ -33,7 +33,7 @@ def process_document(doc, llm):
 
 def process_documents(directory, llm, update_progress=None,triplets=True, chunk_size=500, chunk_overlap=100):    
     with st.spinner("Loading and splitting documents"):
-        loader = DirectoryLoader(directory)
+        loader = DirectoryLoader(directory,  glob="*.pdf")
         raw_docs = loader.load()
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         documents = text_splitter.split_documents(raw_docs)
@@ -42,7 +42,7 @@ def process_documents(directory, llm, update_progress=None,triplets=True, chunk_
     document_data = [{"id": i, "content": doc.page_content} for i, doc in enumerate(documents)]
     df = pd.DataFrame(document_data)
     #df.to_csv('documents.csv', index=False)
-    df = pd.DataFrame(document_data)
+    # df = pd.DataFrame(document_data)
 
     # Define the data directory and ensure it exists
     data_directory = os.path.join(os.getcwd(), 'data')
