@@ -1,0 +1,58 @@
+services:
+  mongodb:
+    image: mongo:latest  # MongoDB image from Docker Hub
+    container_name: mongodb
+    ports:
+      - "27017:27017"  # Map MongoDB port 27017 to the host
+    volumes:
+      - mongodb-volume-nv-mm:/data/db  # Mount a volume for data persistence
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}  # Admin username
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}  # Admin password
+
+  ingest-service:
+    build:
+      context: .
+      dockerfile: ./ingest/Dockerfile  # Name this Dockerfile.ingest as Dockerfile.ingest.ingest
+    container_name: ingest_service
+    ports:
+      - "6001:8000"  # Expose the service on port 8000
+    volumes:
+      - .:/app  # Mount current directory to /app in the container
+    depends_on:
+      - mongodb  # Ensure MongoDB starts before this service
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      IMAGES_HOST: ${IMAGES_HOST}
+
+
+  gradio-service:
+    build:
+      context: .  # Assuming the Gradio-related files are in the current directory
+      dockerfile: ./gradio/Dockerfile  # Name this Dockerfile.ingest as Dockerfile.ingest.gradio
+    container_name: gradio_service
+    ports:
+      - "7860:7860"  # Expose Gradio on port 7860 (Gradio default port)
+    volumes:
+      - .:/app  # Mount current directory to /app in the container
+    depends_on:
+      - ingest-service  # Ensure the ingest service starts first
+    environment:
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY}
+      - IMAGES_HOST=${IMAGES_HOST}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - AGENTS_PORT=${AGENTS_PORT}
+      - AGENTS_HOST=${AGENTS_HOST}
+
+volumes:
+  mongodb-volume-nv-mm:
+    external: true
