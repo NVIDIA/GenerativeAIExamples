@@ -4,9 +4,8 @@ This is a multimodal retrieval using long context. You will be able to ingest HT
 
 Here is an example:
 
-[!assets/table_example.png](Finding an answer inside a table)
-
-[!assets/image_example.png](Finding an answer inside a chart)
+![Finding an answer inside a table](assets/table_example.png)
+![Finding an answer inside a chart](assets/image_example.png)
 
 The tool uses an openai vision model or an nvidia vision model (llama v3.2 90B)
 
