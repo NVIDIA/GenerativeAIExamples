@@ -33,7 +33,7 @@ Run this command from the root of the repository (the one with the  `langgraph.j
 Install a venv:
 
 ```shell
-python3 -m venv lb-venv
+python3 -m venv lg-venv
 source ./lg-venv/bin/activate
 pip install -r requirements.txt
 ```
