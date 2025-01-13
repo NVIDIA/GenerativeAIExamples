@@ -3,9 +3,7 @@ langchain-core
 langchain-openai
 langchain_nvidia_ai_endpoints
 langchain_community
-langchain-cli
 langgraph-cli
 langgraph-sdk
 langgraph-api
-langsmith
 pymongo
