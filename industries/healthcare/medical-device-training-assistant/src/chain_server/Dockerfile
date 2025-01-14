@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Install required ubuntu packages for setting up python 3.10
 RUN apt update && \
-    apt install -y curl software-properties-common libgl1 libglib2.0-0 && \
+apt install -y curl software-properties-common libgl1 libglib2.0-0 libmagic1 libmagic-dev && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt update && apt install -y python3.10 && \
     apt-get clean
@@ -28,7 +28,7 @@ RUN --mount=type=bind,source=src/chain_server/requirements.txt,target=/opt/requi
 # TODO Maybe copy app
 ARG APP_PATH
 COPY ${APP_PATH} /opt/${APP_PATH}
-RUN python3.10 -m nltk.downloader averaged_perceptron_tagger
+RUN python3.10 -m nltk.downloader averaged_perceptron_tagger_eng
 
 # Copy required common modules for all examples
 # TODO copy only relevant files
