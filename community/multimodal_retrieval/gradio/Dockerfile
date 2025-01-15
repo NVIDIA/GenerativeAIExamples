@@ -9,5 +9,8 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
+RUN apt-get update
+RUN apt-get install -y vim iputils-ping telnet net-tools
+
 # Specify the Gradio script file
 ENTRYPOINT python gradio/gradio_interface.py

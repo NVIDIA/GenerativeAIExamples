@@ -41,30 +41,35 @@ pip install -r requirements.txt
 
 ## Create the env files
 
-You need to create two .env files (one for the docker compose and one for the langgraph agent)
+You need to create two .env files (one for the docker compose and one for the langgraph agent).
+
+In the below we give the opportunity to use an NVIDIA text model for the pure text based tasks.
+
+For the Langgraph agent we leave the LLM model to be openai as at the moment it is providing better results with tools binding.
 
 ### .env
 
 Create a .env file in the root directory of this repository (the one with the `langgraph.json` and `docker-compose.yml` files)
 
 ```shell
+# .env
 MONGO_INITDB_ROOT_USERNAME=admin
 MONGO_INITDB_ROOT_PASSWORD=secret
-MONGO_HOST=mongodb
+MONGO_HOST=localhost
 MONGO_PORT=27017
+AGENTS_PORT=2024
 OPENAI_API_KEY=
 LANGCHAIN_API_KEY=
 LANGSMITH_API_KEY=
 LANGGRAPH_CLOUD_LICENSE_KEY=
 NVIDIA_API_KEY=
 IMAGES_HOST=localhost
-AGENTS_HOST=
-AGENTS_PORT=2024
+NVIDIA_VISION_MODEL=meta/llama-3.2-90b-vision-instruct
+NVIDIA_TEXT_MODEL=meta/llama-3.3-70b-instruct
+TEXT_MODEL_PROVIDER=nvidia
 ```
 
-Normally LANGCHAIN_API_KEY and LANGSMITH_API_KEY have the same value. 
-
-AGENTS_HOST is the IP address of the host where you are running docker. It could be the IP address of your PC for instance.
+Normally LANGCHAIN_API_KEY and LANGSMITH_API_KEY have the same value.
 
 ### .env.lg
 
@@ -77,14 +82,16 @@ MONGO_INITDB_ROOT_USERNAME=admin
 MONGO_INITDB_ROOT_PASSWORD=secret
 MONGO_HOST=localhost
 MONGO_PORT=27017
+AGENTS_PORT=2024
 OPENAI_API_KEY=
 LANGCHAIN_API_KEY=
 LANGSMITH_API_KEY=
 LANGGRAPH_CLOUD_LICENSE_KEY=
 NVIDIA_API_KEY=
 IMAGES_HOST=localhost
-AGENTS_HOST=localhost
-AGENTS_PORT=2024
+NVIDIA_VISION_MODEL=meta/llama-3.2-90b-vision-instruct
+NVIDIA_TEXT_MODEL=meta/llama-3.3-70b-instruct
+TEXT_MODEL_PROVIDER=nvidia
 ```
 
 # Launch the mongodb and gradio services

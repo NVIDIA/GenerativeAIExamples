@@ -3,6 +3,10 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 import requests
 import base64
+import os
+
+nvidia_vision_model = os.environ["NVIDIA_VISION_MODEL"]
+nvidia_text_model = os.environ["NVIDIA_TEXT_MODEL"]
 
 system_template = """
 Please describe this image in detail.
@@ -22,7 +26,7 @@ def call_api_for_image(image_base64, system_template=system_template, backend_ll
     )
 
     llm_nvidia = ChatNVIDIA(
-        model="meta/llama-3.2-90b-vision-instruct",
+        model=nvidia_vision_model,
         temperature=0,
         max_tokens=4095,
         top_p=1,
