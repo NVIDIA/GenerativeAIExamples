@@ -28,7 +28,7 @@ However, you can replace these models with your own locally-deployed NIMs to mee
 
 This blueprint is for:
 
-- **IT engineers**: Engineers who want a quick start to set up a RAG solution for unstructured data with a path-to-production with the NVIDIA NIM.
+- **Developers**: Developers who want a quick start to set up a RAG solution for unstructured data with a path-to-production with the NVIDIA NIM.
 
 
 ## Software Components
