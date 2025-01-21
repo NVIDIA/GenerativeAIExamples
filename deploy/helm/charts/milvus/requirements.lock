@@ -1,0 +1,18 @@
+dependencies:
+- name: etcd
+  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+  version: 6.3.3
+- name: minio
+  repository: https://zilliztech.github.io/milvus-helm
+  version: 8.0.17
+- name: pulsarv2
+  repository: https://zilliztech.github.io/milvus-helm
+  version: 2.7.8
+- name: pulsar
+  repository: https://pulsar.apache.org/charts
+  version: 3.3.0
+- name: kafka
+  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+  version: 15.5.1
+digest: sha256:21c2518331186b743edb4564fab17d3789fa41baf9e1f48313c09b0a59696626
+generated: "2024-11-26T15:34:03.319376+08:00"

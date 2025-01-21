@@ -1,0 +1,14 @@
+bleach==6.2.0
+dataclass-wizard==0.27.0
+fastapi==0.115.5
+langchain-core==0.3.18
+langchain-nvidia-ai-endpoints==0.3.7
+langchain-openai==0.2.8
+langchain==0.3.7
+langchain-community==0.3.7
+pymilvus==2.4.9
+python-multipart==0.0.18
+unstructured[all-docs]==0.16.11
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+PyYAML==6.0.2

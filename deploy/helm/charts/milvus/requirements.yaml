@@ -1,0 +1,33 @@
+dependencies:
+- name: etcd
+  version: 6.3.3
+  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+  condition: etcd.enabled
+  tags:
+    - etcd
+- name: minio
+  version: 8.0.17
+  repository: https://zilliztech.github.io/milvus-helm
+  condition: minio.enabled
+  tags:
+    - minio
+- name: pulsarv2
+  alias: pulsar
+  version: 2.7.8
+  repository: https://zilliztech.github.io/milvus-helm
+  condition: pulsar.enabled
+  tags:
+    - pulsar
+- name: pulsar
+  alias: pulsarv3
+  version: 3.3.0
+  repository: https://pulsar.apache.org/charts
+  condition: pulsarv3.enabled
+  tags:
+    - pulsarv3
+- name: kafka
+  version: 15.5.1
+  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+  condition: kafka.enabled
+  tags:
+    - kafka

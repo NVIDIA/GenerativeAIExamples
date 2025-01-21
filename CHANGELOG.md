@@ -1,13 +1,10 @@
-# ___PROJECT___ 0.0.0 (DD Mon YYYY)
+## Changelog
+All notable changes to this project will be documented in this file.
+The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
-## New Features
+## [1.0.0] - 2025-01-15
 
-- ...
+### Added
 
-## Improvements
+- First release.
 
-- ...
-
-## Bug Fixes
-
-- ...

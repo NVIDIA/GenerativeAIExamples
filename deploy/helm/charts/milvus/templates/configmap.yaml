@@ -1,0 +1,16 @@
+# If customConfigMap is not set, this ConfigMap will be redendered.
+{{- if not .Values.customConfigMap }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "milvus.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+  default.yaml: |+
+    {{- include "milvus.config" . | nindent 4 }}
+
+{{- range $key, $value := .Values.extraConfigFiles }}
+  {{ $key }}: |-
+{{ $value | indent 4 }}
+{{- end }}
+{{- end }}

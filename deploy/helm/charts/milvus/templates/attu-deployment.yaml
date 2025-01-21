@@ -1,0 +1,69 @@
+{{- if .Values.attu.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "milvus.attu.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "milvus.labels" . | indent 4 }}
+    component: "attu"
+{{ include "milvus.ud.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+{{ include "milvus.matchLabels" . | indent 6 }}
+      component: "attu"
+  template:
+    metadata:
+      labels:
+{{ include "milvus.matchLabels" . | indent 8 }}
+        component: "attu"
+{{ include "milvus.ud.labels" . | indent 8 }}
+{{- if .Values.attu.podLabels }}
+{{ toYaml .Values.attu.podLabels | indent 8 }}
+{{- end }}
+    spec:
+      {{- if .Values.attu.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.attu.image.pullSecrets }}
+        - name: {{ . }}
+      {{- end }}
+      {{- end }}
+      containers:
+      - name: attu
+        image: {{ .Values.attu.image.repository }}:{{ .Values.attu.image.tag }}
+        imagePullPolicy: {{ .Values.attu.image.pullPolicy }}
+        ports:
+        - name: attu
+          containerPort: 3000
+          protocol: TCP
+        env:
+{{ include "milvus.attu.env" . | indent 8}}
+        resources:
+          {{- toYaml .Values.attu.resources | nindent 10 }}
+    {{- if and (.Values.affinity) (not .Values.attu.affinity) }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+    {{- end }}
+    {{- if .Values.attu.affinity }}
+      affinity:
+{{ toYaml .Values.attu.affinity | indent 8 }}
+    {{- end }}
+    {{- if and (.Values.tolerations) (not .Values.attu.tolerations) }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.attu.tolerations }}
+      tolerations:
+{{ toYaml .Values.attu.tolerations | indent 8 }}
+    {{- end }}
+{{- if and (.Values.nodeSelector) (not .Values.attu.nodeSelector) }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+   {{- end }}
+   {{- if .Values.attu.nodeSelector }}
+      nodeSelector:
+   {{ toYaml .Values.attu.nodeSelector | indent 8 }}
+   {{- end }}
+{{- end }}

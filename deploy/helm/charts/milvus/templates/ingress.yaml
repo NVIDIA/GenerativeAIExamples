@@ -1,0 +1,100 @@
+{{- if and .Values.ingress.enabled }}
+{{- $serviceName := include "milvus.fullname" . -}}
+{{- $servicePort := .Values.service.port -}}
+
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "milvus.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "milvus.labels" . | indent 4 }}
+{{- if .Values.ingress.labels }}
+{{ toYaml .Values.ingress.labels | indent 4 }}
+{{- end }}
+{{- with .Values.ingress.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+{{- if .Values.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+{{- end }}
+{{- if .Values.ingress.tls }}
+  tls:
+  {{- range .Values.ingress.tls }}
+    - hosts:
+      {{- range .hosts }}
+        - {{ . | quote }}
+      {{- end }}
+      secretName: {{ .secretName }}
+  {{- end }}
+  defaultBackend:
+    service:
+      name: {{ $serviceName }}
+      port: 
+        number: {{ $servicePort }}
+{{- end }}
+{{- if .Values.ingress.rules }}
+  rules:
+  {{- range $rule := .Values.ingress.rules }}
+  - host: {{ $rule.host }}
+    http:
+      paths:
+        - path: {{ $rule.path }}
+          pathType: {{ $rule.pathType }}
+          backend:
+            service:
+              name: {{ $serviceName }}
+              port: 
+                number: {{ $servicePort }}
+{{- end }}
+{{- end }}
+
+
+{{- else }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "milvus.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "milvus.labels" . | indent 4 }}
+{{- if .Values.ingress.labels }}
+{{ toYaml .Values.ingress.labels | indent 4 }}
+{{- end }}
+{{- with .Values.ingress.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+{{- if .Values.ingress.tls }}
+  tls:
+  {{- range .Values.ingress.tls }}
+    - hosts:
+      {{- range .hosts }}
+        - {{ . | quote }}
+      {{- end }}
+      secretName: {{ .secretName }}
+  {{- end }}
+  backend:
+    serviceName: {{ $serviceName }}
+    servicePort: {{ $servicePort }}
+{{- end }}
+{{- if .Values.ingress.rules }}
+  rules:
+  {{- range $rule := .Values.ingress.rules }}
+  - host: {{ $rule.host }}
+    http:
+      paths:
+        - path: {{ $rule.path }}
+          pathType: {{ $rule.pathType }}
+          backend:
+            serviceName: {{ $serviceName }}
+            servicePort: {{ $servicePort }}
+
+ {{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
