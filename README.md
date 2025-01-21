@@ -9,7 +9,7 @@ Use the following documentation to learn about the NVIDIA RAG Blueprint.
 - [Technical Diagram](#technical-diagram)
 - [Hardware Requirements](#hardware-requirements)
   - [Driver versions](#driver-versions)
-  - [Minimum hardware requirements for self hosting all NIMs](#minimum-hardware-requirements-for-self-hosting-all-nims)
+  - [Minimum hardware requirements for self hosting all NVIDIA NIM microservices](#minimum-hardware-requirements-for-self-hosting-all-NVIDIA-NIM-microservices)
 - [Next Steps](#next-steps)
 - [Available Customizations](#available-customizations)
 - [Inviting the community to contribute](#inviting-the-community-to-contribute)
@@ -22,7 +22,7 @@ This blueprint serves as a reference solution for a foundational Retrieval Augme
 One of the key use cases in Generative AI is enabling users to ask questions and receive answers based on their enterprise data corpus.
 This blueprint demonstrates how to set up a RAG solution that uses NVIDIA NIM and GPU-accelerated components.
 By default, this blueprint leverages the NVIDIA-hosted models available in the [NVIDIA API Catalog](https://build.nvidia.com).
-However, you can replace these models with your own locally-deployed NIMs to meet specific data governance and latency requirements.
+However, you can replace these models with your own locally-deployed NVIDIA NIM microservices to meet specific data governance and latency requirements.
 
 ## Target Audience
 
@@ -106,10 +106,10 @@ The overall hardware requirements depend on whether you
 - CUDA version - 12.6 or later
 
 
-### Minimum hardware requirements for self hosting all NIMs
+### Minimum hardware requirements for self hosting all NVIDIA NIM microservices
 
 **The NIM and hardware requirements only need to be met if you are self-hosting them.**
-See [Using self-hosted NIMs](/docs/quickstart.md#start-the-containers-using-on-prem-models).
+See [Using self-hosted NVIDIA NIM microservices](/docs/quickstart.md#start-the-containers-using-on-prem-models).
 
 - 8XH100, 8XA100 or 8xL40
 
