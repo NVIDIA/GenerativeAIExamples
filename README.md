@@ -42,7 +42,7 @@ The following are the default components included in this blueprint:
       * [NIM of nvidia/llama-3_2-nv-embedqa-1b-v2]( https://build.nvidia.com/nvidia/llama-3_2-nv-embedqa-1b-v2)
       * [NIM of nvidia/llama-3_2-nv-rerankqa-1b-v2](https://build.nvidia.com/nvidia/llama-3_2-nv-rerankqa-1b-v2)
 * Orchestrator server - Langchain based
-* Milvus Vector Database
+* Milvus Vector Database - accelerated with NVIDIA cuVS
 * Text Splitter: [Recursive Character Text Splitter](https://python.langchain.com/v0.1/docs/modules/data_connection/document_transformers/recursive_text_splitter/)
 * Document parsers: [Unstructured.io](https://docs.unstructured.io)
 * File Types: [File types supported](https://docs.unstructured.io/platform/supported-file-types) by unstructured.io. Accuracy is best optimized for files with extension `.pdf`, `.txt` and `.md`.
@@ -52,7 +52,7 @@ When you are ready for a large-scale deployment,
 you can use the included Helm charts to deploy the necessary microservices.
 You use sample Jupyter notebooks with the JupyterLab service to interact with the code directly.
 
-The Blueprint contains sample data from the [NVIDIA Developer Blog](https://developer.nvidia.com/blog/).
+The Blueprint contains sample data from the [NVIDIA Developer Blog](https://github.com/NVIDIA-AI-Blueprints/rag/blob/main/data/dataset.zip).
 You can build on this blueprint by customizing the RAG application to your specific use case.
 
 We also provide a sample user interface named `rag-playground`.
@@ -77,7 +77,7 @@ The image represents the high level architecture and workflow. The core business
    - The refined query is passed to the **Retriever** module. This component queries the **Milvus Vector Database microservice**, which stores embeddings of unstructured data, generated using **NeMo Retriever Embedding microservice**. The retriever module identifies the top 20 most relevant chunks of information related to the query.
 
 4. **Reranking for Precision**:
-   - The top 20 chunks are passed to the optional **NeMo Retriever Ranker microservice**. The reranker narrows down the results to the top 4 most relevant chunks, improving precision.
+   - The top 20 chunks are passed to the optional **NeMo Retriever reranking microservice**. The reranker narrows down the results to the top 4 most relevant chunks, improving precision.
 
 5. **Response Generation**:
    - The top 4 chunks are injected in the prompt and sent to the **Response Generation** module, which leverages **NeMo LLM inference Microservice** to generate a natural language response based on the retrieved information.
@@ -119,7 +119,7 @@ See [Using self-hosted NVIDIA NIM microservices](/docs/quickstart.md#start-the-c
   - The pipeline can share the GPU with the LLM NIM, but it is recommended to have a separate GPU for the LLM NIM for optimal performance.
 - (If locally deployed) **Embedding NIM**: [Llama-3.2-NV-EmbedQA-1B-v2 Support Matrix](https://docs.nvidia.com/nim/nemo-retriever/text-embedding/latest/support-matrix.html#llama-3-2-nv-embedqa-1b-v2)
   - The pipeline can share the GPU with the Embedding NIM, but it is recommended to have a separate GPU for the Embedding NIM for optimal performance.
-- (If locally deployed) **Reranker NIM**: [llama-3_2-nv-rerankqa-1b-v1 Support Matrix](https://docs.nvidia.com/nim/nemo-retriever/text-reranking/latest/support-matrix.html#llama-3-2-nv-rerankqa-1b-v2)
+- (If locally deployed) **Reranking NIM**: [llama-3_2-nv-rerankqa-1b-v1 Support Matrix](https://docs.nvidia.com/nim/nemo-retriever/text-reranking/latest/support-matrix.html#llama-3-2-nv-rerankqa-1b-v2)
 
 
 ## Next Steps
@@ -150,7 +150,7 @@ To open a GitHub issue or pull request, see the [contributing guidelines](./CONT
 
 ## License
 
-This NVIDIA NIM-AGENT BLUEPRINT is licensed under the [Apache License, Version 2.0.](./LICENSE) This project will download and install additional third-party open source software projects. Review [the license terms of these open source projects](./LICENSE-3rd-party.txt) before use.
+This NVIDIA NVIDIA AI BLUEPRINT is licensed under the [Apache License, Version 2.0.](./LICENSE) This project will download and install additional third-party open source software projects. Review [the license terms of these open source projects](./LICENSE-3rd-party.txt) before use.
 
 The software and materials are governed by the NVIDIA Software License Agreement (found at https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-software-license-agreement/) and the Product-Specific Terms for NVIDIA AI Products (found at https://www.nvidia.com/en-us/agreements/enterprise-software/product-specific-terms-for-ai-products/), except that models are governed by the AI Foundation Models Community License Agreement (found at NVIDIA Agreements | Enterprise Software | NVIDIA Community Model License) and NVIDIA dataset is governed by the NVIDIA Asset License Agreement found [here](./data/LICENSE.DATA).
 
