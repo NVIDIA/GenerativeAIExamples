@@ -111,7 +111,7 @@ The overall hardware requirements depend on whether you
 **The NIM and hardware requirements only need to be met if you are self-hosting them.**
 See [Using self-hosted NVIDIA NIM microservices](/docs/quickstart.md#start-the-containers-using-on-prem-models).
 
-- 8XH100, 8XA100 or 8xL40
+- 8XH100-80GB or 8XA100-80GB
 
 - **Pipeline operation**: 1x L40 GPU or similar recommended. It is needed for Milvus vector store database, if you plan to enable GPU acceleration.
 - (If locally deployed) **LLM NIM**: [Meta Llama 3.1 70B Instruct Support Matrix](https://docs.nvidia.com/nim/large-language-models/latest/support-matrix.html#llama-3-1-70b-instruct)
