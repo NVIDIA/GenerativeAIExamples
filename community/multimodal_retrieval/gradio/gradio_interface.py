@@ -10,14 +10,12 @@ import asyncio  # Import asyncio to run the async function
 
 
 # MongoDB connection setup
-
 images_host = os.environ["IMAGES_HOST"]
 mongodb_user = os.environ["MONGO_INITDB_ROOT_USERNAME"]
 mongodb_password = os.environ["MONGO_INITDB_ROOT_PASSWORD"]
 mongodb_port = os.environ["MONGO_PORT"]
 client = MongoClient(f'mongodb://{mongodb_user}:{mongodb_password}@mongodb:{mongodb_port}/')  # Adjust as needed
 db = client['tme_urls_db']  # Replace with your database name
-
 
 
 def get_default_gateway():
@@ -38,6 +36,7 @@ def get_default_gateway():
 
 
 agents_host = get_default_gateway()
+
 
 
 questions_list = [
@@ -304,6 +303,7 @@ async def run_stream_service(collection_name, document_id, question, vision_mode
     # Get the client from langgraph_sdk
     # agents_host = os.environ["AGENTS_HOST"]
     agents_host = get_default_gateway()
+
     agents_port = os.environ["AGENTS_PORT"]
     client = get_client(url=f"http://{agents_host}:{agents_port}")
     thread = await client.threads.create()
@@ -493,6 +493,7 @@ with gr.Blocks() as interface:
 
         async def run_and_compute_statistics(collection_name, question, vision_model):
 
+
             final_answer, run_id = await run_stream_service(collection_name, None, question, vision_model)
 
             # Introduce a delay of 3 seconds (adjust as needed)
@@ -532,6 +533,10 @@ with gr.Blocks() as interface:
 
         stream_button = gr.Button("Run QA Agent")
         stream_output_answer = gr.Markdown(value="")  # Remove the label argument
+        # gr.Markdown("---")
+        # stream_output_stats = gr.Markdown(value="")  # Remove the label argument
+
+        # Function to update the dropdown when clicked
 
         def update_collection_dropdown_stream():
             return gr.update(choices=get_collection_names())  # Ensure get_collection_names() returns a list

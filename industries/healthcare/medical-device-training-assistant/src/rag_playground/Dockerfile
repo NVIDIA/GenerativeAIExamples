@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Install required ubuntu packages for setting up python 3.10
 RUN apt update && \
-    apt install -y dpkg openssl libgl1 linux-libc-dev libksba8 curl software-properties-common build-essential libssl-dev libffi-dev && \
+    apt install -y dpkg openssl libgl1 linux-libc-dev libksba8 curl software-properties-common build-essential libssl-dev libffi-dev ffmpeg && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt update && apt install -y python3.10 python3.10-dev python3.10-distutils
 

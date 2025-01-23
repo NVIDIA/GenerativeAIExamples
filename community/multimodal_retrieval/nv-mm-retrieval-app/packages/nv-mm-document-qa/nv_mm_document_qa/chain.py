@@ -56,6 +56,7 @@ elif text_model_provider == "openai":
 else:
     llm = None
 
+
 system_template_metadata = """You are a helpful assistant specialized in extracting metadata from a document."""
 
 prompt_metadata = ChatPromptTemplate.from_messages(

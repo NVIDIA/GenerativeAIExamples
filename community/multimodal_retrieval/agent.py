@@ -30,7 +30,6 @@ from nv_mm_document_qa.chain import chain as fciannella_tme_document_qa_chain
 from nv_mm_document_qa.mongodb_utils import get_base64_image
 from nv_mm_document_qa.chain_full_collection import chain_document_expert
 
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",

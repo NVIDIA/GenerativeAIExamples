@@ -3,6 +3,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 import requests
 import base64
+
 import os
 
 nvidia_vision_model = os.environ["NVIDIA_VISION_MODEL"]
