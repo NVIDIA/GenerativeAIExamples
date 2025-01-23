@@ -71,30 +71,49 @@ def call_image_processing_api(backend_llm, image_base64, system_template, questi
         presence_penalty=0,
     )
 
+    messages = []
+
     if backend_llm == "nvidia":
         llm = llm_nvidia
+        _question = f"Can you answer this question from the provided image: {question}"
+
+        # print(image_base64)
+
+        human_message = HumanMessage(
+            content=[
+                {"type": "text", "text": _question},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{image_base64}"},
+                },
+            ]
+        )
+
+        messages = [human_message]
+
     elif backend_llm == "openai":
         llm = llm_openai
+        system_message = SystemMessage(content=system_template)
+
+        _question = f"Can you answer this question from the provided image: {question}"
+
+        # print(image_base64)
+
+        human_message = HumanMessage(
+            content=[
+                {"type": "text", "text": _question},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{image_base64}"},
+                },
+            ]
+        )
+
+        messages = [system_message, human_message]
+
     else:
         llm = None
 
-    system_message = SystemMessage(content=system_template)
-
-    _question = f"Can you answer this question from the provided image: {question}"
-
-    # print(image_base64)
-
-    human_message = HumanMessage(
-        content=[
-            {"type": "text", "text": _question},
-            {
-                "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{image_base64}"},
-            },
-        ]
-    )
-
-    messages = [system_message, human_message]
 
     response = llm.invoke(
         messages

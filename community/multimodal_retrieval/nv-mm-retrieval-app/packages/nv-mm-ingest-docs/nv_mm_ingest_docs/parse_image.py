@@ -37,26 +37,37 @@ def call_api_for_image(image_base64, system_template=system_template, backend_ll
 
     if backend_llm == "nvidia":
         llm = llm_nvidia
-        # print("I am using the NVIDIA Model")
+
+        human_message = HumanMessage(
+            content=[
+                {"type": "text", "text": "Please describe this image in detail."},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{image_base64}"},
+                },
+            ]
+        )
+
+        messages = [human_message]
+
     elif backend_llm == "openai":
         llm = llm_openai
-        # print("I am using the OpenAI Model")
+        system_message = SystemMessage(content=system_template)
+
+        human_message = HumanMessage(
+            content=[
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{image_base64}"},
+                },
+            ]
+        )
+
+        messages = [system_message, human_message]
     else:
         llm = None
 
 
-    system_message = SystemMessage(content=system_template)
-
-    human_message = HumanMessage(
-        content=[
-            {
-                "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{image_base64}"},
-            },
-        ]
-    )
-
-    messages = [system_message, human_message]
 
     # print(messages)
 

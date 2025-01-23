@@ -30,10 +30,10 @@ You can also launch langgraph with the containers with `langgraph up`, in that c
 
 Run this command from the root of the repository (the one with the  `langgraph.json` and `docker-compose.yml` files)
 
-Install a venv:
+Install a venv (python >= 3.11 is required):
 
 ```shell
-python3 -m venv lb-venv
+python3 -m venv lg-venv
 source ./lg-venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -142,5 +142,12 @@ curl --request POST \
 
 ```
 
+## Scaling the services
+
+One can easily scale this solution using a hierarchical approach, with multiple long context LLM calls. 
+
+![Scaling the Retrieval Solution](assets/hierarchical_approach.png)
+
+The picture above illustrates the hierarchical approach using an example of 1000 documents. These documents are divided into 10 groups, with each containing 100 documents. In the first stage, the LLM generates the top 10 summaries for each group, resulting in a total of 100 best summaries. In the second stage, the LLM selects the top 10 summaries from the 100 summaries. These 10 summaries then lead to the 10 most relevant documents, from which the LLM retrieves an answer to the query. If the answer is derived from an image, a VLM is deployed in this stage to process the visual content.
 
 

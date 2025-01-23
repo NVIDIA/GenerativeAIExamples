@@ -73,6 +73,7 @@ def get_context(input_data: dict) -> dict:
 
     document = load_document_by_id(collection_name, document_id)
     document_text = document["text"]
+
     # print(document_text)
     return {"document_text": document_text, "question": question, "collection_name": collection_name, "document_id": document_id}
 

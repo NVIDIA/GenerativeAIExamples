@@ -61,7 +61,7 @@ system_template = """
 *For each question, provide:*
 
 1. *The question itself.* No image should be mentioned in the question, although the question must be generated including information from the description of an image.
-2. *A detailed answer or solution, including explanations of the reasoning process and any necessary calculations. The image that has been used to generate the question should be provided with its identifier (an md5 hash). The text should include the image as in a markdown file, showing the image with the link http://localhost:6001/image/{collection_name}/{document_id}/image_id* (you need to replace image_id in the url with the identifier of the image that comes from the document, which is the md5 of the image).
+2. *A detailed answer or solution, including explanations of the reasoning process and any necessary calculations. The image that has been used to generate the question should be provided with its identifier (an md5 hash). The text should include the image as in a markdown file, showing the image with the link http://{images_host}:6001/image/{collection_name}/{document_id}/image_id* (you need to replace image_id in the url with the identifier of the image that comes from the document, which is the md5 of the image).
 
 Generate no more than one Question / Answer pairs.
 
@@ -99,7 +99,7 @@ def get_context(input_data: dict) -> dict:
     document = load_document_by_id(collection_name, document_id)
     document_text = document["text"]
     # print(document_text)
-    return {"document_text": document_text, "collection_name": collection_name, "document_id": document_id, "vision_model": vision_model}
+    return {"document_text": document_text, "collection_name": collection_name, "document_id": document_id, "vision_model": vision_model, "images_host": os.environ["IMAGES_HOST"]}
 
 
 

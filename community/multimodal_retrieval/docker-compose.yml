@@ -35,7 +35,6 @@ services:
       AGENTS_PORT: ${AGENTS_PORT}
       AGENTS_HOST: ${AGENTS_HOST}
 
-
   gradio-service:
     build:
       context: .  # Assuming the Gradio-related files are in the current directory
