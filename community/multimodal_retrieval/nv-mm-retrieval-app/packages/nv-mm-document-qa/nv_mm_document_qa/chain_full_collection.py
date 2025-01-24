@@ -1,22 +1,59 @@
 import os
-import json
-from typing_extensions import TypedDict
+
 from langchain_openai import ChatOpenAI
-from langchain_community.chat_message_histories import RedisChatMessageHistory
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from nv_mm_document_qa.model_full_collection import BestDocuments, Answer
 from nv_mm_document_qa.mongodb_utils import get_document_summaries_markdown
-
-from langchain.schema.runnable.history import RunnableWithMessageHistory
 from langchain.schema.runnable import RunnableParallel, RunnablePassthrough, RunnableLambda
-from langchain.callbacks.tracers import LangChainTracer
-from langchain.chains.openai_functions import (
-    create_structured_output_chain,
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../app.log"),
+        logging.StreamHandler()
+    ]
 )
 
+nvidia_ngc_api_key = os.environ["NVIDIA_API_KEY"]
+text_model_provider = os.environ["TEXT_MODEL_PROVIDER"]
+nvidia_text_model = os.environ["NVIDIA_TEXT_MODEL"]
 
-# llm = ChatOpenAI(model="gpt-4-1106-preview", temperature=0, max_tokens=3000)
-llm = ChatOpenAI(model="gpt-4o", temperature=0, max_tokens=3000)
+llm_openai = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0,
+    max_tokens=3500,
+)
+
+llm_nvidia = ChatNVIDIA(
+    model=nvidia_text_model,
+    temperature=0,
+    max_tokens=3500,
+)
+
+if text_model_provider == "nvidia":
+    llm = llm_nvidia
+    # print("I am using the NVIDIA Model")
+elif text_model_provider == "openai":
+    llm = llm_openai
+    # print("I am using the OpenAI Model")
+else:
+    llm = None
+
+logging.info(f"We are using the following text model: {text_model_provider}")
+
+nvidia_vision_model = os.environ["NVIDIA_VISION_MODEL"]
+
+if text_model_provider == "nvidia":
+    llm = llm_nvidia
+    # print("I am using the NVIDIA Model")
+elif text_model_provider == "openai":
+    llm = llm_openai
+    # print("I am using the OpenAI Model")
+else:
+    llm = None
 
 prompt_document_expert = ChatPromptTemplate.from_messages(
     [

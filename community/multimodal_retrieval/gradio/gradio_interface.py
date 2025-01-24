@@ -4,18 +4,40 @@ import json, os
 from pymongo import MongoClient
 from langgraph_sdk import get_client
 from datetime import datetime
+import subprocess
 
 import asyncio  # Import asyncio to run the async function
 
 
 # MongoDB connection setup
-agents_host = os.environ["AGENTS_HOST"]
 images_host = os.environ["IMAGES_HOST"]
 mongodb_user = os.environ["MONGO_INITDB_ROOT_USERNAME"]
 mongodb_password = os.environ["MONGO_INITDB_ROOT_PASSWORD"]
 mongodb_port = os.environ["MONGO_PORT"]
 client = MongoClient(f'mongodb://{mongodb_user}:{mongodb_password}@mongodb:{mongodb_port}/')  # Adjust as needed
 db = client['tme_urls_db']  # Replace with your database name
+
+
+
+
+def get_default_gateway():
+    try:
+        # Run the 'route -n' command
+        result = subprocess.run(['route', '-n'], stdout=subprocess.PIPE, text=True)
+        # Parse the output
+        for line in result.stdout.splitlines():
+            parts = line.split()
+            # Look for the line with Destination as '0.0.0.0'
+            if len(parts) > 1 and parts[0] == '0.0.0.0':
+                gateway_ip = parts[1]  # The Gateway IP is the second column
+                return gateway_ip
+        return None
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return None
+
+
+agents_host = get_default_gateway()
 
 
 questions_list = [
@@ -280,7 +302,10 @@ def format_statistics(statistics):
 
 async def run_stream_service(collection_name, document_id, question, vision_model):
     # Get the client from langgraph_sdk
-    agents_host = os.environ["AGENTS_HOST"]
+
+    # agents_host = os.environ["AGENTS_HOST"]
+    agents_host = get_default_gateway()
+
     agents_port = os.environ["AGENTS_PORT"]
     client = get_client(url=f"http://{agents_host}:{agents_port}")
     thread = await client.threads.create()
@@ -464,23 +489,12 @@ with gr.Blocks() as interface:
 
         stream_button = gr.Button("Run Stream Service")
         stream_output_answer = gr.Markdown()  # Remove the label argument
-        # gr.Markdown("---")
-        # stream_output_stats = gr.Markdown()  # Remove the label argument
-
 
         def update_collection_dropdown_stream():
             return gr.update(choices=get_collection_names())  # Ensure get_collection_names() returns a list
 
 
-        # async def run_and_compute_statistics(collection_name, question, vision_model):
-        #     # Return the vision model to the output field for testing
-        #     return f"Vision Model: {vision_model}", ""
-
-
         async def run_and_compute_statistics(collection_name, question, vision_model):
-            # print(f"Collection Name: {collection_name}")
-            # print(f"Question: {question}")
-            # print(f"Vision Model: {vision_model}")
 
             final_answer, run_id = await run_stream_service(collection_name, None, question, vision_model)
 
@@ -521,10 +535,6 @@ with gr.Blocks() as interface:
 
         stream_button = gr.Button("Run QA Agent")
         stream_output_answer = gr.Markdown(value="")  # Remove the label argument
-        # gr.Markdown("---")
-        # stream_output_stats = gr.Markdown(value="")  # Remove the label argument
-
-        # Function to update the dropdown when clicked
 
         def update_collection_dropdown_stream():
             return gr.update(choices=get_collection_names())  # Ensure get_collection_names() returns a list
@@ -533,12 +543,6 @@ with gr.Blocks() as interface:
         async def run_and_compute_statistics(collection_name, question, vision_model):
             print(collection_name, question, vision_model)
             final_answer, run_id = await run_stream_service(collection_name, None, question, vision_model)
-
-            # Introduce a delay of 3 seconds (adjust as needed)
-            await asyncio.sleep(3)
-
-            # Now compute the statistics after the delay
-            statistics = compute_statistics(run_id)
 
             # return final_answer, statistics
             return final_answer
@@ -550,21 +554,6 @@ with gr.Blocks() as interface:
             outputs=[answer_box, url_box]
         )
 
-        # question_dropdown_stream.change(
-        #     fn=lambda question: update_answer_dropdown(questions_list.index(question)),
-        #     inputs=[question_dropdown_stream],
-        #     outputs=[answer_box]
-        # )
-
-        def update_placeholders():
-            return "Processing your request...", "Computing statistics..."
-
-        stream_button.click(
-            fn=update_placeholders,
-            inputs=[],
-            outputs=[stream_output_answer],
-            queue=False  # Ensure this update happens immediately without waiting
-        )
         # Trigger both the streaming service and stats calculation when the button is clicked
         stream_button.click(
             fn=run_and_compute_statistics,
@@ -582,8 +571,6 @@ with gr.Blocks() as interface:
         collection_dropdown = gr.Dropdown(label="Select Collection", choices=[], interactive=True)
         document_dropdown = gr.Dropdown(label="Select Document URL", choices=[])
 
-        # Add a dropdown for vision model selection
-        # vision_model_dropdown = gr.Dropdown(label="Select Vision Model", choices=["openai", "nvidia"])
 
         vision_model_dropdown = gr.Dropdown(
             label="Select Vision Model",
@@ -594,7 +581,7 @@ with gr.Blocks() as interface:
 
         generate_button = gr.Button("Generate SDG QA Pair")
 
-        # _qa_output = gr.Textbox(label="Response")  # Removed the 'label' argument
+
         qa_output = gr.Markdown(label="Response")  # Removed the 'label' argument
 
 

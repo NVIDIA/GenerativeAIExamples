@@ -30,7 +30,9 @@ You can also launch langgraph with the containers with `langgraph up`, in that c
 
 Run this command from the root of the repository (the one with the  `langgraph.json` and `docker-compose.yml` files)
 
-Install a venv:
+
+Install a venv (python >= 3.11 is required):
+
 
 ```shell
 python3 -m venv lg-venv
@@ -41,30 +43,38 @@ pip install -r requirements.txt
 
 ## Create the env files
 
-You need to create two .env files (one for the docker compose and one for the langgraph agent)
+
+You need to create two .env files (one for the docker compose and one for the langgraph agent).
+
+In the below we give the opportunity to use an NVIDIA text model for the pure text based tasks.
+
+For the Langgraph agent we leave the LLM model to be openai as at the moment it is providing better results with tools binding.
+
 
 ### .env
 
 Create a .env file in the root directory of this repository (the one with the `langgraph.json` and `docker-compose.yml` files)
 
 ```shell
+# .env
 MONGO_INITDB_ROOT_USERNAME=admin
 MONGO_INITDB_ROOT_PASSWORD=secret
-MONGO_HOST=mongodb
+MONGO_HOST=localhost
 MONGO_PORT=27017
+AGENTS_PORT=2024
 OPENAI_API_KEY=
 LANGCHAIN_API_KEY=
 LANGSMITH_API_KEY=
 LANGGRAPH_CLOUD_LICENSE_KEY=
 NVIDIA_API_KEY=
 IMAGES_HOST=localhost
-AGENTS_HOST=
-AGENTS_PORT=2024
+NVIDIA_VISION_MODEL=meta/llama-3.2-90b-vision-instruct
+NVIDIA_TEXT_MODEL=meta/llama-3.3-70b-instruct
+TEXT_MODEL_PROVIDER=nvidia
 ```
 
-Normally LANGCHAIN_API_KEY and LANGSMITH_API_KEY have the same value. 
+Normally LANGCHAIN_API_KEY and LANGSMITH_API_KEY have the same value.
 
-AGENTS_HOST is the IP address of the host where you are running docker. It could be the IP address of your PC for instance.
 
 ### .env.lg
 
@@ -77,14 +87,20 @@ MONGO_INITDB_ROOT_USERNAME=admin
 MONGO_INITDB_ROOT_PASSWORD=secret
 MONGO_HOST=localhost
 MONGO_PORT=27017
+
+AGENTS_PORT=2024
+
 OPENAI_API_KEY=
 LANGCHAIN_API_KEY=
 LANGSMITH_API_KEY=
 LANGGRAPH_CLOUD_LICENSE_KEY=
 NVIDIA_API_KEY=
 IMAGES_HOST=localhost
-AGENTS_HOST=localhost
-AGENTS_PORT=2024
+
+NVIDIA_VISION_MODEL=meta/llama-3.2-90b-vision-instruct
+NVIDIA_TEXT_MODEL=meta/llama-3.3-70b-instruct
+TEXT_MODEL_PROVIDER=nvidia
+
 ```
 
 # Launch the mongodb and gradio services
@@ -134,6 +150,15 @@ curl --request POST \
 }'
 
 ```
+
+
+## Scaling the services
+
+One can easily scale this solution using a hierarchical approach, with multiple long context LLM calls. 
+
+![Scaling the Retrieval Solution](assets/hierarchical_approach.png)
+
+The picture above illustrates the hierarchical approach using an example of 1000 documents. These documents are divided into 10 groups, with each containing 100 documents. In the first stage, the LLM generates the top 10 summaries for each group, resulting in a total of 100 best summaries. In the second stage, the LLM selects the top 10 summaries from the 100 summaries. These 10 summaries then lead to the 10 most relevant documents, from which the LLM retrieves an answer to the query. If the answer is derived from an image, a VLM is deployed in this stage to process the visual content.
 
 
 
