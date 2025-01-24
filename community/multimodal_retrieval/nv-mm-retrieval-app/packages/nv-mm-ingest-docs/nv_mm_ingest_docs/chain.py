@@ -3,8 +3,6 @@ from nv_mm_ingest_docs.url_import import process_urls_and_save
 from nv_mm_document_qa.chain import chain_metadata
 from langchain_openai import ChatOpenAI
 
-
-
 llm = ChatOpenAI(model="gpt-4o", temperature=0, max_tokens=3000)
 
 def import_urls(input_data: dict) -> dict:

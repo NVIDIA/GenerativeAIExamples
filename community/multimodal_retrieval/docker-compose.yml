@@ -60,6 +60,7 @@ services:
       - NVIDIA_TEXT_MODEL=${NVIDIA_TEXT_MODEL}
       - TEXT_MODEL_PROVIDER=${TEXT_MODEL_PROVIDER}
 
+
 volumes:
   mongodb-volume-nv-mm:
     external: true

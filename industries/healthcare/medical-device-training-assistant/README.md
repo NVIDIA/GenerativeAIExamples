@@ -51,7 +51,10 @@ Complete the [common prerequisites](../../../docs/common-prerequisites.md). This
 Assuming you would like to enable RIVA ASR and TTS to use your voice for interacting with the RAG, refer to the [Local RIVA Server](../../../docs/riva-asr-tts.md#local-riva-server) section on running RIVA containers on the local machine's compute resources, or refer to [Riva API Endpoint on NVIDIA API Catalog](../../../docs/riva-asr-tts.md#riva-api-endpoint-on-nvidia-api-catalog) to access RIVA speech models on NVIDIA API Catalog instead of hosting them locally. Refer to the rest of the [documentation on RIVA](../../../docs/riva-asr-tts.md) to configure the docker-compose.yaml file. 
 
 ### Hardware Requirement
-The Milvus Vector Database is GPU-enabled by default in this IFU RAG application, which is specified in [docker-compose-vectordb.yaml](./docker-compose-vectordb.yaml). Please refer to the section [Configuring Milvus with GPU Acceleration](../../../docs/vector-database.md#configuring-milvus-with-gpu-acceleration) to see how to set GPU acceleration on and off.
+There is no GPU requirement to run this repository, and you could optionally configure components of this repository to utilize GPUs.
+
+You can optionally self host the NIMS for [LLM](https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html), [embedding](https://docs.nvidia.com/nim/nemo-retriever/text-embedding/latest/getting-started.html), and [reranking](https://docs.nvidia.com/nim/nemo-retriever/text-reranking/latest/getting-started.html) models, or use NVIDIA AI Endpoints. For RIVA ASR and TTS, as stated in [RIVA Setup](#riva-setup) you could choose to host them locally or use the endpoints.
+The Milvus Vector Database is CPU-enabled by default in this IFU RAG application, which is specified in [docker-compose-vectordb.yaml](./docker-compose-vectordb.yaml). Please refer to the section [Configuring Milvus with GPU Acceleration](../../../docs/vector-database.md#configuring-milvus-with-gpu-acceleration) to see how to set GPU acceleration on.
 
 ## Build and Start the Containers
 
@@ -125,7 +128,7 @@ If you see any errors while navigating the web UI, you could use `docker logs ch
 
 ## Next Steps
 
-- [Vector Database Customizations](../../../docs/vector-database.md) to disable GPU acceleration for the Milvus vector database.
+- [Vector Database Customizations](../../../docs/vector-database.md) to customize GPU acceleration for the Milvus vector database.
 - Stop the containers by running `docker compose down`.
 - If you're interested in adapting this application to use on premises machines for NVIDIA Inference Microservices (NIMs), for the LLM, embedding model and reranking model, please refer to [local-deploy README](../../../RAG/examples/local_deploy/README.md) for the requirement and configuration.
 

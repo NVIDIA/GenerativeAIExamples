@@ -1,5 +1,6 @@
 import os, json
 import logging
+
 from pathlib import Path
 from datetime import datetime
 from langchain_core.tools import tool
@@ -31,6 +32,7 @@ from nv_mm_document_qa.mongodb_utils import get_base64_image
 from nv_mm_document_qa.chain_full_collection import chain_document_expert
 
 
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -39,6 +41,7 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+
 
 # from fciannella_tme_ingest_docs.openai_parse_image import call_openai_api_for_image
 nvidia_ngc_api_key = os.environ["NVIDIA_API_KEY"]
@@ -291,7 +294,9 @@ class Assistant:
                 if result.tool_calls:
                     if result.tool_calls[0]["name"] == "query_document":
                         doc_id = result.tool_calls[0]["args"]["document_id"]
+
                         logging.info(f"This is the doc id after querying the document: {doc_id}")
+
                         state = {**state, "document_id": doc_id, "collection_name": collection_name, "images_host": images_host}
                 break
         return {"messages": result, "document_id": doc_id}
@@ -356,6 +361,7 @@ def main():
 
     config = {
         "configurable": {
+
             "collection_name": "nvidia-docs",
             "vision_model": "nvidia"
         }

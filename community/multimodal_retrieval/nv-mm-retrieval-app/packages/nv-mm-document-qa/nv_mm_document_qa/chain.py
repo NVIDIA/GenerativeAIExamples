@@ -12,6 +12,7 @@ from nv_mm_document_qa.mongodb_utils import load_document_by_id
 from nv_mm_document_qa.model_images import Image
 from nv_mm_document_qa.model_metadata import DocumentMetadata
 import os, json
+
 import logging
 from uuid import uuid4
 
@@ -73,7 +74,6 @@ def get_context(input_data: dict) -> dict:
 
     document = load_document_by_id(collection_name, document_id)
     document_text = document["text"]
-
     # print(document_text)
     return {"document_text": document_text, "question": question, "collection_name": collection_name, "document_id": document_id}
 

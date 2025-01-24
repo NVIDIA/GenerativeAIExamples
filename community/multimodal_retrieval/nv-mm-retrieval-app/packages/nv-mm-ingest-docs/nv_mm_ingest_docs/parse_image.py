@@ -3,6 +3,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 import requests
 import base64
+
 import os
 
 nvidia_vision_model = os.environ["NVIDIA_VISION_MODEL"]
@@ -26,6 +27,7 @@ def call_api_for_image(image_base64, system_template=system_template, backend_ll
     )
 
     llm_nvidia = ChatNVIDIA(
+
         model=nvidia_vision_model,
         temperature=0,
         max_tokens=4095,
@@ -37,6 +39,7 @@ def call_api_for_image(image_base64, system_template=system_template, backend_ll
 
     if backend_llm == "nvidia":
         llm = llm_nvidia
+
 
         human_message = HumanMessage(
             content=[
