@@ -12,20 +12,50 @@ from nv_mm_document_qa.mongodb_utils import load_document_by_id
 from nv_mm_document_qa.model_images import Image
 from nv_mm_document_qa.model_metadata import DocumentMetadata
 import os, json
+
+import logging
 from uuid import uuid4
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("../app.log"),
+        logging.StreamHandler()
+    ]
+)
 
 unique_id = uuid4().hex[0:8]
 
-# llm = ChatOpenAI(model="gpt-4-1106-preview", temperature=0, max_tokens=3000)
-llm = ChatOpenAI(model="gpt-4o", temperature=0, max_tokens=3500)
-# llm = ChatNVIDIA(
-#     model="meta/llama-3.2-90b-vision-instruct",
-#     temperature=0,
-#     max_tokens=4095,
-#     top_p=1,
-#     frequency_penalty=0,
-#     presence_penalty=0,
-# )
+nvidia_ngc_api_key = os.environ["NVIDIA_API_KEY"]
+text_model_provider = os.environ["TEXT_MODEL_PROVIDER"]
+nvidia_text_model = os.environ["NVIDIA_TEXT_MODEL"]
+
+llm_openai = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0,
+    max_tokens=3500,
+)
+
+llm_nvidia = ChatNVIDIA(
+    model=nvidia_text_model,
+    temperature=0,
+    max_tokens=4095,
+    top_p=1,
+    frequency_penalty=0,
+    presence_penalty=0,
+)
+
+logging.info(f"We are using the following text model: {text_model_provider}")
+
+if text_model_provider == "nvidia":
+    llm = llm_nvidia
+    # print("I am using the NVIDIA Model")
+elif text_model_provider == "openai":
+    llm = llm_openai
+    # print("I am using the OpenAI Model")
+else:
+    llm = None
 
 system_template_metadata = """You are a helpful assistant specialized in extracting metadata from a document."""
 
