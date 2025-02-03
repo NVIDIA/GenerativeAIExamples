@@ -11,8 +11,8 @@ This repository includes a demo of a simple chat bot that answers questions base
 The implementation includes:
 
 - Gradio chat interface 
-- Langgraph agent
-- Nvidia NIMs for the main LLM as well as RAG Embeddings
+- LangGraph agent
+- NVIDIA NIM microservices
 - Chroma DB for a lightweight vector DB
 - An internal knowledge base stored in Glean and available over the Glean Search API
 
