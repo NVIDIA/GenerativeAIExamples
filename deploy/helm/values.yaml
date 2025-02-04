@@ -17,7 +17,7 @@ ragServer:
       PROMPT_CONFIG_FILE: "/prompt.yaml"
       APP_VECTORSTORE_URL: "http://milvus:19530"
       APP_VECTORSTORE_NAME: "milvus"
-      APP_VECTORSTORE_INDEXTYPE: CAGRA
+      APP_VECTORSTORE_INDEXTYPE: GPU_CAGRA
       COLLECTION_NAME: nvidia_blogs
       APP_LLM_SERVERURL: "nim-llm:8000"
       APP_LLM_MODELNAME: meta/llama-3.1-70b-instruct
