@@ -3,7 +3,6 @@ api_key = "<add your api key>"
 from multiagent import HybridRetriever
 import io
 from contextlib import redirect_stdout, redirect_stderr
-from langchain_nvidia import register_model, Model
 from utils import automation
 
 

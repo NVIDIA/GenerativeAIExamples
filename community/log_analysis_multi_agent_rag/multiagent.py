@@ -1,5 +1,5 @@
 import os
-from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings, NVIDIARerank
+from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader

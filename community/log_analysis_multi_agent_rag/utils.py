@@ -1,4 +1,4 @@
-from langchain_openai import ChatOpenAI
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from binary_score_models import GradeAnswer,GradeDocuments,GradeHallucinations
@@ -9,7 +9,7 @@ import json
 class Nodeoutputs:
     def __init__(self, api_key, base_url, model, prompts_file):
         os.environ["NVIDIA_API_KEY"] = api_key
-        self.llm = ChatOpenAI(base_url=base_url, api_key=api_key, model=model)
+        self.llm = ChatNVIDIA(base_url=base_url, api_key=api_key, model=model)
         self.prompts = self.load_prompts(prompts_file)
         self.setup_prompts()
 
