@@ -1,0 +1,16 @@
+.header {
+    padding: 60px;
+    text-align: center;
+    color: #76b900;
+    font-size: 30px;
+  }
+  
+  #chatbot {
+    flex-grow: 2;
+    overflow: auto;
+  }
+  
+  footer {
+    visibility: hidden;
+  }
+    
