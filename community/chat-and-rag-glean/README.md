@@ -109,6 +109,7 @@ You may way to build an application similar to this demo that is hosted on-premi
 ## Getting Started - Jupyter Notebook
 
 Further details about the code, and an example that calls a chatbot without a web application, is available in the Jupyter Notebook `nvidia_nim_langgraph_glean_example.iypnb`.
+
 ```
 uv run jupyter lab 
 ```

@@ -8,6 +8,7 @@ dependencies = [
     "chroma>=0.2.0",
     "gradio>=5.13.2",
     "gradio-log>=0.0.8",
+    "jupyterlab>=4.3.5",
     "langchain>=0.3.17",
     "langchain-chroma>=0.2.1",
     "langchain-nvidia-ai-endpoints>=0.3.8",
