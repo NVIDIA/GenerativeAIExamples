@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -101,9 +101,9 @@ body:
     id: terms
     attributes:
       label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/rapidsai/rapids-repo-template/blob/main/CODE_OF_CONDUCT.md)
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/NVIDIA-AI-Blueprints/rag/blob/main/CODE_OF_CONDUCT.md)
       options:
-        - label: I agree to follow __PROJECT__'s Code of Conduct
+        - label: I agree to follow rag's Code of Conduct
           required: true
-        - label: I have searched the [open feature requests](https://github.com/rapidsai/rapids-repo-template/issues?q=is%3Aopen+is%3Aissue+label%3A%22feature+request%22%2Cimprovement%2Cenhancement) and have found no duplicates for this feature request
+        - label: I have searched the [open feature requests](https://github.com/NVIDIA-AI-Blueprints/rag/issues?q=is%3Aopen+is%3Aissue+label%3A%22feature+request%22%2Cimprovement%2Cenhancement) and have found no duplicates for this feature request
           required: true
