@@ -4,10 +4,6 @@ This repository includes a demo of a simple chat bot that answers questions base
 
 ![chat_interace_1](./chat_interface_1.png)
 
-
-![chat_interace_2](./chat_interface_2.png)
-
-
 The implementation includes:
 
 - Gradio chat interface 

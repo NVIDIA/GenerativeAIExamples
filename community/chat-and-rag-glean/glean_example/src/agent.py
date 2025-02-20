@@ -61,27 +61,9 @@ def determine_user_intent(state: InfoBotState):
 
     return state
 
-def enrich_user(state: InfoBotState):
-    """
-    
-    adds user information to the query, eg enriching 'who is my boss' to 
-
-    'who is my boss, the user is Jane Doe with username jdoe'
-    
-    """
-
-    # this is a mock example, a production deployment could source the user
-    # from the application (eg parsing the current oauth session) 
-    # and pass to glean appropriately
-
-    user, msg = state.messages[-1]
-    new_msg = f"{msg} \n \n the user asking the question is Jane Doe with username jdoe"
-    state.messages[-1] = (user, new_msg)
-    return state
-
 def route_glean(state: InfoBotState):
     if state.glean_query_required:
-        return "enrich_user"
+        return "call_glean"
 
     if not state.glean_query_required:
         return "summarize_answer"
@@ -140,7 +122,6 @@ def summarize_answer(state: InfoBotState):
 
 graph = StateGraph(InfoBotState)
 graph.add_node("determine_user_intent", determine_user_intent)
-graph.add_node("enrich_user", enrich_user)
 graph.add_node("call_glean", call_glean)
 graph.add_node("add_embeddings", add_embeddings)
 graph.add_node("answer_candidates", answer_candidates)
@@ -149,9 +130,8 @@ graph.add_edge(START, "determine_user_intent")
 graph.add_conditional_edges(
     "determine_user_intent",
     route_glean, 
-    {"enrich_user": "enrich_user", "summarize_answer": "summarize_answer"}
+    {"call_glean": "call_glean", "summarize_answer": "summarize_answer"}
 )
-graph.add_edge("enrich_user", "call_glean")
 graph.add_edge("call_glean", "add_embeddings")
 graph.add_edge("add_embeddings", "answer_candidates")
 graph.add_edge("answer_candidates", "summarize_answer")
@@ -160,7 +140,7 @@ agent = graph.compile()
 
 
 if __name__ == "__main__":
-    msg = "do I need to take PTO if I am sick"
+    msg = "What's the latest on the new API project?"
     history = []
     history.append(("user", msg))
     messages = history
