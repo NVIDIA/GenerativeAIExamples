@@ -1,0 +1,92 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Bug Report
+description: File a bug report
+title: "[BUG]: "
+labels: ["bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of __PROJECT__ are you running?
+      placeholder: "example: 23.02"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation-method
+    attributes:
+      label: Which installation method(s) does this occur on?
+      multiple: true
+      options:
+        - Docker
+        - Conda
+        - Pip
+        - Source
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug.
+      description: Also tell us, what did you expect to happen?
+      placeholder: XYZ occured, I expected QRS results
+    validations:
+      required: true
+
+  - type: textarea
+    id: mvr
+    attributes:
+      label: Minimum reproducible example
+      description: Please supply a [minimum reproducible code example](https://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports) here
+      render: shell
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please paste relevant error and log output here
+      render: shell
+
+  - type: textarea
+    id: env-printout
+    attributes:
+      label: Full env printout
+      description: Please run and paste the output of the `print_env.sh` script here, to gather any other relevant environment details
+      render: shell
+
+  - type: textarea
+    id: misc
+    attributes:
+      label: Other/Misc.
+      description: Please enter any other helpful information here.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://docs.rapids.ai/resources/conduct/)
+      options:
+        - label: I agree to follow __THIS PROJECT__'s Code of Conduct
+          required: true
+        - label: I have searched the [open bugs](https://github.com/jarmak-nv/issues?q=is%3Aopen+is%3Aissue+label%3Abug) and have found no duplicates for this bug report
+          required: true
