@@ -3,13 +3,14 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from binary_score_models import GradeAnswer,GradeDocuments,GradeHallucinations
 import os
-
+from dotenv import load_dotenv
+load_dotenv()
 import json
 
 class Nodeoutputs:
-    def __init__(self, api_key, base_url, model, prompts_file):
+    def __init__(self, api_key, model, prompts_file):
         os.environ["NVIDIA_API_KEY"] = api_key
-        self.llm = ChatNVIDIA(base_url=base_url, api_key=api_key, model=model)
+        self.llm = ChatNVIDIA( api_key=api_key, model=model)
         self.prompts = self.load_prompts(prompts_file)
         self.setup_prompts()
 
@@ -62,8 +63,10 @@ class Nodeoutputs:
         return "\n\n".join(doc.page_content for doc in docs)
 
 # Usage
-api_key = "<addd your api key>"
-base_url = "<add your endpoint>"
+
+
+# Access the API key from environment variables
+api_key = os.getenv('API_KEY')
 model = "meta/llama-3.1-70b-instruct"
 prompts_file = "prompt.json"
-automation = Nodeoutputs(api_key, base_url, model, prompts_file)
+automation = Nodeoutputs(api_key, model, prompts_file)
