@@ -8,13 +8,6 @@ We are calling this tool as BAT.AI (Bug Automation Tool)
 # Target Audience
 Devlopers : This tool is designed for developers who need to quickly analyze log files and gain actionable insights using large language model (LLM). The system automatically refines prompts to ensure optimal results, offering developers an intuitive way to interact with log data and streamline their debugging process.  
 
-# How to Generate an API Key
-To generate your API key, follow the steps outlined in the link below:
-
-[Click here to view the steps for generating an API Key](https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html#generate-an-api-key)
-
-Make sure to follow the instructions carefully and store your API key securely.
-
 # How to Use
 
 This repository provides a sample code to demonstrate how you can use the log analysis tool for your logs. Follow the instructions below to set up and integrate the tool into your workflow.
