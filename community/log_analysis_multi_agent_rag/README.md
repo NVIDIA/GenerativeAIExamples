@@ -15,16 +15,16 @@ To generate your API key, follow the steps outlined in the link below:
 
 Make sure to follow the instructions carefully and store your API key securely.
 
-## How to Use
+# How to Use
 
 This repository provides a sample code to demonstrate how you can use the log analysis tool for your logs. Follow the instructions below to set up and integrate the tool into your workflow.
 
-### 1. Set up your API Key:
+### Set up your API Key:
 
 - **Generate your API key** by following the steps in the link below:
   [Click here to view the steps for generating an API Key](https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html#generate-an-api-key)
 
-- **Store your API key** securely in an environment variable:
+- **Store your API key** : You can securely store your API key by creating a `.env` file in the root directory of your project
 - **example.py** : The sample script showcases how to integrate log analysis into your workflow. It demonstrates how to pass your log data through the system, generate insights, and manage the output.
 
 # Components
