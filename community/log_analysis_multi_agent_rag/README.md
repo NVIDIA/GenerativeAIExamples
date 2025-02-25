@@ -26,6 +26,7 @@ This repository provides a sample code to demonstrate how you can use the log an
 
 - **Store your API key** securely in an environment variable:
 - example.py: The sample script (example.py) showcases how to integrate log analysis into your workflow. It demonstrates how to pass your log data through the system, generate insights, and manage the output.
+
 # Components
 - bat_ai.py: Defines the main workflow graph using LangGraph.
 - graphnodes.py: Contains the node implementations for the workflow graph.
