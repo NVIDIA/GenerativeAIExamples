@@ -5,7 +5,9 @@ from langchain_community.document_loaders import TextLoader
 from langchain.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores.faiss import FAISS
-import argparse
+from dotenv import load_dotenv
+load_dotenv()
+api_key = os.getenv('API_KEY')
 class HybridRetriever:
     def __init__(self, file_path, api_key):
         self.file_path = file_path

@@ -8,14 +8,26 @@ We are calling this tool as BAT.AI (Bug Automation Tool)
 # Target Audience
 Devlopers : This tool is designed for developers who need to quickly analyze log files and gain actionable insights using large language model (LLM). The system automatically refines prompts to ensure optimal results, offering developers an intuitive way to interact with log data and streamline their debugging process.  
 
+# How to Use
+
+This repository provides a sample code to demonstrate how you can use the log analysis tool for your logs. Follow the instructions below to set up and integrate the tool into your workflow.
+
+### Set up your API Key:
+
+- **Generate your API key** by following the steps in the link below:
+  [Click here to view the steps for generating an API Key](https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html#generate-an-api-key)
+
+- **Store your API key** : You can securely store your API key by creating a `.env` file in the root directory of your project
+- **example.py** : The sample script showcases how to integrate log analysis into your workflow. It demonstrates how to pass your log data through the system, generate insights, and manage the output.
+
 # Components
 - bat_ai.py: Defines the main workflow graph using LangGraph.
 - graphnodes.py: Contains the node implementations for the workflow graph.
 - multiagent.py: Implements the HybridRetriever class for document retrieval.
 - graphedges.py: Contains the implementation of the edges for decision making 
 - binaryscroes.py: Contains the formatted output information
-- utils.py : It helps to implement the queries, retrieve relevant documents, grade their relevance, and generate responses      using a multi-agent RAG system.
-- example.py: The script that analyzes a specified log file for errors based on a user-provided question, leveraging the workflow module to process and generate relevant insights.
+- utils.py : It helps to implement the queries, retrieve relevant documents, grade their relevance, and generate responses using a multi-agent RAG system.
+
     
 ![SW Architecture](<BAT.AI SW Architecture Diagram.drawio.png>)
 
@@ -30,8 +42,9 @@ Devlopers : This tool is designed for developers who need to quickly analyze log
     Set up the NVIDIA API key in your environment.
     Prepare your document corpus and update the file path in the code.
 
+
 # Code
-`python main.py path/to/your/logfile.txt --question "What are the critical errors in the log file?"`
+`python example.py path/to/your/logfile.txt --question "What are the critical errors in the log file?"`
 
 # Software Components
 NVIDIA NIM Microservices
