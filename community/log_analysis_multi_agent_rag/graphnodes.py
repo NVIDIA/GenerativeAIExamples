@@ -1,10 +1,12 @@
 from langchain_nvidia_ai_endpoints import NVIDIARerank
-api_key = "<add your api key>"
+import os
 from multiagent import HybridRetriever
 import io
 from contextlib import redirect_stdout, redirect_stderr
 from utils import automation
-
+from dotenv import load_dotenv
+load_dotenv()
+api_key = os.getenv('API_KEY')
 
 class Nodes:
     @staticmethod
