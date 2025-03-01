@@ -37,8 +37,8 @@ Learn more about the model [here](https://developer.nvidia.com/blog/latest-multi
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/jayrodge/ai-podcast-assistant.git
-   cd ai-podcast-assistant
+   git clone https://github.com/NVIDIA/GenerativeAIExamples.git
+   cd GenerativeAIExamples/community/ai-podcast-assistant
    ```
 
 2. Set up your NVIDIA API key:
