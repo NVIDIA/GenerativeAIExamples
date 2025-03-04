@@ -26,7 +26,7 @@ Learn more about the model [here](https://developer.nvidia.com/blog/latest-multi
 
 - Python 3.10+
 - Jupyter Notebook or JupyterLab
-- NVIDIA API Key
+- NVIDIA API Key (see [Installation](#installation) section for setup instructions)
 - Required Python packages:
   - requests
   - base64
