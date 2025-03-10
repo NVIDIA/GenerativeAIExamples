@@ -1,3 +1,19 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION & AFFILIATES.
+# All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import fitz  # PyMuPDF
 import re
 from rapidfuzz import fuzz
@@ -20,11 +36,11 @@ def process_page(args):
 
         if not text_line.strip() or len(text_line.strip()) < 3:
             continue
-            
+
         preprocessed_text_line = preprocess_text(text_line)
         if not preprocessed_text_line:
             continue
-            
+
         for response_line in response_lines:
             if fuzz.partial_ratio(preprocessed_text_line, response_line) > 80:
 
@@ -36,19 +52,20 @@ def process_page(args):
     doc.close()
     return highlights
 
+
 def pdf_highlighter(llm_response, pdf_path):
 
     doc = fitz.open(pdf_path)
     total_pages = len(doc)
     doc.close()
 
+    response_lines = [
+        preprocess_text(line.strip()) for line in llm_response.split("\n")
+        if line.strip() and len(line.strip()) > 2
+    ]
 
-    response_lines = [preprocess_text(line.strip()) 
-                     for line in llm_response.split("\n") 
-                     if line.strip() and len(line.strip()) > 2]
-
-
-    with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+    with ProcessPoolExecutor(
+            max_workers=multiprocessing.cpu_count()) as executor:
         args = [(pdf_path, i, response_lines) for i in range(total_pages)]
         results = list(executor.map(process_page, args))
 
