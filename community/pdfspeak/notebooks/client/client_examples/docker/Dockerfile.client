@@ -1,0 +1,32 @@
+FROM ubuntu:22.04
+
+# Use tini init for container
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
+RUN chmod +x /bin/tini
+
+# Include files to launch jupyter notebook
+RUN mkdir -p /workspace/docker
+COPY docker/start-jupyter.sh /workspace/docker/start-jupyter.sh
+COPY docker/entrypoint.sh /workspace/docker/entrypoint.sh
+RUN chmod +x /workspace/docker/start-jupyter.sh
+RUN chmod +x /workspace/docker/entrypoint.sh
+
+# Install some dependencies and useful utiliites
+RUN apt update && apt install -y python3-pip git tree \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install the nv-ingest client library
+RUN cd /workspace \
+    && git clone https://github.com/NVIDIA/nv-ingest.git \
+    && cd /workspace/nv-ingest/client \
+    && pip install -r ./requirements.txt \
+    && pip install .
+COPY examples /workspace/client_examples/examples
+
+# Install jupyter lab
+RUN pip install jupyterlab
+
+WORKDIR /workspace/client_examples
+
+ENTRYPOINT [ "/bin/tini", "--", "/workspace/docker/entrypoint.sh" ]
