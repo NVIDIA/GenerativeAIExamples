@@ -1,0 +1,518 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: '3.3'
+
+#RIVA ASR and TTS#######################################################
+services:
+  cert-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.cert-generator
+    volumes:
+      - ./generate-certs.sh:/generate-certs.sh
+      - ./.certs:/certs
+      - ./webapp/src/main/ui/web/pdf-speak/:/web-certs
+      - ./webapp/src/main/backend/:/backend-certs
+    command: ["/bin/sh", "-c", "/generate-certs.sh && tail -f /dev/null"]
+    healthcheck:
+      test: ["CMD", "test", "-f", "/web-certs/.certs/localhost.crt"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      
+  notebook:
+    build:
+      dockerfile: docker/notebook.dockerfile
+    volumes:
+      - ./notebooks:/app/notebooks
+    env_file:
+      - ./.env
+    container_name: notebook
+    networks:
+      - app-network
+    ports:
+      - "8888:8888"
+
+  parakeet-asr:
+    image: nvcr.io/nim/nvidia/parakeet-ctc-1.1b-asr:1.0.0
+    container_name: parakeet-ctc-1.1b-asr
+    runtime: nvidia
+    shm_size: "8gb"
+    environment:
+      - NGC_API_KEY=${NIM_NGC_API_KEY:-${NGC_API_KEY:-ngcapikey}}
+      - NIM_MANIFEST_PROFILE=9136dd64-4777-11ef-9f27-37cfd56fa6ee
+      - NIM_HTTP_API_PORT=9099
+      - NIM_GRPC_API_PORT=50051
+    ports:
+      - "9099:9099"
+      - "50051:50051"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["3"]
+              capabilities: [ gpu ]
+    networks:
+      - app-network
+
+  fastpitch-tts:
+    image: nvcr.io/nim/nvidia/fastpitch-hifigan-tts:1.0.0
+    container_name: fastpitch-hifigan-tts
+    runtime: nvidia
+    shm_size: "8gb"
+    environment:
+      - NGC_API_KEY=${NIM_NGC_API_KEY:-${NGC_API_KEY:-ngcapikey}}
+      - NIM_MANIFEST_PROFILE=3c8ee3ee-477f-11ef-aa12-1b4e6406fad5
+      - NIM_HTTP_API_PORT=9001
+      - NIM_GRPC_API_PORT=50052
+    ports:
+      - "9001:9001"
+      - "50052:50052"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["3"]
+              capabilities: [ gpu ]
+    networks:
+      - app-network
+
+
+#NV-INGEST##############################################################
+
+  redis:
+    image: "redis/redis-stack"
+    ports:
+      - "6379:6379"
+    networks:
+        - app-network
+
+  yolox:
+    image: ${YOLOX_IMAGE:-nvcr.io/ohlfw0olaadg/ea-participants/nv-yolox-structured-images-v1}:${YOLOX_TAG:-0.2.0}
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+    user: root
+    environment:
+      - NIM_HTTP_API_PORT=8000
+      - NIM_TRITON_LOG_VERBOSE=1
+      - NGC_API_KEY=${NIM_NGC_API_KEY:-${NGC_API_KEY:-ngcapikey}}
+      - CUDA_VISIBLE_DEVICES=0
+      # NIM OpenTelemetry Settings
+      - NIM_OTEL_SERVICE_NAME=yolox
+      - NIM_OTEL_TRACES_EXPORTER=otlp
+      - NIM_OTEL_METRICS_EXPORTER=console
+      - NIM_OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - NIM_ENABLE_OTEL=true
+      # Triton OpenTelemetry Settings
+      - TRITON_OTEL_URL=http://otel-collector:4318/v1/traces
+      - TRITON_OTEL_RATE=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+    runtime: nvidia
+    networks:
+      - app-network
+
+  deplot:
+    image: ${DEPLOT_IMAGE:-nvcr.io/ohlfw0olaadg/ea-participants/deplot}:${DEPLOT_TAG:-1.0.0}
+    ports:
+      - "8003:8000"
+      - "8004:8001"
+      - "8005:8002"
+    user: root
+    environment:
+      - NIM_HTTP_API_PORT=8000
+      - NIM_TRITON_LOG_VERBOSE=1
+      - NGC_API_KEY=${NIM_NGC_API_KEY:-${NGC_API_KEY:-ngcapikey}}
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["2"]
+              capabilities: [gpu]
+    runtime: nvidia
+    networks:
+      - app-network
+
+  cached:
+    image: ${CACHED_IMAGE:-nvcr.io/ohlfw0olaadg/ea-participants/cached}:${CACHED_TAG:-0.2.0}
+    shm_size: 2gb
+    ports:
+      - "8006:8000"
+      - "8007:8001"
+      - "8008:8002"
+    user: root
+    environment:
+      - NIM_HTTP_API_PORT=8000
+      - NIM_TRITON_LOG_VERBOSE=1
+      - NGC_API_KEY=${NIM_NGC_API_KEY:-${NGC_API_KEY:-ngcapikey}}
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+    runtime: nvidia
+    networks:
+      - app-network
+
+  paddle:
+    image: ${PADDLE_IMAGE:-nvcr.io/ohlfw0olaadg/ea-participants/paddleocr}:${PADDLE_TAG:-0.2.0}
+    shm_size: 2gb
+    ports:
+      - "8009:8000"
+      - "8010:8001"
+      - "8011:8002"
+    user: root
+    environment:
+      - NIM_HTTP_API_PORT=8000
+      - NIM_TRITON_LOG_VERBOSE=1
+      - NGC_API_KEY=${NIM_NGC_API_KEY:-${NGC_API_KEY:-ngcapikey}}
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+    runtime: nvidia
+    networks:
+      - app-network
+
+  embedding:
+    # NIM ON
+    image: ${EMBEDDING_IMAGE:-nvcr.io/nim/nvidia/nv-embedqa-e5-v5}:${EMBEDDING_TAG:-1.1.0}
+    shm_size: 16gb
+    ports:
+      - "8012:8000"
+      - "8013:8001"
+      - "8014:8002"
+    environment:
+      - NIM_HTTP_API_PORT=8000
+      - NIM_TRITON_LOG_VERBOSE=1
+      - NGC_API_KEY=${NIM_NGC_API_KEY:-${NGC_API_KEY:-ngcapikey}}
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+    runtime: nvidia
+    networks:
+      - app-network
+
+  nv-ingest-ms-runtime:
+    image: nvcr.io/ohlfw0olaadg/ea-participants/nv-ingest:24.10.1
+    build:
+      context: ${NV_INGEST_ROOT:-.}
+      dockerfile: "./Dockerfile"
+      target: runtime
+    volumes:
+      - ${DATASET_ROOT:-./data}:/workspace/data
+    ports:
+      # HTTP API
+      - "7670:7670"
+      # Simple Broker
+      - "7671:7671"
+    cap_add:
+      - sys_nice
+    environment:
+      # Self-hosted cached endpoints.
+      - CACHED_GRPC_ENDPOINT=cached:8001
+      - CACHED_HTTP_ENDPOINT=http://cached:8000/v1/infer
+      - CACHED_INFER_PROTOCOL=grpc
+      # build.nvidia.com hosted cached endpoints.
+      #- CACHED_HTTP_ENDPOINT=https://ai.api.nvidia.com/v1/cv/university-at-buffalo/cached
+      #- CACHED_INFER_PROTOCOL=http
+      - CUDA_VISIBLE_DEVICES=0
+      #- DEPLOT_GRPC_ENDPOINT=""
+      # Self-hosted deplot endpoints.
+      - DEPLOT_HTTP_ENDPOINT=http://deplot:8000/v1/chat/completions
+      # build.nvidia.com hosted deplot
+      #- DEPLOT_HTTP_ENDPOINT=https://ai.api.nvidia.com/v1/vlm/google/deplot
+      - DEPLOT_INFER_PROTOCOL=http
+      - DOUGHNUT_GRPC_TRITON=triton-doughnut:8001
+      - EMBEDDING_NIM_MODEL_NAME=${EMBEDDING_NIM_MODEL_NAME:-nvidia/nv-embedqa-e5-v5}
+      - INGEST_LOG_LEVEL=DEFAULT
+      # Message client for development
+      #- MESSAGE_CLIENT_HOST=0.0.0.0
+      #- MESSAGE_CLIENT_PORT=7671
+      #- MESSAGE_CLIENT_TYPE=simple # Configure the ingest service to use the simple broker
+      # Message client for production
+      - MESSAGE_CLIENT_HOST=redis
+      - MESSAGE_CLIENT_PORT=6379
+      - MESSAGE_CLIENT_TYPE=redis
+      - MINIO_BUCKET=${MINIO_BUCKET:-nv-ingest}
+      - MRC_IGNORE_NUMA_CHECK=1
+      - NGC_API_KEY=${NGC_API_KEY:-ngcapikey}
+      - NVIDIA_BUILD_API_KEY=${NVIDIA_BUILD_API_KEY:-${NGC_API_KEY:-ngcapikey}}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
+      # Self-hosted paddle endpoints.
+      - PADDLE_GRPC_ENDPOINT=paddle:8001
+      - PADDLE_HTTP_ENDPOINT=http://paddle:8000/v1/infer
+      - PADDLE_INFER_PROTOCOL=grpc
+      # build.nvidia.com hosted paddle endpoints.
+      #- PADDLE_HTTP_ENDPOINT=https://ai.api.nvidia.com/v1/cv/baidu/paddleocr
+      #- PADDLE_INFER_PROTOCOL=http
+      - READY_CHECK_ALL_COMPONENTS=True
+      - REDIS_MORPHEUS_TASK_QUEUE=morpheus_task_queue
+      # Self-hosted redis endpoints.
+      - YOLOX_GRPC_ENDPOINT=yolox:8001
+      - YOLOX_HTTP_ENDPOINT=http://yolox:8000/v1/infer
+      - YOLOX_INFER_PROTOCOL=grpc
+      # build.nvidia.com hosted yolox endpoints.
+      #- YOLOX_HTTP_ENDPOINT=https://ai.api.nvidia.com/v1/cv/nvidia/nv-yolox-page-elements-v1
+      #- YOLOX_INFER_PROTOCOL=http
+      - VLM_CAPTION_ENDPOINT=https://ai.api.nvidia.com/v1/gr/meta/llama-3.2-90b-vision-instruct/chat/completions
+    healthcheck:
+      test: curl --fail http://nv-ingest-ms-runtime:7670/v1/health/ready || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+    networks:
+      - app-network
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.91.0
+    hostname: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./nv-ingest/config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "9988:9988" # Prometheus metrics exposed by the collector
+      - "8889:8889" # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "9411" # Zipkin receiver
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP/HTTP receiver
+      - "55680:55679" # zpages extension
+    depends_on:
+      - zipkin
+    networks:
+      - app-network
+
+  zipkin:
+    image: openzipkin/zipkin
+    environment:
+      JAVA_OPTS: "-Xms4g -Xmx8g -XX:+ExitOnOutOfMemoryError"
+    ports:
+      - "9411:9411" # Zipkin UI and API
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --storage.tsdb.retention.time=1h
+      - --config.file=/etc/prometheus/prometheus-config.yaml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - --web.route-prefix=/
+      - --enable-feature=exemplar-storage
+      - --enable-feature=otlp-write-receiver
+    volumes:
+      - ./nv-ingest/config/prometheus.yaml:/etc/prometheus/prometheus-config.yaml
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
+
+  grafana:
+    container_name: grafana-service
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+  etcd:
+    # Turn on to leverage the `vdb_upload` task
+    restart: always
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.5
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - ./nv-ingest/.volumes/etcd:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: [ "CMD", "etcdctl", "endpoint", "health" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    # profiles:
+    #   - retrieval
+    networks:
+      - app-network
+
+  minio:
+    # Turn on to leverage the `store` and `vdb_upload` task
+    restart: always
+    container_name: minio
+    hostname: minio
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9006:9006"
+      - "9005:9005"
+    volumes:
+      - ./nv-ingest/.volumes/minio:/minio_data
+    networks:
+      - app-network
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    # profiles:
+    #   - retrieval
+
+  milvus:
+    # Turn on to leverage the `vdb_upload` task
+    restart: always
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.4.17-gpu
+    command: [ "milvus", "run", "standalone" ]
+    hostname: milvus
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - ./nv-ingest/.volumes/milvus:/var/lib/milvus
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9091/healthz" ]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: [gpu]
+    depends_on:
+      - "etcd"
+      - "minio"
+    # profiles:
+    #   - retrieval
+    networks:
+      - app-network
+
+  attu:
+    # Turn on to leverage the `vdb_upload` task
+    restart: always
+    container_name: milvus-attu
+    image: zilliz/attu:v2.3.5
+    hostname: attu
+    environment:
+      MILVUS_URL: http://milvus:19530
+    ports:
+      - "3001:3000"
+    depends_on:
+      - "milvus"
+    # profiles:
+    #   - retrieval
+    networks:
+      - app-network
+
+#webapp#################################################################
+  frontend:
+    build:
+      context: ./webapp/src/main/ui/web/pdf-speak
+      dockerfile: Dockerfile
+    volumes:
+       - ./webapp/src/main/ui/web/pdf-speak/.certs:/app/.certs
+    ports:
+      - "3002:3000"
+    networks:
+      - app-network
+    depends_on:
+      cert-generator:
+        condition: service_healthy
+
+  frontend-server:
+    build:
+      context: ./webapp/src/main/ui/web/pdf-speak/
+      dockerfile: server/Dockerfile
+    volumes:
+      - ./webapp/src/main/ui/web/pdf-speak/.certs:/app/.certs
+      - ./webapp/src/main/ui/web/pdf-speak/server:/app/server
+    ports:
+      - "8090:8090"
+    networks:
+      - app-network
+    depends_on:
+      cert-generator:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./webapp/src/main/backend/Dockerfile
+    volumes:
+      - ./webapp/src/main/backend/.certs:/usr/src/app/.certs
+      - ./webapp/src/main/backend/audio_outputs:/usr/src/app/audio_outputs
+      - ./webapp/src/main/backend/uploads:/usr/src/app/uploads
+    env_file:
+      - ./.env
+    ports:
+      - "5050:5000"
+    networks:
+      - app-network
+    depends_on:
+      cert-generator:
+        condition: service_healthy
+
+networks:
+  app-network:
+    driver: bridge
