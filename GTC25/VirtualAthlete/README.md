@@ -1,4 +1,4 @@
-
+![](images/VirtualAthlete-HeaderImage.png)
 
 # **Virtual Athlete**
 
