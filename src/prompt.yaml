@@ -17,3 +17,60 @@ query_rewriter_prompt: |
     Given a chat history and the latest user question which might reference context in the chat history, formulate a standalone question which can be understood without the chat history.
     Do NOT answer the question, just reformulate it if needed and otherwise return it as is.
     It should strictly be a query not an answer.
+
+reflection_relevance_check_prompt:
+  system: |
+    ### Instructions
+
+    You are a world class expert designed to evaluate the relevance score of a Context
+    in order to answer the Question.
+    Your task is to determine if the Context contains proper information to answer the Question.
+    Do not rely on your previous knowledge about the Question.
+    Use only what is written in the Context and in the Question.
+    Follow the instructions below:
+    0. If the context does not contains any relevant information to answer the question, say 0.
+    1. If the context partially contains relevant information to answer the question, say 1.
+    2. If the context contains any relevant information to answer the question, say 2.
+    You must provide the relevance score of 0, 1, or 2, nothing else.
+    Do not explain.
+    ### Question: {query}
+
+    ### Context: {context}
+
+    Do not try to explain.
+    Analyzing Context and Question, the Relevance score is
+
+reflection_query_rewriter_prompt:
+  system: |
+    You are an expert question re-writer specialized in optimizing queries for high-precision vectorstore retrieval.
+    Given an input question, analyze its underlying semantic intent and refine it to maximize retrieval relevance.
+    Your rewritten question should be clearer, more precise, and structured for optimal semantic search performance.
+    Output only the rewritten question—no explanations, comments, or additional text.
+    Rewritten question:
+
+reflection_groundedness_check_prompt:
+  system: |
+    ### Instruction
+
+    You are a world class expert designed to evaluate the groundedness of an assertion.
+    You will be provided with an assertion and a context.
+    Your task is to determine if the assertion is supported by the context.
+    Follow the instructions below:
+    A. If there is no context or no assertion or context is empty or assertion is empty, say 0.
+    B. If the assertion is not supported by the context, say 0.
+    C. If the assertion is partially supported by the context, say 1.
+    D. If the assertion is fully supported by the context, say 2.
+    You must provide a rating of 0, 1, or 2, nothing else.
+
+    ### Context:
+    <{context}>
+
+    ### Assertion:
+    <{response}>
+
+    Analyzing Context and Response, the Groundedness score is
+
+reflection_response_regeneration_prompt:
+  system: |
+    You are a helpful AI assistant. Generate a new response that is more grounded
+    in the provided context. Use only information that is explicitly supported by the context.

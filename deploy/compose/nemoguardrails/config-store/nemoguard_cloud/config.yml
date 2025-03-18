@@ -1,0 +1,21 @@
+models:
+  - type: "content_safety"
+    engine: nim
+    model: nvidia/nemoguard-8b-content-safety
+    parameters:
+      base_url: https://integrate.api.nvidia.com/v1
+
+  - type: "topic_control"
+    engine: nim
+    model: nvidia/nemoguard-8b-topic-control
+    parameters:
+      base_url: https://integrate.api.nvidia.com/v1
+
+rails:
+  input:
+    flows:
+      - content safety check input $model=content_safety
+      - topic safety check input $model=topic_control
+  output:
+    flows:
+      - content safety check output $model=content_safety

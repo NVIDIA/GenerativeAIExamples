@@ -1,0 +1,80 @@
+services:
+  nemo-guardrails-microservice:
+    container_name: nemo-guardrails-microservice
+    image: nvcr.io/nvidia/nemo-microservices/guardrails:25.02
+    ports:
+      - "7331:7331"
+    volumes:
+      - ./nemoguardrails/config-store:/config-store
+    environment:
+      CONFIG_STORE_PATH: /config-store
+      NIM_ENDPOINT_API_KEY: ${NVIDIA_API_KEY}
+      NIM_ENDPOINT_URL: ${NIM_ENDPOINT_URL:-http://nim-llm:8000/v1}
+      DEFAULT_CONFIG_ID: ${DEFAULT_CONFIG:-nemoguard}
+    depends_on:
+      content-safety:
+        condition: service_healthy
+        required: false
+      topic-control:
+        condition: service_healthy
+        required: false
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:7331/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  content-safety:
+    container_name: llama-3.1-nemoguard-8b-content-safety
+    image: nvcr.io/nim/nvidia/llama-3.1-nemoguard-8b-content-safety:1.0.0
+    environment:
+      - NGC_API_KEY=${NVIDIA_API_KEY}
+      - NIM_SERVED_MODEL_NAME=llama-3.1-nemoguard-8b-content-safety
+      - NIM_CUSTOM_MODEL_NAME=llama-3.1-nemoguard-8b-content-safety
+    user: "${USERID}"
+    volumes:
+      - ${MODEL_DIRECTORY:-~/.cache/models/}:/opt/nim/.cache/
+    ports:
+      - "8123:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              device_ids: ['${CONTENT_SAFETY_GPU_ID:-7}']
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:8000/v1/health/ready')"]
+      interval: 10s
+      timeout: 20s
+      retries: 100
+
+  topic-control:
+    container_name: llama-3.1-nemoguard-8b-topic-control
+    image: nvcr.io/nim/nvidia/llama-3.1-nemoguard-8b-topic-control:1.0.0
+    environment:
+      - NGC_API_KEY=${NVIDIA_API_KEY}
+      - NIM_SERVED_MODEL_NAME=llama-3.1-nemoguard-8b-topic-control
+      - NIM_CUSTOM_MODEL_NAME=llama-3.1-nemoguard-8b-topic-control
+    user: "${USERID}"
+    volumes:
+      - ${MODEL_DIRECTORY:-~/.cache/models/}:/opt/nim/.cache/
+    ports:
+      - "8124:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              device_ids: ['${TOPIC_CONTROL_GPU_ID:-6}']
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:8000/v1/health/ready')"]
+      interval: 10s
+      timeout: 20s
+      retries: 100
+              
+networks:
+  default:
+    name: nvidia-rag

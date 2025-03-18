@@ -1,6 +1,0 @@
-apiVersion: v1
-appVersion: v1.0.0
-description: An end to end Helm chart for the NVIDIA RAG Blueprint
-name: nvidia-rag
-type: application
-version: v1.0.0

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-server
+  labels:
+    app: rag-server
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: rag-server
+  template:
+    metadata:
+      labels:
+        app: rag-server
+    spec:
+      {{- if .Values.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret.name }}
+      {{- end }}
+      containers:
+        - name: rag-server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+          - "uvicorn"
+          - "src.server:app"
+          - "--port"
+          - "8081"
+          - "--host"
+          - "0.0.0.0"
+          - "--workers"
+          - "{{ .Values.server.workers }}"
+          ports:
+            - containerPort: 8081
+
+          env:
+            {{- if .Values.envVars }}
+            {{- range $k, $v := .Values.envVars }}
+            - name: "{{ $k }}"
+              value: "{{ $v }}"
+            {{- end }}
+            {{- end }}
+          resources:
+            limits:
+              memory: "5Gi"
+            requests:
+              memory: "512Mi"

@@ -1,5 +1,0 @@
-{{ include "nim.common.v1.deployment" . }}
-{{ include "nim.common.v1.service" . }}
-{{ include "nim.common.v1.hpa" . }}
-{{ include "nim.common.v1.ingress" . }}
-{{ include "nim.common.v1.serviceAccount" . }}

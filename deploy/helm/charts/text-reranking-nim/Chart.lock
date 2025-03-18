@@ -1,6 +1,0 @@
-dependencies:
-- name: nim-library
-  repository: file://charts/library_chart/
-  version: 0.1.2
-digest: sha256:d3f0f098502c9fa516b5db5ac5183d5ca5be4f2fb49005e296ca73a5897297b5
-generated: "2024-12-16T23:18:22.594452456Z"

@@ -6,7 +6,7 @@
 # Customize LLM Parameters at Runtime
 
 The RAG server exposes an OpenAI-compatible API, using which developers can customize different LLM parameters at runtime.
-For full details, see [APIs for RAG Server](./api_reference/openapi_schema.json).
+For full details, see [APIs for RAG Server](./api_reference/openapi_schema_rag_server.json).
 
 Use the `/generate` endpoint in the RAG server of a RAG pipeline to generate responses to prompts.
 

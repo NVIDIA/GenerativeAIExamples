@@ -1,8 +1,0 @@
-Thank you for installing {{ .Chart.Name }}.
-
-**************************************************
-| It may take some time for pods to become ready |
-| while model files download                     |
-**************************************************
-
-Your NIM version is: {{ .Values.image.tag | default .Chart.AppVersion }}

@@ -48,8 +48,114 @@ class VectorStoreConfig(ConfigWizard):
     )
     index_type: str = configfield(
         "index_type",
-        default="GPU_IVF_FLAT",
+        default="GPU_CAGRA",
         help_txt="Index of the vector db",  # IVF Flat for milvus
+    )
+
+    enable_gpu_index: bool = configfield(
+        "enable_gpu_index",
+        default=True,
+        help_txt="Flag to control GPU indexing",
+    )
+
+    enable_gpu_search: bool = configfield(
+        "enable_gpu_search",
+        default=True,
+        help_txt="Flag to control GPU search",
+    )
+
+    search_type: str = configfield(
+        "search_type",
+        default="hybrid", # dense or hybrid
+        help_txt="Flag to control search type - 'dense' retrieval or 'hybrid' retrieval",
+    )
+
+
+@configclass
+class NvIngestConfig(ConfigWizard):
+    """
+    Configuration for NV-Ingest.
+    """
+    # NV-Ingest Runtime Connectivity Configuration parameters
+    message_client_hostname: str = configfield(
+        "message_client_hostname",
+        default="host.docker.internal", # TODO
+        help_txt="NV Ingest Message Client Host Name",
+    )
+
+    message_client_port: int = configfield(
+        "message_client_port",
+        default=7670,
+        help_txt="NV Ingest Message Client Port",
+    )
+
+    # Extraction Configuration Parameters (Add additional parameters here)
+    extract_text: bool = configfield(
+        "extract_text",
+        default=True,
+        help_txt="Enable extract text for nv-ingest extraction",
+    )
+
+    extract_tables: bool = configfield(
+        "extract_tables",
+        default=True,
+        help_txt="Enable extract tables for nv-ingest extraction",
+    )
+
+    extract_charts: bool = configfield(
+        "extract_charts",
+        default=True,
+        help_txt="Enable extract charts for nv-ingest extraction",
+    )
+
+    extract_images: bool = configfield(
+        "extract_images",
+        default=True,
+        help_txt="Enable extract images for nv-ingest extraction",
+    )
+
+    extract_method: str = configfield(
+        "extract_method",
+        default="pdfium", # Literal['pdfium','nemoretriever_parse','haystack','llama_parse','tika','unstructured_io']
+        help_txt="Extract method 'pdfium', 'nemoretriever_parse', 'haystack', 'llama_parse', 'tika', 'unstructured_io'",
+    )
+
+    text_depth: str = configfield(
+        "text_depth",
+        default="page", # Literal['page', 'document']
+        help_txt="Extract text by 'page' or 'document'",
+    )
+
+    # Splitting Configuration Parameters (Add additional parameters here)
+    tokenizer: str = configfield(
+        "tokenizer",
+        default="intfloat/e5-large-unsupervised", # Literal["intfloat/e5-large-unsupervised" , "meta-llama/Llama-3.2-1B"]
+        help_txt="Tokenizer for text splitting.",
+    )
+
+    chunk_size: int = configfield(
+        "chunk_size",
+        default=1024,
+        help_txt="Chunk size for text splitting.",
+    )
+
+    chunk_overlap: int = configfield(
+        "chunk_overlap",
+        default=150,
+        help_txt="Chunk overlap for text splitting.",
+    )
+
+    # Captioning Configuration Parameters
+    caption_model_name: str = configfield(
+        "caption_model_name",
+        default="meta/llama-3.2-11b-vision-instruct",
+        help_txt="NV Ingest Captioning model name",
+    )
+
+    caption_endpoint_url: str = configfield(
+        "caption_endpoint_url",
+        default="https://ai.api.nvidia.com/v1/gr/meta/llama-3.2-11b-vision-instruct/chat/completions",
+        help_txt="NV Ingest Captioning model Endpoint URL",
     )
 
 
@@ -81,6 +187,23 @@ class LLMConfig(ConfigWizard):
         default="ai-mixtral-8x7b-instruct",
         help_txt="The name of the ai catalog model to be used with PandasAI agent",
     )
+
+
+@configclass
+class QueryRewriterConfig(ConfigWizard):
+    """Configuration class for the Query Rewriter.
+    """
+    model_name: str = configfield(
+        "model_name",
+        default="meta/llama-3.1-8b-instruct",
+        help_txt="The llm name of the query rewriter model",
+    )
+    server_url: str = configfield(
+        "server_url",
+        default="",
+        help_txt="The location of the query rewriter model.",
+    )
+    # TODO: Add temperature, top_p, max_tokens
 
 
 @configclass
@@ -127,7 +250,7 @@ class EmbeddingConfig(ConfigWizard):
     )
     dimensions: int = configfield(
         "dimensions",
-        default=1024,
+        default=2048,
         help_txt="The required dimensions of the embedding model. Currently utilized for vector DB indexing.",
     )
     server_url: str = configfield(
@@ -190,6 +313,26 @@ class RetrieverConfig(ConfigWizard):
         help_txt="The name of the nemo retriever pipeline one of ranked_hybrid or hybrid",
     )
 
+@configclass 
+class TracingConfig(ConfigWizard):
+    """Configuration class for Open Telemetry Tracing.
+    """
+    enabled: bool = configfield(
+        "enabled",
+        default=False,
+        help_txt="Enable Open Telemetry Tracing",
+    )
+    otlp_http_endpoint: str = configfield(
+        "otlp_http_endpoint",
+        default="",
+        help_txt=""
+    )
+    otlp_grpc_endpoint: str = configfield(
+        "otlp_grpc_endpoint",
+        default="",
+        help_txt=""
+    )
+
 
 @configclass
 class AppConfig(ConfigWizard):
@@ -219,6 +362,12 @@ class AppConfig(ConfigWizard):
         help_txt="The configuration for the server hosting the Large Language Models.",
         default=LLMConfig(),
     )
+    query_rewriter: QueryRewriterConfig = configfield(
+        "query_rewriter",
+        env=False,
+        help_txt="The configuration for the query rewriter.",
+        default=QueryRewriterConfig(),
+    )
     text_splitter: TextSplitterConfig = configfield(
         "text_splitter",
         env=False,
@@ -242,4 +391,16 @@ class AppConfig(ConfigWizard):
         env=False,
         help_txt="The configuration of the retriever pipeline.",
         default=RetrieverConfig(),
+    )
+    nv_ingest: NvIngestConfig = configfield(
+        "nv_ingest",
+        env=False,
+        help_txt="The configuration for nv-ingest.",
+        default=NvIngestConfig(),
+    )
+    tracing: TracingConfig = configfield(
+        "tracing", 
+        env=False, 
+        help_txt="",
+        default=TracingConfig()
     )

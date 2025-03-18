@@ -13,8 +13,8 @@ You can customize these prompts to fit your specific needs and achieve desired r
 
 ## Example: Access a Prompt
 
-The `prompt.yaml` file is loaded as a Python dictionary in the application.
-To access this dictionary, use the `get_prompts()` function provided by the `utils` module.
+The [`prompt.yaml`](../src/prompt.yaml) file is loaded as a Python dictionary in the application.
+To access this dictionary, use the [`get_prompts()`](../src/utils.py#L150) function provided by the [`utils`](../src/utils.py) module.
 
 For example, if we have the following `prompt.yaml` file:
 
@@ -46,14 +46,14 @@ chat_template = prompts.get("chat_template", "")
 
 Use the following procedure to create a template that makes the LLM respond as a pirate.
 
-1. Add a new template to `prompt.yaml`:
+1. Add a new template to [`prompt.yaml`](../src/prompt.yaml):
 
    ```yaml
    pirate_template: |
       You are a pirate and for every question you are asked you respond in the same way.
    ```
 
-1. Update the `llm_chain` method in `chains.py` and use `pirate_template` to generate responses.
+2. Update the [`llm_chain`](../src/chains.py#L130) method in [`chains.py`](../src/chains.py) and use `pirate_template` to generate responses.
 
    ```python3
     def llm_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
@@ -81,8 +81,8 @@ Use the following procedure to create a template that makes the LLM respond as a
         return chain.stream({"query_str": query})
    ```
 
-1. Restart the service by running the following code.
+3. Restart the service by running the following code.
 
    ```console
-   docker compose -f deploy/compose/docker-compose.yaml up -d --build
+   docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d --build
    ```

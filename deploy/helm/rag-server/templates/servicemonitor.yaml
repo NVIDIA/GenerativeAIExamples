@@ -1,0 +1,24 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}-opentelemetry-collector-monitor
+  labels:
+    release: {{ .Release.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    component: standalone-collector
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opentelemetry-collector
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/managed-by: {{ .Release.Service }}
+      component: standalone-collector
+  endpoints:
+    - port: metrics
+      interval: 15s
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+{{- end }}

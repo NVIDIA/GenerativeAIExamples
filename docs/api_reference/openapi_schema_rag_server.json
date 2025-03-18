@@ -1,0 +1,1138 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "APIs for NVIDIA RAG Server",
+    "description": "This API schema describes all the retriever endpoints exposed for NVIDIA RAG server Blueprint",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/v1"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health APIs"
+        ],
+        "summary": "Health Check",
+        "description": "Perform a Health Check\n\nArgs:\n    check_dependencies: If True, check health of all dependent services. \n                       If False (default), only report that the API service is up.\n\nReturns 200 when service is up and includes health status of all dependent services when requested.",
+        "operationId": "health_check_health_get",
+        "parameters": [
+          {
+            "name": "check_dependencies",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Check Dependencies"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Internal server error occurred"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate": {
+      "post": {
+        "tags": [
+          "RAG APIs"
+        ],
+        "summary": "Generate Answer",
+        "description": "Generate and stream the response to the provided prompt.",
+        "operationId": "generate_answer_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Prompt"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainResponse"
+                }
+              }
+            }
+          },
+          "499": {
+            "description": "Client Closed Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "The client cancelled the request"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Internal server error occurred"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/completions": {
+      "post": {
+        "tags": [
+          "RAG APIs"
+        ],
+        "summary": "V1 Chat Completions",
+        "description": "Just an alias function to /generate endpoint which is openai compatible",
+        "operationId": "v1_chat_completions_chat_completions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Prompt"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Internal server error occurred"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "post": {
+        "tags": [
+          "Retrieval APIs"
+        ],
+        "summary": "Document Search",
+        "description": "Search for the most relevant documents for the given search parameters.",
+        "operationId": "document_search_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentSearch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Citations"
+                }
+              }
+            }
+          },
+          "499": {
+            "description": "Client Closed Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "The client cancelled the request"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Internal server error occurred"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChainResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 100000,
+            "pattern": "[\\s\\S]*",
+            "title": "Id",
+            "default": ""
+          },
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/ChainResponseChoices"
+            },
+            "type": "array",
+            "maxItems": 256,
+            "title": "Choices",
+            "default": []
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 4096,
+            "pattern": "[\\s\\S]*",
+            "title": "Model",
+            "default": ""
+          },
+          "object": {
+            "type": "string",
+            "maxLength": 4096,
+            "pattern": "[\\s\\S]*",
+            "title": "Object",
+            "default": ""
+          },
+          "created": {
+            "type": "integer",
+            "maximum": 9999999999,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Created",
+            "default": 0
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Usage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Token usage statistics",
+            "default": {
+              "total_tokens": 0,
+              "prompt_tokens": 0,
+              "completion_tokens": 0
+            }
+          },
+          "citations": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Citations"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Source documents used for the response",
+            "default": {
+              "total_results": 0,
+              "results": []
+            }
+          }
+        },
+        "type": "object",
+        "title": "ChainResponse",
+        "description": "Definition of Chain APIs resopnse data type"
+      },
+      "ChainResponseChoices": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "maximum": 256,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Index",
+            "default": 0
+          },
+          "message": {
+            "$ref": "#/components/schemas/Message",
+            "default": {
+              "role": "assistant",
+              "content": ""
+            }
+          },
+          "delta": {
+            "$ref": "#/components/schemas/Message",
+            "default": {
+              "content": ""
+            }
+          },
+          "finish_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4096,
+                "pattern": "[\\s\\S]*"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finish Reason"
+          }
+        },
+        "type": "object",
+        "title": "ChainResponseChoices",
+        "description": "Definition of Chain response choices"
+      },
+      "Citations": {
+        "properties": {
+          "total_results": {
+            "type": "integer",
+            "maximum": 1000000,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Total Results",
+            "description": "Total number of source documents found",
+            "default": 0
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SourceResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "List of document results",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "Citations",
+        "description": "Represents the sources section of the API response."
+      },
+      "DatabaseHealthInfo": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms",
+            "default": 0
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "collections": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service",
+          "url",
+          "status"
+        ],
+        "title": "DatabaseHealthInfo",
+        "description": "Health info specific to database services"
+      },
+      "DocumentSearch": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 131072,
+            "pattern": "[\\s\\S]*",
+            "title": "Query",
+            "description": "The content or keywords to search for within documents.",
+            "default": ""
+          },
+          "reranker_top_k": {
+            "type": "integer",
+            "maximum": 25,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Reranker Top K",
+            "description": "Number of document chunks to retrieve.",
+            "default": 10
+          },
+          "vdb_top_k": {
+            "type": "integer",
+            "maximum": 400,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Vdb Top K",
+            "description": "Number of top results to retrieve from the vector database.",
+            "default": 100
+          },
+          "vdb_endpoint": {
+            "type": "string",
+            "title": "Vdb Endpoint",
+            "description": "Endpoint url of the vector database server.",
+            "default": "http://milvus:19530"
+          },
+          "collection_name": {
+            "type": "string",
+            "maxLength": 4096,
+            "pattern": "[\\s\\S]*",
+            "title": "Collection Name",
+            "description": "Name of collection to be used for searching document.",
+            "default": "multimodal_data"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "type": "array",
+            "maxItems": 50000,
+            "title": "Messages",
+            "description": "A list of messages comprising the conversation so far. The roles of the messages must be alternating between user and assistant. The last input message should have role user. A message with the the system role is optional, and must be the very first message if it is present."
+          },
+          "enable_query_rewriting": {
+            "type": "boolean",
+            "title": "Enable Query Rewriting",
+            "description": "Enable or disable query rewriting.",
+            "default": false
+          },
+          "enable_reranker": {
+            "type": "boolean",
+            "title": "Enable Reranker",
+            "description": "Enable or disable reranking by the ranker model.",
+            "default": true
+          },
+          "embedding_model": {
+            "type": "string",
+            "maxLength": 256,
+            "title": "Embedding Model",
+            "description": "Name of the embedding model used for vectorization.",
+            "default": "nvidia/llama-3.2-nv-embedqa-1b-v2"
+          },
+          "embedding_endpoint": {
+            "type": "string",
+            "maxLength": 2048,
+            "title": "Embedding Endpoint",
+            "description": "Endpoint URL for the embedding model server.",
+            "default": "nemoretriever-embedding-ms:8000"
+          },
+          "reranker_model": {
+            "type": "string",
+            "maxLength": 256,
+            "title": "Reranker Model",
+            "description": "Name of the reranker model used for ranking results.",
+            "default": "nvidia/llama-3.2-nv-rerankqa-1b-v2"
+          },
+          "reranker_endpoint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reranker Endpoint",
+            "description": "Endpoint URL for the reranker model server.",
+            "default": "nemoretriever-ranking-ms:8000"
+          }
+        },
+        "type": "object",
+        "required": [
+          "messages"
+        ],
+        "title": "DocumentSearch",
+        "description": "Definition of the DocumentSearch API data type."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 4096,
+            "pattern": "[\\s\\S]*",
+            "title": "Message",
+            "default": "Service is up."
+          },
+          "databases": {
+            "items": {
+              "$ref": "#/components/schemas/DatabaseHealthInfo"
+            },
+            "type": "array",
+            "title": "Databases"
+          },
+          "object_storage": {
+            "items": {
+              "$ref": "#/components/schemas/StorageHealthInfo"
+            },
+            "type": "array",
+            "title": "Object Storage"
+          },
+          "nim": {
+            "items": {
+              "$ref": "#/components/schemas/NIMServiceHealthInfo"
+            },
+            "type": "array",
+            "title": "Nim"
+          }
+        },
+        "type": "object",
+        "title": "HealthResponse",
+        "description": "Overall health response with specialized fields for each service type"
+      },
+      "Message": {
+        "properties": {
+          "role": {
+            "enum": [
+              "user",
+              "assistant",
+              "system",
+              null],
+            "title": "Role",
+            "description": "Role for a message: either 'user' or 'assistant' or 'system",
+            "default": "user"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 131072,
+            "pattern": "[\\s\\S]*",
+            "title": "Content",
+            "description": "The input query/prompt to the pipeline.",
+            "default": "Hello! What can you help me with?"
+          }
+        },
+        "type": "object",
+        "title": "Message",
+        "description": "Definition of the Chat Message type."
+      },
+      "NIMServiceHealthInfo": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms",
+            "default": 0
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service",
+          "url",
+          "status"
+        ],
+        "title": "NIMServiceHealthInfo",
+        "description": "Health info specific to NIM services (LLM, embeddings, etc.)"
+      },
+      "Prompt": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "type": "array",
+            "maxItems": 50000,
+            "title": "Messages",
+            "description": "A list of messages comprising the conversation so far. The roles of the messages must be alternating between user and assistant. The last input message should have role user. A message with the the system role is optional, and must be the very first message if it is present."
+          },
+          "use_knowledge_base": {
+            "type": "boolean",
+            "title": "Use Knowledge Base",
+            "description": "Whether to use a knowledge base",
+            "default": true
+          },
+          "temperature": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0.1,
+            "title": "Temperature",
+            "description": "The sampling temperature to use for text generation. The higher the temperature value is, the less deterministic the output text will be. It is not recommended to modify both temperature and top_p in the same call.",
+            "default": 0.2
+          },
+          "top_p": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0.1,
+            "title": "Top P",
+            "description": "The top-p sampling mass used for text generation. The top-p value determines the probability mass that is sampled at sampling time. For example, if top_p = 0.2, only the most likely tokens (summing to 0.2 cumulative probability) will be sampled. It is not recommended to modify both temperature and top_p in the same call.",
+            "default": 0.7
+          },
+          "max_tokens": {
+            "type": "integer",
+            "maximum": 128000,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Max Tokens",
+            "description": "The maximum number of tokens to generate in any given call. Note that the model is not aware of this value,  and generation will simply stop at the number of tokens specified.",
+            "default": 1024
+          },
+          "reranker_top_k": {
+            "type": "integer",
+            "maximum": 25,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Reranker Top K",
+            "description": "The maximum number of documents to return in the response.",
+            "default": 10
+          },
+          "vdb_top_k": {
+            "type": "integer",
+            "maximum": 400,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Vdb Top K",
+            "description": "Number of top results to retrieve from the vector database.",
+            "default": 100
+          },
+          "vdb_endpoint": {
+            "type": "string",
+            "title": "Vdb Endpoint",
+            "description": "Endpoint url of the vector database server.",
+            "default": "http://milvus:19530"
+          },
+          "collection_name": {
+            "type": "string",
+            "maxLength": 4096,
+            "pattern": "[\\s\\S]*",
+            "title": "Collection Name",
+            "description": "Name of collection to be used for inference.",
+            "default": "multimodal_data"
+          },
+          "enable_query_rewriting": {
+            "type": "boolean",
+            "title": "Enable Query Rewriting",
+            "description": "Enable or disable query rewriting.",
+            "default": false
+          },
+          "enable_reranker": {
+            "type": "boolean",
+            "title": "Enable Reranker",
+            "description": "Enable or disable reranking by the ranker model.",
+            "default": true
+          },
+          "enable_guardrails": {
+            "type": "boolean",
+            "title": "Enable Guardrails",
+            "description": "Enable or disable guardrailing of queries/responses.",
+            "default": false
+          },
+          "enable_citations": {
+            "type": "boolean",
+            "title": "Enable Citations",
+            "description": "Enable or disable citations as part of response.",
+            "default": true
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 4096,
+            "pattern": "[\\s\\S]*",
+            "title": "Model",
+            "description": "Name of NIM LLM model to be used for inference.",
+            "default": "meta/llama-3.1-70b-instruct"
+          },
+          "llm_endpoint": {
+            "type": "string",
+            "maxLength": 2048,
+            "title": "Llm Endpoint",
+            "description": "Endpoint URL for the llm model server.",
+            "default": "nim-llm:8000"
+          },
+          "embedding_model": {
+            "type": "string",
+            "maxLength": 256,
+            "title": "Embedding Model",
+            "description": "Name of the embedding model used for vectorization.",
+            "default": "nvidia/llama-3.2-nv-embedqa-1b-v2"
+          },
+          "embedding_endpoint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Endpoint",
+            "description": "Endpoint URL for the embedding model server.",
+            "default": "nemoretriever-embedding-ms:8000"
+          },
+          "reranker_model": {
+            "type": "string",
+            "maxLength": 256,
+            "title": "Reranker Model",
+            "description": "Name of the reranker model used for ranking results.",
+            "default": "nvidia/llama-3.2-nv-rerankqa-1b-v2"
+          },
+          "reranker_endpoint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reranker Endpoint",
+            "description": "Endpoint URL for the reranker model server.",
+            "default": "nemoretriever-ranking-ms:8000"
+          },
+          "stop": {
+            "items": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "type": "array",
+            "maxItems": 256,
+            "title": "Stop",
+            "description": "A string or a list of strings where the API will stop generating further tokens.The returned text will not contain the stop sequence.",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "messages"
+        ],
+        "title": "Prompt",
+        "description": "Definition of the Prompt API data type."
+      },
+      "SourceMetadata": {
+        "properties": {
+          "language": {
+            "type": "string",
+            "maxLength": 100000,
+            "pattern": "[\\s\\S]*",
+            "title": "Language",
+            "description": "Language of the document",
+            "default": ""
+          },
+          "date_created": {
+            "type": "string",
+            "maxLength": 100000,
+            "pattern": "[\\s\\S]*",
+            "title": "Date Created",
+            "description": "Creation date of the document",
+            "default": ""
+          },
+          "last_modified": {
+            "type": "string",
+            "maxLength": 100000,
+            "pattern": "[\\s\\S]*",
+            "title": "Last Modified",
+            "description": "Last modification date",
+            "default": ""
+          },
+          "page_number": {
+            "type": "integer",
+            "maximum": 1000000,
+            "minimum": -1,
+            "format": "int64",
+            "title": "Page Number",
+            "description": "Page number in the document",
+            "default": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 100000,
+            "pattern": "[\\s\\S]*",
+            "title": "Description",
+            "description": "Description of the document content",
+            "default": ""
+          },
+          "height": {
+            "type": "integer",
+            "maximum": 100000,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Height",
+            "description": "Height of the document in pixels",
+            "default": 0
+          },
+          "width": {
+            "type": "integer",
+            "maximum": 100000,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Width",
+            "description": "Width of the document in pixels",
+            "default": 0
+          },
+          "location": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Location",
+            "description": "Bounding box location of the content",
+            "default": []
+          },
+          "location_max_dimensions": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Location Max Dimensions",
+            "description": "Maximum dimensions of the document",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "SourceMetadata",
+        "description": "Metadata associated with a document source."
+      },
+      "SourceResult": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "maxLength": 100000,
+            "pattern": "[\\s\\S]*",
+            "title": "Document Id",
+            "description": "Unique identifier of the document",
+            "default": ""
+          },
+          "content": {
+            "type": "string",
+            "pattern": "[\\s\\S]*",
+            "title": "Content",
+            "description": "Extracted content from the document",
+            "default": ""
+          },
+          "document_name": {
+            "type": "string",
+            "maxLength": 100000,
+            "pattern": "[\\s\\S]*",
+            "title": "Document Name",
+            "description": "Name of the document",
+            "default": ""
+          },
+          "document_type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "text",
+              "table",
+              "chart"
+            ],
+            "title": "Document Type",
+            "description": "Type of document content",
+            "default": "text"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score",
+            "description": "Relevance score of the document",
+            "default": 0
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/SourceMetadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metadata"
+        ],
+        "title": "SourceResult",
+        "description": "Represents a single source document result."
+      },
+      "StorageHealthInfo": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms",
+            "default": 0
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "buckets": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buckets"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service",
+          "url",
+          "status"
+        ],
+        "title": "StorageHealthInfo",
+        "description": "Health info specific to object storage services"
+      },
+      "Usage": {
+        "properties": {
+          "total_tokens": {
+            "type": "integer",
+            "maximum": 1000000000,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Total Tokens",
+            "description": "Total tokens used in the request",
+            "default": 0
+          },
+          "prompt_tokens": {
+            "type": "integer",
+            "maximum": 1000000000,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Prompt Tokens",
+            "description": "Tokens used for the prompt",
+            "default": 0
+          },
+          "completion_tokens": {
+            "type": "integer",
+            "maximum": 1000000000,
+            "minimum": 0,
+            "format": "int64",
+            "title": "Completion Tokens",
+            "description": "Tokens used for the completion",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "Usage",
+        "description": "Token usage information."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health APIs",
+      "description": "APIs for checking and monitoring server liveliness and readiness."
+    },
+    {
+      "name": "Retrieval APIs",
+      "description": "APIs for retrieving document chunks for a query."
+    },
+    {
+      "name": "RAG APIs",
+      "description": "APIs for retrieval followed by generation."
+    }
+  ]
+}

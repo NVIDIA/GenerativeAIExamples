@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestor-server
+  labels:
+    app: ingestor-server
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: ingestor-server
+  template:
+    metadata:
+      labels:
+        app: ingestor-server
+    spec:
+      {{- if .Values.imagePullSecret.name }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret.name }}
+      {{- end }}
+      containers:
+        - name: ingestor-server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+          - "uvicorn"
+          - "src.ingestor_server.server:app"
+          - "--port"
+          - "8082"
+          - "--host"
+          - "0.0.0.0"
+          - "--workers"
+          - "{{ .Values.server.workers }}"
+          ports:
+            - containerPort: 8082
+          env:
+            {{- if .Values.envVars }}
+            {{- range $k, $v := .Values.envVars }}
+            - name: "{{ $k }}"
+              value: "{{ $v }}"
+            {{- end }}
+            {{- end }}
+          resources:
+            limits:
+              memory: "5Gi"
+            requests:
+              memory: "512Mi"

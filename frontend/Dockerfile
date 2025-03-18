@@ -1,48 +1,40 @@
-ARG BASE_IMAGE_URL=nvcr.io/nvidia/base/ubuntu
-ARG BASE_IMAGE_TAG=22.04_20240212
+FROM nvcr.io/nvidia/base/ubuntu:22.04_20240212
 
-FROM ${BASE_IMAGE_URL}:${BASE_IMAGE_TAG}
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg2 \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV DEBIAN_FRONTEND noninteractive
-
-# Install required ubuntu packages for setting up python 3.10
-RUN apt update && \
-    apt install -y openssl libgl1 linux-libc-dev libksba8 curl software-properties-common build-essential libssl-dev libffi-dev && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt update && apt install -y python3.10 python3.10-dev python3.10-distutils
-
-# Install pip for python3.10
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
-
-RUN rm -rf /var/lib/apt/lists/*
-
-# Download the sources of apt packages within the container for standard legal compliance
-RUN sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list
-RUN apt update
-# xz-utils is needed to pull the source and unpack them correctly
-RUN apt install xz-utils -y
-RUN mkdir -p /legal/source
-WORKDIR /legal/source
-# Read installed packages, strip all but the package names, pipe to 'apt source' to download respective packages
-RUN apt list --installed |  grep -i installed | sed 's|\(.*\)/.*|\1|' | xargs apt source --download-only
-# The source is saved in directories as well as tarballs in the current dir
-RUN rm xz-utils*
+# Copy license information
+RUN mkdir -p /legal
 COPY LICENSE-3rd-party.txt /legal/
 
-# Install all custom python dependencies
-RUN mkdir /app
-COPY ./frontend/requirements.txt /app
-RUN apt-get update; \
-    apt-get upgrade -y; \
-    pip3 --no-cache-dir install -r /app/requirements.txt;
-
-# Uninstall build packages
-RUN apt autoremove -y openssl libgl1 linux-libc-dev libksba8 curl software-properties-common build-essential libssl-dev libffi-dev python3.10-dev python3.10-distutils
-
-RUN apt-get clean
-
-COPY ./frontend /app/frontend
-
 WORKDIR /app
-ENTRYPOINT ["python3.10", "-m", "frontend"]
+
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y nodejs
+
+RUN node -v && npm -v
+
+ARG NEXT_PUBLIC_MODEL_NAME
+ARG NEXT_PUBLIC_EMBEDDING_MODEL
+ARG NEXT_PUBLIC_RERANKER_MODEL
+ARG NEXT_PUBLIC_CHAT_BASE_URL
+ARG NEXT_PUBLIC_VDB_BASE_URL
+
+ENV NEXT_PUBLIC_MODEL_NAME=${NEXT_PUBLIC_MODEL_NAME}
+ENV NEXT_PUBLIC_EMBEDDING_MODEL=${NEXT_PUBLIC_EMBEDDING_MODEL}
+ENV NEXT_PUBLIC_RERANKER_MODEL=${NEXT_PUBLIC_RERANKER_MODEL}
+ENV NEXT_PUBLIC_CHAT_BASE_URL=${NEXT_PUBLIC_CHAT_BASE_URL}
+ENV NEXT_PUBLIC_VDB_BASE_URL=${NEXT_PUBLIC_VDB_BASE_URL}
+
+COPY . /app
+
+RUN npm install
+
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start"]

@@ -6,7 +6,7 @@
 # Customizing Multi-Turn Conversations
 
 The RAG server exposes an OpenAI-compatible API, using which developers can provide custom conversation history.
-For full details, see [APIs for RAG Server](./api_reference/openapi_schema.json).
+For full details, see [APIs for RAG Server](./api_reference/openapi_schema_rag_server.json).
 
 Use the `/generate` endpoint in the RAG server of a RAG pipeline to generate responses to prompts using custom conversation history.
 
@@ -48,3 +48,5 @@ The following example payload includes a `messages` parameter that passes a cust
     "use_knowledge_base": true
 }
 ```
+
+[!TIP]: For better accuracy of multi-turn queries, consider [enabling query rewriting](./query_rewriter.md).

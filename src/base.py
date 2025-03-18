@@ -17,9 +17,8 @@
 from abc import ABC
 from abc import abstractmethod
 from typing import Generator
-from typing import List
+from typing import List, Dict, Any
 
-from .server import Message
 
 
 class BaseExample(ABC):
@@ -29,7 +28,7 @@ class BaseExample(ABC):
     """
 
     @abstractmethod
-    def llm_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
+    def llm_chain(self, query: str, chat_history: List[Dict[str, Any]], **kwargs) -> Generator[str, None, None]:
         """Implements the LLM chain logic specific to the example.
         It's called when the `/generate` API is invoked with `use_knowledge_base` set to `False`.
 
@@ -45,7 +44,7 @@ class BaseExample(ABC):
         pass
 
     @abstractmethod
-    def rag_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
+    def rag_chain(self, query: str, chat_history: List[Dict[str, Any]], **kwargs) -> Generator[str, None, None]:
         """Implements the RAG chain logic specific to the example.
         It's called when the `/generate` API is invoked with `use_knowledge_base` set to `True`.
 

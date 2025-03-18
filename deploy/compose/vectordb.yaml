@@ -3,8 +3,7 @@ services:
   # Milvus can be made GPU accelerated by uncommenting the lines as specified below
   milvus:
     container_name: milvus-standalone
-    image: milvusdb/milvus:v2.4.4
-    # image: milvusdb/milvus:v2.4.4-gpu # Uncomment to enable GPU acceleration
+    image: milvusdb/milvus:v2.5.3-gpu # milvusdb/milvus:v2.5.3 for CPU
     command: ["milvus", "run", "standalone"]
     environment:
       ETCD_ENDPOINTS: etcd:2379
@@ -24,19 +23,21 @@ services:
     depends_on:
       - "etcd"
       - "minio"
-    # deploy: # Uncomment to enable GPU acceleration
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           capabilities: ["gpu"]
-    #           # count: ${INFERENCE_GPU_COUNT:-all}
-    #           device_ids: ['${VECTORSTORE_GPU_DEVICE_ID:-0}']
-    profiles: ["milvus", "", "local-nim"]
+    # Comment out this section if CPU based image is used and set below env variables to False
+    # export APP_VECTORSTORE_ENABLEGPUSEARCH=False
+    # export APP_VECTORSTORE_ENABLEGPUINDEX=False
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: ["gpu"]
+              # count: ${INFERENCE_GPU_COUNT:-all}
+              device_ids: ['${VECTORSTORE_GPU_DEVICE_ID:-0}']
 
   etcd:
     container_name: milvus-etcd
-    image: quay.io/coreos/etcd:v3.5.15
+    image: quay.io/coreos/etcd:v3.5.19
     environment:
       - ETCD_AUTO_COMPACTION_MODE=revision
       - ETCD_AUTO_COMPACTION_RETENTION=1000
@@ -50,11 +51,10 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
-    profiles: ["milvus", "", "local-nim"]
 
   minio:
     container_name: milvus-minio
-    image: minio/minio:RELEASE.2024-05-01T01-11-10Z
+    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
     environment:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
@@ -69,7 +69,6 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
-    profiles: ["milvus", "", "local-nim"]
 
 networks:
   default:

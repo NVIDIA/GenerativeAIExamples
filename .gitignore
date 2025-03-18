@@ -17,16 +17,6 @@ uploaded_files/
 
 # File from docs builds
 docs/_*
-docs/notebooks
-docs/experimental
-docs/tools
-
-# Developing examples
-RAG/examples/simple_rag_api_catalog/
-RAG/examples/simple-rag-api-catalog.yaml
 
 # Notebook checkpoints
-RAG/notebooks/langchain/.ipynb_checkpoints
-RAG/notebooks/langchain/data/nv_embedding
-RAG/notebooks/langchain/data/save_embedding
 notebooks/.ipynb_checkpoints

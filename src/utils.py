@@ -18,14 +18,20 @@ import os
 from functools import lru_cache
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 from typing import Callable
 from typing import Dict
 from typing import List
+from typing import Any
 from typing import Optional
 from urllib.parse import urlparse
 
+import requests
 import yaml
+import math
+import aiohttp
+import asyncio
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -52,27 +58,72 @@ except Exception:
     logger.error("Optional langchain API Catalog connector langchain_nvidia_ai_endpoints not installed.")
 
 try:
+    from langchain_openai import ChatOpenAI
+except Exception:
+    logger.warning("Optional langchain_openai module not installed.")
+
+try:
     from langchain_community.docstore.in_memory import InMemoryDocstore
     from langchain_community.embeddings import HuggingFaceEmbeddings
-    from langchain_community.vectorstores import Milvus
 except Exception:
     logger.warning("Optional Langchain module langchain_community not installed.")
+
+try:
+    from langchain_milvus import Milvus, BM25BuiltInFunction
+except Exception:
+    logger.warning("Optional Langchain module langchain_milvus not installed.")
 
 # pylint: disable=ungrouped-imports, wrong-import-position
 from langchain.llms.base import LLM  # noqa: E402  # pylint: disable=no-name-in-module
 from langchain_core.documents.compressor import BaseDocumentCompressor  # noqa: E402
 from langchain_core.embeddings import Embeddings  # noqa: E402
 from langchain_core.language_models.chat_models import SimpleChatModel  # noqa: E402
+from pymilvus import connections, utility, Collection
 
+try:
+    from nv_ingest_client.client import NvIngestClient, Ingestor
+    from nv_ingest_client.util.milvus import create_nvingest_collection
+except Exception:
+    logger.warning("Optional nv_ingest_client module not installed.")
+
+from src.minio_operator import MinioOperator
 from . import configuration  # noqa: E402
 
 if TYPE_CHECKING:
     from .configuration_wizard import ConfigWizard
 
 DEFAULT_MAX_CONTEXT = 1500
+ENABLE_NV_INGEST_VDB_UPLOAD = True # When enabled entire ingestion would be performed using nv-ingest
 
 # pylint: disable=unnecessary-lambda-assignment
 
+def get_env_variable(
+        variable_name: str,
+        default_value: Any
+    ) -> Any:
+    """
+    Get an environment variable with a fallback to a default value.
+    Also checks if the variable is set, is not empty, and is not longer than 256 characters.
+    
+    Args:
+        variable_name (str): The name of the environment variable to get
+        
+    Returns:
+        Any: The value of the environment variable or the default value if the variable is not set
+    """
+    var = os.environ.get(variable_name)
+
+    # Check if variable is set
+    if var is None:
+        logger.warning(f"Environment variable {variable_name} is not set. Using default value: {default_value}")
+        var = default_value
+
+    # Check min and max length of variable
+    if len(var) > 256 or len(var) == 0:
+        logger.warning(f"Environment variable {variable_name} is longer than 256 characters or empty. Using default value: {default_value}")
+        var = default_value
+
+    return var
 
 def utils_cache(func: Callable) -> Callable:
     """Use this to convert unhashable args to hashable ones"""
@@ -125,31 +176,68 @@ def get_prompts() -> Dict:
     return config
 
 
-def create_vectorstore_langchain(document_embedder, collection_name: str = "") -> VectorStore:
+def create_vectorstore_langchain(document_embedder, collection_name: str = "", vdb_endpoint: str = "") -> VectorStore:
     """Create the vector db index for langchain."""
 
     config = get_config()
 
+    if vdb_endpoint == "":
+        vdb_endpoint = config.vector_store.url
+
     if config.vector_store.name == "milvus":
-        logger.info("Using milvus collection: %s", collection_name)
+        logger.info("Trying to connect to milvus collection: %s", collection_name)
         if not collection_name:
             collection_name = os.getenv('COLLECTION_NAME', "vector_db")
 
-        logger.info("Using milvus collection: %s", collection_name)
-        url = urlparse(config.vector_store.url)
-        logger.info("Inedx type for milvus: %s", config.vector_store.index_type)
-        vectorstore = Milvus(document_embedder,
-                             connection_args={
-                                 "host": url.hostname, "port": url.port
-                             },
-                             collection_name=collection_name,
-                             index_params={
-                                 "index_type": config.vector_store.index_type,
-                                 "metric_type": "L2",
-                                 "nlist": config.vector_store.nlist
-                             },
-                             search_params={"nprobe": config.vector_store.nprobe},
-                             auto_id=True)
+        # Connect to Milvus to check for collection availability
+        from urllib.parse import urlparse
+        url = urlparse(vdb_endpoint)
+        connection_alias = f"milvus_{url.hostname}_{url.port}"
+        connections.connect(connection_alias, host=url.hostname, port=url.port)
+
+        # Check if the collection exists
+        if not utility.has_collection(collection_name, using=connection_alias):
+            logger.warning(f"Collection '{collection_name}' does not exist in Milvus. Aborting vectorstore creation.")
+            connections.disconnect(connection_alias)
+            return None
+
+        logger.info(f"Collection '{collection_name}' exists. Proceeding with vector store creation.")
+
+        if config.vector_store.search_type == "hybrid":
+            logger.info("Creating Langchain Milvus object for Hybrid search")
+            vectorstore = Milvus(
+                document_embedder,
+                connection_args={
+                    "uri": config.vector_store.url
+                },
+                builtin_function=BM25BuiltInFunction(
+                    output_field_names="sparse",
+                    enable_match=True
+                ),
+                collection_name=collection_name,
+                vector_field=["vector", "sparse"] # Dense and Sparse fields set by NV-Ingest
+            )
+        elif config.vector_store.search_type == "dense":
+            logger.info("Index type for milvus: %s", config.vector_store.index_type)
+            vectorstore = Milvus(document_embedder,
+                                connection_args={
+                                    "uri": vdb_endpoint
+                                },
+                                collection_name=collection_name,
+                                index_params={
+                                    "index_type": config.vector_store.index_type,
+                                    "metric_type": "L2",
+                                    "nlist": config.vector_store.nlist
+                                },
+                                search_params={"nprobe": config.vector_store.nprobe},
+                                auto_id=True)
+        else:
+            logger.error("Invalid search_type: %s. Please select from ['hybrid', 'dense']",
+                        config.vector_store.search_type)
+            raise ValueError(
+                f"{config.vector_store.search_type} search type is not supported" + \
+                "Please select from ['hybrid', 'dense']"
+            )
     else:
         raise ValueError(f"{config.vector_store.name} vector database is not supported")
     logger.info("Vector store created and saved.")
@@ -157,63 +245,235 @@ def create_vectorstore_langchain(document_embedder, collection_name: str = "") -
 
 
 def get_vectorstore(
-        vectorstore: Optional["VectorStore"],  # pylint: disable=unused-argument
         document_embedder: "Embeddings",
-        collection_name: str = "") -> VectorStore:
+        collection_name: str = "",
+        vdb_endpoint: str = "") -> VectorStore:
     """
     Send a vectorstore object.
     If a Vectorstore object already exists, the function returns that object.
     Otherwise, it creates a new Vectorstore object and returns it.
     """
-    return create_vectorstore_langchain(document_embedder, collection_name)
+    return create_vectorstore_langchain(document_embedder, collection_name, vdb_endpoint)
 
 
-def get_collection():
-    """get list of all collection in vectorstore.
+def create_collections(collection_names: List[str], vdb_endpoint: str, dimension: int = 768, collection_type: str = "text") -> Dict[str, any]:
+    """
+    Create multiple collections in the Milvus vector database.
+
+    Args:
+        vdb_endpoint (str): The Milvus database endpoint.
+        collection_names (List[str]): List of collection names to be created.
+        dimension (int): The dimension of the embedding vectors (default: 768).
+        collection_type (str): The type of collection to be created. Reserved for future use.
+
+    Returns:
+        dict: Response with creation status.
+    """
+    config = get_config()
+    try:
+        if not len(collection_names):
+            return {
+                "message": "No collections to create. Please provide a list of collection names.",
+                "successful": [],
+                "failed": [],
+                "total_success": 0,
+                "total_failed": 0
+            }
+
+        # Parse endpoint and connect
+        url = urlparse(vdb_endpoint)
+        connection_alias = f"milvus_{url.hostname}_{url.port}"
+        connections.connect(connection_alias, host=url.hostname, port=url.port)
+
+        created_collections = []
+        failed_collections = []
+
+        for collection_name in collection_names:
+            try:
+                create_nvingest_collection(
+                    collection_name = collection_name,
+                    milvus_uri = vdb_endpoint,
+                    sparse = (config.vector_store.search_type == "hybrid"),
+                    recreate = False,
+                    gpu_index = config.vector_store.enable_gpu_index,
+                    gpu_search = config.vector_store.enable_gpu_search,
+                    dense_dim = dimension
+                )
+                created_collections.append(collection_name)
+                logger.info(f"Collection '{collection_name}' created successfully in {vdb_endpoint}.")
+
+            except Exception as e:
+                failed_collections.append(collection_name)
+                logger.error(f"Failed to create collection {collection_name}: {str(e)}")
+
+        # Disconnect from Milvus
+        connections.disconnect(connection_alias)
+
+        return {
+            "message": "Collection creation process completed.",
+            "successful": created_collections,
+            "failed": failed_collections,
+            "total_success": len(created_collections),
+            "total_failed": len(failed_collections)
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to create collections due to error: {str(e)}")
+        return {
+            "message": f"Failed to create collections due to error: {str(e)}",
+            "successful": [],
+            "failed": collection_names,
+            "total_success": 0,
+            "total_failed": len(collection_names)
+        }
+
+
+def get_collection(vdb_endpoint: str = "") -> Dict[str, Any]:
+    """get list of all collection in vectorstore along with the number of rows in each collection.
     """
 
     config = get_config()
 
     if config.vector_store.name == "milvus":
-        from pymilvus import connections
-        from pymilvus import utility
-        url = urlparse(config.vector_store.url)
-        connections.connect("default", host=url.hostname, port=url.port)
+        url = urlparse(vdb_endpoint)
+        connection_alias = f"milvus_{url.hostname}_{url.port}"
+        connections.connect(connection_alias, host=url.hostname, port=url.port)
 
         # Get list of collections
-        collections = utility.list_collections()
+        collections = utility.list_collections(using=connection_alias)
+
+        # Get document count for each collection
+        collection_info = []
+        for collection in collections:
+            collection_obj = Collection(collection, using=connection_alias)
+            num_entities = collection_obj.num_entities
+            collection_info.append({"collection_name": collection, "num_entities": num_entities})
 
         # Disconnect from Milvus
-        connections.disconnect("default")
-        return collections
+        connections.disconnect(connection_alias)
+        return collection_info
 
     raise ValueError(f"{config.vector_store.name} vector database does not support collection name")
 
+
+def delete_collections(vdb_endpoint: str, collection_names: List[str]) -> dict:
+    """
+    Delete a list of collections from the Milvus vector database.
+
+    Args:
+        vdb_endpoint (str): The Milvus database endpoint.
+        collection_names (List[str]): List of collection names to be deleted.
+
+    Returns:
+        dict: Response with deletion status.
+    """
+    try:
+
+        if not len(collection_names):
+            return {
+                "message": "No collections to delete. Please provide a list of collection names.",
+                "successful": [],
+                "failed": [],
+                "total_success": 0,
+                "total_failed": 0 }
+
+        # Parse endpoint and connect
+        url = urlparse(vdb_endpoint)
+        connection_alias = f"milvus_{url.hostname}_{url.port}"
+        connections.connect(connection_alias, host=url.hostname, port=url.port)
+
+        deleted_collections = []
+        failed_collections = []
+
+        for collection in collection_names:
+            try:
+                if utility.has_collection(collection, using=connection_alias):
+                    utility.drop_collection(collection, using=connection_alias)
+                    deleted_collections.append(collection)
+                    logger.info(f"Deleted collection: {collection}")
+                else:
+                    failed_collections.append(collection)
+                    logger.warning(f"Collection {collection} not found.")
+            except Exception as e:
+                failed_collections.append(collection)
+                logger.error(f"Failed to delete collection {collection}: {str(e)}")
+
+        # Disconnect from Milvus
+        connections.disconnect(connection_alias)
+
+        return {
+            "message": "Collection deletion process completed.",
+            "successful": deleted_collections,
+            "failed": failed_collections,
+            "total_success": len(deleted_collections),
+            "total_failed": len(failed_collections)
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to delete collections due to error: {str(e)}")
+        return {
+            "message": f"Failed to delete collections due to error: {str(e)}",
+            "successful": [],
+            "failed": collection_names,
+            "total_success": 0,
+            "total_failed": len(collection_names)
+        }
 
 @utils_cache
 @lru_cache()
 def get_llm(**kwargs) -> LLM | SimpleChatModel:
     """Create the LLM connection."""
     settings = get_config()
+    
+    # Check if guardrails are enabled
+    enable_guardrails = os.getenv("ENABLE_GUARDRAILS", "False").lower() == "true" and kwargs.get('enable_guardrails', False) == True
 
-    logger.info("Using %s as model engine for llm. Model name: %s", settings.llm.model_engine, settings.llm.model_name)
+    logger.info("Using %s as model engine for llm. Model name: %s", settings.llm.model_engine, kwargs.get('model'))
     if settings.llm.model_engine == "nvidia-ai-endpoints":
-        unused_params = [key for key in kwargs if key not in ['temperature', 'top_p', 'max_tokens']]
-        if unused_params:
-            logger.warning("The following parameters from kwargs are not supported: %s for %s",
-                           unused_params,
-                           settings.llm.model_engine)
 
-        if settings.llm.server_url:
-            logger.info("Using llm model %s hosted at %s", settings.llm.model_name, settings.llm.server_url)
-            return ChatNVIDIA(base_url=f"http://{settings.llm.server_url}/v1",
-                              model=settings.llm.model_name,
+        # Use ChatOpenAI with guardrails if enabled
+        # TODO Add the ChatNVIDIA implementation when available
+        if enable_guardrails:
+            logger.info("Guardrails enabled, using ChatOpenAI with guardrails URL")
+            guardrails_url = os.getenv("NEMO_GUARDRAILS_URL", "")
+            if not guardrails_url:
+                logger.warning("NEMO_GUARDRAILS_URL not set, falling back to default implementation")
+            else:
+                try:
+                    # Parse URL and add scheme if missing
+                    if not guardrails_url.startswith(('http://', 'https://')):
+                        guardrails_url = 'http://' + guardrails_url
+                        
+                    # Try to connect with a timeout of 5 seconds
+                    response = requests.get(guardrails_url + "/v1/health", timeout=5)
+                    response.raise_for_status()
+                    
+                    x_model_authorization = {"X-Model-Authorization": os.environ.get("NVIDIA_API_KEY", "")}
+                    return ChatOpenAI(
+                        model_name=kwargs.get('model'),
+                        openai_api_base=f"{guardrails_url}/v1/guardrail",
+                        openai_api_key="dummy-value", 
+                        default_headers=x_model_authorization,
+                        temperature=kwargs.get('temperature', None),
+                        top_p=kwargs.get('top_p', None),
+                        max_tokens=kwargs.get('max_tokens', None)
+                    )
+                except (requests.RequestException, requests.ConnectionError) as e:
+                    error_msg = f"Failed to connect to guardrails service at {guardrails_url}: {str(e)} Make sure the guardrails service is running and accessible."
+                    logger.error(error_msg)
+                    raise RuntimeError(error_msg)
+        
+        if kwargs.get('llm_endpoint') and kwargs.get('llm_endpoint') != '""':
+            logger.info(f"Length of string {len(kwargs.get('llm_endpoint'))}")
+            logger.info("Using llm model %s hosted at %s", kwargs.get('model'), kwargs.get('llm_endpoint'))
+            return ChatNVIDIA(base_url=f"http://{kwargs.get('llm_endpoint')}/v1",
+                              model=kwargs.get('model'),
                               temperature=kwargs.get('temperature', None),
                               top_p=kwargs.get('top_p', None),
                               max_tokens=kwargs.get('max_tokens', None))
 
-        logger.info("Using llm model %s from api catalog", settings.llm.model_name)
-        return ChatNVIDIA(model=settings.llm.model_name,
+        logger.info("Using llm model %s from api catalog", kwargs.get('model'))
+        return ChatNVIDIA(model=kwargs.get('model'),
                           temperature=kwargs.get('temperature', None),
                           top_p=kwargs.get('top_p', None),
                           max_tokens=kwargs.get('max_tokens', None))
@@ -223,7 +483,7 @@ def get_llm(**kwargs) -> LLM | SimpleChatModel:
 
 
 @lru_cache
-def get_embedding_model() -> Embeddings:
+def get_embedding_model(model: str, url: str) -> Embeddings:
     """Create the embedding model."""
     model_kwargs = {"device": "cpu"}
     if torch.cuda.is_available():
@@ -234,7 +494,7 @@ def get_embedding_model() -> Embeddings:
 
     logger.info("Using %s as model engine and %s and model for embeddings",
                 settings.embeddings.model_engine,
-                settings.embeddings.model_name)
+                model)
     if settings.embeddings.model_engine == "huggingface":
         hf_embeddings = HuggingFaceEmbeddings(
             model_name=settings.embeddings.model_name,
@@ -245,23 +505,23 @@ def get_embedding_model() -> Embeddings:
         return hf_embeddings
 
     if settings.embeddings.model_engine == "nvidia-ai-endpoints":
-        if settings.embeddings.server_url:
+        if url:
             logger.info("Using embedding model %s hosted at %s",
-                        settings.embeddings.model_name,
-                        settings.embeddings.server_url)
-            return NVIDIAEmbeddings(base_url=f"http://{settings.embeddings.server_url}/v1",
-                                    model=settings.embeddings.model_name,
+                        model,
+                        url)
+            return NVIDIAEmbeddings(base_url=f"http://{url}/v1",
+                                    model=model,
                                     truncate="END")
 
-        logger.info("Using embedding model %s hosted at api catalog", settings.embeddings.model_name)
-        return NVIDIAEmbeddings(model=settings.embeddings.model_name, truncate="END")
+        logger.info("Using embedding model %s hosted at api catalog", model)
+        return NVIDIAEmbeddings(model=model, truncate="END")
 
     raise RuntimeError(
         "Unable to find any supported embedding model. Supported engine is huggingface and nvidia-ai-endpoints.")
 
 
 @lru_cache
-def get_ranking_model() -> BaseDocumentCompressor:
+def get_ranking_model(model="", url="", top_n=4) -> BaseDocumentCompressor:
     """Create the ranking model.
 
     Returns:
@@ -272,15 +532,15 @@ def get_ranking_model() -> BaseDocumentCompressor:
 
     try:
         if settings.ranking.model_engine == "nvidia-ai-endpoints":
-            if settings.ranking.server_url:
-                logger.info("Using ranking model hosted at %s", settings.ranking.server_url)
-                return NVIDIARerank(base_url=f"http://{settings.ranking.server_url}/v1",
-                                    top_n=settings.retriever.top_k,
+            if url:
+                logger.info("Using ranking model hosted at %s", url)
+                return NVIDIARerank(base_url=f"http://{url}/v1",
+                                    top_n=top_n,
                                     truncate="END")
 
-            if settings.ranking.model_name:
-                logger.info("Using ranking model %s hosted at api catalog", settings.ranking.model_name)
-                return NVIDIARerank(model=settings.ranking.model_name, top_n=settings.retriever.top_k, truncate="END")
+            if model:
+                logger.info("Using ranking model %s hosted at api catalog", model)
+                return NVIDIARerank(model=model, top_n=top_n, truncate="END")
         else:
             logger.warning("Unable to find any supported ranking model. Supported engine is nvidia-ai-endpoints.")
     except Exception as e:
@@ -302,8 +562,8 @@ def get_docs_vectorstore_langchain(vectorstore: VectorStore) -> List[str]:
 
     settings = get_config()
     try:
-        # No API availbe in LangChain for listing the docs, thus usig its private _dict
-        extract_filename = lambda metadata: os.path.basename(metadata['source'])  # noqa: E731
+        # No API available in LangChain for listing the docs, thus using its private _dict
+        extract_filename = lambda metadata: os.path.basename(metadata['source'] if type(metadata['source']) == str else metadata.get('source').get('source_name'))  # noqa: E731
 
         if settings.vector_store.name == "milvus":
             # Getting all the ID's > 0
@@ -320,24 +580,25 @@ def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str
     """Delete documents from the vector index implemented in LangChain."""
 
     settings = get_config()
+    upload_folder = "/tmp-data/uploaded_files"
+    deleted = False
     try:
-        # No other API availbe in LangChain for listing the docs, thus usig its private _dict
-        extract_filename = lambda metadata: os.path.basename(metadata['source'])  # noqa: E731
-        if settings.vector_store.name == "milvus":
-            # Getting all the ID's > 0
-            milvus_data = vectorstore.col.query(expr="pk >= 0", output_fields=["pk", "source"])
-            for filename in filenames:
-                ids_list = [metadata["pk"] for metadata in milvus_data if extract_filename(metadata) == filename]
-                if len(ids_list) == 0:
+        for filename in filenames:
+            source_value =  os.path.join(upload_folder, filename)
+            if settings.vector_store.name == "milvus":
+                # Delete Milvus Entities
+                resp = vectorstore.col.delete(f"source['source_name'] == '{source_value}'")
+                deleted = True
+                if resp.delete_count == 0:
                     logger.info("File does not exist in the vectorstore")
                     return False
-                vectorstore.col.delete(f"pk in {ids_list}")
-                logger.info("Deleted documents with filenames %s", filename)
-                return True
-    except Exception as e:
+        if deleted and settings.vector_store.name == "milvus":
+            # Force flush the vectorstore after deleting documents to ensure that the changes are reflected in the vectorstore
+            vectorstore.col.flush()
+        return True
+    except Exception as e: #TODO - propagate the exception
         logger.error("Error occurred while deleting documents: %s", e)
         return False
-    return True
 
 
 def _combine_dicts(dict_a, dict_b):
@@ -367,3 +628,642 @@ def _combine_dicts(dict_a, dict_b):
             combined_dict[key] = value_b
 
     return combined_dict
+
+def get_nv_ingest_client():
+    """
+    Creates and returns NV-Ingest client
+    """
+    config = get_config()
+
+    client = NvIngestClient(
+        # Host where nv-ingest-ms-runtime is running
+        message_client_hostname=config.nv_ingest.message_client_hostname,
+        message_client_port=config.nv_ingest.message_client_port # REST port, defaults to 7670
+    )
+    return client
+
+def get_nv_ingest_ingestor(
+        nv_ingest_client_instance,
+        filepaths: List[str],
+        **kwargs
+    ):
+    """
+    Prepare NV-Ingest ingestor instance based on nv-ingest configuration
+
+    Returns:
+        - ingestor: Ingestor - NV-Ingest ingestor instance with configured tasks
+    """
+    config = get_config()
+
+    logger.info("Preparing NV Ingest Ingestor instance for filepaths: %s", filepaths)
+    # Prepare the ingestor using nv-ingest-client
+    ingestor = Ingestor(client=nv_ingest_client_instance)
+
+    # Add files to ingestor
+    ingestor = ingestor.files(filepaths)
+
+    # Add extraction task
+    extraction_options = kwargs.get("extraction_options", {})
+    ingestor = ingestor.extract(
+                    extract_text=extraction_options.get("extract_text", config.nv_ingest.extract_text),
+                    extract_tables=extraction_options.get("extract_tables", config.nv_ingest.extract_tables),
+                    extract_charts=extraction_options.get("extract_charts", config.nv_ingest.extract_charts),
+                    extract_images=extraction_options.get("extract_images", config.nv_ingest.extract_images),
+                    extract_method=extraction_options.get("extract_method", config.nv_ingest.extract_method),
+                    text_depth=extraction_options.get("text_depth", config.nv_ingest.text_depth),
+                )
+
+    # Add splitting task (By default only works for text documents)
+    split_options = kwargs.get("split_options", {})
+    ingestor = ingestor.split(
+                    tokenizer=config.nv_ingest.tokenizer,
+                    chunk_size=split_options.get("chunk_size", config.nv_ingest.chunk_size),
+                    chunk_overlap=split_options.get("chunk_overlap", config.nv_ingest.chunk_overlap),
+                )
+
+    # Add captioning task if extract_images is enabled
+    if extraction_options.get("extract_images", config.nv_ingest.extract_images):
+        logger.info("Adding captioning task to NV-Ingest Ingestor")
+        ingestor = ingestor.caption(
+                        api_key=get_env_variable(variable_name="NVIDIA_API_KEY", default_value=""),
+                        endpoint_url=config.nv_ingest.caption_endpoint_url,
+                        model_name=config.nv_ingest.caption_model_name,
+                    )
+
+    # Add Embedding task
+    if ENABLE_NV_INGEST_VDB_UPLOAD:
+        ingestor = ingestor.embed()
+
+    # Add Vector-DB upload task
+    if ENABLE_NV_INGEST_VDB_UPLOAD:
+        ingestor = ingestor.vdb_upload(
+            # Milvus configurations
+            collection_name=kwargs.get("collection_name"),
+            milvus_uri=kwargs.get("vdb_endpoint", config.vector_store.url),
+
+            # Minio configurations
+            minio_endpoint=os.getenv("MINIO_ENDPOINT"),
+            access_key=os.getenv("MINIO_ACCESSKEY"),
+            secret_key=os.getenv("MINIO_SECRETKEY"),
+
+            # Hybrid search configurations
+            sparse=(config.vector_store.search_type == "hybrid"),
+
+            # Additional configurations
+            enable_images=extraction_options.get("extract_images", config.nv_ingest.extract_images),
+            recreate=False, # Don't re-create milvus collection
+            dense_dim=config.embeddings.dimensions,
+
+            gpu_index = config.vector_store.enable_gpu_index,
+            gpu_search = config.vector_store.enable_gpu_search,
+        )
+
+    return ingestor
+
+def get_minio_operator():
+    """
+    Prepares and return MinioOperator object
+
+    Returns:
+        - minio_operator: MinioOperator
+    """
+    minio_operator = MinioOperator(
+        endpoint=os.getenv("MINIO_ENDPOINT"),
+        access_key=os.getenv("MINIO_ACCESSKEY"),
+        secret_key=os.getenv("MINIO_SECRETKEY"),
+    )
+    return minio_operator
+
+def get_unique_thumbnail_id_collection_prefix(
+        collection_name: str,
+    ) -> str:
+    """
+    Prepares unique thumbnail id prefix based on input collection name
+    Returns:
+        - unique_thumbnail_id_prefix: str
+    """
+    prefix = f"{collection_name}_::"
+    return prefix
+
+def get_unique_thumbnail_id_file_name_prefix(
+        collection_name: str,
+        file_name: str,
+    ) -> str:
+    """
+    Prepares unique thumbnail id prefix based on input collection name and file name
+    Returns:
+        - unique_thumbnail_id_prefix: str
+    """
+    collection_prefix = get_unique_thumbnail_id_collection_prefix(collection_name)
+    prefix = f"{collection_prefix}_{file_name}_::"
+    return prefix
+
+def get_unique_thumbnail_id(
+        collection_name: str,
+        file_name: str,
+        page_number: int,
+        location: List[float] # Bbox information
+    ) -> str:
+    """
+    Prepares unique thumbnail id based on input arguments
+    Returns:
+        - unique_thumbnail_id: str
+    """
+    # Round bbox values to reduce precision
+    rounded_bbox = [round(coord, 4) for coord in location]
+    prefix = get_unique_thumbnail_id_file_name_prefix(collection_name, file_name)
+    # Create a string representation
+    unique_thumbnail_id = f"{prefix}_{page_number}_" + \
+                          "_".join(map(str, rounded_bbox))
+    return unique_thumbnail_id
+
+def format_document_with_source(doc) -> str:
+    """Format document content with its source filename.
+
+    Args:
+        doc: Document object with metadata and page_content
+
+    Returns:
+        str: Formatted string with filename and content if ENABLE_SOURCE_METADATA is True,
+             otherwise returns just the content
+    """
+    # Debug log before formatting
+    logger.debug(f"Before format_document_with_source - Document: {doc}")
+    
+    # Check if source metadata is enabled via environment variable
+    enable_metadata = os.getenv('ENABLE_SOURCE_METADATA', 'True').lower() == 'true'
+
+    # Return just content if metadata is disabled or doc has no metadata
+    if not enable_metadata or not hasattr(doc, 'metadata'):
+        result = doc.page_content
+        logger.debug(f"After format_document_with_source (metadata disabled) - Result: {result}")
+        return result
+
+    # Handle nested metadata structure
+    source = doc.metadata.get('source', {})
+    source_path = source.get('source_name', '') if isinstance(source, dict) else source
+
+    # If no source path is found, return just the content
+    if not source_path:
+        result = doc.page_content
+        logger.debug(f"After format_document_with_source (no source path) - Result: {result}")
+        return result
+
+    filename = os.path.splitext(os.path.basename(source_path))[0]
+    logger.info(f"Before format_document_with_source - Filename: {filename}")
+    result = f"File: {filename}\nContent: {doc.page_content}"
+    
+    # Debug log after formatting
+    logger.debug(f"After format_document_with_source - Result: {result}")
+    
+    return result
+
+def streaming_filter_think(chunks: Iterable[str]) -> Iterable[str]:
+    """
+    This generator accepts an iterable of string chunks (from a streaming LLM)
+    and yields chunks with any text between <think> and </think> tags removed.
+    
+    Args:
+        chunks (Iterable[str]): An iterable of string chunks from a streaming LLM response
+        
+    Yields:
+        str: Filtered chunks with <think>...</think> content removed
+    """
+    buffer = ""
+    in_think = False
+    tag_start = "<think>"
+    tag_end = "</think>"
+
+    for chunk in chunks:
+        buffer += chunk.content
+        # Process as long as there is enough data in the buffer.
+        while True:
+            if not in_think:
+                # Look for the start tag in the buffer.
+                start_idx = buffer.find(tag_start)
+                if start_idx == -1:
+                    # No start tag: yield the entire buffer and clear it.
+                    if buffer:
+                        yield buffer
+                        buffer = ""
+                    break
+                else:
+                    # Yield any text before the <think> tag.
+                    if start_idx > 0:
+                        yield buffer[:start_idx]
+                    # Remove the tag and switch to skipping mode.
+                    buffer = buffer[start_idx + len(tag_start):]
+                    in_think = True
+            else:
+                # Currently inside a <think> block.
+                end_idx = buffer.find(tag_end)
+                if end_idx == -1:
+                    # End tag not yet seen; discard buffer and wait for more.
+                    buffer = ""
+                    break
+                else:
+                    # Found the end tag; drop everything up to and including it.
+                    buffer = buffer[end_idx + len(tag_end):]
+                    in_think = False
+                    # Loop back to check if there is further text (or a new tag) in buffer.
+    # After processing all chunks, yield any remaining text (if not inside a think block).
+    if buffer and not in_think:
+        yield buffer
+
+def get_streaming_filter_think_parser():
+    """
+    Creates and returns a RunnableGenerator for filtering think tokens based on configuration.
+    
+    If FILTER_THINK_TOKENS environment variable is set to "true" (case-insensitive), 
+    returns a parser that filters out content between <think> and </think> tags.
+    Otherwise, returns a pass-through parser that doesn't modify the content.
+    
+    Returns:
+        RunnableGenerator: A parser for filtering (or not filtering) think tokens
+    """
+    from langchain_core.runnables import RunnableGenerator, RunnablePassthrough
+    
+    # Check environment variable
+    filter_enabled = os.getenv('FILTER_THINK_TOKENS', 'true').lower() == 'true'
+    
+    if filter_enabled:
+        logger.info("Think token filtering is enabled")
+        return RunnableGenerator(streaming_filter_think)
+    else:
+        logger.info("Think token filtering is disabled")
+        # If filtering is disabled, use a passthrough that passes content as-is
+        return RunnablePassthrough()
+
+def normalize_relevance_scores(documents: List["Document"]) -> List["Document"]:
+    """
+    Normalize relevance scores in a list of documents to be between 0 and 1 using sigmoid function.
+    
+    Args:
+        documents: List of Document objects with relevance_score in metadata
+        
+    Returns:
+        The same list of documents with normalized scores
+    """
+    if not documents:
+        return documents
+    
+    # Apply sigmoid normalization (1 / (1 + e^-x))
+    for doc in documents:
+        if 'relevance_score' in doc.metadata:
+            original_score = doc.metadata['relevance_score']
+            scaled_score = original_score * 0.1
+            normalized_score = 1 / (1 + math.exp(-scaled_score))
+            doc.metadata['relevance_score'] = normalized_score
+    
+    return documents
+
+async def check_service_health(
+    url: str, 
+    service_name: str, 
+    method: str = "GET", 
+    timeout: int = 5,
+    headers: Optional[Dict[str, str]] = None,
+    json_data: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Check health of a service endpoint asynchronously.
+    
+    Args:
+        url: The endpoint URL to check
+        service_name: Name of the service for reporting
+        method: HTTP method to use (GET, POST, etc.)
+        timeout: Request timeout in seconds
+        headers: Optional HTTP headers
+        json_data: Optional JSON payload for POST requests
+        
+    Returns:
+        Dictionary with status information
+    """
+    start_time = time.time()
+    status = {
+        "service": service_name,
+        "url": url,
+        "status": "unknown",
+        "latency_ms": 0,
+        "error": None
+    }
+    
+    if not url:
+        status["status"] = "skipped"
+        status["error"] = "No URL provided"
+        return status
+    
+    try:
+        # Add scheme if missing
+        if not url.startswith(('http://', 'https://')):
+            url = 'http://' + url
+            
+        async with aiohttp.ClientSession() as session:
+            request_kwargs = {
+                "timeout": aiohttp.ClientTimeout(total=timeout),
+                "headers": headers or {}
+            }
+            
+            if method.upper() == "POST" and json_data:
+                request_kwargs["json"] = json_data
+            
+            async with getattr(session, method.lower())(url, **request_kwargs) as response:
+                status["status"] = "healthy" if response.status < 400 else "unhealthy"
+                status["http_status"] = response.status
+                status["latency_ms"] = round((time.time() - start_time) * 1000, 2)
+                
+    except asyncio.TimeoutError:
+        status["status"] = "timeout"
+        status["error"] = f"Request timed out after {timeout}s"
+    except aiohttp.ClientError as e:
+        status["status"] = "error"
+        status["error"] = str(e)
+    except Exception as e:
+        status["status"] = "error"
+        status["error"] = str(e)
+    
+    return status
+
+async def check_minio_health(endpoint: str, access_key: str, secret_key: str) -> Dict[str, Any]:
+    """Check MinIO server health"""
+    status = {
+        "service": "MinIO",
+        "url": endpoint,
+        "status": "unknown",
+        "error": None
+    }
+    
+    if not endpoint:
+        status["status"] = "skipped"
+        status["error"] = "No endpoint provided"
+        return status
+        
+    try:
+        start_time = time.time()
+        minio_operator = MinioOperator(
+            endpoint=endpoint,
+            access_key=access_key,
+            secret_key=secret_key
+        )
+        # Test basic operation - list buckets
+        buckets = minio_operator.client.list_buckets()
+        status["status"] = "healthy"
+        status["latency_ms"] = round((time.time() - start_time) * 1000, 2)
+        status["buckets"] = len(buckets)
+    except Exception as e:
+        status["status"] = "error"
+        status["error"] = str(e)
+        
+    return status
+
+async def check_milvus_health(url: str) -> Dict[str, Any]:
+    """Check Milvus database health"""
+    status = {
+        "service": "Milvus",
+        "url": url,
+        "status": "unknown",
+        "error": None
+    }
+    
+    if not url:
+        status["status"] = "skipped"
+        status["error"] = "No URL provided"
+        return status
+        
+    try:
+        start_time = time.time()
+        parsed_url = urlparse(url)
+        connection_alias = f"health_check_{parsed_url.hostname}_{parsed_url.port}_{int(time.time())}"
+        
+        # Connect to Milvus
+        connections.connect(
+            connection_alias, 
+            host=parsed_url.hostname, 
+            port=parsed_url.port
+        )
+        
+        # Test basic operation - list collections
+        collections = utility.list_collections(using=connection_alias)
+        
+        # Disconnect
+        connections.disconnect(connection_alias)
+        
+        status["status"] = "healthy"
+        status["latency_ms"] = round((time.time() - start_time) * 1000, 2)
+        status["collections"] = len(collections)
+    except Exception as e:
+        status["status"] = "error"
+        status["error"] = str(e)
+        
+    return status
+
+async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Check health of all services used by the application
+    
+    Returns:
+        Dictionary with service categories and their health status
+    """
+    config = get_config()
+    
+    # Create tasks for different service types
+    tasks = []
+    results = {
+        "databases": [],
+        "object_storage": [],
+        "nim": [],  # New unified category for NIM services
+    }
+    
+    # MinIO health check
+    minio_endpoint = os.environ.get("MINIO_ENDPOINT", "")
+    minio_access_key = os.environ.get("MINIO_ACCESSKEY", "")
+    minio_secret_key = os.environ.get("MINIO_SECRETKEY", "")
+    if minio_endpoint:
+        tasks.append(("object_storage", check_minio_health(
+            endpoint=minio_endpoint,
+            access_key=minio_access_key,
+            secret_key=minio_secret_key
+        )))
+    
+    # Vector DB (Milvus) health check
+    if config.vector_store.url:
+        tasks.append(("databases", check_milvus_health(config.vector_store.url)))
+    
+    # LLM service health check
+    if config.llm.server_url:
+        llm_url = config.llm.server_url
+        if not llm_url.startswith(('http://', 'https://')):
+            llm_url = f"http://{llm_url}/v1/health/ready"
+        else:
+            llm_url = f"{llm_url}/v1/health/ready"
+        tasks.append(("nim", check_service_health(
+            url=llm_url,
+            service_name=f"LLM ({config.llm.model_name})"
+        )))
+    else:
+        # When URL is empty, assume the service is running via API catalog
+        results["nim"].append({
+            "service": f"LLM ({config.llm.model_name})",
+            "url": "NVIDIA API Catalog",
+            "status": "healthy",
+            "latency_ms": 0,
+            "message": "Using NVIDIA API Catalog"
+        })
+    
+    query_rewriter_enabled = os.getenv('ENABLE_QUERYREWRITER', 'True').lower() == 'true'
+
+    if query_rewriter_enabled:
+        # Query rewriter LLM health check
+        if config.query_rewriter.server_url:
+            qr_url = config.query_rewriter.server_url
+            if not qr_url.startswith(('http://', 'https://')):
+                qr_url = f"http://{qr_url}/v1/health/ready"
+            else:
+                qr_url = f"{qr_url}/v1/health/ready"
+            tasks.append(("nim", check_service_health(
+                url=qr_url,
+                service_name=f"Query Rewriter ({config.query_rewriter.model_name})"
+            )))
+        else:
+            # When URL is empty, assume the service is running via API catalog
+            results["nim"].append({
+                "service": f"Query Rewriter ({config.query_rewriter.model_name})",
+                "url": "NVIDIA API Catalog",
+                "status": "healthy",
+                "latency_ms": 0,
+                "message": "Using NVIDIA API Catalog"
+            })
+    
+    # Embedding service health check
+    if config.embeddings.server_url:
+        embed_url = config.embeddings.server_url
+        if not embed_url.startswith(('http://', 'https://')):
+            embed_url = f"http://{embed_url}/v1/health/ready"
+        else:
+            embed_url = f"{embed_url}/v1/health/ready"
+        tasks.append(("nim", check_service_health(
+            url=embed_url,
+            service_name=f"Embeddings ({config.embeddings.model_name})"
+        )))
+    else:
+        # When URL is empty, assume the service is running via API catalog
+        results["nim"].append({
+            "service": f"Embeddings ({config.embeddings.model_name})",
+            "url": "NVIDIA API Catalog",
+            "status": "healthy",
+            "latency_ms": 0,
+            "message": "Using NVIDIA API Catalog"
+        })
+    
+    enable_reranker = os.getenv('ENABLE_RERANKER', 'True').lower() == 'true'
+    # Ranking service health check
+    if enable_reranker:
+        if config.ranking.server_url:
+            ranking_url = config.ranking.server_url
+            if not ranking_url.startswith(('http://', 'https://')):
+                ranking_url = f"http://{ranking_url}/v1/health/ready"
+            else:
+                ranking_url = f"{ranking_url}/v1/health/ready"
+            tasks.append(("nim", check_service_health(
+                url=ranking_url,
+                service_name=f"Ranking ({config.ranking.model_name})"
+            )))
+        else:
+            # When URL is empty, assume the service is running via API catalog
+            results["nim"].append({
+                "service": f"Ranking ({config.ranking.model_name})",
+                "url": "NVIDIA API Catalog",
+                "status": "healthy",
+                "latency_ms": 0,
+                "message": "Using NVIDIA API Catalog"
+            })
+    
+    # NemoGuardrails health check
+    enable_guardrails = os.getenv('ENABLE_GUARDRAILS', 'False').lower() == 'true'
+    if enable_guardrails:
+        guardrails_url = os.getenv('NEMO_GUARDRAILS_URL', '')
+        if guardrails_url:
+            if not guardrails_url.startswith(('http://', 'https://')):
+                guardrails_url = f"http://{guardrails_url}/v1/health"
+            else:
+                guardrails_url = f"{guardrails_url}/v1/health"
+            tasks.append(("nim", check_service_health(
+                url=guardrails_url,
+                service_name="NemoGuardrails"
+            )))
+        else:
+            results["nim"].append({
+                "service": "NemoGuardrails",
+                "url": "Not configured",
+                "status": "skipped",
+                "message": "URL not provided"
+            })
+    
+    # Reflection LLM health check
+    enable_reflection = os.getenv('ENABLE_REFLECTION', 'False').lower() == 'true'
+    if enable_reflection:
+        reflection_llm = os.getenv('REFLECTION_LLM', '').strip('"').strip("'")
+        reflection_url = os.getenv('REFLECTION_LLM_SERVERURL', '').strip('"').strip("'")
+        if reflection_url:
+            if not reflection_url.startswith(('http://', 'https://')):
+                reflection_url = f"http://{reflection_url}/v1/health/ready"
+            else:
+                reflection_url = f"{reflection_url}/v1/health/ready"
+            tasks.append(("nim", check_service_health(
+                url=reflection_url,
+                service_name=f"Reflection LLM ({reflection_llm})"
+            )))
+        else:
+            # When URL is empty, assume the service is running via API catalog
+            results["nim"].append({
+                "service": f"Reflection LLM ({reflection_llm})",
+                "url": "NVIDIA API Catalog",
+                "status": "healthy",
+                "latency_ms": 0,
+                "message": "Using NVIDIA API Catalog"
+            })
+    
+    # Execute all health checks concurrently
+    for category, task in tasks:
+        result = await task
+        results[category].append(result)
+    
+    return results
+
+def print_health_report(health_results: Dict[str, List[Dict[str, Any]]]) -> None:
+    """
+    Print health status for individual services
+    
+    Args:
+        health_results: Results from check_all_services_health
+    """
+    logger.info("===== SERVICE HEALTH STATUS =====")
+    
+    for category, services in health_results.items():
+        if not services:
+            continue
+            
+        for service in services:
+            if service["status"] == "healthy":
+                logger.info(f"Service '{service['service']}' is healthy - Response time: {service.get('latency_ms', 'N/A')}ms")
+            elif service["status"] == "skipped":
+                logger.info(f"Service '{service['service']}' check skipped - Reason: {service.get('error', 'No URL provided')}")
+            else:
+                error_msg = service.get("error", "Unknown error")
+                logger.info(f"Service '{service['service']}' is not healthy - Issue: {error_msg}")
+    
+    logger.info("================================")
+
+async def check_and_print_services_health():
+    """
+    Check health of all services and print a report
+    """
+    health_results = await check_all_services_health()
+    print_health_report(health_results)
+    return health_results
+
+def check_services_health():
+    """
+    Synchronous wrapper for checking service health
+    """
+    return asyncio.run(check_and_print_services_health())
