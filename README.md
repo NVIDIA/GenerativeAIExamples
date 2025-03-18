@@ -73,7 +73,7 @@ Follow the links below to learn more:
 Experience NVIDIA RAG Pipelines with just a few steps!
 
 1. Get your NVIDIA API key.
-   1. Go to the [NVIDIA API Catalog](https://build.ngc.nvidia.com/explore/).
+   1. Go to the [NVIDIA API Catalog](https://build.nvidia.com/explore/).
    1. Select any model.
    1. Click **Get API Key**.
    1. Run:
