@@ -13,7 +13,7 @@ This repository is a starting point for developers looking to integrate with the
 <!-- TOC -->
 
 * [What's New?](#whats-new)
-  * [Tool-Calling Data Flywheel](#tool-calling-data-flywheel)
+  * [Data Flywheel](#data-flywheel)
   * [Knowledge Graph RAG](#knowledge-graph-rag)
   * [Agentic Workflows with Llama 3.1](#agentic-workflows-with-llama-31)
   * [RAG with Local NIM Deployment and LangChain](#rag-with-local-nim-deployment-and-langchain)
@@ -36,7 +36,7 @@ This repository is a starting point for developers looking to integrate with the
 
 ## What's New?
 
-### Tool-Calling Data Flywheel
+### Data Flywheel
 
 This tutorial demonstrates an end-to-end Data Flywheel implementation that uses NVIDIA NeMo Microservices. It features tool-calling workflows with the NeMo Data Store, Entity Store, Customizer, Evaluator, Guardrails, and NIMs.
 
