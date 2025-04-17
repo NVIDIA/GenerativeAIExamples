@@ -13,11 +13,14 @@ This repository is a starting point for developers looking to integrate with the
 <!-- TOC -->
 
 * [What's New?](#whats-new)
+  * [Data Flywheel](#data-flywheel)
   * [Knowledge Graph RAG](#knowledge-graph-rag)
   * [Agentic Workflows with Llama 3.1](#agentic-workflows-with-llama-31)
   * [RAG with Local NIM Deployment and LangChain](#rag-with-local-nim-deployment-and-langchain)
   * [Vision NIM Workflows](#vision-nim-workflows)
 * [Try it Now!](#try-it-now)
+* [Data Flywheel](#data-flywheel)
+  * [Tool-Calling Notebooks](#tool-calling-notebooks)
 * [RAG](#rag)
   * [RAG Notebooks](#rag-notebooks)
   * [RAG Examples](#rag-examples)
@@ -32,6 +35,12 @@ This repository is a starting point for developers looking to integrate with the
 <!-- /TOC -->
 
 ## What's New?
+
+### Data Flywheel
+
+This tutorial demonstrates an end-to-end Data Flywheel implementation that uses NVIDIA NeMo Microservices. It features a tool-calling workflow with the NVIDIA NeMo Datastore, NeMo Entity Store, NeMo Customizer, NeMo Evaluator, NeMo Guardrails microservices, and NVIDIA NIMs.
+
+- [Tool Calling Fine-tuning, Inference, and Evaluation with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/tool-calling)
 
 ### Knowledge Graph RAG
 
@@ -103,6 +112,16 @@ Experience NVIDIA RAG Pipelines with just a few steps!
    ``` 
       
 
+
+## Data Flywheel
+
+A [Data Flywheel](https://www.nvidia.com/en-us/glossary/data-flywheel/) is a self-reinforcing cycle where user interactions generate data that improves AI models or products, leading to better outcomes that attract more users and further enhance data quality. This feedback loop relies on continuous data processing, model refinement, and guardrails to ensure accuracy and compliance while compounding value over time. Real-world applications range from personalized customer experiences to operational systems like inventory management, where improved predictions drive efficiency and growth.
+
+### Tool-Calling Notebooks
+
+Tool calling empowers Large Language Models (LLMs) to integrate with external APIs, execute dynamic workflows, and retrieve real-time data beyond their training scope. The NVIDIA NeMo microservices platform offers a modular infrastructure for deploying AI pipelines that includes fine-tuning, evaluation, inference, and guardrail enforcement—across Kubernetes clusters in cloud or on-premises environments.
+
+This end-to-end [tutorial](./nemo/data-flywheel/tool-calling) demonstrates how to leverage NeMo Microservices to customize [Llama-3.2-1B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) by using the [xLAM](https://huggingface.co/datasets/Salesforce/xlam-function-calling-60k) function-calling dataset, assess its accuracy, and implement safety constraints to govern its behavior.
 
 ## RAG
 
@@ -186,3 +205,4 @@ Example tools and tutorials to enhance LLM development and productivity when usi
 ## Community
 We're posting these examples on GitHub to support the NVIDIA LLM community and facilitate feedback.
 We invite contributions! Open a GitHub issue or pull request! See [contributing](docs/contributing.md) Check out the [community](./community/README.md) examples and notebooks.
+
