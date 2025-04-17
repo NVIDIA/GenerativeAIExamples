@@ -1,3 +1,3 @@
 # nemo-data-flywheel-tutorials
 
-Tutorials for NeMo Microservices (MS) Data Flywheel, which includes examples for using the NeMo MS Data Store, Entity Store, Customizer, Evaluator, Guardrails, and NVIDIA NIMs.
+Tutorials for the NVIDIA NeMo Microservices Data Flywheel, featuring examples with NeMo Datastore, NeMo Entity Store, NeMo Customizer, NeMo Evaluator, NeMo Guardrails microservices, and NVIDIA NIMs.
