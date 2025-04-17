@@ -40,7 +40,7 @@ This repository is a starting point for developers looking to integrate with the
 
 This tutorial demonstrates an end-to-end Data Flywheel implementation that uses NVIDIA NeMo Microservices. It features tool-calling workflows with the NeMo Data Store, Entity Store, Customizer, Evaluator, Guardrails, and NIMs.
 
-- [Tool-Calling Data Flywheel with NeMo Microservices](./nemo/data-flywheel)
+- [Tool-Calling Fine-tuning with NeMo Microservices](./nemo/data-flywheel)
 
 ### Knowledge Graph RAG
 
