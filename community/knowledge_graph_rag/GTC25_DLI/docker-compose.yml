@@ -1,0 +1,60 @@
+version: '3'
+
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "${DEV_NGINX_PORT}:8888"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./notebooks:/usr/share/nginx/html:ro
+    networks:
+      - gtc25_kgrag_dli
+
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./notebooks:/workspace/notebooks
+      - ./entrypoint.sh:/entrypoint.sh
+    environment:
+      - JUPYTER_TOKEN=nvidia
+    entrypoint: /entrypoint.sh
+    networks:
+      - gtc25_kgrag_dli
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  nim:
+    image: nvcr.io/nvidia/nemo-inference-microservice:23.12
+    ports:
+      - "8000:8000"
+    environment:
+      - NGC_API_KEY=$NGC_API_KEY
+      - NIM_PEFT_SOURCE=/home/nvs/loras
+      - NIM_PEFT_REFRESH_INTERVAL=3600
+      - TRANSFORMERS_CACHE=#
+      - CUDA_VISIBLE_DEVICES=2
+    volumes:
+      - ${PWD}/model/nim/:/opt/nim/.cache:rw
+      - ${PWD}/model/loras/:/home/nvs/loras:rw
+    networks:
+      - gtc25_kgrag_dli
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+networks:
+  gtc25_kgrag_dli:
+    name: ${COMPOSE_PROJECT_NAME}
+
