@@ -23,6 +23,10 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
 ## Inventory
 
+* [NVIDIA Data Analysis Agent](./data-analysis-agent/)
+
+  This example demonstrates an interactive, agentic data analysis application that leverages NVIDIA Llama-3.1-Nemotron-Ultra-253B-v1 for advanced reasoning and data exploration. Users can upload CSV files, ask questions in natural language, and receive automated visualizations with clear, step-by-step reasoning. The implementation features a modular agent architecture for data insight, code generation, execution, and transparent reasoning.
+
 * [NVIDIA RAG in 5 minutes](./5_mins_rag_no_gpu/)
 
   This is a simple standalone implementation showing rag pipeline using Nvidia API Catalog models. It uses a simple Streamlit UI and one file implementation of a minimalistic RAG pipeline.
