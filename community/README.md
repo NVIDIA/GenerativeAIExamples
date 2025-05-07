@@ -67,3 +67,11 @@ Community examples are sample code and deployments for RAG pipelines that are no
 * [LLM Prompt Design Helper using NIM](./llm-prompt-design-helper/)
 
   This tool demonstrates how to utilize a user-friendly interface to interact with NVIDIA NIMs, including those available in the API catalog, self-deployed NIM endpoints, and NIMs hosted on Hugging Face. It also provides settings to integrate RAG pipelines with either local and temporary vector stores or self-hosted search engines. Developers can use this tool to design system prompts, few-shot prompts, and configure LLM settings.
+
+* [Chatbot with RAG and Glean](./chat-and-rag-glean/)
+
+  This tool shows how to build a chat interface that uses NVIDIA NIMs along with the Glean Search API to enable internal knowledge base search, chat, and retrieval. 
+
+* [AI Podcast Assistant](./ai-podcast-assistant/)
+
+  This example demonstrates a comprehensive workflow for processing podcast audio using the Phi-4-Multimodal LLM through NVIDIA NIM Microservices. It includes functionality for generating detailed notes from audio content, creating concise summaries, and translating both transcriptions and summaries into different languages. The implementation handles long audio files by automatically chunking them for efficient processing and preserves formatting during translation.

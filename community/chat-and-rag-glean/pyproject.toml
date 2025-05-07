@@ -1,0 +1,22 @@
+[project]
+name = "glean-example"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "chroma>=0.2.0",
+    "gradio>=5.13.2",
+    "gradio-log>=0.0.8",
+    "jupyterlab>=4.3.5",
+    "langchain>=0.3.17",
+    "langchain-chroma>=0.2.1",
+    "langchain-nvidia-ai-endpoints>=0.3.8",
+    "langchain-ollama>=0.2.3",
+    "langgraph>=0.2.68",
+    "ruff>=0.9.3",
+]
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 64", "setuptools-scm>=8"]
