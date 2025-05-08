@@ -1,0 +1,17 @@
+# This file defines paths that should not be included in the
+# launch tarball.
+# This includes any paths in the docker container.
+# If a dataset loader is used, this file should also include
+# the paths to any datasets.
+Dockerfile
+.launchignore
+.dockerignore
+.gitignore
+vm_properties.json
+entrypoint.sh
+assessment/*
+.git
+**/.ipynb_checkpoints
+# **/data
+**/dask-worker-space
+**/mydask*
