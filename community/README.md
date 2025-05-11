@@ -23,6 +23,10 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
 ## Inventory
 
+* [Vanna with NVIDIA AI Endpoints](./Vanna_with_NVIDIA_AI_Endpoints/)
+
+  This example demonstrates how to optimize Vanna's open-source text-to-SQL pipeline using NVIDIA NIM and NeMo Retriever for faster and more efficient analytics. The notebook showcases integration with NVIDIA's AI endpoints to accelerate natural language to SQL queries on a Steam games dataset, enabling data exploration through simple English questions that are automatically converted to optimized SQL queries.
+
 * [NVIDIA Data Analysis Agent](./data-analysis-agent/)
 
   This example demonstrates an interactive, agentic data analysis application that leverages NVIDIA Llama-3.1-Nemotron-Ultra-253B-v1 for advanced reasoning and data exploration. Users can upload CSV files, ask questions in natural language, and receive automated visualizations with clear, step-by-step reasoning. The implementation features a modular agent architecture for data insight, code generation, execution, and transparent reasoning.
