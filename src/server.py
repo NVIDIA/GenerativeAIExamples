@@ -36,7 +36,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import constr
 from pydantic import validator
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pymilvus.exceptions import MilvusException
 from pymilvus.exceptions import MilvusUnavailableException
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
@@ -55,9 +55,14 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO').upper())
 logger = logging.getLogger(__name__)
 
 settings = get_config()
-default_max_tokens = 128000 if "deepseek-r1" in str(settings.llm.model_name) else 1024
-default_temperature = 0.6 if "deepseek-r1" in str(settings.llm.model_name) else 0.2
-default_top_p = 0.95 if "deepseek-r1" in str(settings.llm.model_name) else 0.7
+model_params = settings.llm.get_model_parameters()
+default_max_tokens = model_params["max_tokens"]
+default_temperature = model_params["temperature"]
+default_top_p = model_params["top_p"]
+
+logger.info(f"default_max_tokens: {default_max_tokens}")
+logger.info(f"default_temperature: {default_temperature}")
+logger.info(f"default_top_p: {default_top_p}")
 
 tags_metadata = [
     {
@@ -152,7 +157,7 @@ class Prompt(BaseModel):
         description="The sampling temperature to use for text generation. "
         "The higher the temperature value is, the less deterministic the output text will be. "
         "It is not recommended to modify both temperature and top_p in the same call.",
-        ge=0.1,
+        ge=0.0,
         le=1.0,
     )
     top_p: float = Field(
@@ -302,6 +307,21 @@ class Prompt(BaseModel):
             raise ValueError("reranker_top_k must be less than or equal to vdb_top_k")
         return reranker_top_k
 
+    # Validator to check chat message structure
+    @model_validator(mode="after")
+    def validate_messages_structure(cls, values):
+        messages = values.messages
+        if not messages:
+            raise ValueError("At least one message is required")
+
+        # Check for at least one user message
+        if not any(msg.role == "user" for msg in messages):
+            raise ValueError("At least one message must have role='user'")
+
+        # Validate last message role is user
+        if messages[-1].role != "user":
+            raise ValueError("The last message must have role='user'")
+        return values
 
 class ChainResponseChoices(BaseModel):
     """ Definition of Chain response choices"""
@@ -459,7 +479,7 @@ class DocumentSearch(BaseModel):
         description="The content or keywords to search for within documents.",
         max_length=131072,
         pattern=r'[\s\S]*',
-        default="",
+        default="Tell me something interesting",
     )
     reranker_top_k: int = Field(
         description="Number of document chunks to retrieve.",
@@ -491,7 +511,7 @@ class DocumentSearch(BaseModel):
         pattern=r'[\s\S]*',
     )
     messages: List[Message] = Field(
-        ...,
+        default=[],
         description="A list of messages comprising the conversation so far. "
         "The roles of the messages must be alternating between user and assistant. "
         "The last input message should have role user. "
@@ -535,6 +555,22 @@ class DocumentSearch(BaseModel):
             return value.strip().strip('"')
         return value
 
+    # Validator to check chat message structure
+    @model_validator(mode="after")
+    def validate_messages_structure(cls, values):
+        messages = values.messages
+        if not messages:
+            # If no messages are provided, don't raise an error
+            return values
+
+        # Check for at least one user message
+        if not any(msg.role == "user" for msg in messages):
+            raise ValueError("At least one message must have role='user'")
+
+        # Validate last message role is user
+        if messages[-1].role != "user":
+            raise ValueError("The last message must have role='user'")
+        return values
 
 # Define the service health models in server.py
 class BaseServiceHealthInfo(BaseModel):
@@ -631,9 +667,9 @@ def error_response_generator(exception_msg: str):
 async def health_check(check_dependencies: bool = False):
     """
     Perform a Health Check
-    
+
     Args:
-        check_dependencies: If True, check health of all dependent services. 
+        check_dependencies: If True, check health of all dependent services.
                            If False (default), only report that the API service is up.
 
     Returns 200 when service is up and includes health status of all dependent services when requested.
@@ -641,37 +677,37 @@ async def health_check(check_dependencies: bool = False):
 
     response_message = "Service is up."
     logger.info("Checking service health...")
-    
+
     # Initialize with default response
     response = HealthResponse(message=response_message)
-    
+
     # Only perform detailed service checks if requested
     if check_dependencies:
         try:
             health_results = await check_all_services_health()
             print_health_report(health_results)
-            
+
             # Process databases
             if "databases" in health_results:
                 response.databases = [
-                    DatabaseHealthInfo(**service) 
+                    DatabaseHealthInfo(**service)
                     for service in health_results["databases"]
                 ]
-            
+
             # Process object_storage
             if "object_storage" in health_results:
                 response.object_storage = [
-                    StorageHealthInfo(**service) 
+                    StorageHealthInfo(**service)
                     for service in health_results["object_storage"]
                 ]
-            
+
             # Process nim services
             if "nim" in health_results:
                 response.nim = [
-                    NIMServiceHealthInfo(**service) 
+                    NIMServiceHealthInfo(**service)
                     for service in health_results["nim"]
                 ]
-                    
+
         except Exception as e:
             logger.error(f"Error during dependency health checks: {str(e)}")
     else:
@@ -792,14 +828,16 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
     if metrics:
         metrics.update_api_requests(method=request.method, endpoint=request.url.path)
     try:
-        chat_history = prompt.messages
+        logger.debug(f"Prompt: {prompt}")
+        chat_history = [msg for msg in prompt.messages if not (msg.role == 'assistant' and not msg.content.strip())]
+        logger.debug(f"Chat history: {chat_history}")
         collection_name = prompt.collection_name
-        
+
         # Helper function to escape JSON-like structures in content
         def escape_json_content(content: str) -> str:
             """Escape curly braces in content to avoid JSON parsing issues"""
             return content.replace("{", "{{").replace("}", "}}")
-        
+
         # The last user message will be the query for the rag or llm chain
         last_user_message = next((message.content for message in reversed(chat_history) if message.role == 'user'),
                                 None)
@@ -895,11 +933,11 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
                 else:
                     chain_response = ChainResponse()
                     yield "data: " + str(chain_response.json()) + "\n\n"
-            
+
             except Exception as e:
                 logger.exception("Error from response generator in /generate endpoint. Error details: %s", e)
                 yield from error_response_generator(FALLBACK_EXCEPTION_MSG)
-        
+
         return StreamingResponse(response_generator(), media_type="text/event-stream")
         # pylint: enable=unreachable
     except asyncio.CancelledError as e:
@@ -912,13 +950,14 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
         logger.error(
             "Error from Milvus database in /generate endpoint. Please ensure you have ingested some documents. " +
             "Error details: %s",
-            e)
+            e, exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
         return StreamingResponse(error_response_generator(exception_msg),
                                  media_type="text/event-stream",
                                  status_code=500)
 
     except Exception as e:
-        logger.error("Error from /generate endpoint. Error details: %s", e)
+        logger.error("Error from /generate endpoint. Error details: %s", e,
+                     exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
         return StreamingResponse(error_response_generator(FALLBACK_EXCEPTION_MSG),
                                  media_type="text/event-stream",
                                  status_code=500)
@@ -1000,5 +1039,6 @@ async def document_search(request: Request, data: DocumentSearch) -> Dict[str, L
         logger.warning(f"Request cancelled during document search. {str(e)}")
         return JSONResponse(content={"message": "Request was cancelled by the client."}, status_code=499)
     except Exception as e:
-        logger.error("Error from POST /search endpoint. Error details: %s", e)
+        logger.error("Error from POST /search endpoint. Error details: %s", e,
+                     exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
         return JSONResponse(content={"message": "Error occurred while searching documents."}, status_code=500)

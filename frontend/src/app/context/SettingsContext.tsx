@@ -22,12 +22,14 @@ interface SettingsContextType {
   topP: number;
   vdbTopK: number;
   rerankerTopK: number;
+  confidenceScoreThreshold: number;
   useGuardrails: boolean;
   includeCitations: boolean;
   setTemperature: (value: number) => void;
   setTopP: (value: number) => void;
   setVdbTopK: (value: number) => void;
   setRerankerTopK: (value: number) => void;
+  setConfidenceScoreThreshold: (value: number) => void;
   setUseGuardrails: (value: boolean) => void;
   setIncludeCitations: (value: boolean) => void;
 }
@@ -36,6 +38,9 @@ const MIN_TEMPERATURE = 0.1;
 const MIN_TOP_P = 0.1;
 const DEFAULT_VDB_TOPK = 100;
 const DEFAULT_RERANKER_TOPK = 10;
+const DEFAULT_CONFIDENCE_THRESHOLD = 0.0;
+const MIN_CONFIDENCE_THRESHOLD = 0.0;
+const MAX_CONFIDENCE_THRESHOLD = 1.0;
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
   undefined
@@ -46,6 +51,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [topP, setTopPState] = useState(0.9);
   const [vdbTopK, setVdbTopKState] = useState(DEFAULT_VDB_TOPK);
   const [rerankerTopK, setRerankerTopKState] = useState(DEFAULT_RERANKER_TOPK);
+  const [confidenceScoreThreshold, setConfidenceScoreThresholdState] = useState(DEFAULT_CONFIDENCE_THRESHOLD);
   const [useGuardrails, setUseGuardrails] = useState(false);
   const [includeCitations, setIncludeCitations] = useState(true);
 
@@ -69,6 +75,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setRerankerTopKState(Math.min(newValue, vdbTopK));
   };
 
+  const setConfidenceScoreThreshold = (value: number) => {
+    // Ensure the value is within 0-1 range
+    const newValue = Math.max(MIN_CONFIDENCE_THRESHOLD, Math.min(MAX_CONFIDENCE_THRESHOLD, value));
+    setConfidenceScoreThresholdState(newValue);
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -76,12 +88,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         topP,
         vdbTopK,
         rerankerTopK,
+        confidenceScoreThreshold,
         useGuardrails,
         includeCitations,
         setTemperature,
         setTopP,
         setVdbTopK,
         setRerankerTopK,
+        setConfidenceScoreThreshold,
         setUseGuardrails,
         setIncludeCitations,
       }}

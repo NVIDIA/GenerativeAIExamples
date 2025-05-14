@@ -33,7 +33,7 @@ spec:
           - "{{ .Values.server.workers }}"
           ports:
             - containerPort: 8081
-
+          {{ if .Values.envVars }}
           env:
             {{- if .Values.envVars }}
             {{- range $k, $v := .Values.envVars }}
@@ -41,8 +41,17 @@ spec:
               value: "{{ $v }}"
             {{- end }}
             {{- end }}
+          {{- end }}
+          {{- if .Values.resources }}
           resources:
-            limits:
-              memory: "5Gi"
-            requests:
-              memory: "512Mi"
+{{ toYaml .Values.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: prompt-volume
+              mountPath: /prompt.yaml
+              subPath: prompt.yaml
+      volumes:
+        - name: prompt-volume
+          configMap:
+            name: prompt-config
+            defaultMode: 0555

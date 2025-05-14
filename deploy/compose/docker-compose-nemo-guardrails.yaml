@@ -8,7 +8,7 @@ services:
       - ./nemoguardrails/config-store:/config-store
     environment:
       CONFIG_STORE_PATH: /config-store
-      NIM_ENDPOINT_API_KEY: ${NVIDIA_API_KEY}
+      NIM_ENDPOINT_API_KEY: ${NGC_API_KEY}
       NIM_ENDPOINT_URL: ${NIM_ENDPOINT_URL:-http://nim-llm:8000/v1}
       DEFAULT_CONFIG_ID: ${DEFAULT_CONFIG:-nemoguard}
     depends_on:
@@ -29,7 +29,7 @@ services:
     container_name: llama-3.1-nemoguard-8b-content-safety
     image: nvcr.io/nim/nvidia/llama-3.1-nemoguard-8b-content-safety:1.0.0
     environment:
-      - NGC_API_KEY=${NVIDIA_API_KEY}
+      - NGC_API_KEY=${NGC_API_KEY}
       - NIM_SERVED_MODEL_NAME=llama-3.1-nemoguard-8b-content-safety
       - NIM_CUSTOM_MODEL_NAME=llama-3.1-nemoguard-8b-content-safety
     user: "${USERID}"
@@ -54,7 +54,7 @@ services:
     container_name: llama-3.1-nemoguard-8b-topic-control
     image: nvcr.io/nim/nvidia/llama-3.1-nemoguard-8b-topic-control:1.0.0
     environment:
-      - NGC_API_KEY=${NVIDIA_API_KEY}
+      - NGC_API_KEY=${NGC_API_KEY}
       - NIM_SERVED_MODEL_NAME=llama-3.1-nemoguard-8b-topic-control
       - NIM_CUSTOM_MODEL_NAME=llama-3.1-nemoguard-8b-topic-control
     user: "${USERID}"
@@ -74,7 +74,7 @@ services:
       interval: 10s
       timeout: 20s
       retries: 100
-              
+
 networks:
   default:
     name: nvidia-rag

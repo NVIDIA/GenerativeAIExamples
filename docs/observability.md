@@ -70,3 +70,17 @@ You can open Grafana UI and visualize these metrics on a dashboard by selecting 
 Open the Grafana UI at **http://localhost:3000**
 
 
+
+## Viewing Inputs / Outputs of each stage of the RAG pipeline using Zipkin
+
+After tracing is enabled and running, you can view inputs and outputs of different stages of the RAG pipeline in [Zipkin](https://zipkin.io/).
+
+1. Click on any of the workflows out of `query-rewriter`, `retriver`, `context-reranker` or `llm-stream`. Details appear in the details pane.
+
+2. In the details, find the `traceloop.entity.input` and `traceloop.entity.ouput` rows. These rows show the input and output of that particular workflow.
+
+3. Similarly, you can view inputs and outputs for sub stages within the workflows by clicking on a substage and finding the `traceloop.entity.input` and `traceloop.entity.ouput` rows.
+
+  <p align="center">
+  <img src="./assets/zipkin_ui_labelled.png" width="750">
+  </p>

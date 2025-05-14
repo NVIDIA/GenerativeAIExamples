@@ -184,18 +184,21 @@ export default function Collections() {
           {showSourceItems ? (
             <button
               onClick={handleBackToCollections}
-              className="hover:text-[var(--nv-green)]"
+              className="whitespace-nowrap hover:text-[var(--nv-green)]"
             >
               All Collections
             </button>
           ) : (
-            "All Collections"
+            <span className="whitespace-nowrap">All Collections</span>
           )}
         </h2>
         {showSourceItems && selectedCollection && (
           <>
             <span className="text-gray-500">/</span>
-            <span className="text-sm font-medium text-[var(--nv-green)]">
+            <span
+              title={selectedCollection}
+              className="inline-block max-w-[170px] truncate text-sm font-medium text-[var(--nv-green)]"
+            >
               {selectedCollection}
             </span>
           </>

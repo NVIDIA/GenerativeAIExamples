@@ -3,7 +3,7 @@ services:
   # Main ingestor server which is responsible for ingestion
   ingestor-server:
     container_name: ingestor-server
-    image: nvcr.io/nvidia/blueprint/ingestor-server:${TAG:-2.0.0}
+    image: nvcr.io/nvidia/blueprint/ingestor-server:${TAG:-2.1.0}
     build:
       # Set context to repo's root directory
       context: ../../
@@ -35,7 +35,7 @@ services:
       MINIO_ACCESSKEY: "minioadmin"
       MINIO_SECRETKEY: "minioadmin"
 
-      NVIDIA_API_KEY: ${NVIDIA_API_KEY:?"NVIDIA_API_KEY is required"}
+      NGC_API_KEY: ${NGC_API_KEY:?"NGC_API_KEY is required"}
 
       ##===Embedding Model specific configurations===
       # url on which embedding model is hosted. If "", Nvidia hosted API is used
@@ -52,13 +52,14 @@ services:
       APP_NVINGEST_EXTRACTTABLES: ${APP_NVINGEST_EXTRACTTABLES:-True}
       APP_NVINGEST_EXTRACTCHARTS: ${APP_NVINGEST_EXTRACTCHARTS:-True}
       APP_NVINGEST_EXTRACTIMAGES: ${APP_NVINGEST_EXTRACTIMAGES:-False}
-      APP_NVINGEST_EXTRACTMETHOD: ${APP_NVINGEST_EXTRACTMETHOD:-pdfium}
+      APP_NVINGEST_PDFEXTRACTMETHOD: ${APP_NVINGEST_PDFEXTRACTMETHOD:-None} # Select from pdfium, nemoretriever_parse, None
       # Extract text by "page" only recommended for documents with pages like .pdf, .docx, etc.
       APP_NVINGEST_TEXTDEPTH: ${APP_NVINGEST_TEXTDEPTH:-page} # extract by "page" or "document"
 
       ##===NV-Ingest Splitting Configurations========
-      APP_NVINGEST_CHUNKSIZE: ${APP_NVINGEST_CHUNKSIZE:-1024}
+      APP_NVINGEST_CHUNKSIZE: ${APP_NVINGEST_CHUNKSIZE:-512}
       APP_NVINGEST_CHUNKOVERLAP: ${APP_NVINGEST_CHUNKOVERLAP:-150}
+      APP_NVINGEST_ENABLEPDFSPLITTER: ${APP_NVINGEST_ENABLEPDFSPLITTER:-True}
 
       ##===NV-Ingest Caption Model configurations====
       APP_NVINGEST_CAPTIONMODELNAME: ${APP_NVINGEST_CAPTIONMODELNAME:-"meta/llama-3.2-11b-vision-instruct"}
@@ -68,8 +69,22 @@ services:
       # Choose whether to store the extracted content in the vector store for citation support
       ENABLE_CITATIONS: ${ENABLE_CITATIONS:-True}
 
+      # Enable ingestion in chunks for multi-user support (Recommended to increase number of workers when set to True)
+      # Also, recommended to set when API endpoints are used for nv-ingest NIMs instead of self-hosted endpoints
+      # In case you encounter OOM errors, set to True to optimize memory usage
+      ENABLE_NV_INGEST_BATCH_MODE: ${ENABLE_NV_INGEST_BATCH_MODE:-True}
+      NV_INGEST_FILES_PER_BATCH: ${NV_INGEST_FILES_PER_BATCH:-128} # Number of documents to process in each chunk
+
       # Log level for server, supported level NOTSET, DEBUG, INFO, WARN, ERROR, CRITICAL
       LOGLEVEL: ${LOGLEVEL:-INFO}
+
+      # [Optional] Redis configuration for task status and result storage
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_DB: ${REDIS_DB:-0}
+
+      # Bulk upload to MinIO
+      ENABLE_MINIO_BULK_UPLOAD: ${ENABLE_MINIO_BULK_UPLOAD:-False}
 
     ports:
       - "8082:8082"
@@ -83,7 +98,7 @@ services:
       - "6379:6379"
 
   nv-ingest-ms-runtime:
-    image: nvcr.io/nvidia/nemo-microservices/nv-ingest:25.3.0
+    image: nvcr.io/nvidia/nemo-microservices/nv-ingest:25.4.1
     cpuset: "0-15"
     volumes:
       - ${DATASET_ROOT:-./data}:/workspace/data
@@ -118,11 +133,11 @@ services:
       - NEMORETRIEVER_PARSE_HTTP_ENDPOINT=http://nemoretriever-parse:8000/v1/chat/completions
       - NEMORETRIEVER_PARSE_INFER_PROTOCOL=http
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-nvidiaapikey}
-      - NGC_API_KEY=${NVIDIA_API_KEY:-nvidiaapikey}
-      - NVIDIA_BUILD_API_KEY=${NVIDIA_API_KEY:-nvidiaapikey}
+      - NGC_API_KEY=${NGC_API_KEY:-nvidiaapikey}
+      - NVIDIA_BUILD_API_KEY=${NGC_API_KEY:-nvidiaapikey}
       - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
       # Self-hosted paddle endpoints.
-      - PADDLE_GRPC_ENDPOINT=paddle:8001
+      - PADDLE_GRPC_ENDPOINT=${PADDLE_GRPC_ENDPOINT:-paddle:8001}
       - PADDLE_HTTP_ENDPOINT=${PADDLE_HTTP_ENDPOINT-http://paddle:8000/v1/infer}
       - PADDLE_INFER_PROTOCOL=${PADDLE_INFER_PROTOCOL-grpc}
       # build.nvidia.com hosted paddle endpoints.
@@ -134,19 +149,19 @@ services:
       # build.nvidia.com hosted yolox endpoints.
       #- YOLOX_HTTP_ENDPOINT=https://ai.api.nvidia.com/v1/cv/nvidia/nemoretriever-page-elements-v2
       #- YOLOX_INFER_PROTOCOL=http
-      - YOLOX_GRPC_ENDPOINT=page-elements:8001
+      - YOLOX_GRPC_ENDPOINT=${YOLOX_GRPC_ENDPOINT:-page-elements:8001}
       - YOLOX_HTTP_ENDPOINT=${YOLOX_HTTP_ENDPOINT:-http://page-elements:8000/v1/infer}
       - YOLOX_INFER_PROTOCOL=${YOLOX_INFER_PROTOCOL:-grpc}
       # build.nvidia.com hosted yolox-graphics-elements endpoints.
       #- YOLOX_GRAPHIC_ELEMENTS_HTTP_ENDPOINT=https://ai.api.nvidia.com/v1/cv/nvidia/nemoretriever-graphic-elements-v1
       #- YOLOX_GRAPHIC_ELEMENTS_INFER_PROTOCOL=http
-      - YOLOX_GRAPHIC_ELEMENTS_GRPC_ENDPOINT=graphic-elements:8001
+      - YOLOX_GRAPHIC_ELEMENTS_GRPC_ENDPOINT=${YOLOX_GRAPHIC_ELEMENTS_GRPC_ENDPOINT:-graphic-elements:8001}
       - YOLOX_GRAPHIC_ELEMENTS_HTTP_ENDPOINT=${YOLOX_GRAPHIC_ELEMENTS_HTTP_ENDPOINT:-http://graphic-elements:8000/v1/infer}
       - YOLOX_GRAPHIC_ELEMENTS_INFER_PROTOCOL=${YOLOX_GRAPHIC_ELEMENTS_INFER_PROTOCOL:-grpc}
       # build.nvidia.com hosted  yolox-table-elements endpoints.
       #- YOLOX_TABLE_STRUCTURE_HTTP_ENDPOINT=https://ai.api.nvidia.com/v1/cv/nvidia/nemoretriever-table-structure-v1
       #- YOLOX_TABLE_STRUCTURE_INFER_PROTOCOL=http
-      - YOLOX_TABLE_STRUCTURE_GRPC_ENDPOINT=table-structure:8001
+      - YOLOX_TABLE_STRUCTURE_GRPC_ENDPOINT=${YOLOX_TABLE_STRUCTURE_GRPC_ENDPOINT:-table-structure:8001}
       - YOLOX_TABLE_STRUCTURE_HTTP_ENDPOINT=${YOLOX_TABLE_STRUCTURE_HTTP_ENDPOINT:-http://table-structure:8000/v1/infer}
       - YOLOX_TABLE_STRUCTURE_INFER_PROTOCOL=${YOLOX_TABLE_STRUCTURE_INFER_PROTOCOL:-grpc}
       # Incase of nvidia-hosted caption model, use the endpoint url as - https://ai.api.nvidia.com/v1/gr/meta/llama-3.2-11b-vision-instruct/chat/completions

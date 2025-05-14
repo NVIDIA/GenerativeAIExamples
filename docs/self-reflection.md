@@ -5,6 +5,8 @@ The RAG Blueprint supports self-reflection capabilities to improve response qual
 1. Context Relevance Check: Evaluates and potentially improves retrieved document relevance
 2. Response Groundedness Check: Ensures generated responses are well-grounded in the retrieved context
 
+For steps to enable reflection in Helm deployment, refer to [Reflection Support via Helm Deployment](#reflection-support-via-helm-deployment).
+
 ## Configuration
 
 Enable self-reflection by setting the following environment variables:
@@ -36,14 +38,13 @@ The reflection feature supports multiple deployment options:
    - **Required**: 8x A100 80GB or H100 80GB GPUs for optimal latency-optimized deployment
    - For detailed GPU requirements and supported model configurations, refer to the [NVIDIA NIM documentation](https://docs.nvidia.com/nim/large-language-models/latest/supported-models.html#mixtral-8x22b-instruct-v0-1).
 
-
 ### Deployment Steps
 
 1. Authenticate Docker with NGC using your NVIDIA API key:
 
    ```bash
-   export NVIDIA_API_KEY="nvapi-..."
-   echo "${NVIDIA_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
+   export NGC_API_KEY="nvapi-..."
+   echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
    ```
 
 2. Create a directory to cache the models:
@@ -111,7 +112,7 @@ If you don't have sufficient GPU resources for on-premises deployment, you can u
 1. Set your NVIDIA API key as an environment variable:
 
    ```bash
-   export NVIDIA_API_KEY="nvapi-..."
+   export NGC_API_KEY="nvapi-..."
    ```
 
 2. Configure the environment to use NVIDIA hosted models:
@@ -145,6 +146,100 @@ If you don't have sufficient GPU resources for on-premises deployment, you can u
 
 [!NOTE]
 When using NVIDIA AI Playground models, you must obtain an API key. See [Obtain an API Key](quickstart.md#obtain-an-api-key) for instructions.
+
+## Reflection Support via Helm Deployment
+
+You can enable self-reflection through Helm when you deploy the RAG Blueprint.
+
+### Prerequisites
+
+- Only on-premises reflection deployment is supported in Helm
+- Requires 8 additional GPUs for the Mixtral model service
+- The model used is: `mistralai/mixtral-8x22b-instruct-v0.1`
+
+### Deploy the Reflection LLM in a Separate Namespace
+
+1. Export your NGC API key:
+
+   ```bash
+   export NGC_API_KEY=your_api_key_here
+   ```
+
+2. Create a namespace for reflection:
+
+   ```bash
+   kubectl create ns reflection-nim
+   ```
+
+3. Create required secrets:
+
+   ```bash
+   kubectl create secret -n reflection-nim docker-registry ngc-secret \
+     --docker-server=nvcr.io --docker-username='$oauthtoken' --docker-password=$NGC_API_KEY
+
+   kubectl create secret -n reflection-nim generic ngc-api \
+     --from-literal=NGC_API_KEY=$NGC_API_KEY
+   ```
+
+4. Create a `custom_values.yaml` file:
+
+   ```yaml
+   service:
+     name: "nim-llm"
+   image:
+     repository: nvcr.io/nim/mistralai/mixtral-8x22b-instruct-v01
+     pullPolicy: IfNotPresent
+     tag: "1.2.2"
+   resources:
+     limits:
+       nvidia.com/gpu: 8
+     requests:
+       nvidia.com/gpu: 8
+   model:
+     ngcAPISecret: ngc-api
+     name: "mistralai/mixtral-8x22b-instruct-v0.1"
+   persistence:
+     enabled: true
+   imagePullSecrets:
+     - name: ngc-secret
+   ```
+
+5. Deploy the reflection LLM via Helm:
+
+   ```bash
+   helm upgrade --install nim-llm -n reflection-nim https://helm.ngc.nvidia.com/nim/charts/nim-llm-1.7.0.tgz \
+     --username='$oauthtoken' \
+     --password=$NGC_API_KEY \
+     -f custom_values.yaml
+   ```
+
+6. Set the following environment variables in your `values.yaml` under `envVars`:
+
+   ```yaml
+   # === Reflection ===
+   ENABLE_REFLECTION: "True"
+   MAX_REFLECTION_LOOP: "3"
+   CONTEXT_RELEVANCE_THRESHOLD: "1"
+   RESPONSE_GROUNDEDNESS_THRESHOLD: "1"
+   REFLECTION_LLM: "mistralai/mixtral-8x22b-instruct-v0.1"
+   REFLECTION_LLM_SERVERURL: "nim-llm.reflection-nim:8000"
+   ```
+
+7. Deploy the RAG Helm chart:
+
+   Follow the steps from [Quick Start Helm Deployment](./quickstart.md#deploy-with-helm-chart) and run:
+
+   ```bash
+   helm install rag -n rag https://helm.ngc.nvidia.com/nvidia/blueprint/charts/nvidia-blueprint-rag-v2.1.0.tgz \
+     --username '$oauthtoken' \
+     --password "${NGC_API_KEY}" \
+     --set imagePullSecret.password=$NGC_API_KEY \
+     --set ngcApiSecret.password=$NGC_API_KEY \
+     -f rag-server/values.yaml
+   ```
+
+> [!NOTE]
+> Enabling Helm-based reflection support increases total GPU requirement to 16x H100 (8 for RAG and 8 for Mixtral model).
 
 ## How It Works
 
@@ -194,6 +289,6 @@ When using NVIDIA AI Playground models, you must obtain an API key. See [Obtain 
 - Response streaming is not supported during response groundedness checks
 - For on-premises deployment:
   - Requires significant GPU resources (8x A100/H100 GPUs recommended)
-  - Initial model download time may very based on network bandwith
+  - Initial model download time may vary based on network bandwidth
 
 For more details on implementation, see the [reflection.py](../src/reflection.py) source code.

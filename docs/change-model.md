@@ -89,4 +89,11 @@ You can specify the model for NVIDIA NIM containers to use in the [nims.yaml](..
 
    - Browse the NGC catalog at <https://catalog.ngc.nvidia.com/containers>.
 
-2. Follow the steps specified [here](quickstart.md#start-using-on-prem-models) to relaunch the containers with the updated models. Make sure to specify the correct model names using appropriate environment variables.
+2. Update the corresponding model names using environment variables as required.
+   ```bash
+   export APP_EMBEDDINGS_MODELNAME=<>
+   export APP_RANKING_MODELNAME=<>
+   export APP_EMBEDDINGS_MODELNAME=<>
+   ```
+
+3. Follow the steps specified [here](quickstart.md#start-using-on-prem-models) to relaunch the containers with the updated models. Make sure to specify the correct model names using appropriate environment variables as shown in the earlier step.

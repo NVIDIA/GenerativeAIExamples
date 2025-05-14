@@ -53,8 +53,14 @@ export default function Citations({ citations = [] }: CitationsProps) {
     );
   }
 
+  // Debug the received citations
+  console.log("Citations component received:", citations);
+
   return (
     <div className="space-y-6 text-gray-400">
+      <div className="mb-2 p-2 text-center text-sm">
+        <span className="font-medium">Showing {citations.length} citations</span>
+      </div>
       {citations.map((citation, index) => (
         <div
           key={index}
@@ -62,6 +68,9 @@ export default function Citations({ citations = [] }: CitationsProps) {
         >
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-medium">Source {index + 1}</h3>
+            <span className="text-xs px-2 py-1 rounded bg-neutral-900">
+              Score: {citation.score !== undefined ? citation.score.toFixed(2) : "N/A"}
+            </span>
           </div>
           {renderCitationContent(citation)}
           <div className="flex items-center gap-2">

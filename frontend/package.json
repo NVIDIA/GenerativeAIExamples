@@ -10,8 +10,9 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\""
   },
   "dependencies": {
+    "axios": "^1.9.0",
     "marked": "^15.0.7",
-    "next": "15.1.6",
+    "next": "15.4.0-canary.23",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "uuid": "^11.1.0"

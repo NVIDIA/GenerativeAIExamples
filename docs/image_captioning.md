@@ -9,6 +9,7 @@ Once you have followed [steps in quick start guide](./quickstart.md#deploy-with-
 - [Enable image captioning support](#enable-image-captioning-support)
   - [Using on-prem VLM model (Recommended)](#using-on-prem-vlm-model-recommended)
   - [Using cloud hosted VLM model](#using-cloud-hosted-vlm-model)
+  - [Using Helm chart deployment (On-prem only)](#using-helm-chart-deployment-on-prem-only)
 
 ## Using on-prem VLM model (Recommended)
 1. Deploy the VLM model on-prem. You need a H100 or A100 GPU to deploy this model.
@@ -46,9 +47,8 @@ Once you have followed [steps in quick start guide](./quickstart.md#deploy-with-
    ```
 
 2. Enable image captioning
-
    Export the below environment variable and relaunch the ingestor-server container.
-      ```bash
+   ```bash
    export APP_NVINGEST_EXTRACTIMAGES="True"
    docker compose -f deploy/compose/docker-compose-ingestor-server.yaml up -d
    ```
@@ -58,3 +58,38 @@ Once you have followed [steps in quick start guide](./quickstart.md#deploy-with-
 export VLM_CAPTION_ENDPOINT="<vlm_nim_http_endpoint_url>"
 export VLM_CAPTION_MODEL_NAME="<model_name>"
 ```
+
+## Using Helm chart deployment (On-prem only)
+
+To enable image captioning in Helm-based deployments by using an on-prem VLM model, use the following procedure.
+
+
+1. In the `values.yaml` file, in the `ingestor-server.envVars` section, set the following environment variables.
+
+   ```yaml
+   APP_NVINGEST_EXTRACTIMAGES: "True"
+   APP_NVINGEST_CAPTIONENDPOINTURL: "http://nim-vlm-image-captioning:8000/v1/chat/completions"
+   APP_NVINGEST_CAPTIONMODELNAME: "meta/llama-3.2-11b-vision-instruct"
+   ```
+
+2. Enable the VLM image captioning model in your `values.yaml` file.
+
+   ```yaml
+   nv-ingest:
+     nim-vlm-image-captioning:
+       deployed: true
+   ```
+
+3. Apply the updated Helm chart by running the following code.
+
+   ```bash
+   helm upgrade --install rag -n rag https://helm.ngc.nvidia.com/nvidia/blueprint/charts/nvidia-blueprint-rag-v2.1.0.tgz \
+   --username '$oauthtoken' \
+   --password "${NGC_API_KEY}" \
+   --set imagePullSecret.password=$NGC_API_KEY \
+   --set ngcApiSecret.password=$NGC_API_KEY \
+   -f rag-server/values.yaml
+   ```
+
+> [!Note]
+> Enabling the on-prem VLM model increases the total GPU requirement to 10xH100 GPUs.

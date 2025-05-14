@@ -43,9 +43,15 @@ For detailed hardware compatibility and support information:
 
 ### Deployment Options
 
-#### Option 1: Self-hosted Deployment (Default)
+You can deploy NeMo Guardrails using one of the following methods:
 
-This is the default deployment method that runs all guardrails services locally on your hardware.
+1. **Self-hosted Deployment (Docker Compose)** – Default method running all guardrails services locally on your hardware
+2. **Cloud Deployment** – Uses NVIDIA-hosted models instead of running the models locally
+3. **Helm Deployment** – Deploys NeMo Guardrails as a Helm chart on a Kubernetes cluster (local deployment only)
+
+---
+
+## Option 1: Self-hosted Deployment (Default)
 
 ### Step 1: Enable Guardrails
 
@@ -175,6 +181,48 @@ cat deploy/compose/nemoguardrails/config-store/nemoguard_cloud/config.yml
 ```
 
 Ensure that the model names in this file match the models available in your NVIDIA API account. You may need to update these names based on the specific models you have access to.
+
+---
+
+## Option 3: Helm Deployment (Local Deployment Only)
+
+Alternatively, you can deploy NeMo Guardrails using Helm for Kubernetes environments.
+
+### Step 1: Install NeMo Guardrails Helm Chart
+
+Follow the instructions to install the chart in inference mode:
+
+👉 [https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo-microservices/helm-charts/nemo-guardrails](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo-microservices/helm-charts/nemo-guardrails)
+
+### Step 2: Retrieve NeMo Guardrails Service URL
+
+After deploying the chart, obtain the URL of the NeMo Guardrails service (external IP or internal cluster service name).
+
+You can retrieve it using:
+
+```bash
+kubectl get svc -n <namespace>
+```
+
+Locate the `nemo-guardrails` service and copy its URL.
+
+### Step 3: Update RAG Blueprint Deployment with NeMo Guardrails
+
+Use the Helm upgrade command below to enable NeMo Guardrails in RAG Blueprint by setting `ENABLE_GUARDRAILS` and the `NEMO_GUARDRAILS_URL`:
+
+```bash
+helm upgrade rag -n rag https://helm.ngc.nvidia.com/nvidia/blueprint/charts/nvidia-blueprint-rag-v2.1.0.tgz \
+  --username '$oauthtoken' \
+  --password "${NGC_API_KEY}" \
+  --set imagePullSecret.password=${NGC_API_KEY} \
+  --set ngcApiSecret.password=${NGC_API_KEY} \
+  --set envVars.ENABLE_GUARDRAILS="True" \
+  --set envVars.NEMO_GUARDRAILS_URL="<URL OF THE NEMO GUARDRAILS SERVICE>"
+```
+
+Replace `<URL OF THE NEMO GUARDRAILS SERVICE>` with the URL you obtained.
+
+This will configure the RAG server to route guardrails functionality to the deployed NeMo Guardrails service.
 
 ---
 

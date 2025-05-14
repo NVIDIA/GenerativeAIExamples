@@ -3,6 +3,21 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 
+# Migration Guide: RAG v2.0.0 to RAG v2.1.0
+
+## Overview
+In RAG 2.1.0, the behaviour of POST /documents API which can be used to upload documents has changed. Developers can now upload documents in a non-blocking manner.
+
+## API Changes
+
+Updated openapi schemas are available [here](./api_reference/).
+
+### 2.1 Changed Endpoints and Features
+
+1. **Documents management**:
+   - **Upload documents**:
+     - *New field*: `blocking: bool` is added in the request schema. By default it is set to `True`. Developers are expected to call this API and then monitor the status of doc upload using `/status` API.
+
 # Migration Guide: RAG v1.0.0 to RAG v2.0.0
 
 ## Overview

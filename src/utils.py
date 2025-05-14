@@ -54,6 +54,7 @@ try:
     from langchain_nvidia_ai_endpoints import ChatNVIDIA
     from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
     from langchain_nvidia_ai_endpoints import NVIDIARerank
+    from langchain_nvidia_ai_endpoints import register_model, Model
 except Exception:
     logger.error("Optional langchain API Catalog connector langchain_nvidia_ai_endpoints not installed.")
 
@@ -104,10 +105,10 @@ def get_env_variable(
     """
     Get an environment variable with a fallback to a default value.
     Also checks if the variable is set, is not empty, and is not longer than 256 characters.
-    
+
     Args:
         variable_name (str): The name of the environment variable to get
-        
+
     Returns:
         Any: The value of the environment variable or the default value if the variable is not set
     """
@@ -185,7 +186,7 @@ def create_vectorstore_langchain(document_embedder, collection_name: str = "", v
         vdb_endpoint = config.vector_store.url
 
     if config.vector_store.name == "milvus":
-        logger.info("Trying to connect to milvus collection: %s", collection_name)
+        logger.debug("Trying to connect to milvus collection: %s", collection_name)
         if not collection_name:
             collection_name = os.getenv('COLLECTION_NAME', "vector_db")
 
@@ -201,7 +202,7 @@ def create_vectorstore_langchain(document_embedder, collection_name: str = "", v
             connections.disconnect(connection_alias)
             return None
 
-        logger.info(f"Collection '{collection_name}' exists. Proceeding with vector store creation.")
+        logger.debug(f"Collection '{collection_name}' exists. Proceeding with vector store creation.")
 
         if config.vector_store.search_type == "hybrid":
             logger.info("Creating Langchain Milvus object for Hybrid search")
@@ -218,7 +219,7 @@ def create_vectorstore_langchain(document_embedder, collection_name: str = "", v
                 vector_field=["vector", "sparse"] # Dense and Sparse fields set by NV-Ingest
             )
         elif config.vector_store.search_type == "dense":
-            logger.info("Index type for milvus: %s", config.vector_store.index_type)
+            logger.debug("Index type for milvus: %s", config.vector_store.index_type)
             vectorstore = Milvus(document_embedder,
                                 connection_args={
                                     "uri": vdb_endpoint
@@ -240,7 +241,7 @@ def create_vectorstore_langchain(document_embedder, collection_name: str = "", v
             )
     else:
         raise ValueError(f"{config.vector_store.name} vector database is not supported")
-    logger.info("Vector store created and saved.")
+    logger.debug("Vector store created and saved.")
     return vectorstore
 
 
@@ -303,7 +304,12 @@ def create_collections(collection_names: List[str], vdb_endpoint: str, dimension
                 logger.info(f"Collection '{collection_name}' created successfully in {vdb_endpoint}.")
 
             except Exception as e:
-                failed_collections.append(collection_name)
+                failed_collections.append(
+                    {
+                        "collection_name": collection_name,
+                        "error_message": str(e)
+                    }
+                )
                 logger.error(f"Failed to create collection {collection_name}: {str(e)}")
 
         # Disconnect from Milvus
@@ -424,7 +430,10 @@ def delete_collections(vdb_endpoint: str, collection_names: List[str]) -> dict:
 def get_llm(**kwargs) -> LLM | SimpleChatModel:
     """Create the LLM connection."""
     settings = get_config()
-    
+
+    # Sanitize the URL
+    url = sanitize_nim_url(kwargs.get('llm_endpoint', ""), kwargs.get('model'), "llm")
+
     # Check if guardrails are enabled
     enable_guardrails = os.getenv("ENABLE_GUARDRAILS", "False").lower() == "true" and kwargs.get('enable_guardrails', False) == True
 
@@ -443,16 +452,16 @@ def get_llm(**kwargs) -> LLM | SimpleChatModel:
                     # Parse URL and add scheme if missing
                     if not guardrails_url.startswith(('http://', 'https://')):
                         guardrails_url = 'http://' + guardrails_url
-                        
+
                     # Try to connect with a timeout of 5 seconds
                     response = requests.get(guardrails_url + "/v1/health", timeout=5)
                     response.raise_for_status()
-                    
-                    x_model_authorization = {"X-Model-Authorization": os.environ.get("NVIDIA_API_KEY", "")}
+
+                    x_model_authorization = {"X-Model-Authorization": os.environ.get("NGC_API_KEY", "")}
                     return ChatOpenAI(
                         model_name=kwargs.get('model'),
                         openai_api_base=f"{guardrails_url}/v1/guardrail",
-                        openai_api_key="dummy-value", 
+                        openai_api_key="dummy-value",
                         default_headers=x_model_authorization,
                         temperature=kwargs.get('temperature', None),
                         top_p=kwargs.get('top_p', None),
@@ -462,11 +471,11 @@ def get_llm(**kwargs) -> LLM | SimpleChatModel:
                     error_msg = f"Failed to connect to guardrails service at {guardrails_url}: {str(e)} Make sure the guardrails service is running and accessible."
                     logger.error(error_msg)
                     raise RuntimeError(error_msg)
-        
-        if kwargs.get('llm_endpoint') and kwargs.get('llm_endpoint') != '""':
-            logger.info(f"Length of string {len(kwargs.get('llm_endpoint'))}")
-            logger.info("Using llm model %s hosted at %s", kwargs.get('model'), kwargs.get('llm_endpoint'))
-            return ChatNVIDIA(base_url=f"http://{kwargs.get('llm_endpoint')}/v1",
+
+        if url:
+            logger.debug(f"Length of llm endpoint url string {url}")
+            logger.info("Using llm model %s hosted at %s", kwargs.get('model'), url)
+            return ChatNVIDIA(base_url=url,
                               model=kwargs.get('model'),
                               temperature=kwargs.get('temperature', None),
                               top_p=kwargs.get('top_p', None),
@@ -492,6 +501,9 @@ def get_embedding_model(model: str, url: str) -> Embeddings:
     encode_kwargs = {"normalize_embeddings": False}
     settings = get_config()
 
+    # Sanitize the URL
+    url = sanitize_nim_url(url, model, "embedding")
+
     logger.info("Using %s as model engine and %s and model for embeddings",
                 settings.embeddings.model_engine,
                 model)
@@ -509,7 +521,7 @@ def get_embedding_model(model: str, url: str) -> Embeddings:
             logger.info("Using embedding model %s hosted at %s",
                         model,
                         url)
-            return NVIDIAEmbeddings(base_url=f"http://{url}/v1",
+            return NVIDIAEmbeddings(base_url=url,
                                     model=model,
                                     truncate="END")
 
@@ -521,7 +533,7 @@ def get_embedding_model(model: str, url: str) -> Embeddings:
 
 
 @lru_cache
-def get_ranking_model(model="", url="", top_n=4) -> BaseDocumentCompressor:
+def _get_ranking_model(model="", url="", top_n=4) -> BaseDocumentCompressor:
     """Create the ranking model.
 
     Returns:
@@ -530,11 +542,14 @@ def get_ranking_model(model="", url="", top_n=4) -> BaseDocumentCompressor:
 
     settings = get_config()
 
+    # Sanitize the URL
+    url = sanitize_nim_url(url, model, "ranking")
+
     try:
         if settings.ranking.model_engine == "nvidia-ai-endpoints":
             if url:
                 logger.info("Using ranking model hosted at %s", url)
-                return NVIDIARerank(base_url=f"http://{url}/v1",
+                return NVIDIARerank(base_url=url,
                                     top_n=top_n,
                                     truncate="END")
 
@@ -547,6 +562,15 @@ def get_ranking_model(model="", url="", top_n=4) -> BaseDocumentCompressor:
         logger.error("An error occurred while initializing ranking_model: %s", e)
     return None
 
+
+def get_ranking_model(model="", url="", top_n=4) -> BaseDocumentCompressor:
+    """Create the ranking model."""
+    ranker = _get_ranking_model(model, url, top_n)
+    if ranker is None:
+        logger.warning("Cached ranking model was None — clearing cache and retrying.")
+        _get_ranking_model.cache_clear()
+        ranker = _get_ranking_model(model, url, top_n)
+    return ranker
 
 def get_text_splitter() -> RecursiveCharacterTextSplitter:
     """Return the token text splitter instance from langchain."""
@@ -576,11 +600,11 @@ def get_docs_vectorstore_langchain(vectorstore: VectorStore) -> List[str]:
     return []
 
 
-def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str]) -> bool:
+def del_docs_vectorstore_langchain(vectorstore: VectorStore, filenames: List[str], collection_name: str="") -> bool:
     """Delete documents from the vector index implemented in LangChain."""
 
     settings = get_config()
-    upload_folder = "/tmp-data/uploaded_files"
+    upload_folder = f"/tmp-data/uploaded_files/{collection_name}"
     deleted = False
     try:
         for filename in filenames:
@@ -629,6 +653,39 @@ def _combine_dicts(dict_a, dict_b):
 
     return combined_dict
 
+def sanitize_nim_url(url:str, model_name:str, model_type:str) -> str:
+    """
+    Sanitize the NIM URL by adding http(s):// if missing and checking if the URL is hosted on NVIDIA's known endpoints.
+    """
+
+    logger.info(f"Sanitizing NIM URL: {url} for model: {model_name} of type: {model_type}")
+
+    # Construct the URL - if url does not start with http(s)://, add it
+    if url and not url.startswith("http://") and not url.startswith("https://"):
+        url = "http://" + url + "/v1"
+        logger.info(f"{model_type} URL does not start with http(s)://, adding it: {url}")
+
+    # Register model only if URL is hosted on NVIDIA's known endpoints
+    if url.startswith("https://integrate.api.nvidia.com") or \
+       url.startswith("https://ai.api.nvidia.com") or \
+       url.startswith("https://api.nvcf.nvidia.com"):
+
+        if model_type == "embedding":
+            client = "NVIDIAEmbeddings"
+        elif model_type == "llm":
+            client = "ChatNVIDIA"
+        elif model_type == "ranking":
+            client = "NVIDIARerank"
+
+        register_model(Model(
+            id=model_name,
+            model_type=model_type,
+            client=client,
+            endpoint=url,
+        ))
+        logger.info(f"Registering custom model {model_name} with client {client} at endpoint {url}")
+    return url
+
 def get_nv_ingest_client():
     """
     Creates and returns NV-Ingest client
@@ -655,7 +712,7 @@ def get_nv_ingest_ingestor(
     """
     config = get_config()
 
-    logger.info("Preparing NV Ingest Ingestor instance for filepaths: %s", filepaths)
+    logger.debug("Preparing NV Ingest Ingestor instance for filepaths: %s", filepaths)
     # Prepare the ingestor using nv-ingest-client
     ingestor = Ingestor(client=nv_ingest_client_instance)
 
@@ -663,29 +720,38 @@ def get_nv_ingest_ingestor(
     ingestor = ingestor.files(filepaths)
 
     # Add extraction task
-    extraction_options = kwargs.get("extraction_options", {})
-    ingestor = ingestor.extract(
-                    extract_text=extraction_options.get("extract_text", config.nv_ingest.extract_text),
-                    extract_tables=extraction_options.get("extract_tables", config.nv_ingest.extract_tables),
-                    extract_charts=extraction_options.get("extract_charts", config.nv_ingest.extract_charts),
-                    extract_images=extraction_options.get("extract_images", config.nv_ingest.extract_images),
-                    extract_method=extraction_options.get("extract_method", config.nv_ingest.extract_method),
-                    text_depth=extraction_options.get("text_depth", config.nv_ingest.text_depth),
-                )
+    # Determine paddle_output_format
+    paddle_output_format = "markdown" if config.nv_ingest.extract_tables else "pseudo_markdown"
+    # Create kwargs for extract method
+    extract_kwargs = {
+        "extract_text": config.nv_ingest.extract_text,
+        "extract_tables": config.nv_ingest.extract_tables,
+        "extract_charts": config.nv_ingest.extract_charts,
+        "extract_images": config.nv_ingest.extract_images,
+        "extract_method": config.nv_ingest.pdf_extract_method,
+        "text_depth": config.nv_ingest.text_depth,
+        "paddle_output_format": paddle_output_format,
+    }
+    if config.nv_ingest.pdf_extract_method in ["None", "none"]:
+        extract_kwargs.pop("extract_method")
+    ingestor = ingestor.extract(**extract_kwargs)
 
     # Add splitting task (By default only works for text documents)
     split_options = kwargs.get("split_options", {})
+    split_source_types = ["PDF", "text"] if config.nv_ingest.enable_pdf_splitter else ["text"]
+    logger.info(f"Post chunk split status: {config.nv_ingest.enable_pdf_splitter}. Splitting by: {split_source_types}")
     ingestor = ingestor.split(
                     tokenizer=config.nv_ingest.tokenizer,
                     chunk_size=split_options.get("chunk_size", config.nv_ingest.chunk_size),
                     chunk_overlap=split_options.get("chunk_overlap", config.nv_ingest.chunk_overlap),
+                    params={"split_source_types": split_source_types}
                 )
 
     # Add captioning task if extract_images is enabled
-    if extraction_options.get("extract_images", config.nv_ingest.extract_images):
+    if config.nv_ingest.extract_images:
         logger.info("Adding captioning task to NV-Ingest Ingestor")
         ingestor = ingestor.caption(
-                        api_key=get_env_variable(variable_name="NVIDIA_API_KEY", default_value=""),
+                        api_key=get_env_variable(variable_name="NGC_API_KEY", default_value=""),
                         endpoint_url=config.nv_ingest.caption_endpoint_url,
                         model_name=config.nv_ingest.caption_model_name,
                     )
@@ -710,7 +776,7 @@ def get_nv_ingest_ingestor(
             sparse=(config.vector_store.search_type == "hybrid"),
 
             # Additional configurations
-            enable_images=extraction_options.get("extract_images", config.nv_ingest.extract_images),
+            enable_images=config.nv_ingest.extract_images,
             recreate=False, # Don't re-create milvus collection
             dense_dim=config.embeddings.dimensions,
 
@@ -789,7 +855,7 @@ def format_document_with_source(doc) -> str:
     """
     # Debug log before formatting
     logger.debug(f"Before format_document_with_source - Document: {doc}")
-    
+
     # Check if source metadata is enabled via environment variable
     enable_metadata = os.getenv('ENABLE_SOURCE_METADATA', 'True').lower() == 'true'
 
@@ -812,80 +878,166 @@ def format_document_with_source(doc) -> str:
     filename = os.path.splitext(os.path.basename(source_path))[0]
     logger.info(f"Before format_document_with_source - Filename: {filename}")
     result = f"File: {filename}\nContent: {doc.page_content}"
-    
+
     # Debug log after formatting
     logger.debug(f"After format_document_with_source - Result: {result}")
-    
+
     return result
 
 def streaming_filter_think(chunks: Iterable[str]) -> Iterable[str]:
     """
-    This generator accepts an iterable of string chunks (from a streaming LLM)
-    and yields chunks with any text between <think> and </think> tags removed.
-    
+    This generator filters content between think tags in streaming LLM responses.
+    It handles both complete tags in a single chunk and tags split across multiple tokens.
+
     Args:
-        chunks (Iterable[str]): An iterable of string chunks from a streaming LLM response
-        
+        chunks (Iterable[str]): Chunks from a streaming LLM response
+
     Yields:
-        str: Filtered chunks with <think>...</think> content removed
+        str: Filtered content with think blocks removed
     """
+    # Complete tags
+    FULL_START_TAG = "<think>"
+    FULL_END_TAG = "</think>"
+
+    # Multi-token tags - core parts without newlines for more robust matching
+    START_TAG_PARTS = ["<th", "ink", ">"]
+    END_TAG_PARTS = ["</", "think", ">"]
+
+    # States
+    NORMAL = 0
+    IN_THINK = 1
+    MATCHING_START = 2
+    MATCHING_END = 3
+
+    state = NORMAL
+    match_position = 0
     buffer = ""
-    in_think = False
-    tag_start = "<think>"
-    tag_end = "</think>"
+    output_buffer = ""
+    chunk_count = 0
 
     for chunk in chunks:
-        buffer += chunk.content
-        # Process as long as there is enough data in the buffer.
-        while True:
-            if not in_think:
-                # Look for the start tag in the buffer.
-                start_idx = buffer.find(tag_start)
-                if start_idx == -1:
-                    # No start tag: yield the entire buffer and clear it.
-                    if buffer:
-                        yield buffer
-                        buffer = ""
-                    break
-                else:
-                    # Yield any text before the <think> tag.
-                    if start_idx > 0:
-                        yield buffer[:start_idx]
-                    # Remove the tag and switch to skipping mode.
-                    buffer = buffer[start_idx + len(tag_start):]
-                    in_think = True
+        content = chunk.content
+        chunk_count += 1
+
+        # Let's first check for full tags - this is the most reliable approach
+        buffer += content
+
+        # Check for complete tags first - most efficient case
+        while state == NORMAL and FULL_START_TAG in buffer:
+            start_idx = buffer.find(FULL_START_TAG)
+            # Extract content before tag
+            before_tag = buffer[:start_idx]
+            output_buffer += before_tag
+
+            # Skip over the tag
+            buffer = buffer[start_idx + len(FULL_START_TAG):]
+            state = IN_THINK
+
+        while state == IN_THINK and FULL_END_TAG in buffer:
+            end_idx = buffer.find(FULL_END_TAG)
+            # Discard everything up to and including end tag
+            buffer = buffer[end_idx + len(FULL_END_TAG):]
+            content = buffer
+            state = NORMAL
+
+        # For token-by-token matching, use the core content without worrying about exact whitespace
+        # Strip whitespace for comparison to make matching more robust
+        content_stripped = content.strip()
+
+        if state == NORMAL:
+            if content_stripped == START_TAG_PARTS[0].strip():
+                # Save everything except this start token
+                to_output = buffer[:-len(content)]
+                output_buffer += to_output
+
+                buffer = content  # Keep only the start token in buffer
+                state = MATCHING_START
+                match_position = 1
             else:
-                # Currently inside a <think> block.
-                end_idx = buffer.find(tag_end)
-                if end_idx == -1:
-                    # End tag not yet seen; discard buffer and wait for more.
-                    buffer = ""
-                    break
+                output_buffer += content  # Regular content, save it
+                buffer = ""  # Clear buffer, we've processed this chunk
+
+        elif state == MATCHING_START:
+            expected_part = START_TAG_PARTS[match_position].strip()
+            if content_stripped == expected_part:
+                match_position += 1
+                if match_position >= len(START_TAG_PARTS):
+                    # Complete start tag matched
+                    state = IN_THINK
+                    match_position = 0
+                    buffer = ""  # Clear the buffer
+            else:
+                # False match, revert to normal and recover the partial match
+                state = NORMAL
+                output_buffer += buffer  # Recover saved tokens
+                buffer = ""
+
+                # Check if this content is a new start tag
+                if content_stripped == START_TAG_PARTS[0].strip():
+                    state = MATCHING_START
+                    match_position = 1
+                    buffer = content  # Keep this token in buffer
                 else:
-                    # Found the end tag; drop everything up to and including it.
-                    buffer = buffer[end_idx + len(tag_end):]
-                    in_think = False
-                    # Loop back to check if there is further text (or a new tag) in buffer.
-    # After processing all chunks, yield any remaining text (if not inside a think block).
-    if buffer and not in_think:
-        yield buffer
+                    output_buffer += content  # Regular content
+
+        elif state == IN_THINK:
+            if content_stripped == END_TAG_PARTS[0].strip():
+                state = MATCHING_END
+                match_position = 1
+                buffer = content  # Keep this token in buffer
+            else:
+                buffer = ""  # Discard content inside think block
+
+        elif state == MATCHING_END:
+            expected_part = END_TAG_PARTS[match_position].strip()
+            if content_stripped == expected_part:
+                match_position += 1
+                if match_position >= len(END_TAG_PARTS):
+                    # Complete end tag matched
+                    state = NORMAL
+                    match_position = 0
+                    buffer = ""  # Clear buffer
+            else:
+                # False match, revert to IN_THINK
+                state = IN_THINK
+                buffer = ""  # Discard content
+
+                # Check if this is a new end tag start
+                if content_stripped == END_TAG_PARTS[0].strip():
+                    state = MATCHING_END
+                    match_position = 1
+                    buffer = content  # Keep this token in buffer
+
+        # Yield accumulated output before processing next chunk
+        if output_buffer:
+            yield output_buffer
+            output_buffer = ""
+
+    # Yield any remaining content if not in a think block
+    if state == NORMAL:
+        if buffer:
+            yield buffer
+        if output_buffer:
+            yield output_buffer
+
+    logger.info("Finished streaming_filter_think processing after %d chunks", chunk_count)
 
 def get_streaming_filter_think_parser():
     """
     Creates and returns a RunnableGenerator for filtering think tokens based on configuration.
-    
-    If FILTER_THINK_TOKENS environment variable is set to "true" (case-insensitive), 
+
+    If FILTER_THINK_TOKENS environment variable is set to "true" (case-insensitive),
     returns a parser that filters out content between <think> and </think> tags.
     Otherwise, returns a pass-through parser that doesn't modify the content.
-    
+
     Returns:
         RunnableGenerator: A parser for filtering (or not filtering) think tokens
     """
     from langchain_core.runnables import RunnableGenerator, RunnablePassthrough
-    
+
     # Check environment variable
     filter_enabled = os.getenv('FILTER_THINK_TOKENS', 'true').lower() == 'true'
-    
+
     if filter_enabled:
         logger.info("Think token filtering is enabled")
         return RunnableGenerator(streaming_filter_think)
@@ -897,16 +1049,16 @@ def get_streaming_filter_think_parser():
 def normalize_relevance_scores(documents: List["Document"]) -> List["Document"]:
     """
     Normalize relevance scores in a list of documents to be between 0 and 1 using sigmoid function.
-    
+
     Args:
         documents: List of Document objects with relevance_score in metadata
-        
+
     Returns:
         The same list of documents with normalized scores
     """
     if not documents:
         return documents
-    
+
     # Apply sigmoid normalization (1 / (1 + e^-x))
     for doc in documents:
         if 'relevance_score' in doc.metadata:
@@ -914,20 +1066,20 @@ def normalize_relevance_scores(documents: List["Document"]) -> List["Document"]:
             scaled_score = original_score * 0.1
             normalized_score = 1 / (1 + math.exp(-scaled_score))
             doc.metadata['relevance_score'] = normalized_score
-    
+
     return documents
 
 async def check_service_health(
-    url: str, 
-    service_name: str, 
-    method: str = "GET", 
+    url: str,
+    service_name: str,
+    method: str = "GET",
     timeout: int = 5,
     headers: Optional[Dict[str, str]] = None,
     json_data: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Check health of a service endpoint asynchronously.
-    
+
     Args:
         url: The endpoint URL to check
         service_name: Name of the service for reporting
@@ -935,7 +1087,7 @@ async def check_service_health(
         timeout: Request timeout in seconds
         headers: Optional HTTP headers
         json_data: Optional JSON payload for POST requests
-        
+
     Returns:
         Dictionary with status information
     """
@@ -947,31 +1099,31 @@ async def check_service_health(
         "latency_ms": 0,
         "error": None
     }
-    
+
     if not url:
         status["status"] = "skipped"
         status["error"] = "No URL provided"
         return status
-    
+
     try:
         # Add scheme if missing
         if not url.startswith(('http://', 'https://')):
             url = 'http://' + url
-            
+
         async with aiohttp.ClientSession() as session:
             request_kwargs = {
                 "timeout": aiohttp.ClientTimeout(total=timeout),
                 "headers": headers or {}
             }
-            
+
             if method.upper() == "POST" and json_data:
                 request_kwargs["json"] = json_data
-            
+
             async with getattr(session, method.lower())(url, **request_kwargs) as response:
                 status["status"] = "healthy" if response.status < 400 else "unhealthy"
                 status["http_status"] = response.status
                 status["latency_ms"] = round((time.time() - start_time) * 1000, 2)
-                
+
     except asyncio.TimeoutError:
         status["status"] = "timeout"
         status["error"] = f"Request timed out after {timeout}s"
@@ -981,7 +1133,7 @@ async def check_service_health(
     except Exception as e:
         status["status"] = "error"
         status["error"] = str(e)
-    
+
     return status
 
 async def check_minio_health(endpoint: str, access_key: str, secret_key: str) -> Dict[str, Any]:
@@ -992,12 +1144,12 @@ async def check_minio_health(endpoint: str, access_key: str, secret_key: str) ->
         "status": "unknown",
         "error": None
     }
-    
+
     if not endpoint:
         status["status"] = "skipped"
         status["error"] = "No endpoint provided"
         return status
-        
+
     try:
         start_time = time.time()
         minio_operator = MinioOperator(
@@ -1013,7 +1165,7 @@ async def check_minio_health(endpoint: str, access_key: str, secret_key: str) ->
     except Exception as e:
         status["status"] = "error"
         status["error"] = str(e)
-        
+
     return status
 
 async def check_milvus_health(url: str) -> Dict[str, Any]:
@@ -1024,48 +1176,48 @@ async def check_milvus_health(url: str) -> Dict[str, Any]:
         "status": "unknown",
         "error": None
     }
-    
+
     if not url:
         status["status"] = "skipped"
         status["error"] = "No URL provided"
         return status
-        
+
     try:
         start_time = time.time()
         parsed_url = urlparse(url)
         connection_alias = f"health_check_{parsed_url.hostname}_{parsed_url.port}_{int(time.time())}"
-        
+
         # Connect to Milvus
         connections.connect(
-            connection_alias, 
-            host=parsed_url.hostname, 
+            connection_alias,
+            host=parsed_url.hostname,
             port=parsed_url.port
         )
-        
+
         # Test basic operation - list collections
         collections = utility.list_collections(using=connection_alias)
-        
+
         # Disconnect
         connections.disconnect(connection_alias)
-        
+
         status["status"] = "healthy"
         status["latency_ms"] = round((time.time() - start_time) * 1000, 2)
         status["collections"] = len(collections)
     except Exception as e:
         status["status"] = "error"
         status["error"] = str(e)
-        
+
     return status
 
 async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
     """
     Check health of all services used by the application
-    
+
     Returns:
         Dictionary with service categories and their health status
     """
     config = get_config()
-    
+
     # Create tasks for different service types
     tasks = []
     results = {
@@ -1073,7 +1225,7 @@ async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
         "object_storage": [],
         "nim": [],  # New unified category for NIM services
     }
-    
+
     # MinIO health check
     minio_endpoint = os.environ.get("MINIO_ENDPOINT", "")
     minio_access_key = os.environ.get("MINIO_ACCESSKEY", "")
@@ -1084,11 +1236,11 @@ async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
             access_key=minio_access_key,
             secret_key=minio_secret_key
         )))
-    
+
     # Vector DB (Milvus) health check
     if config.vector_store.url:
         tasks.append(("databases", check_milvus_health(config.vector_store.url)))
-    
+
     # LLM service health check
     if config.llm.server_url:
         llm_url = config.llm.server_url
@@ -1109,7 +1261,7 @@ async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
             "latency_ms": 0,
             "message": "Using NVIDIA API Catalog"
         })
-    
+
     query_rewriter_enabled = os.getenv('ENABLE_QUERYREWRITER', 'True').lower() == 'true'
 
     if query_rewriter_enabled:
@@ -1133,7 +1285,7 @@ async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
                 "latency_ms": 0,
                 "message": "Using NVIDIA API Catalog"
             })
-    
+
     # Embedding service health check
     if config.embeddings.server_url:
         embed_url = config.embeddings.server_url
@@ -1154,7 +1306,7 @@ async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
             "latency_ms": 0,
             "message": "Using NVIDIA API Catalog"
         })
-    
+
     enable_reranker = os.getenv('ENABLE_RERANKER', 'True').lower() == 'true'
     # Ranking service health check
     if enable_reranker:
@@ -1177,7 +1329,7 @@ async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
                 "latency_ms": 0,
                 "message": "Using NVIDIA API Catalog"
             })
-    
+
     # NemoGuardrails health check
     enable_guardrails = os.getenv('ENABLE_GUARDRAILS', 'False').lower() == 'true'
     if enable_guardrails:
@@ -1198,7 +1350,7 @@ async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
                 "status": "skipped",
                 "message": "URL not provided"
             })
-    
+
     # Reflection LLM health check
     enable_reflection = os.getenv('ENABLE_REFLECTION', 'False').lower() == 'true'
     if enable_reflection:
@@ -1222,27 +1374,27 @@ async def check_all_services_health() -> Dict[str, List[Dict[str, Any]]]:
                 "latency_ms": 0,
                 "message": "Using NVIDIA API Catalog"
             })
-    
+
     # Execute all health checks concurrently
     for category, task in tasks:
         result = await task
         results[category].append(result)
-    
+
     return results
 
 def print_health_report(health_results: Dict[str, List[Dict[str, Any]]]) -> None:
     """
     Print health status for individual services
-    
+
     Args:
         health_results: Results from check_all_services_health
     """
     logger.info("===== SERVICE HEALTH STATUS =====")
-    
+
     for category, services in health_results.items():
         if not services:
             continue
-            
+
         for service in services:
             if service["status"] == "healthy":
                 logger.info(f"Service '{service['service']}' is healthy - Response time: {service.get('latency_ms', 'N/A')}ms")
@@ -1251,7 +1403,7 @@ def print_health_report(health_results: Dict[str, List[Dict[str, Any]]]) -> None
             else:
                 error_msg = service.get("error", "Unknown error")
                 logger.info(f"Service '{service['service']}' is not healthy - Issue: {error_msg}")
-    
+
     logger.info("================================")
 
 async def check_and_print_services_health():

@@ -63,11 +63,21 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Background Ingestion Started",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DocumentListResponse"
+                  "$ref": "#/components/schemas/IngestionTaskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -88,16 +98,6 @@
               "application/json": {
                 "example": {
                   "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -132,6 +132,16 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "499": {
             "description": "Client Closed Request",
             "content": {
@@ -148,16 +158,6 @@
               "application/json": {
                 "example": {
                   "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -194,6 +194,16 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "499": {
             "description": "Client Closed Request",
             "content": {
@@ -210,16 +220,6 @@
               "application/json": {
                 "example": {
                   "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -270,6 +270,16 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "499": {
             "description": "Client Closed Request",
             "content": {
@@ -286,6 +296,39 @@
               "application/json": {
                 "example": {
                   "detail": "Internal server error occurred"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "tags": [
+          "Ingestion APIs"
+        ],
+        "summary": "Get Task Status",
+        "description": "Get the status of an ingestion task.",
+        "operationId": "get_task_status_status_get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestionTaskStatusResponse"
                 }
               }
             }
@@ -322,6 +365,16 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "499": {
             "description": "Client Closed Request",
             "content": {
@@ -338,16 +391,6 @@
               "application/json": {
                 "example": {
                   "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -410,6 +453,16 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "499": {
             "description": "Client Closed Request",
             "content": {
@@ -426,16 +479,6 @@
               "application/json": {
                 "example": {
                   "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -476,6 +519,16 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "499": {
             "description": "Client Closed Request",
             "content": {
@@ -492,16 +545,6 @@
               "application/json": {
                 "example": {
                   "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -527,7 +570,7 @@
             "title": "Data",
             "description": "JSON data in string format containing metadata about the documents which needs to be uploaded.",
             "examples": [
-              "{\"collection_name\": \"multimodal_data\", \"extraction_options\": {\"extract_text\": true, \"extract_tables\": true, \"extract_charts\": true, \"extract_images\": false, \"extract_method\": \"pdfium\", \"text_depth\": \"page\"}, \"split_options\": {\"chunk_size\": 1024, \"chunk_overlap\": 150}}"
+              "{\"collection_name\": \"multimodal_data\", \"blocking\": false, \"split_options\": {\"chunk_size\": 1024, \"chunk_overlap\": 150}}"
             ]
           }
         },
@@ -553,7 +596,7 @@
             "title": "Data",
             "description": "JSON data in string format containing metadata about the documents which needs to be uploaded.",
             "examples": [
-              "{\"collection_name\": \"multimodal_data\", \"extraction_options\": {\"extract_text\": true, \"extract_tables\": true, \"extract_charts\": true, \"extract_images\": false, \"extract_method\": \"pdfium\", \"text_depth\": \"page\"}, \"split_options\": {\"chunk_size\": 1024, \"chunk_overlap\": 150}}"
+              "{\"collection_name\": \"multimodal_data\", \"blocking\": false, \"split_options\": {\"chunk_size\": 1024, \"chunk_overlap\": 150}}"
             ]
           }
         },
@@ -609,7 +652,7 @@
           },
           "failed": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FailedCollection"
             },
             "type": "array",
             "title": "Failed",
@@ -663,6 +706,44 @@
         "title": "DocumentListResponse",
         "description": "Response model for uploading a document."
       },
+      "FailedCollection": {
+        "properties": {
+          "collection_name": {
+            "type": "string",
+            "title": "Collection Name",
+            "description": "Name of the collection.",
+            "default": ""
+          },
+          "error_message": {
+            "type": "string",
+            "title": "Error Message",
+            "description": "Error message from the collection creation or deletion process.",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "FailedCollection",
+        "description": "Model representing a collection that failed to be created or deleted."
+      },
+      "FailedDocument": {
+        "properties": {
+          "document_name": {
+            "type": "string",
+            "title": "Document Name",
+            "description": "Name of the document.",
+            "default": ""
+          },
+          "error_message": {
+            "type": "string",
+            "title": "Error Message",
+            "description": "Error message from the ingestion process.",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "FailedDocument",
+        "description": "Model representing an individual uploaded document."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -688,6 +769,82 @@
         },
         "type": "object",
         "title": "HealthResponse"
+      },
+      "IngestionTaskResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Message indicating the status of the request.",
+            "default": ""
+          },
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "description": "Task ID of the ingestion process.",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "IngestionTaskResponse",
+        "description": "Response model for uploading a document."
+      },
+      "IngestionTaskStatusResponse": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "State of the ingestion task.",
+            "default": ""
+          },
+          "result": {
+            "$ref": "#/components/schemas/UploadDocumentResponse",
+            "description": "Result of the ingestion task."
+          }
+        },
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "IngestionTaskStatusResponse",
+        "description": "Response model for getting the status of an ingestion task."
+      },
+      "UploadDocumentResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Message indicating the status of the request.",
+            "default": ""
+          },
+          "total_documents": {
+            "type": "integer",
+            "title": "Total Documents",
+            "description": "Total number of documents uploaded.",
+            "default": 0
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/UploadedDocument"
+            },
+            "type": "array",
+            "title": "Documents",
+            "description": "List of uploaded documents.",
+            "default": []
+          },
+          "failed_documents": {
+            "items": {
+              "$ref": "#/components/schemas/FailedDocument"
+            },
+            "type": "array",
+            "title": "Failed Documents",
+            "description": "List of failed documents.",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "UploadDocumentResponse",
+        "description": "Response model for uploading a document."
       },
       "UploadedCollection": {
         "properties": {

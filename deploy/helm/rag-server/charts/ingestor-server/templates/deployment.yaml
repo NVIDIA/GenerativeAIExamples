@@ -33,6 +33,7 @@ spec:
           - "{{ .Values.server.workers }}"
           ports:
             - containerPort: 8082
+          {{ if .Values.envVars }}
           env:
             {{- if .Values.envVars }}
             {{- range $k, $v := .Values.envVars }}
@@ -40,8 +41,6 @@ spec:
               value: "{{ $v }}"
             {{- end }}
             {{- end }}
+          {{- end }}
           resources:
-            limits:
-              memory: "5Gi"
-            requests:
-              memory: "512Mi"
+{{ toYaml .Values.resources | nindent 12 }}

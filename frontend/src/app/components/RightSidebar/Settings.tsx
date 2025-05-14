@@ -24,19 +24,21 @@ export default function Settings() {
     topP,
     vdbTopK,
     rerankerTopK,
+    confidenceScoreThreshold,
     useGuardrails,
     includeCitations,
     setTemperature,
     setTopP,
     setVdbTopK,
     setRerankerTopK,
+    setConfidenceScoreThreshold,
     setUseGuardrails,
     setIncludeCitations,
   } = useSettings();
 
   const [expandedSections, setExpandedSections] = useState({
     ragConfig: true,
-    outputPrefs: false,
+    outputPrefs: true,
   });
 
   const [vdbTopKInput, setVdbTopKInput] = useState(vdbTopK.toString());
@@ -203,6 +205,43 @@ export default function Settings() {
                   constraint.
                 </p>
               )}
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm">Confidence Score Threshold</label>
+              <input
+                type="number"
+                value={confidenceScoreThreshold.toFixed(2)}
+                onChange={(e) => {
+                  const newValue = Number(e.target.value);
+                  console.log(`Setting confidence threshold to: ${newValue}`);
+                  setConfidenceScoreThreshold(newValue);
+                }}
+                className="w-16 rounded bg-neutral-800 px-2 py-1 text-sm"
+                step="0.01"
+                min="0"
+                max="1"
+              />
+            </div>
+            <input
+              type="range"
+              value={confidenceScoreThreshold}
+              onChange={(e) => {
+                const newValue = Number(e.target.value);
+                console.log(`Setting confidence threshold to: ${newValue} (from slider)`);
+                setConfidenceScoreThreshold(newValue);
+              }}
+              className="w-full accent-[var(--nv-green)]"
+              step="0.01"
+              min="0"
+              max="1"
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Filter chunks based on their confidence score (0-1 scale). Higher threshold values will 
+              only include chunks with higher confidence, potentially improving precision 
+              but reducing recall.
+            </p>
           </div>
         </div>
       </div>

@@ -21,6 +21,7 @@ import {
   createErrorResponse,
 } from "../utils/api-utils";
 import { API_CONFIG, buildQueryUrl } from "@/app/config/api";
+import axios from "axios";
 
 export const config = {
   api: {
@@ -34,7 +35,12 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const documents = formData.getAll("documents") as File[];
     const dataStr = formData.get("data") as string;
-    const metadata = JSON.parse(dataStr);
+    const metadata = { ...JSON.parse(dataStr), blocking: true };
+
+    // Log the request details
+    console.log("=== DOCUMENT UPLOAD REQUEST ===");
+    console.log("Metadata:", metadata);
+    console.log("===========================");
 
     // Create a new FormData instance for the upstream request
     const upstreamFormData = new FormData();
@@ -45,25 +51,26 @@ export async function POST(request: NextRequest) {
     });
 
     // Add metadata
-    upstreamFormData.append("data", dataStr);
+    upstreamFormData.append("data", JSON.stringify(metadata));
+    
 
     // Forward the request to the VDB service
     const url = `${API_CONFIG.VDB.BASE_URL}${API_CONFIG.VDB.ENDPOINTS.DOCUMENTS.UPLOAD}`;
 
-    const response = await fetch(url, {
-      method: "POST",
-      body: upstreamFormData,
+    const response = await axios.post(url, upstreamFormData, {
+      timeout: 3600000, // 1 hour in milliseconds
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || "Failed to upload documents");
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(response.data);
   } catch (error) {
     console.error("Error uploading documents:", error);
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.detail || "Failed to upload documents";
+      throw new Error(errorMessage);
+    }
     return createErrorResponse(error);
   }
 }

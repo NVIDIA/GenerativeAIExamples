@@ -14,10 +14,10 @@ To configure the behavior of the LLM dynamically at runtime, you can include or 
 
 | Parameter   | Description | Type   | Valid Values | Default | Optional? |
 |-------------|-------------|--------|--------------|---------|-----------|
-| max_tokens | The maximum number of tokens to generate during inference. This limits the length of the generated text. | Integer | — | 1024 | Yes       |
+| max_tokens | The maximum number of tokens to generate during inference. This limits the length of the generated text. | Integer | — | 32768 | Yes       |
 | stop | A list of strings to use as stop tokens in the text generation. The text returned does not include the stop tokens. | Array | — | [] | Yes       |
-| temperature | Adjusts the randomness of token selection. Higher values increase randomness and creativity; lower values promote deterministic and conservative output. | Number | 0.1 - 1.0 | 0.2 | Yes       |
-| top_p | A threshold that selects from the most probable tokens until the cumulative probability exceeds p. | Number | 0.1 - 1.0 | 0.7 | Yes       |
+| temperature | Adjusts the randomness of token selection. Higher values increase randomness and creativity; lower values promote deterministic and conservative output. | Number | 0.0 - 1.0 | 0.0 | Yes       |
+| top_p | A threshold that selects from the most probable tokens until the cumulative probability exceeds p. | Number | 0.1 - 1.0 | 0.1 | Yes       |
 
 
 

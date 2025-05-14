@@ -17,6 +17,7 @@ export interface Citation {
   text: string;
   source: string;
   document_type: "text" | "image" | "table" | "chart";
+  score?: number;
 }
 
 export interface ChatMessage {
@@ -47,6 +48,7 @@ export interface GenerateRequest {
   max_tokens?: number;
   reranker_top_k?: number;
   vdb_top_k?: number;
+  confidence_threshold?: number;
   vdb_endpoint?: string;
   collection_name: string;
   enable_query_rewriting?: boolean;

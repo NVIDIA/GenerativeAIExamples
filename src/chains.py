@@ -53,7 +53,7 @@ document_embedder = get_embedding_model(model=settings.embeddings.model_name, ur
 ranker = get_ranking_model(model=settings.ranking.model_name, url=settings.ranking.server_url, top_n=settings.retriever.top_k)
 query_rewriter_llm_config = {"temperature": 0.7, "top_p": 0.2, "max_tokens": 1024}
 logger.info("Query rewriter llm config: model name %s, url %s, config %s", settings.query_rewriter.model_name, settings.query_rewriter.server_url, query_rewriter_llm_config)
-query_rewriter_llm = get_llm(model=settings.query_rewriter.model_name, url=settings.query_rewriter.server_url, **query_rewriter_llm_config)
+query_rewriter_llm = get_llm(model=settings.query_rewriter.model_name, llm_endpoint=settings.query_rewriter.server_url, **query_rewriter_llm_config)
 prompts = get_prompts()
 vdb_top_k = int(os.environ.get("VECTOR_DB_TOPK", 40))
 
@@ -61,7 +61,7 @@ try:
     VECTOR_STORE = create_vectorstore_langchain(document_embedder=document_embedder)
 except Exception as ex:
     VECTOR_STORE = None
-    logger.info("Unable to connect to vector store during initialization: %s", ex)
+    logger.error("Unable to connect to vector store during initialization: %s", ex)
 
 # Get a StreamingFilterThinkParser based on configuration
 StreamingFilterThinkParser = get_streaming_filter_think_parser()
@@ -142,9 +142,19 @@ class UnstructuredRAG(BaseExample):
             system_message = []
             conversation_history = []
             user_message = []
+            nemotron_message = []
             system_prompt = ""
 
             system_prompt += prompts.get("chat_template", "")
+
+            if "llama-3.3-nemotron-super-49b" in str(kwargs.get("model")):
+                if os.environ.get("ENABLE_NEMOTRON_THINKING", "false").lower() == "true":
+                    logger.info("Setting system prompt as detailed thinking on")
+                    system_prompt = "detailed thinking on"
+                else:
+                    logger.info("Setting system prompt as detailed thinking off")
+                    system_prompt = "detailed thinking off"
+                nemotron_message += [("user", prompts.get("chat_template", ""))]
 
             for message in chat_history:
                 if message.role ==  "system":
@@ -156,10 +166,10 @@ class UnstructuredRAG(BaseExample):
 
             logger.info("Query is: %s", query)
             if query is not None and query != "":
-                user_message = [("user", "{question}")]
+                user_message += [("user", "{question}")]
 
             # Prompt template with system message, conversation history and user query
-            message = system_message + conversation_history + user_message
+            message = system_message + nemotron_message + conversation_history + user_message
 
             self.print_conversation_history(message, query)
 
@@ -223,13 +233,23 @@ class UnstructuredRAG(BaseExample):
             system_prompt = ""
             conversation_history = []
             system_prompt += prompts.get("rag_template", "")
+            user_message = []
+
+            if "llama-3.3-nemotron-super-49b" in str(kwargs.get("model")):
+                if os.environ.get("ENABLE_NEMOTRON_THINKING", "false").lower() == "true":
+                    logger.info("Setting system prompt as detailed thinking on")
+                    system_prompt = "detailed thinking on"
+                else:
+                    logger.info("Setting system prompt as detailed thinking off")
+                    system_prompt = "detailed thinking off"
+                user_message += [("user", prompts.get("rag_template", ""))]
 
             for message in chat_history:
                 if message.role ==  "system":
                     system_prompt = system_prompt + " " + message.content
 
             system_message = [("system", system_prompt)]
-            user_message = [("user", "{question}")]
+            user_message += [("user", "{question}")]
 
             # Prompt template with system message, conversation history and user query
             message = system_message + conversation_history + user_message
@@ -239,14 +259,14 @@ class UnstructuredRAG(BaseExample):
             if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true":
                 max_loops = int(os.environ.get("MAX_REFLECTION_LOOP", 3))
                 reflection_counter = ReflectionCounter(max_loops)
-                
+
                 context_to_show, is_relevant = check_context_relevance(
-                    query, 
-                    retriever, 
+                    query,
+                    retriever,
                     ranker,
                     reflection_counter
                 )
-                
+
                 if not is_relevant:
                     logger.warning("Could not find sufficiently relevant context after maximum attempts")
             else:
@@ -274,12 +294,12 @@ class UnstructuredRAG(BaseExample):
                     context_to_show = retriever.invoke(query)
             docs = [format_document_with_source(d) for d in context_to_show]
             chain = prompt | llm | StreamingFilterThinkParser | StrOutputParser()
-                
+
             # Check response groundedness if we still have reflection iterations available
             if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true" and reflection_counter.remaining > 0:
                 initial_response = chain.invoke({"question": query, "context": docs})
                 final_response, is_grounded = check_response_groundedness(
-                    initial_response, 
+                    initial_response,
                     docs,
                     reflection_counter
                 )
@@ -329,6 +349,7 @@ class UnstructuredRAG(BaseExample):
                 raise APIError("Vector store not initialized properly. Please check if the vector DB is up and running.", 500)
 
             llm = get_llm(**kwargs)
+            logger.info("Ranker enabled: %s", kwargs.get("enable_reranker"))
             ranker = get_ranking_model(model=kwargs.get("reranker_model"), url=kwargs.get("reranker_endpoint"), top_n=reranker_top_k)
             top_k = vdb_top_k if ranker and kwargs.get("enable_reranker") else reranker_top_k
             logger.info("Setting retriever top k as: %s.", top_k)
@@ -341,6 +362,16 @@ class UnstructuredRAG(BaseExample):
             system_prompt = ""
             conversation_history = []
             system_prompt += prompts.get("rag_template", "")
+            user_message = []
+
+            if "llama-3.3-nemotron-super-49b" in str(kwargs.get("model")):
+                if os.environ.get("ENABLE_NEMOTRON_THINKING", "false").lower() == "true":
+                    logger.info("Setting system prompt as detailed thinking on")
+                    system_prompt = "detailed thinking on"
+                else:
+                    logger.info("Setting system prompt as detailed thinking off")
+                    system_prompt = "detailed thinking off"
+                user_message += [("user", prompts.get("rag_template", ""))]
 
             for message in chat_history:
                 if message.role ==  "system":
@@ -379,7 +410,7 @@ class UnstructuredRAG(BaseExample):
                     logger.info("Combined retriever query: %s", retriever_query)
 
             # Prompt for response generation based on context
-            user_message = [("user", "{question}")]
+            user_message += [("user", "{question}")]
             message = system_message + conversation_history + user_message
             self.print_conversation_history(message)
             prompt = ChatPromptTemplate.from_messages(message)
@@ -387,16 +418,16 @@ class UnstructuredRAG(BaseExample):
             if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true":
                 max_loops = int(os.environ.get("MAX_REFLECTION_LOOP", 3))
                 reflection_counter = ReflectionCounter(max_loops)
-                
+
                 context_to_show, is_relevant = check_context_relevance(
-                    retriever_query, 
-                    retriever, 
+                    retriever_query,
+                    retriever,
                     ranker,
                     reflection_counter
                 )
-                
+
                 if not is_relevant:
-                    logger.warning("Could not find sufficiently relevant context after %d attempts", 
+                    logger.warning("Could not find sufficiently relevant context after %d attempts",
                                   reflection_counter.current_count)
             else:
                 if ranker and kwargs.get("enable_reranker"):
@@ -420,15 +451,15 @@ class UnstructuredRAG(BaseExample):
                 else:
                     docs = retriever.invoke(retriever_query, config={'run_name':'retriever'})
                     context_to_show = docs
-                
+
             docs = [format_document_with_source(d) for d in context_to_show]
             chain = prompt | llm | StreamingFilterThinkParser | StrOutputParser()
-                
+
             # Check response groundedness if we still have reflection iterations available
             if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true" and reflection_counter.remaining > 0:
                 initial_response = chain.invoke({"question": query, "context": docs})
                 final_response, is_grounded = check_response_groundedness(
-                    initial_response, 
+                    initial_response,
                     docs,
                     reflection_counter
                 )
@@ -436,7 +467,7 @@ class UnstructuredRAG(BaseExample):
                     logger.warning("Could not generate sufficiently grounded response after %d total reflection attempts",
                                     reflection_counter.current_count)
                 return iter([final_response]), context_to_show
-            else:              
+            else:
                 return chain.stream({"question": query, "context": docs}, config={'run_name':'llm-stream'}), context_to_show
 
         except ConnectTimeout as e:
@@ -524,7 +555,7 @@ class UnstructuredRAG(BaseExample):
                     user_queries = [msg.content for msg in messages if msg.role == "user"]
                     retriever_query = ". ".join([*user_queries, content])
                     logger.info("Combined retriever query: %s", retriever_query)
-            # Get relevant documents with optional reflection   
+            # Get relevant documents with optional reflection
             if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true":
                 max_loops = int(os.environ.get("MAX_REFLECTION_LOOP", 3))
                 reflection_counter = ReflectionCounter(max_loops)

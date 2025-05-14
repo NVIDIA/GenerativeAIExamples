@@ -21,6 +21,7 @@ from typing import Dict, List
 from io import BytesIO
 
 from minio import Minio
+from minio.commonconfig import SnowballObject
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,26 @@ class MinioOperator:
             len(json_data),
             content_type="application/json"
         )
+    
+    def put_payloads_bulk(
+        self,
+        payloads: List[dict],
+        object_names: List[str]
+    ):
+        """Put list of dictionaries to S3 storage using minio client"""
+        json_datas = [json.dumps(payload).encode("utf-8") for payload in payloads]
+
+        snowball_objects = []
+        for object_name, json_data in zip(object_names, json_datas):
+            snowball_objects.append(
+                SnowballObject(object_name, data=BytesIO(json_data), length=len(json_data))
+            )
+
+        # Bulk upload objects to MinIO
+        self.client.upload_snowball_objects(
+            self.default_bucket_name,
+            snowball_objects
+        )   
 
     def get_payload(
         self,

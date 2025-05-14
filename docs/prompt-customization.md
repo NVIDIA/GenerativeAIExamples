@@ -86,3 +86,22 @@ Use the following procedure to create a template that makes the LLM respond as a
    ```console
    docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d --build
    ```
+
+## Prompt customization in Helm chart
+
+The [prompt.yaml](../deploy/helm/rag-server/files/prompt.yaml) resides within `rag-server/files/prompt.yaml` in the chart. This is converted into a ConfigMap within the Helm deployment.
+
+To provide custom instructions in the prompt, you can edit the [prompt.yaml](../deploy/helm/rag-server/files/prompt.yaml) and update the `chat_template`, `rag_template` or `query_rewriter_prompt`.
+
+```yaml
+chat_template: |
+    <custom prompt instructions>
+
+rag_template: |
+    <custom prompt instructions>
+
+query_rewriter_prompt: |
+    <custom prompt instructions>
+```
+
+After the required changes have been made, you can deploy the Helm chart from source by following the steps [here](./quickstart.md#deploying-e2e-from-the-source-optional).

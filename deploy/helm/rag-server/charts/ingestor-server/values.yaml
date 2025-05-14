@@ -9,11 +9,17 @@ imagePullSecret:
 
 image:
   repository: nvcr.io/nvidia/blueprint/ingestor-server
-  tag: "2.0.0"
+  tag: "2.1.0"
   pullPolicy: IfNotPresent
 
 server:
   workers: 1
+
+resources:
+  limits:
+    memory: "25Gi"
+  requests:
+    memory: "25Gi"
 
 envVars:
   # === Vector Store Configurations ===
@@ -39,7 +45,7 @@ envVars:
   APP_NVINGEST_MESSAGECLIENTPORT: "7670"
 
   # === NV-Ingest extraction configurations ===
-  APP_NVINGEST_EXTRACTMETHOD: "pdfium"  # Method used for text extraction
+  APP_NVINGEST_PDFEXTRACTMETHOD: "None"  # Method used for text extraction from "None", "pdfium", "nemoretriever_parse"
   APP_NVINGEST_EXTRACTTEXT: "True"  # Enable text extraction
   APP_NVINGEST_EXTRACTTABLES: "True"  # Enable table extraction
   APP_NVINGEST_EXTRACTCHARTS: "True"  # Enable chart extraction
@@ -57,6 +63,15 @@ envVars:
   # === NV-Ingest splitting configurations ===
   APP_NVINGEST_CHUNKSIZE: "1024"  # Size of chunks for splitting
   APP_NVINGEST_CHUNKOVERLAP: "150"  # Overlap size for chunks
+  APP_NVINGEST_ENABLEPDFSPLITTER: "True"  # Enable PDF splitter
+
+  # === Redis configurations ===
+  REDIS_HOST: "rag-redis-master"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+
+  # === Bulk upload to MinIO ===
+  ENABLE_MINIO_BULK_UPLOAD: "False"
 
 # NV-Ingest
 nv-ingest:
@@ -68,20 +83,40 @@ nv-ingest:
     create: false
   image:
     repository: "nvcr.io/nvidia/nemo-microservices/nv-ingest"
-    tag: "25.3.0"
+    tag: "25.4.1"
   resources:
     limits:
       nvidia.com/gpu: 0
   envVars:
-    AUDIO_GRPC_ENDPOINT: "audio:50051"
-    AUDIO_INFER_PROTOCOL: "grpc"
-    CUDA_VISIBLE_DEVICES: "0"
+    INGEST_LOG_LEVEL: DEFAULT
+    INGEST_EDGE_BUFFER_SIZE: 64
+    MRC_IGNORE_NUMA_CHECK: 1
+    READY_CHECK_ALL_COMPONENTS: "true"
+    REDIS_MORPHEUS_TASK_QUEUE: morpheus_task_queue
+    NV_INGEST_DEFAULT_TIMEOUT_MS: "1234"
     MAX_INGEST_PROCESS_WORKERS: 16
     EMBEDDING_NIM_ENDPOINT: "http://nemo-retriever-embedding-ms:8000/v1"
     MESSAGE_CLIENT_HOST: "rag-redis-master"
-    MINIO_INTERNAL_ADDRESS: rag-minio:9000
+    MESSAGE_CLIENT_PORT: 6379
+    MESSAGE_CLIENT_TYPE: "redis"
+    MINIO_INTERNAL_ADDRESS: "rag-minio:9000"
     MILVUS_ENDPOINT: "http://milvus:19530"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "otel-collector:4317"
     MODEL_PREDOWNLOAD_PATH: "/workspace/models/"
+
+    # WAR to fix -loadbalancer from the ingestion NIMs URLs
+    PADDLE_GRPC_ENDPOINT: nv-ingest-paddle:8001
+    PADDLE_HTTP_ENDPOINT: http://nv-ingest-paddle:8000/v1/infer
+    PADDLE_INFER_PROTOCOL: grpc
+    YOLOX_GRPC_ENDPOINT: nemoretriever-page-elements-v2:8001
+    YOLOX_HTTP_ENDPOINT: http://nemoretriever-page-elements-v2:8000/v1/infer
+    YOLOX_INFER_PROTOCOL: grpc
+    YOLOX_GRAPHIC_ELEMENTS_GRPC_ENDPOINT: nemoretriever-graphic-elements-v1:8001
+    YOLOX_GRAPHIC_ELEMENTS_HTTP_ENDPOINT: http://nemoretriever-graphic-elements-v1:8000/v1/infer
+    YOLOX_GRAPHIC_ELEMENTS_INFER_PROTOCOL: grpc
+    YOLOX_TABLE_STRUCTURE_GRPC_ENDPOINT: nemoretriever-table-structure-v1:8001
+    YOLOX_TABLE_STRUCTURE_HTTP_ENDPOINT: http://nemoretriever-table-structure-v1:8000/v1/infer
+    YOLOX_TABLE_STRUCTURE_INFER_PROTOCOL: grpc
 
   paddleocr-nim:
     image:

@@ -17,7 +17,7 @@
           "Health APIs"
         ],
         "summary": "Health Check",
-        "description": "Perform a Health Check\n\nArgs:\n    check_dependencies: If True, check health of all dependent services. \n                       If False (default), only report that the API service is up.\n\nReturns 200 when service is up and includes health status of all dependent services when requested.",
+        "description": "Perform a Health Check\n\nArgs:\n    check_dependencies: If True, check health of all dependent services.\n                       If False (default), only report that the API service is up.\n\nReturns 200 when service is up and includes health status of all dependent services when requested.",
         "operationId": "health_check_health_get",
         "parameters": [
           {
@@ -42,22 +42,22 @@
               }
             }
           },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "example": {
-                  "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Internal server error occurred"
                 }
               }
             }
@@ -94,6 +94,16 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "499": {
             "description": "Client Closed Request",
             "content": {
@@ -110,16 +120,6 @@
               "application/json": {
                 "example": {
                   "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -156,22 +156,22 @@
               }
             }
           },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "example": {
-                  "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Internal server error occurred"
                 }
               }
             }
@@ -208,6 +208,16 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "499": {
             "description": "Client Closed Request",
             "content": {
@@ -224,16 +234,6 @@
               "application/json": {
                 "example": {
                   "detail": "Internal server error occurred"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -445,7 +445,7 @@
             "pattern": "[\\s\\S]*",
             "title": "Query",
             "description": "The content or keywords to search for within documents.",
-            "default": ""
+            "default": "Tell me about robert frost's poems"
           },
           "reranker_top_k": {
             "type": "integer",
@@ -486,7 +486,8 @@
             "type": "array",
             "maxItems": 50000,
             "title": "Messages",
-            "description": "A list of messages comprising the conversation so far. The roles of the messages must be alternating between user and assistant. The last input message should have role user. A message with the the system role is optional, and must be the very first message if it is present."
+            "description": "A list of messages comprising the conversation so far. The roles of the messages must be alternating between user and assistant. The last input message should have role user. A message with the the system role is optional, and must be the very first message if it is present.",
+            "default": []
           },
           "enable_query_rewriting": {
             "type": "boolean",
@@ -537,9 +538,6 @@
           }
         },
         "type": "object",
-        "required": [
-          "messages"
-        ],
         "title": "DocumentSearch",
         "description": "Definition of the DocumentSearch API data type."
       },
@@ -598,7 +596,8 @@
               "user",
               "assistant",
               "system",
-              null],
+              null
+            ],
             "title": "Role",
             "description": "Role for a message: either 'user' or 'assistant' or 'system",
             "default": "user"
@@ -698,10 +697,10 @@
           "temperature": {
             "type": "number",
             "maximum": 1,
-            "minimum": 0.1,
+            "minimum": 0,
             "title": "Temperature",
             "description": "The sampling temperature to use for text generation. The higher the temperature value is, the less deterministic the output text will be. It is not recommended to modify both temperature and top_p in the same call.",
-            "default": 0.2
+            "default": 0
           },
           "top_p": {
             "type": "number",
@@ -709,7 +708,7 @@
             "minimum": 0.1,
             "title": "Top P",
             "description": "The top-p sampling mass used for text generation. The top-p value determines the probability mass that is sampled at sampling time. For example, if top_p = 0.2, only the most likely tokens (summing to 0.2 cumulative probability) will be sampled. It is not recommended to modify both temperature and top_p in the same call.",
-            "default": 0.7
+            "default": 0.1
           },
           "max_tokens": {
             "type": "integer",
@@ -718,7 +717,7 @@
             "format": "int64",
             "title": "Max Tokens",
             "description": "The maximum number of tokens to generate in any given call. Note that the model is not aware of this value,  and generation will simply stop at the number of tokens specified.",
-            "default": 1024
+            "default": 32768
           },
           "reranker_top_k": {
             "type": "integer",
@@ -782,14 +781,14 @@
             "pattern": "[\\s\\S]*",
             "title": "Model",
             "description": "Name of NIM LLM model to be used for inference.",
-            "default": "meta/llama-3.1-70b-instruct"
+            "default": "nvdev/nvidia/llama-3.3-nemotron-super-49b-v1"
           },
           "llm_endpoint": {
             "type": "string",
             "maxLength": 2048,
             "title": "Llm Endpoint",
             "description": "Endpoint URL for the llm model server.",
-            "default": "nim-llm:8000"
+            "default": ""
           },
           "embedding_model": {
             "type": "string",

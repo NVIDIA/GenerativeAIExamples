@@ -120,6 +120,7 @@ export default function AddSourceModal({
       // Add metadata as JSON string
       const metadata = {
         collection_name: selectedCollection,
+        blocking: true
       };
       formData.append("data", JSON.stringify(metadata));
 

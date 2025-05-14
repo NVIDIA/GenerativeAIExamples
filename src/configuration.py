@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The definition of the application configuration."""
+import os
 from .configuration_wizard import ConfigWizard
 from .configuration_wizard import configclass
 from .configuration_wizard import configfield
@@ -114,10 +115,10 @@ class NvIngestConfig(ConfigWizard):
         help_txt="Enable extract images for nv-ingest extraction",
     )
 
-    extract_method: str = configfield(
-        "extract_method",
-        default="pdfium", # Literal['pdfium','nemoretriever_parse','haystack','llama_parse','tika','unstructured_io']
-        help_txt="Extract method 'pdfium', 'nemoretriever_parse', 'haystack', 'llama_parse', 'tika', 'unstructured_io'",
+    pdf_extract_method: str = configfield(
+        "pdf_extract_method",
+        default="None", # Literal['pdfium','nemoretriever_parse','None']
+        help_txt="Extract method 'pdfium', 'nemoretriever_parse', 'None'",
     )
 
     text_depth: str = configfield(
@@ -158,6 +159,38 @@ class NvIngestConfig(ConfigWizard):
         help_txt="NV Ingest Captioning model Endpoint URL",
     )
 
+    enable_pdf_splitter: bool = configfield(
+        "enable_pdf_splitter",
+        default=True,
+        help_txt="Enable post chunk split for NV Ingest",
+    )
+
+
+@configclass
+class ModelParametersConfig(ConfigWizard):
+    """Configuration class for model parameters based on model name.
+
+    This defines default parameters for different LLM models.
+    """
+
+    max_tokens: int = configfield(
+        "max_tokens",
+        default=1024,
+        help_txt="The maximum number of tokens to generate in any given call."
+    )
+
+    temperature: float = configfield(
+        "temperature",
+        default=0.2,
+        help_txt="The sampling temperature to use for text generation."
+    )
+
+    top_p: float = configfield(
+        "top_p",
+        default=0.7,
+        help_txt="The top-p sampling mass used for text generation."
+    )
+
 
 @configclass
 class LLMConfig(ConfigWizard):
@@ -187,6 +220,45 @@ class LLMConfig(ConfigWizard):
         default="ai-mixtral-8x7b-instruct",
         help_txt="The name of the ai catalog model to be used with PandasAI agent",
     )
+    # Add model parameters configuration
+    parameters: ModelParametersConfig = configfield(
+        "parameters",
+        env=False,
+        help_txt="Model-specific parameters for generation.",
+        default=ModelParametersConfig(),
+    )
+
+    def get_model_parameters(self) -> dict:
+        """Return appropriate parameters based on the model name.
+
+        Returns a dictionary with max_tokens, temperature, and top_p
+        adjusted according to the model name.
+        """
+        params = {
+            "max_tokens": self.parameters.max_tokens,
+            "temperature": self.parameters.temperature,
+            "top_p": self.parameters.top_p
+        }
+
+        # Check for deepseek model
+        if "deepseek-r1" in str(self.model_name):
+            params["max_tokens"] = 128000
+            params["temperature"] = 0.6
+            params["top_p"] = 0.95
+
+        # Check for llama model
+        if "llama-3.3-nemotron-super-49b" in str(self.model_name):
+            if os.getenv("ENABLE_NEMOTRON_THINKING", "false").lower() == "true":
+                params["max_tokens"] = 32768
+                params["temperature"] = 0.6
+                params["top_p"] = 0.95
+            else:
+                params["max_tokens"] = 32768
+                params["temperature"] = 0
+                # TODO: Add support to pass None as top_p
+                params["top_p"] = 0.1
+
+        return params
 
 
 @configclass
@@ -313,7 +385,7 @@ class RetrieverConfig(ConfigWizard):
         help_txt="The name of the nemo retriever pipeline one of ranked_hybrid or hybrid",
     )
 
-@configclass 
+@configclass
 class TracingConfig(ConfigWizard):
     """Configuration class for Open Telemetry Tracing.
     """
@@ -399,8 +471,8 @@ class AppConfig(ConfigWizard):
         default=NvIngestConfig(),
     )
     tracing: TracingConfig = configfield(
-        "tracing", 
-        env=False, 
+        "tracing",
+        env=False,
         help_txt="",
         default=TracingConfig()
     )

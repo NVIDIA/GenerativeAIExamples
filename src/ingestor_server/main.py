@@ -16,12 +16,15 @@
 This is the Main module for RAG ingestion pipeline integration
 """
 import os
+import time
 import asyncio
+import json
 from typing import (
     List,
     Dict,
     Union,
-    Any
+    Any,
+    Tuple
 )
 import logging
 from uuid import uuid4
@@ -49,6 +52,8 @@ from src.utils import (
     delete_collections,
     ENABLE_NV_INGEST_VDB_UPLOAD
 )
+from nv_ingest_client.util.file_processing.extract import EXTENSION_TO_DOCUMENT_TYPE
+
 
 # Initialize global objects
 logger = logging.getLogger(__name__)
@@ -57,6 +62,7 @@ SETTINGS = get_config()
 DOCUMENT_EMBEDDER = document_embedder = get_embedding_model(model=SETTINGS.embeddings.model_name, url=SETTINGS.embeddings.server_url)
 NV_INGEST_CLIENT_INSTANCE = get_nv_ingest_client()
 MINIO_OPERATOR = get_minio_operator()
+NV_INGEST_FILES_PER_BATCH = int(os.getenv("NV_INGEST_FILES_PER_BATCH", 128))
 
 class NVIngestIngestor(BaseIngestor):
     """
@@ -81,8 +87,8 @@ class NVIngestIngestor(BaseIngestor):
             - kwargs: Any - Metadata about the file paths
         """
 
-        logger.info("Performing ingestion for filepaths: %s in collection_name: %s",
-                    filepaths, kwargs.get("collection_name"))
+        logger.info("Performing ingestion in collection_name: %s", kwargs.get("collection_name"))
+        logger.debug("Filepaths for ingestion: %s", filepaths)
 
         try:
 
@@ -101,10 +107,13 @@ class NVIngestIngestor(BaseIngestor):
             finally:
                 connections.disconnect(connection_alias)
 
-            await self._nv_ingest_ingestion(
+            results, failures = await self._ingest_documents_in_chunks_nvingest(
                 filepaths=filepaths,
                 **kwargs
             )
+            # Get failed documents
+            failed_documents = await self.get_failed_documents(failures, results, filepaths)
+            failures_filepaths = [failed_document.get("document_name") for failed_document in failed_documents]
 
             # Generate response dictionary
             uploaded_documents = [
@@ -113,7 +122,7 @@ class NVIngestIngestor(BaseIngestor):
                     "document_name": os.path.basename(filepath),
                     "size_bytes": os.path.getsize(filepath)
                 }
-                for filepath in filepaths
+                for filepath in filepaths if os.path.basename(filepath) not in failures_filepaths
             ]
 
              # Get current timestamp in ISO format
@@ -122,18 +131,27 @@ class NVIngestIngestor(BaseIngestor):
 
             response_data = {
                 "message": "Document upload job successfully completed.",
-                "total_documents": len(filepaths),
-                "documents": uploaded_documents
+                "total_documents": len(uploaded_documents),
+                "documents": uploaded_documents,
+                "failed_documents": failed_documents
             }
+
+            # Ensure all temporary directories are deleted in case of errors
+            logger.info(f"Cleaning up files in {filepaths}")
+            for file in filepaths:
+                try:
+                    os.remove(file)
+                    logger.info(f"Deleted temporary file: {file}")
+                except FileNotFoundError:
+                    logger.warning(f"File not found: {file}")
+                except Exception as e:
+                    logger.error(f"Error deleting {file}: {e}")
 
             return response_data
 
         except Exception as e:
-            logger.error("Ingestion failed due to error: %s", e)
-            from traceback import print_exc
-            print_exc()
+            logger.error("Ingestion failed due to error: %s", e, exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
             return {"message": f"Ingestion failed due to error: {e}", "total_documents": 0, "documents": []}
-
 
     @staticmethod
     def create_collections(
@@ -260,7 +278,7 @@ class NVIngestIngestor(BaseIngestor):
                 raise ValueError("No document names provided for deletion. Please provide document names to delete.")
 
             # TODO: Delete based on document_ids if provided
-            if del_docs_vectorstore_langchain(vs, document_names):
+            if del_docs_vectorstore_langchain(vs, document_names, collection_name):
                 # Generate response dictionary
                 documents = [
                     {
@@ -406,6 +424,9 @@ class NVIngestIngestor(BaseIngestor):
             logger.info(f"Skipping minio insertion for collection: {collection_name}")
             return # Don't perform minio insertion if captioning is disabled
 
+        payloads = []
+        object_names = []
+
         for result in results:
             for result_element in result:
                 if result_element.get("document_type") in ["image", "structured"]:
@@ -423,17 +444,69 @@ class NVIngestIngestor(BaseIngestor):
                             page_number=page_number,
                             location=location
                         )
-                        # Put payload to minio
-                        MINIO_OPERATOR.put_payload(
-                            payload={"content": content},
-                            object_name=unique_thumbnail_id
-                        )
 
+                        payloads.append({"content": content})
+                        object_names.append(unique_thumbnail_id)
+
+        if os.getenv("ENABLE_MINIO_BULK_UPLOAD", "False") in ["True", "true"]:
+            logger.info(f"Bulk uploading {len(payloads)} payloads to MinIO")
+            MINIO_OPERATOR.put_payloads_bulk(
+                payloads=payloads,
+                object_names=object_names
+            )
+        else:
+            logger.info(f"Sequentially uploading {len(payloads)} payloads to MinIO")
+            for payload, object_name in zip(payloads, object_names):
+                MINIO_OPERATOR.put_payload(
+                    payload=payload,
+                    object_name=object_name
+                )
+
+    async def _ingest_documents_in_chunks_nvingest(
+        self,
+        filepaths: List[str],
+        **kwargs
+    ) -> Tuple[List[List[Dict[str, Union[str, dict]]]], List[Dict[str, Any]]]:
+        """
+        Wrapper function to ingest documents in chunks using NV-ingest
+
+        Arguments:
+            - filepaths: List[str] - List of absolute filepaths
+            - kwargs: Any - Metadata about the file paths
+        """
+        if not os.getenv("ENABLE_NV_INGEST_BATCH_MODE", "True") in ["True", "true"]:
+            logger.info(
+                "== Performing ingestion in single batch for collection_name: %s with %d files ==",
+                kwargs.get("collection_name"), len(filepaths)
+            )
+            results, failures = await self._nv_ingest_ingestion(
+                filepaths=filepaths,
+                **kwargs
+            )
+            return results, failures
+        else:
+            all_results = []
+            all_failures = []
+            for i in range(0, len(filepaths), NV_INGEST_FILES_PER_BATCH):
+                sub_filepaths = filepaths[i:i+NV_INGEST_FILES_PER_BATCH]
+                logger.info(
+                    f"=== Batch Processing Status - Collection: {kwargs.get('collection_name')} - "
+                    f"Processing batch {i//NV_INGEST_FILES_PER_BATCH + 1} of {len(filepaths)//NV_INGEST_FILES_PER_BATCH + 1} - "
+                    f"Documents in current batch: {len(sub_filepaths)} ==="
+                )
+                results, failures = await self._nv_ingest_ingestion(
+                    filepaths=sub_filepaths,
+                    **kwargs
+                )
+                all_results.extend(results)
+                all_failures.extend(failures)
+            return all_results, all_failures
+    
     async def _nv_ingest_ingestion(
         self,
         filepaths: List[str],
         **kwargs
-    ) -> None:
+    ) -> Tuple[List[List[Dict[str, Union[str, dict]]]], List[Dict[str, Any]]]:
         """
         This methods performs following steps:
         - Perform extraction and splitting using NV-ingest ingestor
@@ -449,19 +522,30 @@ class NVIngestIngestor(BaseIngestor):
             filepaths=filepaths,
             **kwargs
         )
+        start_time = time.time()
         logger.info(f"Performing ingestion with parameters: {kwargs}")
-        results = await asyncio.to_thread(nv_ingest_ingestor.ingest)
-        logger.debug("NV-ingest Job for collection_name: %s is complete!", kwargs.get("collection_name"))
+        results, failures = await asyncio.to_thread(
+            lambda: nv_ingest_ingestor.ingest(return_failures=True, show_progress=logger.getEffectiveLevel() <= logging.DEBUG)
+        )
+        end_time = time.time()
+        logger.info(f"== NV-ingest Job for collection_name: {kwargs.get('collection_name')} is complete! Time taken: {end_time - start_time} seconds ==")
 
         if not results:
             error_message = "NV-Ingest ingestion failed with no results. Please check the ingestor-server microservice logs for more details."
             logger.error(error_message)
             raise Exception(error_message)
 
-        self._put_content_to_minio(
-            results=results,
-            collection_name=kwargs.get("collection_name")
-        )
+        try:
+            start_time = time.time()
+            self._put_content_to_minio(
+                results=results,
+                collection_name=kwargs.get("collection_name")
+            )
+            end_time = time.time()
+            logger.info(f"== MinIO upload for collection_name: {kwargs.get('collection_name')} is complete! Time taken: {end_time - start_time} seconds ==")
+        except Exception as e:
+            logger.error("Failed to put content to minio: %s, citations would be disabled for collection: %s", str(e),
+                         kwargs.get("collection_name"), exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
 
         if not ENABLE_NV_INGEST_VDB_UPLOAD:
             logger.debug("Performing embedding and vector DB upload")
@@ -476,3 +560,81 @@ class NVIngestIngestor(BaseIngestor):
                 vdb_endpoint=kwargs.get("vdb_endpoint")
             )
             logger.debug("Vector DB upload complete to: %s in collection %s", kwargs.get("vdb_endpoint"), kwargs.get("collection_name"))
+
+        return results, failures
+
+    async def get_failed_documents(
+        self,
+        failures: List[Dict[str, Any]],
+        results: List[List[Dict[str, Union[str, dict]]]],
+        filepaths: List[str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Get failed documents
+
+        Arguments:
+            - failures: List[Dict[str, Any]] - List of failures
+            - filepaths: List[str] - List of filepaths
+            - results: List[List[Dict[str, Union[str, dict]]]] - List of results
+
+        Returns:
+            - List[Dict[str, Any]] - List of failed documents
+        """
+        failed_documents = []
+        failed_documents_filepaths = set()
+        for failure in failures:
+            error_message = ""
+            for annotation_id in failure[1].keys():
+                if failure[1].get(annotation_id).get("task_result") == "FAILURE":
+                    error_message = failure[1].get(annotation_id).get("message")
+                    break
+            failed_documents.append(
+                {
+                    "document_name": os.path.basename(failure[0]),
+                    "error_message": error_message
+                }
+            )
+            failed_documents_filepaths.add(failure[0])
+        
+        # Add non-supported files to failed documents
+        for filepath in await self.get_non_supported_files(filepaths):
+            if filepath not in failed_documents_filepaths:
+                failed_documents.append(
+                    {
+                        "document_name": os.path.basename(filepath),
+                        "error_message": "Unsupported file type"
+                    }
+                )
+                failed_documents_filepaths.add(filepath)
+        
+        # Add document to failed documents if it is not in the results
+        filepaths_in_results = set()
+        for result in results:
+            for result_element in result:
+                filepaths_in_results.add(result_element.get("metadata").get("source_metadata").get("source_name"))
+                break # Only add the first document for each result
+        for filepath in filepaths:
+            if filepath not in filepaths_in_results and filepath not in failed_documents_filepaths:
+                failed_documents.append(
+                    {
+                        "document_name": os.path.basename(filepath),
+                        "error_message": "Ingestion did not complete successfully"
+                    }
+                )
+                failed_documents_filepaths.add(filepath)
+
+        if failed_documents:
+            logger.error("Ingestion failed for %d document(s)", len(failed_documents))
+            logger.debug("Failed documents details: %s", json.dumps(failed_documents, indent=4))
+        
+        return failed_documents
+    
+    @staticmethod
+    async def get_non_supported_files(filepaths: List[str]) -> List[str]:
+        """Get filepaths of non-supported file extensions"""
+        non_supported_files = []
+        for filepath in filepaths:
+            ext = os.path.splitext(filepath)[1].lower()
+            if ext not in ["." + supported_ext for supported_ext in EXTENSION_TO_DOCUMENT_TYPE.keys()]:
+                non_supported_files.append(filepath)
+        return non_supported_files

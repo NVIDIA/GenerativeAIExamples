@@ -13,11 +13,12 @@ Use the following documentation to learn about the NVIDIA RAG Blueprint.
   - [Deployment Options](#deployment-options)
   - [Driver versions](#driver-versions)
   - [Hardware Requirements](#hardware-requirements)
-  - [Minimum hardware requirements for self hosting all NVIDIA NIM microservices](#minimum-hardware-requirements-for-self-hosting-all-nvidia-nim-microservices)
+  - [Hardware requirements for self hosting all NVIDIA NIM microservices](#hardware-requirements-for-self-hosting-all-nvidia-nim-microservices)
 - [Next Steps](#next-steps)
 - [Available Customizations](#available-customizations)
 - [Inviting the community to contribute](#inviting-the-community-to-contribute)
 - [License](#license)
+- [Terms of Use](#terms-of-use)
 
 
 ## Overview
@@ -57,7 +58,7 @@ The following are the default components included in this blueprint:
 
 * NVIDIA NIM Microservices
    * Response Generation (Inference)
-      * [NIM of meta/llama-3.1-70b-instruct](https://build.nvidia.com/meta/llama-3_1-70b-instruct)
+      * [NIM of nvidia/llama-3.3-nemotron-super-49b-v1](https://build.nvidia.com/nvidia/llama-3_3-nemotron-super-49b-v1)
     * Retriever Models
       * [NIM of nvidia/llama-3_2-nv-embedqa-1b-v2]( https://build.nvidia.com/nvidia/llama-3_2-nv-embedqa-1b-v2)
       * [NIM of nvidia/llama-3_2-nv-rerankqa-1b-v2](https://build.nvidia.com/nvidia/llama-3_2-nv-rerankqa-1b-v2)
@@ -78,14 +79,19 @@ The following are the default components included in this blueprint:
 * Milvus Vector Database - accelerated with NVIDIA cuVS
 * Ingestion - [Nvidia-Ingest](https://github.com/NVIDIA/nv-ingest/tree/main) is leveraged for ingestion of files. NVIDIA-Ingest is a scalable, performance-oriented document content and metadata extraction microservice. Including support for parsing PDFs, Word and PowerPoint documents, it uses specialized NVIDIA NIM microservices to find, contextualize, and extract text, tables, charts and images for use in downstream generative applications.
 * File Types: File types supported by Nvidia-Ingest are supported by this blueprint. This includes `.pdf`, `.pptx`, `.docx` having images. Image captioning support is turned off by default to improve latency, so questions about images in documents will yield poor accuracy. Files with following extensions are supported:
-  - pdf
-  - docx
-  - pptx
-  - jpeg
-  - png
-  - svg
-  - tiff
-  - txt
+
+- `bmp`
+- `docx`
+- `html` (treated as text)
+- `jpeg`
+- `json` (treated as text)
+- `md` (treated as text)
+- `pdf`
+- `png`
+- `pptx`
+- `sh` (treated as text)
+- `tiff`
+- `txt`
 
 We provide Docker Compose scripts that deploy the microservices on a single node.
 When you are ready for a large-scale deployment,
@@ -146,8 +152,8 @@ Ubuntu 22.04 OS
 
 ### Hardware Requirements
 By default, this blueprint deploys the referenced NIM microservices locally. For this, you will require a minimum of:
- - 4xH100
- - 6xA100
+ - 2xH100
+ - 3xA100
 The blueprint can be also modified to use NIM microservices hosted by NVIDIA in [NVIDIA API Catalog](https://build.nvidia.com/explore/discover).
 
 Following are the hardware requirements for each component.
@@ -157,15 +163,14 @@ The overall hardware requirements depend on whether you
 [Deploy With Docker Compose](./docs/quickstart.md#deploy-with-docker-compose) or [Deploy With Helm Chart](./docs/quickstart.md#deploy-with-helm-chart).
 
 
-### Minimum hardware requirements for self hosting all NVIDIA NIM microservices
+### Hardware requirements for self hosting all NVIDIA NIM microservices
 
 **The NIM and hardware requirements only need to be met if you are self-hosting them with default settings of RAG.**
 See [Using self-hosted NVIDIA NIM microservices](./docs/quickstart.md#deploy-with-docker-compose).
 
 - **Pipeline operation**: 1x L40 GPU or similar recommended. It is needed for Milvus vector store database, as GPU acceleration is enabled by default.
-- **LLM NIM**: [Meta Llama 3.1 70B Instruct Support Matrix](https://docs.nvidia.com/nim/large-language-models/latest/support-matrix.html#llama-3-1-70b-instruct)
+- **LLM NIM**: [Nvidia llama-3.3-nemotron-super-49b-v1](https://docs.nvidia.com/nim/large-language-models/latest/supported-models.html#id83)
   - For improved paralleled performance, we recommend 8x or more H100s/A100s for LLM inference.
-  - The pipeline can share the GPU with the LLM NIM, but it is recommended to have a separate GPU for the LLM NIM for optimal performance.
 - **Embedding NIM**: [Llama-3.2-NV-EmbedQA-1B-v2 Support Matrix](https://docs.nvidia.com/nim/nemo-retriever/text-embedding/latest/support-matrix.html#llama-3-2-nv-embedqa-1b-v2)
   - The pipeline can share the GPU with the Embedding NIM, but it is recommended to have a separate GPU for the Embedding NIM for optimal performance.
 - **Reranking NIM**: [llama-3_2-nv-rerankqa-1b-v2 Support Matrix](https://docs.nvidia.com/nim/nemo-retriever/text-reranking/latest/support-matrix.html#llama-3-2-nv-rerankqa-1b-v2)
@@ -178,7 +183,7 @@ See [Using self-hosted NVIDIA NIM microservices](./docs/quickstart.md#deploy-wit
 ## Next Steps
 
 - Do the procedures in [Get Started](./docs/quickstart.md) to deploy this blueprint
-- See the [OpenAPI Specification](./docs/api_reference/openapi_schema.json)
+- See the [OpenAPI Specifications](./docs/api_reference)
 - Explore notebooks that demonstrate how to use the APIs [here](./notebooks/)
 - Explore [observability support](./docs/observability.md)
 - Explore [best practices for enhancing accuracy or latency](./docs/accuracy_perf.md)
@@ -211,6 +216,10 @@ To open a GitHub issue or pull request, see the [contributing guidelines](./CONT
 
 This NVIDIA NVIDIA AI BLUEPRINT is licensed under the [Apache License, Version 2.0.](./LICENSE) This project will download and install additional third-party open source software projects and containers. Review [the license terms of these open source projects](./LICENSE-3rd-party.txt) before use.
 
-The software and materials are governed by the NVIDIA Software License Agreement (found at https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-software-license-agreement/) and the Product-Specific Terms for NVIDIA AI Products (found at https://www.nvidia.com/en-us/agreements/enterprise-software/product-specific-terms-for-ai-products/), except that models are governed by the AI Foundation Models Community License Agreement (found at NVIDIA Agreements | Enterprise Software | NVIDIA Community Model License) and NVIDIA dataset is governed by the NVIDIA Asset License Agreement found [here](./data/LICENSE.DATA).
+Use of the models in this blueprint is governed by the [NVIDIA AI Foundation Models Community License](https://docs.nvidia.com/ai-foundation-models-community-license.pdf).
 
-For Meta/llama-3.1-70b-instruct model the Llama 3.1 Community License Agreement, for nvidia/llama-3.2-nv-embedqa-1b-v2model the Llama 3.2 Community License Agreement, and for the nvidia/llama-3.2-nv-rerankqa-1b-v2 model the Llama 3.2 Community License Agreement. Built with Llama.
+## Terms of Use
+This blueprint is governed by the [NVIDIA Agreements | Enterprise Software | NVIDIA Software License Agreement](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-software-license-agreement/) and the [NVIDIA Agreements | Enterprise Software | Product Specific Terms for AI Product](https://www.nvidia.com/en-us/agreements/enterprise-software/product-specific-terms-for-ai-products/). The models are governed by the [NVIDIA Agreements | Enterprise Software | NVIDIA Community Model License](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-community-models-license/) and the [NVIDIA RAG dataset](https://github.com/NVIDIA-AI-Blueprints/rag/tree/v2.0.0/data/multimodal) which is governed by the [NVIDIA Asset License Agreement](https://github.com/NVIDIA-AI-Blueprints/rag/blob/main/data/LICENSE.DATA).
+
+The following models that are built with Llama are governed by the [Llama 3.2 Community License Agreement](https://www.llama.com/llama3_2/license/): llama-3.3-nemotron-super-49b-v1, nvidia/llama-3.2-nv-embedqa-1b-v2, and nvidia/llama-3.2-nv-rerankqa-1b-v2.
+

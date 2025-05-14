@@ -41,6 +41,7 @@ export default function Chat() {
     topP,
     vdbTopK,
     rerankerTopK,
+    confidenceScoreThreshold,
     useGuardrails,
     includeCitations,
   } = useSettings();
@@ -85,6 +86,9 @@ export default function Chat() {
     setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setMessage("");
 
+    // Debug confidence score threshold being used
+    console.log(`Submitting with confidence threshold: ${confidenceScoreThreshold} (value type: ${typeof confidenceScoreThreshold})`);
+
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
@@ -96,7 +100,7 @@ export default function Chat() {
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
 
-      await processStream(response, assistantMessage.id, setMessages);
+      await processStream(response, assistantMessage.id, setMessages, confidenceScoreThreshold);
     } catch (error: unknown) {
       if (error instanceof Error && error.name === "AbortError") {
         console.log("Stream aborted");
@@ -151,6 +155,7 @@ export default function Chat() {
       top_p: topP,
       reranker_top_k: rerankerTopK,
       vdb_top_k: vdbTopK,
+      confidence_threshold: confidenceScoreThreshold,
       use_knowledge_base: !!selectedCollection,
       enable_citations: includeCitations,
       enable_guardrails: useGuardrails,

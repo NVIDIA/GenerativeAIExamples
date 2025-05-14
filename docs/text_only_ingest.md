@@ -3,7 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 
-# Enable text only ingestion support
+# Enable text only ingestion support in Docker
 For ingesting text only files, developers do not need to deploy the complete pipeline with all NIMs connected. In case your usecase requires extracting text from files, follow steps below to deploy just the necassary components.
 
 1. Follow steps outlined in the [quickstart guide](quickstart.md#start-using-on-prem-models) till step 3.
@@ -40,14 +40,6 @@ For ingesting text only files, developers do not need to deploy the complete pip
        data = {
         "vdb_endpoint": "http://milvus:19530",
         "collection_name": collection_name,
-        "extraction_options": {
-            "extract_text": True,
-            "extract_tables": False,
-            "extract_charts": False,
-            "extract_images": False,
-            "extract_method": "pdfium",
-            "text_depth": "page",
-        },
         "split_options": {
             "chunk_size": 1024,
             "chunk_overlap": 150
@@ -67,3 +59,41 @@ In case you are [interacting with cloud hosted models](quickstart.md#start-using
    export YOLOX_HTTP_ENDPOINT="https://ai.api.nvidia.com/v1/cv/nvidia/nemoretriever-page-elements-v2"
    export YOLOX_INFER_PROTOCOL="http"
    ```
+
+# Enable text only ingestion support in Helm
+
+
+To ingest text-only files, you do not need to deploy the complete pipeline with all NIMs connected.
+If your scenario requires only text extraction from files, use the following steps to deploy only the necessary components using Helm.
+
+When you install the Helm chart, enable only the following services that are required for text ingestion:
+
+- `rag-server`
+- `ingestor-server`
+- `nv-ingest`
+- `nvidia-nim-llama-32-nv-embedqa-1b-v2`
+- `text-reranking-nim`
+- `nemoretriever-page-elements-v2`
+- `nim-llm`
+- `milvus`
+- `minio`
+
+Additionally, ensure that **table extraction**, **chart extraction**, and **image extraction** are disabled.
+
+Example Helm install command:
+
+```bash
+helm upgrade --install rag -n rag https://helm.ngc.nvidia.com/nvidia/blueprint/charts/nvidia-blueprint-rag-v2.1.0.tgz \
+  --username '$oauthtoken' \
+  --password "${NGC_API_KEY}" \
+  --set nim-llm.enabled=true \
+  --set nvidia-nim-llama-32-nv-embedqa-1b-v2.enabled=true \
+  --set text-reranking-nim.enabled=true \
+  --set ingestor-server.enabled=true \
+  --set ingestor-server.nv-ingest.nemoretriever-page-elements-v2.deployed=true \
+  --set ingestor-server.nv-ingest.nemoretriever-graphic-elements-v1.deployed=false \
+  --set ingestor-server.nv-ingest.nemoretriever-table-structure-v1.deployed=false \
+  --set ingestor-server.nv-ingest.paddleocr-nim.deployed=false \
+  --set imagePullSecret.password=$NGC_API_KEY \
+  --set ngcApiSecret.password=$NGC_API_KEY
+```

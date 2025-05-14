@@ -21,7 +21,7 @@ import shutil
 from inspect import getmembers
 from inspect import isclass
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 from uuid import uuid4
 
 from fastapi import UploadFile, Request, File, FastAPI, Form, Depends, HTTPException, Query
@@ -33,10 +33,11 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import constr
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
-from nv_ingest_client.util.file_processing.extract import EXTENSION_TO_DOCUMENT_TYPE
 
 from src.chains import UnstructuredRAG
+from src.utils import get_config
 from .main import NVIngestIngestor
+from .ingestion_task_handler import INGESTION_TASK_HANDLER
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO').upper())
 logger = logging.getLogger(__name__)
@@ -78,25 +79,16 @@ ENABLE_NV_INGEST = True # Configurable flag to enable/disable nv-ingest
 
 # Initialize the NVIngestIngestor class
 NV_INGEST_INGESTOR = NVIngestIngestor()
+CONFIG = get_config()
 
 class HealthResponse(BaseModel):
     message: str = Field(max_length=4096, pattern=r'[\s\S]*', default="")
 
 
-class ExtractionOptions(BaseModel):
-    """Options for extracting different content types from documents."""
-    extract_text: bool = Field(os.getenv("APP_NVINGEST_EXTRACTTEXT", "True").lower() in ["true", "True"], description="Enable text extraction from the document.")
-    extract_tables: bool = Field(os.getenv("APP_NVINGEST_EXTRACTTABLES", "True").lower() in ["true", "True"], description="Enable table extraction from the document.")
-    extract_charts: bool = Field(os.getenv("APP_NVINGEST_EXTRACTCHARTS", "True").lower() in ["true", "True"], description="Enable chart extraction from the document.")
-    extract_images: bool = Field(os.getenv("APP_NVINGEST_EXTRACTIMAGES", "False").lower() in ["true", "True"], description="Enable image extraction from the document.")
-    extract_method: str = Field(os.getenv("APP_NVINGEST_EXTRACTMETHOD", "pdfium"), description="Extract method 'pdfium', 'nemoretriever_parse', 'haystack', 'llama_parse', 'tika', 'unstructured_io'")
-    text_depth: str = Field(os.getenv("APP_NVINGEST_TEXTDEPTH", "page"), description="Extract text by 'page' or 'document'")
-
-
 class SplitOptions(BaseModel):
     """Options for splitting the document into smaller chunks."""
-    chunk_size: int = Field(1024, description="Number of units per split.")
-    chunk_overlap: int = Field(150, description="Number of overlapping units between consecutive splits.")
+    chunk_size: int = Field(CONFIG.nv_ingest.chunk_size, description="Number of units per split.")
+    chunk_overlap: int = Field(CONFIG.nv_ingest.chunk_overlap, description="Number of overlapping units between consecutive splits.")
 
 
 class DocumentUploadRequest(BaseModel):
@@ -113,9 +105,9 @@ class DocumentUploadRequest(BaseModel):
         description="Name of the collection in the vector database."
     )
 
-    extraction_options: ExtractionOptions = Field(
-        default_factory=ExtractionOptions,
-        description="Options to control what types of content are extracted from the document."
+    blocking: bool = Field(
+        False,
+        description="Enable/disable blocking ingestion."
     )
 
     split_options: SplitOptions = Field(
@@ -142,6 +134,28 @@ class UploadedDocument(BaseModel):
     # Reserved for future use
     # size_bytes: int = Field(0, description="Size of the document in bytes.")
 
+class FailedDocument(BaseModel):
+    """Model representing an individual uploaded document."""
+    document_name: str = Field("", description="Name of the document.")
+    error_message: str = Field("", description="Error message from the ingestion process.")
+
+class UploadDocumentResponse(BaseModel):
+    """Response model for uploading a document."""
+    message: str = Field("", description="Message indicating the status of the request.")
+    total_documents: int = Field(0, description="Total number of documents uploaded.")
+    documents: List[UploadedDocument] = Field([], description="List of uploaded documents.")
+    failed_documents: List[FailedDocument] = Field([], description="List of failed documents.")
+
+class IngestionTaskResponse(BaseModel):
+    """Response model for uploading a document."""
+    message: str = Field("", description="Message indicating the status of the request.")
+    task_id: str = Field("", description="Task ID of the ingestion process.")
+
+class IngestionTaskStatusResponse(BaseModel):
+    """Response model for getting the status of an ingestion task."""
+    state: str = Field("", description="State of the ingestion task.")
+    result: UploadDocumentResponse = Field(..., description="Result of the ingestion task.")
+
 class DocumentListResponse(BaseModel):
     """Response model for uploading a document."""
     message: str = Field("", description="Message indicating the status of the request.")
@@ -159,12 +173,17 @@ class CollectionListResponse(BaseModel):
     total_collections: int = Field(0, description="Total number of collections uploaded.")
     collections: List[UploadedCollection] = Field([], description="List of uploaded collections.")
 
+class FailedCollection(BaseModel):
+    """Model representing a collection that failed to be created or deleted."""
+    collection_name: str = Field("", description="Name of the collection.")
+    error_message: str = Field("", description="Error message from the collection creation or deletion process.")
+
 class CollectionResponse(BaseModel):
     """Response model for creation or deletion of collections in Milvus."""
 
     message: str = Field(..., description="Status message of the process.")
     successful: List[str] = Field(default_factory=list, description="List of successfully created or deleted collections.")
-    failed: List[str] = Field(default_factory=list, description="List of collections that failed to be created or deleted.")
+    failed: List[FailedCollection] = Field(default_factory=list, description="List of collections that failed to be created or deleted.")
     total_success: int = Field(0, description="Total number of collections successfully created or deleted.")
     total_failed: int = Field(0, description="Total number of collections that failed to be created or deleted.")
 
@@ -181,16 +200,6 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
         content={"detail": jsonable_encoder(exc.errors(), exclude={"input"})},
     )
 
-async def validate_files(files: List[UploadFile] = File(...)) -> List[UploadFile]:
-    """Validate the files to be uploaded."""
-    non_supported_files = []
-    for file in files:
-        ext = os.path.splitext(file.filename)[1].lower()
-        if ext not in ["." + supported_ext for supported_ext in EXTENSION_TO_DOCUMENT_TYPE.keys()]:
-            non_supported_files.append(file.filename)
-    if non_supported_files:
-        raise HTTPException(status_code=400, detail=f"Invalid file types: {non_supported_files}")
-    return files
 
 @app.get(
     "/health",
@@ -224,23 +233,7 @@ async def parse_json_data(
     data: str = Form(
         ...,
         description="JSON data in string format containing metadata about the documents which needs to be uploaded.",
-        examples=[json.dumps({
-            # "vdb_endpoint": "http://milvus:19530", # WAR to hide it from openapi schema
-            "collection_name": "multimodal_data",
-            "extraction_options": {
-                "extract_text": True,
-                "extract_tables": True,
-                "extract_charts": True,
-                "extract_images": False,
-                "extract_method": "pdfium",
-                "text_depth": "page"
-            },
-            "split_options": {
-                "chunk_size": 1024,
-                "chunk_overlap": 150
-            }
-        }
-        )],
+        examples=[json.dumps(DocumentUploadRequest().model_dump())],
         media_type="application/json"
     )
 ) -> DocumentUploadRequest:
@@ -256,7 +249,7 @@ async def parse_json_data(
 @app.post(
     "/documents",
     tags=["Ingestion APIs"],
-    response_model=DocumentListResponse,
+    response_model=UploadDocumentResponse,
     responses={
         499: {
             "description": "Client Closed Request",
@@ -278,24 +271,25 @@ async def parse_json_data(
                 }
             },
         },
+        200: {
+            "description": "Background Ingestion Started",
+            "model": IngestionTaskResponse
+        }
     }
 )
 async def upload_document(documents: List[UploadFile] = File(...),
-    request: DocumentUploadRequest = Depends(parse_json_data)) -> DocumentListResponse:
+    request: DocumentUploadRequest = Depends(parse_json_data)) -> Union[UploadDocumentResponse, IngestionTaskResponse]:
     """Upload a document to the vector store."""
 
     if not len(documents):
         raise Exception("No files provided for uploading.")
-
-    # Validate the files
-    await validate_files(documents)
 
     # Store all provided file paths
     all_file_paths = []
     temp_dirs = []
 
     try:
-        base_upload_folder = Path("/tmp-data/uploaded_files")
+        base_upload_folder = Path(f"/tmp-data/uploaded_files/{request.collection_name}")
         base_upload_folder.mkdir(parents=True, exist_ok=True)
 
         for file in documents:
@@ -343,12 +337,27 @@ async def upload_document(documents: List[UploadFile] = File(...),
                 UNSTRUCTURED_RAG_CHAIN.ingest_docs(str(file_path), upload_file, request.collection_name, request.vdb_endpoint)
 
         if ENABLE_NV_INGEST:
-            response_dict = await NV_INGEST_INGESTOR.ingest_docs(
-                filepaths=all_file_paths,
-                vdb_endpoint=request.vdb_endpoint, # WAR to hide it from openapi schema
-                **request.model_dump()
-            )
-            return DocumentListResponse(**response_dict)
+            if not request.blocking:
+                _task = lambda: NV_INGEST_INGESTOR.ingest_docs(
+                    filepaths=all_file_paths,
+                    vdb_endpoint=request.vdb_endpoint, # WAR to hide it from openapi schema
+                    **request.model_dump()
+                )
+                task_id = INGESTION_TASK_HANDLER.submit_task(_task)
+                return JSONResponse(    
+                    content=IngestionTaskResponse(
+                        message="Ingestion started in background",
+                        task_id=task_id
+                    ).model_dump(),
+                    status_code=200
+                )
+            else:
+                response_dict = await NV_INGEST_INGESTOR.ingest_docs(
+                    filepaths=all_file_paths,
+                    vdb_endpoint=request.vdb_endpoint, # WAR to hide it from openapi schema
+                    **request.model_dump()
+                )
+            return UploadDocumentResponse(**response_dict)
 
         return JSONResponse(content="Documents uploaded successfully!", status_code=200)
 
@@ -358,18 +367,49 @@ async def upload_document(documents: List[UploadFile] = File(...),
     except Exception as e:
         logger.error(f"Error from POST /documents endpoint. Ingestion of file failed with error: {e}")
         return JSONResponse(content={"message": f"Ingestion of files failed with error: {e}"}, status_code=500)
-    finally:
-        # Ensure all temporary directories are deleted in case of errors
-        logger.info(f"Cleaning up files in {all_file_paths}")
-        for file in all_file_paths:
-            try:
-                os.remove(file)
-                logger.info(f"Deleted temporary file: {file}")
-            except FileNotFoundError:
-                logger.warning(f"File not found: {file}")
-            except Exception as e:
-                logger.error(f"Error deleting {file}: {e}")
 
+
+@app.get(
+    "/status",
+    tags=["Ingestion APIs"],
+    response_model=IngestionTaskStatusResponse,
+)
+async def get_task_status(task_id: str):
+    """Get the status of an ingestion task."""
+    
+    logger.info(f"Getting status of task {task_id}")
+    try:
+        if INGESTION_TASK_HANDLER.get_task_status(task_id) == "PENDING":
+            logger.info(f"Task {task_id} is pending")
+            return IngestionTaskStatusResponse(
+                state="PENDING",
+                result={}
+            )
+        elif INGESTION_TASK_HANDLER.get_task_status(task_id) == "FINISHED":
+            try:
+                logger.info(f"Task {task_id} is finished")
+                return IngestionTaskStatusResponse(
+                    state="FINISHED",
+                    result=INGESTION_TASK_HANDLER.get_task_result(task_id)
+                )
+            except Exception as e:
+                logger.error(f"Task {task_id} failed with error: {e}")
+                return IngestionTaskStatusResponse(
+                    state="FAILED",
+                    result={"message": str(e)}
+                )
+        else:
+            logger.error(f"Unknown task state: {INGESTION_TASK_HANDLER.get_task_status(task_id)}")
+            return IngestionTaskStatusResponse(
+                state="UNKNOWN",
+                result={}
+            )
+    except KeyError as e:
+        logger.error(f"Task {task_id} not found with error: {e}")
+        return IngestionTaskStatusResponse(
+            state="UNKNOWN",
+            result={"message": "Task not found"}
+        )
 
 @app.patch(
     "/documents",

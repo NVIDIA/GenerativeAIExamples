@@ -3,7 +3,7 @@ services:
   # Main orchestrator server which stiches together all calls to different services to fulfill the user request
   rag-server:
     container_name: rag-server
-    image: nvcr.io/nvidia/blueprint/rag-server:${TAG:-2.0.0}
+    image: nvcr.io/nvidia/blueprint/rag-server:${TAG:-2.1.0}
     build:
       # Set context to repo's root directory
       context: ../../
@@ -31,11 +31,11 @@ services:
       # vectorstore collection name to store embeddings
       COLLECTION_NAME: ${COLLECTION_NAME:-multimodal_data}
       APP_RETRIEVER_SCORETHRESHOLD: 0.25
-      # Top K from vector DB, which goes as input to reranker model - not applicable if ENABLE_RERANKER is set to False
+      # Top K from vector DB, which goes as input to reranker model if enabled, else goes to LLM prompt
       VECTOR_DB_TOPK: 100
 
       ##===LLM Model specific configurations===
-      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-"meta/llama-3.1-70b-instruct"}
+      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-"nvidia/llama-3.3-nemotron-super-49b-v1"}
       # url on which llm model is hosted. If "", Nvidia hosted API is used
       APP_LLM_SERVERURL: ${APP_LLM_SERVERURL-"nim-llm:8000"}
 
@@ -55,9 +55,9 @@ services:
       APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-"nvidia/llama-3.2-nv-rerankqa-1b-v2"}
       ENABLE_RERANKER: ${ENABLE_RERANKER:-True}
 
-      NVIDIA_API_KEY: ${NVIDIA_API_KEY:?"NVIDIA_API_KEY is required"}
+      NVIDIA_API_KEY: ${NGC_API_KEY:?"NGC_API_KEY is required"}
 
-      # Number of document chunks to insert in LLM prompt
+      # Number of document chunks to insert in LLM prompt, used only when ENABLE_RERANKER is set to True
       APP_RETRIEVER_TOPK: 10
 
       # Log level for server, supported level NOTSET, DEBUG, INFO, WARN, ERROR, CRITICAL
@@ -96,6 +96,9 @@ services:
       # Whether to filter content within <think></think> tags in model responses
       FILTER_THINK_TOKENS: ${FILTER_THINK_TOKENS:-true}
 
+      # Whether to enable thinking in the rag chain for llama-3.3-nemotron-super-49b model
+      ENABLE_NEMOTRON_THINKING: ${ENABLE_NEMOTRON_THINKING:-false}
+
       # enable reflection (context relevance and response groundedness checking) in the rag chain
       ENABLE_REFLECTION: ${ENABLE_REFLECTION:-false}
       # Maximum number of context relevance loop iterations
@@ -118,14 +121,14 @@ services:
   # Sample UI container which interacts with APIs exposed by rag-server container
   rag-playground:
     container_name: rag-playground
-    image: nvcr.io/nvidia/blueprint/rag-playground:${TAG:-2.0.0}
+    image: nvcr.io/nvidia/blueprint/rag-playground:${TAG:-2.1.0}
     build:
       # Set context to repo's root directory
       context: ../../frontend
       dockerfile: ./Dockerfile
       args:
         # Model name for LLM
-        NEXT_PUBLIC_MODEL_NAME: ${APP_LLM_MODELNAME:-meta/llama-3.1-70b-instruct}
+        NEXT_PUBLIC_MODEL_NAME: ${APP_LLM_MODELNAME:-nvidia/llama-3.3-nemotron-super-49b-v1}
         # Model name for embeddings
         NEXT_PUBLIC_EMBEDDING_MODEL: ${APP_EMBEDDINGS_MODELNAME:-nvidia/llama-3.2-nv-embedqa-1b-v2}
         # Model name for reranking

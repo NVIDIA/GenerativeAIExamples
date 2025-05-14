@@ -62,4 +62,14 @@ These parameters allow fine-tuning RAG performance based on specific accuracy vs
   - ❌ May slightly increase processing overhead
   - Controlled via `APP_NVINGEST_CHUNKOVERLAP` environment variable. Default value is 150.
 
+- **Customize PDF Splitting**
+  - ✅ PDFs are extracted at the page level by default. When PDF splitting is enabled, chunk-based splitting is performed after page-level extraction for more granular content segmentation. Recommended for PDFs with pages with more text content
+  - ❌ This may increase number of chunks and slightly slow down ingestion process
+  - Controlled by `APP_NVINGEST_ENABLEPDFSPLITTER` environment variable. Default value is `True`.
+
+- **Enable Batch mode Ingestion**
+  - ✅ Enabling batch-based ingestion can help manage memory usage of `ingestor-server` more effectively.
+  - ❌ May slightly increase processing overhead and ingestion time.
+  - Controlled using `ENABLE_NV_INGEST_BATCH_MODE` and `NV_INGEST_FILES_PER_BATCH` variables. Default value is `True` and `100` respectively.
+
 These parameters allow fine-tuning RAG performance based on specific accuracy vs. latency trade-offs. Choose the configurations based on use case needs!

@@ -1,5 +1,7 @@
 replicaCount: 1
 
+namespace: "nv-nvidia-blueprint-rag"
+
 # Secrets
 imagePullSecret:
   name: "ngc-secret"
@@ -16,14 +18,21 @@ ngcApiSecret:
 # RAG server config
 image:
   repository: nvcr.io/nvidia/blueprint/rag-server
-  tag: "2.0.0"
+  tag: "2.1.0"
   pullPolicy: IfNotPresent
 
 server:
   workers: 8
 
+resources:
+  limits:
+    memory: "64Gi"
+  requests:
+    memory: "8Gi"
+
 envVars:
   EXAMPLE_PATH: "src/"
+  PROMPT_CONFIG_FILE: "/prompt.yaml"
 
   ##===MINIO specific configurations which is used to store the multimodal base64 content===
   MINIO_ENDPOINT: "rag-minio:9000"
@@ -46,12 +55,12 @@ envVars:
   APP_RETRIEVER_TOPK: "10"
 
   ##===LLM Model specific configurations===
-  APP_LLM_MODELNAME: "meta/llama-3.1-70b-instruct"
+  APP_LLM_MODELNAME: "nvidia/llama-3.3-nemotron-super-49b-v1"
   # URL on which LLM model is hosted. If "", Nvidia hosted API is used
   APP_LLM_SERVERURL: "nim-llm:8000"
 
   ##===Query Rewriter Model specific configurations===
-  APP_QUERYREWRITER_MODELNAME: "meta/llama-3.1-70b-instruct"
+  APP_QUERYREWRITER_MODELNAME: "nvidia/llama-3.3-nemotron-super-49b-v1"
   # URL on which query rewriter model is hosted. If "", Nvidia hosted API is used
   APP_QUERYREWRITER_SERVERURL: "nim-llm:8000"
 
@@ -113,6 +122,9 @@ envVars:
   # Whether to filter content within <think></think> tags in model responses
   FILTER_THINK_TOKENS: "true"
 
+  # Whether to enable thinking in the rag chain for llama-3.3-nemotron-super-49b model
+  ENABLE_NEMOTRON_THINKING: "false"
+
 # Ingestor Server
 ingestor-server:
   enabled: true
@@ -121,10 +133,15 @@ ingestor-server:
     create: false
   image:
     repository: nvcr.io/nvidia/blueprint/ingestor-server
-    tag: "2.0.0"
+    tag: "2.1.0"
     pullPolicy: IfNotPresent
   server:
     workers: 1
+  resources:
+    limits:
+      memory: "25Gi"
+    requests:
+      memory: "25Gi"
   envVars:
     # === Vector Store Configurations ===
     APP_VECTORSTORE_URL: "http://milvus:19530"
@@ -149,7 +166,7 @@ ingestor-server:
     APP_NVINGEST_MESSAGECLIENTPORT: "7670"
 
     # === NV-Ingest extraction configurations ===
-    APP_NVINGEST_EXTRACTMETHOD: "pdfium"  # Method used for text extraction
+    APP_NVINGEST_PDFEXTRACTMETHOD: "None"  # Method used for text extraction from "None", "pdfium", "nemoretriever_parse"
     APP_NVINGEST_EXTRACTTEXT: "True"  # Enable text extraction
     APP_NVINGEST_EXTRACTTABLES: "True"  # Enable table extraction
     APP_NVINGEST_EXTRACTCHARTS: "True"  # Enable chart extraction
@@ -162,11 +179,22 @@ ingestor-server:
 
     # === General ===
     ENABLE_CITATIONS: "True"
+    ENABLE_NV_INGEST_BATCH_MODE: "True" # Enable chunk ingestion for multi-user support
+    NV_INGEST_FILES_PER_BATCH: "128" # Number of documents to process in each chunk
     LOGLEVEL: "INFO"
 
     # === NV-Ingest splitting configurations ===
-    APP_NVINGEST_CHUNKSIZE: "1024"  # Size of chunks for splitting
+    APP_NVINGEST_CHUNKSIZE: "512"  # Size of chunks for splitting
     APP_NVINGEST_CHUNKOVERLAP: "150"  # Overlap size for chunks
+    APP_NVINGEST_ENABLEPDFSPLITTER: "True"  # Enable PDF splitter
+
+    # === Redis configurations ===
+    REDIS_HOST: "rag-redis-master"
+    REDIS_PORT: "6379"
+    REDIS_DB: "0"
+
+    # === Bulk upload to MinIO ===
+    ENABLE_MINIO_BULK_UPLOAD: "False"
 
   # NV-Ingest
   nv-ingest:
@@ -178,20 +206,18 @@ ingestor-server:
       create: false
     image:
       repository: "nvcr.io/nvidia/nemo-microservices/nv-ingest"
-      tag: "25.3.0"
+      tag: "25.4.1"
     resources:
       limits:
         nvidia.com/gpu: 0
     envVars:
-      MAX_INGEST_PROCESS_WORKERS: 16
       INGEST_LOG_LEVEL: DEFAULT
+      NV_INGEST_MAX_UTIL: 48
       INGEST_EDGE_BUFFER_SIZE: 64
       MRC_IGNORE_NUMA_CHECK: 1
-      READY_CHECK_ALL_COMPONENTS: False
+      READY_CHECK_ALL_COMPONENTS: "true"
       REDIS_MORPHEUS_TASK_QUEUE: morpheus_task_queue
-      AUDIO_GRPC_ENDPOINT: "audio:50051"
-      AUDIO_INFER_PROTOCOL: "grpc"
-      CUDA_VISIBLE_DEVICES: "0"
+      NV_INGEST_DEFAULT_TIMEOUT_MS: "1234"
       MAX_INGEST_PROCESS_WORKERS: 16
       EMBEDDING_NIM_ENDPOINT: "http://nemo-retriever-embedding-ms:8000/v1"
       MESSAGE_CLIENT_HOST: "rag-redis-master"
@@ -199,26 +225,25 @@ ingestor-server:
       MESSAGE_CLIENT_TYPE: "redis"
       MINIO_INTERNAL_ADDRESS: "rag-minio:9000"
       MILVUS_ENDPOINT: "http://milvus:19530"
-      MINIO_BUCKET: "nv-ingest"
-      NEMORETRIEVER_PARSE_HTTP_ENDPOINT: "http://nemoretriever-parse:8000/v1/chat/completions"
-      NEMORETRIEVER_PARSE_INFER_PROTOCOL: "http"
       OTEL_EXPORTER_OTLP_ENDPOINT: "otel-collector:4317"
-      PADDLE_GRPC_ENDPOINT: "nv-ingest-paddle:8001"
-      PADDLE_HTTP_ENDPOINT: "http://nv-ingest-paddle:8000/v1/infer"
-      PADDLE_INFER_PROTOCOL: "grpc"
-      YOLOX_GRPC_ENDPOINT: "nemoretriever-page-elements-v2:8001"
-      YOLOX_HTTP_ENDPOINT: "http://nemoretriever-page-elements-v2:8000/v1/infer"
-      YOLOX_INFER_PROTOCOL: "grpc"
-      YOLOX_GRAPHIC_ELEMENTS_GRPC_ENDPOINT: "nemoretriever-graphic-elements-v1:8001"
-      YOLOX_GRAPHIC_ELEMENTS_HTTP_ENDPOINT: "http://nemoretriever-graphic-elements-v1:8000/v1/infer"
-      YOLOX_TABLE_STRUCTURE_GRPC_ENDPOINT: "nemoretriever-table-structure-v1:8001"
-      YOLOX_TABLE_STRUCTURE_HTTP_ENDPOINT: "http://nemoretriever-table-structure-v1:8000/v1/infer"
-      YOLOX_TABLE_STRUCTURE_INFER_PROTOCOL: "grpc"
-      VLM_CAPTION_ENDPOINT: "http://vlm-ms:8000/v1/chat/completions"
-      VLM_CAPTION_MODEL_NAME: "meta/llama-3.2-11b-vision-instruct"
       MODEL_PREDOWNLOAD_PATH: "/workspace/models/"
 
+      # WAR to fix -loadbalancer from the ingestion NIMs URLs
+      PADDLE_GRPC_ENDPOINT: nv-ingest-paddle:8001
+      PADDLE_HTTP_ENDPOINT: http://nv-ingest-paddle:8000/v1/infer
+      PADDLE_INFER_PROTOCOL: grpc
+      YOLOX_GRPC_ENDPOINT: nemoretriever-page-elements-v2:8001
+      YOLOX_HTTP_ENDPOINT: http://nemoretriever-page-elements-v2:8000/v1/infer
+      YOLOX_INFER_PROTOCOL: grpc
+      YOLOX_GRAPHIC_ELEMENTS_GRPC_ENDPOINT: nemoretriever-graphic-elements-v1:8001
+      YOLOX_GRAPHIC_ELEMENTS_HTTP_ENDPOINT: http://nemoretriever-graphic-elements-v1:8000/v1/infer
+      YOLOX_GRAPHIC_ELEMENTS_INFER_PROTOCOL: grpc
+      YOLOX_TABLE_STRUCTURE_GRPC_ENDPOINT: nemoretriever-table-structure-v1:8001
+      YOLOX_TABLE_STRUCTURE_HTTP_ENDPOINT: http://nemoretriever-table-structure-v1:8000/v1/infer
+      YOLOX_TABLE_STRUCTURE_INFER_PROTOCOL: grpc
+
     paddleocr-nim:
+      replicaCount: 1
       image:
         repository: nvcr.io/nim/baidu/paddleocr
         tag: "1.2.0"
@@ -226,24 +251,24 @@ ingestor-server:
       - name: ngc-secret
 
     nemoretriever-graphic-elements-v1:
+      replicaCount: 1
       image:
         repository: nvcr.io/nim/nvidia/nemoretriever-graphic-elements-v1
         tag: "1.2.0"
 
     nemoretriever-page-elements-v2:
+      replicaCount: 1
       image:
         repository: nvcr.io/nim/nvidia/nemoretriever-page-elements-v2
         tag: "1.2.0"
 
     nemoretriever-table-structure-v1:
+      replicaCount: 1
       image:
         repository: nvcr.io/nim/nvidia/nemoretriever-table-structure-v1
         tag: "1.2.0"
 
     nim-vlm-text-extraction:
-      image:
-        repository: "nvcr.io/nim/nvidia/nemoretriever-parse"
-        tag: "1.2"
       deployed: false
 
     nim-vlm-image-captioning:
@@ -256,15 +281,7 @@ ingestor-server:
       deployed: false
 
     milvus:
-      image:
-        all:
-          repository: milvusdb/milvus
-          tag: v2.5.3-gpu
-          pullPolicy: IfNotPresent
-      standalone:
-        resources:
-          limits:
-            nvidia.com/gpu: 1
+
       fullnameOverride: "milvus"
 
     otelDeployed: false
@@ -304,17 +321,17 @@ nim-llm:
   service:
     name: "nim-llm"
   image:
-      repository: nvcr.io/nim/meta/llama-3.1-70b-instruct-pb24h2
+      repository: nvcr.io/nim/nvidia/llama-3.3-nemotron-super-49b-v1
       pullPolicy: IfNotPresent
-      tag: "1.3.4"
+      tag: "1.8.3"
   resources:
     limits:
-      nvidia.com/gpu: 2
+      nvidia.com/gpu: 1
     requests:
-      nvidia.com/gpu: 2
+      nvidia.com/gpu: 1
   model:
     ngcAPIKey: ""
-    name: "meta/llama-3.1-70b-instruct"
+    name: "nvidia/llama-3.3-nemotron-super-49b-v1"
 
 
 nvidia-nim-llama-32-nv-embedqa-1b-v2:
@@ -338,7 +355,7 @@ text-reranking-nim:
     name: "nemo-retriever-reranking-ms"
   image:
     repository: nvcr.io/nim/nvidia/llama-3.2-nv-rerankqa-1b-v2
-    tag: "1.3"
+    tag: "1.3.1"
   resources:
     limits:
       nvidia.com/gpu: 1
@@ -450,7 +467,7 @@ frontend:
   image:
     repository: nvcr.io/nvidia/blueprint/rag-playground
     pullPolicy: IfNotPresent
-    tag: "2.0.0"
+    tag: "2.1.0"
   imagePullSecret:
     name: "ngc-secret"
     registry: "nvcr.io"
@@ -461,7 +478,7 @@ frontend:
     port: 3000
   envVars:
     - name: NEXT_PUBLIC_MODEL_NAME
-      value: "meta/llama-3.1-70b-instruct"
+      value: "nvidia/llama-3.3-nemotron-super-49b-v1"
     - name: NEXT_PUBLIC_EMBEDDING_MODEL
       value: "nvidia/llama-3.2-nv-embedqa-1b-v2"
     - name: NEXT_PUBLIC_RERANKER_MODEL
