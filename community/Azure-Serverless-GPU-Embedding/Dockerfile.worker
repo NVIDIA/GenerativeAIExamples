@@ -1,0 +1,59 @@
+#
+# Copyright (c) 2025, NVIDIA CORPORATION.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+FROM Apache Spark 3.4.1
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ENV RAPIDS_VERSION=25.2.0
+
+RUN python -m pip install --upgrade pip
+
+# System utilities
+RUN apt-get update && apt-get install -y mc && rm -rf /var/lib/apt/lists/*
+
+# Install all required Python packages in one go
+RUN pip install --no-cache-dir \
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
+    pip install --no-cache-dir \
+    cudf-cu11~=${RAPIDS_VERSION} \
+    cuml-cu11~=${RAPIDS_VERSION} \
+    cuvs-cu11~=${RAPIDS_VERSION} \
+    onnxruntime-gpu \
+    "tensorrt" \
+    "triton-model-navigator==0.10.1" \
+    "sentence_transformers==2.2.2" \
+    "urllib3<2" \
+    "transformers==4.27.4" \
+    "huggingface-hub==0.13.4" \
+    "scikit-learn>=1.2.1" \
+    "black>=23.1.0" "build>=0.10.0" "isort>=5.12.0" "mypy>=1.0.0" \
+    numpydoc pydata-sphinx-theme pylint pytest "sphinx<6.0" "twine>=4.0.0" \
+    --extra-index-url=https://pypi.nvidia.com
+
+RUN git clone -b branch-25.02 https://github.com/NVIDIA/spark-rapids-ml.git
+COPY ./spark-rapids-ml /spark-rapids-ml
+WORKDIR /spark-rapids-ml/python
+
+# install spark-rapids-ml with requirements_dev.txt (in case it has diverged from cache)
+RUN pip install --no-cache-dir -r requirements_dev.txt \
+    && pip install --no-cache-dir -e .
+
+# Copy MSSQL JDBC driver
+COPY ./lib/mssql-jdbc-12.6.1.jre8.jar /opt/driver/mssql-jdbc-12.6.1.jre8.jar
+
+ENV TERM=xterm
