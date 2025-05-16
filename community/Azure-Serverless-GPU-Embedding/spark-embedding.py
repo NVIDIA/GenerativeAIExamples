@@ -242,7 +242,7 @@ while processed_records < total_records_to_process:
     print(f"✅ Batch {batch_number + 1}: embeddings saved to temp table.")
 
     conn = spark._sc._jvm.java.sql.DriverManager.getConnection(
-        jdbc_url + ";user=azureuser;password=AzurePassw0rd;encrypt=true;trustServerCertificate=false"
+        jdbc_url + ";user=xxxxx;password=xxxxx;encrypt=true;trustServerCertificate=false"
     )
     stmt = conn.createStatement()
 
