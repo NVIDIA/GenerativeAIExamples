@@ -1,0 +1,48 @@
+version: '2.3'
+services:
+    oai-smf-slice2:
+        container_name: "oai-smf-slice2"
+        image: oaisoftwarealliance/oai-smf:v2.1.0
+        expose:
+            - 80/tcp
+            - 8080/tcp
+            - 8805/udp
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice2_config.yaml:/openair-smf/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.142
+
+    oai-upf-slice2:
+        container_name: "oai-upf-slice2"
+        image: oaisoftwarealliance/oai-upf:v2.1.0
+        expose:
+            - 2152/udp
+            - 8805/udp
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice2_config.yaml:/openair-upf/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        depends_on:
+            - oai-smf-slice2
+        cap_add:
+            - NET_ADMIN
+            - SYS_ADMIN
+        cap_drop:
+            - ALL
+        privileged: true
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.143
+
+networks:
+    public_net:
+        driver: bridge
+        name: demo-oai-public-net
+        ipam:
+            config:
+                - subnet: 192.168.70.0/24
+        driver_opts:
+            com.docker.network.bridge.name: "demo-oai"
