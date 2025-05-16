@@ -1,0 +1,106 @@
+#
+# Copyright (c) 2025, NVIDIA CORPORATION.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+FROM Apache Spark 3.4.1
+
+ENV RAPIDS_VERSION=25.2.0
+
+RUN python -m pip install --upgrade pip
+
+# Install system utilities
+RUN apt-get update && apt-get install -y \
+    bind9-host \
+    curl \
+    iputils-ping \
+    net-tools \
+    mc \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- 🛠️ Install Python + CUDA/RAPIDS packages
+RUN pip install --no-cache-dir \
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
+    pip install --no-cache-dir \
+    jupyterlab \
+    findspark \
+    pyspark \
+    ipykernel \
+    aiohttp \
+    redis \
+    sentence-transformers==2.2.2 \
+    transformers==4.27.4 \
+    huggingface-hub==0.13.4 \
+    "urllib3<2" \
+    onnxruntime-gpu \
+    tensorrt \
+    triton-model-navigator==0.10.1 \
+    cudf-cu11~=${RAPIDS_VERSION} \
+    cuml-cu11~=${RAPIDS_VERSION} \
+    cuvs-cu11~=${RAPIDS_VERSION} \
+    scikit-learn>=1.2.1 \
+    black>=23.1.0 \
+    build>=0.10.0 \
+    isort>=5.12.0 \
+    mypy>=1.0.0 \
+    numpydoc \
+    pydata-sphinx-theme \
+    pylint \
+    pytest \
+    "sphinx<6.0" \
+    "twine>=4.0.0" \
+    matplotlib \
+    --extra-index-url=https://pypi.nvidia.com
+
+# --- 📄 Copy application code
+WORKDIR /opt/spark/work-dir/
+
+COPY trigger-mode_sql.py /app/trigger-mode.py
+COPY spark-embedding.py /app/spark-embedding.py
+COPY switch-modes.sh /usr/local/bin/switch-modes.sh
+RUN chmod +x /usr/local/bin/switch-modes.sh
+
+# Copy MSSQL JDBC driver
+COPY ./lib/mssql-jdbc-12.6.1.jre8.jar /opt/driver/mssql-jdbc-12.6.1.jre8.jar
+
+# --- 📄 Copy libcuda.so.1 and link it properly
+COPY ./lib/cuda.so.1 /usr/lib/libcuda.so.1
+RUN ln -sf /usr/lib/libcuda.so.1 /usr/lib/libcuda.so
+
+# --- 🧠 Install Jupyter Kernel
+RUN python3 -m ipykernel install --user --name=pyspark --display-name "Python (PySpark)"
+
+# --- 📦 Install spark-rapids-ml
+RUN git clone -b branch-25.02 https://github.com/NVIDIA/spark-rapids-ml.git
+COPY ./spark-rapids-ml /spark-rapids-ml
+WORKDIR /spark-rapids-ml/python
+
+RUN pip install --no-cache-dir -r requirements_dev.txt \
+    && pip install --no-cache-dir -e .
+
+# --- ⚙️ Environment Variables
+ENV JUPYTER_CONFIG_DIR=/root/.jupyter \
+    JUPYTER_RUNTIME_DIR=/root/.local/share/jupyter/runtime \
+    PYSPARK_PYTHON=python3 \
+    SPARK_HOME=/opt/spark \
+    PATH="$SPARK_HOME/bin:$PATH" \
+    PYTHONPATH="$SPARK_HOME/python:$SPARK_HOME/python/lib/py4j-0.10.9-src.zip:$PYTHONPATH" \
+    TERM=xterm
+
+# --- 🌎 Expose Jupyter port
+EXPOSE 8888
+
+# Entrypoint
+ENTRYPOINT ["/usr/local/bin/switch-modes.sh"]
