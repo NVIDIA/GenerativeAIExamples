@@ -32,7 +32,7 @@ services:
       COLLECTION_NAME: ${COLLECTION_NAME:-multimodal_data}
       APP_RETRIEVER_SCORETHRESHOLD: 0.25
       # Top K from vector DB, which goes as input to reranker model if enabled, else goes to LLM prompt
-      VECTOR_DB_TOPK: 100
+      VECTOR_DB_TOPK: ${VECTOR_DB_TOPK:-100}
 
       ##===LLM Model specific configurations===
       APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-"nvidia/llama-3.3-nemotron-super-49b-v1"}
@@ -58,7 +58,7 @@ services:
       NVIDIA_API_KEY: ${NGC_API_KEY:?"NGC_API_KEY is required"}
 
       # Number of document chunks to insert in LLM prompt, used only when ENABLE_RERANKER is set to True
-      APP_RETRIEVER_TOPK: 10
+      APP_RETRIEVER_TOPK: ${APP_RETRIEVER_TOPK:-10}
 
       # Log level for server, supported level NOTSET, DEBUG, INFO, WARN, ERROR, CRITICAL
       LOGLEVEL: ${LOGLEVEL:-INFO}
