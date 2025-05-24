@@ -1,0 +1,202 @@
+version: '2.3'
+services:
+    mysql:
+        container_name: "mysql"
+        image: mysql:8.0
+        volumes:
+            - ${OAIR_ROOT:-.}/database/oai_db2.sql:/docker-entrypoint-initdb.d/oai_db.sql
+            - ${OAIR_ROOT:-.}/healthscripts/mysql-healthcheck2.sh:/tmp/mysql-healthcheck.sh
+        environment:
+            - TZ=Europe/Paris
+            - MYSQL_DATABASE=oai_db
+            - MYSQL_USER=test
+            - MYSQL_PASSWORD=test
+            - MYSQL_ROOT_PASSWORD=linux
+        healthcheck:
+            test: /bin/bash -c "/tmp/mysql-healthcheck.sh"
+            interval: 10s
+            timeout: 5s
+            retries: 30
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.131
+    oai-udr:
+        container_name: "oai-udr"
+        image: oaisoftwarealliance/oai-udr:v2.1.0
+        expose:
+            - 80/tcp
+            - 8080/tcp
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice1_config.yaml:/openair-udr/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        depends_on:
+            - mysql
+            - oai-nrf
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.136
+    oai-udm:
+        container_name: "oai-udm"
+        image: oaisoftwarealliance/oai-udm:v2.1.0
+        expose:
+            - 80/tcp
+            - 8080/tcp
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice1_config.yaml:/openair-udm/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        depends_on:
+            - oai-udr
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.137
+    oai-ausf:
+        container_name: "oai-ausf"
+        image: oaisoftwarealliance/oai-ausf:v2.1.0
+        expose:
+            - 80/tcp
+            - 8080/tcp
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice1_config.yaml:/openair-ausf/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        depends_on:
+            - oai-udm
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.138
+    oai-nrf:
+        container_name: "oai-nrf"
+        image: oaisoftwarealliance/oai-nrf:v2.1.0
+        expose:
+            - 80/tcp
+            - 8080/tcp
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice1_config.yaml:/openair-nrf/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.130
+    oai-amf:
+        container_name: "oai-amf"
+        image: oaisoftwarealliance/oai-amf:v2.1.0
+        expose:
+            - 80/tcp
+            - 8080/tcp
+            # - 38412/sctp
+        extra_hosts:
+            - "oai-nrf:192.168.70.131"
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice1_config.yaml:/openair-amf/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        depends_on:
+            - mysql
+            - oai-nrf
+            - oai-ausf
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.132
+    oai-smf-slice1:
+        container_name: "oai-smf-slice1"
+        image: oaisoftwarealliance/oai-smf:v2.1.0
+        expose:
+            - 80/tcp
+            - 8080/tcp
+            - 8805/udp
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice1_config.yaml:/openair-smf/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        depends_on:
+            - oai-nrf
+            - oai-amf
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.133
+    oai-pcf:
+        container_name: "oai-pcf"
+        image: oaisoftwarealliance/oai-pcf:v2.1.0
+        expose:
+            - 80/tcp
+            - 8080/tcp
+        volumes:
+            - ${OAIR_ROOT:-.}/policies/qos:/openair-pcf/policies
+            - ${OAIR_ROOT:-.}/conf/basic_slice1_config.yaml:/openair-pcf/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        depends_on:
+            - oai-nrf
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.139
+    oai-upf-slice1:
+        container_name: "oai-upf-slice1"
+        image: oaisoftwarealliance/oai-upf:v2.1.0
+        expose:
+            - 2152/udp
+            - 8805/udp
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice1_config.yaml:/openair-upf/etc/config.yaml
+        environment:
+            - TZ=Europe/Paris
+        depends_on:
+            - oai-nrf
+            - oai-smf-slice1
+        cap_add:
+            - NET_ADMIN
+            - SYS_ADMIN
+        cap_drop:
+            - ALL
+        privileged: true
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.134
+
+    oai-ext-dn:
+        privileged: true
+        init: false
+        container_name: oai-ext-dn
+        image: oaisoftwarealliance/trf-gen-cn5g:latest
+        entrypoint: /bin/bash -c \
+            "ip route add 12.1.1.0/25 via 192.168.70.134 dev eth0;"\ 
+            "ip route add 12.1.1.128/25 via 192.168.70.143 dev eth0;"\
+            "ip route; sleep infinity"
+        healthcheck:
+            test: /bin/bash -c "ip r | grep 12.1.1"
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.135
+    oai-nssf:
+        container_name: "oai-nssf"
+        image: oaisoftwarealliance/oai-nssf:v2.1.0
+        expose:
+            - 80/tcp
+            - 8080/tcp
+        volumes:
+            - ${OAIR_ROOT:-.}/conf/basic_slice1_config.yaml:/openair-nssf/etc/config.yaml
+            - ${OAIR_ROOT:-.}/conf/nssf_slice_config.yaml:/openair-nssf/etc/nssf_slice_config.yaml
+        cap_add:
+            - NET_ADMIN
+            - SYS_ADMIN
+        cap_drop:
+            - ALL
+        privileged: true
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.140
+
+networks:
+    public_net:
+        driver: bridge
+        name: demo-oai-public-net
+        ipam:
+            config:
+                - subnet: 192.168.70.0/24
+        driver_opts:
+            com.docker.network.bridge.name: "demo-oai"
