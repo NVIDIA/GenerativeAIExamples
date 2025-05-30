@@ -18,3 +18,4 @@ DATASET_NAME = "xlam-ft-dataset"
 
 # (Optional) Configure the base model. Must be one supported by the NeMo Customizer deployment!
 BASE_MODEL = "meta/llama-3.2-1b-instruct"
+BASE_MODEL_VERSION = "v1.0.0+A100"
