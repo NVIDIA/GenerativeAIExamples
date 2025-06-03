@@ -1,0 +1,23 @@
+{
+  "company": "DummyCorp",
+  "ticker": "DMYC",
+  "form_type": "10-K",
+  "accession_number": "0001234567-23-000001",
+  "filing_date": "2023-03-15",
+  "report_date": "2022-12-31",
+  "item_1": "This is Item 1 text for DummyCorp. Business overview.",
+  "item_1A": "This is Item 1A text for DummyCorp. Risk factors are discussed here. The company faces competition and market risks. There are also operational risks associated with its new product line.",
+  "item_1B": "Unresolved staff comments for DummyCorp.",
+  "item_2": "Properties of DummyCorp.",
+  "item_3": "Legal proceedings for DummyCorp.",
+  "item_4": "Mine safety disclosures for DummyCorp.",
+  "item_5": "Market for registrant's common equity for DummyCorp.",
+  "item_6": "[Reserved]",
+  "item_7": "This is Item 7 text for DummyCorp. Management's Discussion and Analysis. Financial condition is stable. Liquidity is adequate. The company launched a new widget in Q4 which is expected to boost sales. However, supply chain disruptions could impact future performance.",
+  "item_7A": "Quantitative and qualitative disclosures about market risk for DummyCorp.",
+  "item_8": "Financial statements and supplementary data for DummyCorp.",
+  "item_9": "Changes in and disagreements with accountants on accounting and financial disclosure for DummyCorp.",
+  "item_9A": "Controls and procedures for DummyCorp.",
+  "item_9B": "Other information for DummyCorp.",
+  "item_9C": "Disclosure Regarding Foreign Jurisdictions that Prevent Inspections."
+}

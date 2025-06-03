@@ -1,0 +1,5 @@
+subject_id,relation_id,object_id
+0,0,1
+0,1,2
+2,2,3
+1,0,3

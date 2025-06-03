@@ -1,0 +1,4 @@
+relation_id,relation_name
+0,"knows"
+1,"works_with"
+2,"manages"

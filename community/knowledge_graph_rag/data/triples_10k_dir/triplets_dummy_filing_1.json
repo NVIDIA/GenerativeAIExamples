@@ -1,0 +1,5 @@
+{
+    "file_path": "/app/community/knowledge_graph_rag/data/sec_filings_json/dummy_filing_1.json",
+    "company_name": "DummyCorp",
+    "triplets": []
+}
