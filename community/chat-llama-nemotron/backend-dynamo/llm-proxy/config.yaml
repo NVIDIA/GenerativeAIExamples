@@ -1,0 +1,33 @@
+# NVIDIA Dynamo Proxy Configuration
+
+# LLM Server Configuration
+llm:
+  # IP will be provided by frontend via X-LLM-IP header
+  port: "8000"
+  timeout: 30  # Request timeout in seconds
+
+# Proxy Server Configuration
+proxy:
+  port: "8002"
+  host: "0.0.0.0"  # Listen on all interfaces
+  log_level: "info"
+  
+  # CORS Configuration
+  cors:
+    allow_origins: 
+      - "http://localhost:3000"  # React development server
+      - "http://127.0.0.1:3000"  # Alternative localhost
+    allow_credentials: true
+    allow_methods: ["GET", "POST", "OPTIONS"]
+    allow_headers: ["*", "X-LLM-IP", "Content-Type"]
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "proxy.log"  # Optional: log to file
+
+# Server configuration
+server:
+  # IP will be provided by environment variable or user input
+  port: 8002 

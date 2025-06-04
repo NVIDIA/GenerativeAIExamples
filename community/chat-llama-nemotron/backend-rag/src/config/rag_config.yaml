@@ -1,0 +1,30 @@
+# RAG Service Configuration
+model:
+  name: "all-MiniLM-L6-v2"
+  dimension: 384  # dimension of the embeddings
+
+# Text Processing Configuration
+text_processing:
+  chunk_size: 6000
+  chunk_overlap: 500
+  min_chunk_words: 10  # Minimum number of words in a chunk to be considered valid
+
+# Processing Configuration
+processing:
+  batch_size: 32  # number of chunks to process in each batch
+  max_workers: 4  # maximum number of parallel workers for processing
+  use_gpu: false  # whether to use GPU if available
+
+# Search Configuration
+search:
+  default_k: 5  # Default number of results to return
+  use_rag: true  # Whether to use RAG by default
+
+# Index Configuration
+index:
+  type: "faiss"  # Type of index to use
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s" 

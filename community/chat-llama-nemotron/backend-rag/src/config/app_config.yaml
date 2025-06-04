@@ -1,0 +1,27 @@
+# FastAPI Application Configuration
+app:
+  name: "RAG Service API"
+  version: "1.0.0"
+  debug: true
+
+# CORS Configuration
+cors:
+  allow_origins:
+    - "http://localhost:3000"  # Frontend origin
+  allow_credentials: true
+  allow_methods: ["*"]
+  allow_headers: ["*"]
+  expose_headers: ["*"]
+
+# File Storage Configuration
+storage:
+  documents_dir: "storage/documents"
+  index_dir: "index"
+
+# Supported File Types
+supported_files:
+  application/pdf: .pdf
+  text/plain: .txt
+  text/markdown: .md
+  application/vnd.openxmlformats-officedocument.wordprocessingml.document: .docx
+  text/html: .html 

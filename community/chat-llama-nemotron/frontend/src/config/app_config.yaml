@@ -1,0 +1,32 @@
+# UI Configuration
+ui:
+  components:
+    file_upload:
+      max_file_size: 10485760  # 10MB in bytes
+      accepted_file_types:
+        - "application/pdf"
+        - "text/plain"
+        - "text/markdown"
+        - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        - "text/html"
+      timeouts:
+        status_reset: 3000  # milliseconds
+        error_reset: 3000   # milliseconds
+      messages:
+        starting: "Starting upload..."
+        processing: "Processing files..."
+        complete: "Processing complete"
+        error: "Connection error. Please try again."
+    
+    search:
+      placeholder: "Enter your search query..."
+      relevance_threshold: 0.3  # Adjusted from 0.5 to 0.3 for better results
+      
+    progress:
+      polling_interval: 1000  # milliseconds
+
+    chat:
+      summary:
+        max_messages: 5
+        system_prompt: "detailed thinking {status}"
+        rag_prefix: "Relevant information from knowledge base:\n" 

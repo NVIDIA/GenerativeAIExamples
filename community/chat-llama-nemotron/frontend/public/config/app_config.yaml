@@ -1,0 +1,78 @@
+# Frontend Application Configuration
+app:
+  name: "RAG Client"
+  version: "1.0.0"
+  environment: "development"
+
+# API Configuration
+api:
+  ip: "localhost"
+  port: "8001"
+  base_url: "http://localhost:8001"  # This will be overridden by the dynamic config
+  endpoints:
+    upload: "/api/upload"
+    search: "/api/search"
+    clear: "/api/clear-rag"
+    status: "/api/rag-status"
+    progress: "/api/upload/progress"
+    document: "/api/document"
+
+# NVIDIA Dynamo Server Configuration
+llm:
+  name: "NVIDIA Dynamo"
+  port: "8000"
+  endpoints:
+    chat: "/v1/chat/completions"
+  cors:
+    allow_origins: ["http://localhost:3000"]
+    allow_credentials: true
+    allow_methods: ["POST", "OPTIONS"]
+    allow_headers: ["Content-Type", "Accept", "Origin"]
+  model:
+    name: "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    max_tokens: 32768
+    temperature: 0.6
+    top_p: 0.95
+
+# LLM Proxy Configuration
+llm_proxy:
+  port: 8002
+  # IP will be provided by user input
+  endpoints:
+    chat: "/v1/chat/completions"
+
+# UI Configuration
+ui:
+    
+  components:
+    file_upload:
+      max_file_size: 10485760  # 10MB in bytes
+      accepted_file_types:
+        - "application/pdf"
+        - "text/plain"
+        - "text/markdown"
+        - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        - "text/html"
+      timeouts:
+        status_reset: 3000  # milliseconds
+        error_reset: 3000   # milliseconds
+      messages:
+        starting: "Starting upload..."
+        processing: "Processing files..."
+        complete: "Processing complete"
+        error: "Connection error. Please try again."
+    
+    search:
+      placeholder: "Enter your search query..."
+      relevance_threshold: 0.3
+      
+    progress:
+      polling_interval: 1000  # milliseconds
+
+    chat:
+      summary:
+        # Number of recent messages to include when generating conversation summaries
+        # This is separate from RAG search results and only affects summary generation
+        max_messages: 5
+        system_prompt: "detailed thinking {status}"
+        rag_prefix: "Relevant information from knowledge base:\n" 
