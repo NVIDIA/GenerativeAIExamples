@@ -1,0 +1,94 @@
+general:
+  use_uvloop: true
+  telemetry:
+    logging:
+      console:
+        _type: console
+        level: DEBUG
+  tracing:
+    phoenix:
+      _type: phoenix
+      endpoint: http://localhost:6006/v1/traces
+      project: predictive-maintenance-app
+
+llms:
+  sql_llm:
+    _type: nim
+    model_name: "meta/llama-4-scout-17b-16e-instruct"
+  plotting_llm:
+    _type: nim
+    model_name: "meta/llama-4-scout-17b-16e-instruct"
+  nim_llm:
+    _type: nim
+    model_name: "meta/llama-4-scout-17b-16e-instruct"
+  reasoning_llm:
+    _type: nim
+    model_name: "deepseek-ai/deepseek-r1-distill-qwen-32b"
+
+embedders:
+  vanna_embedder:
+    _type: nim
+    model_name: "nvidia/nv-embed-v1"
+
+functions:
+  sql_retriever:
+    _type: generate_sql_query_and_retrieve_tool
+    llm_name: sql_llm
+    embedding_name: vanna_embedder
+    vector_store_path: "./database"
+    db_path: "./database/nasa_turbo.db"
+    output_folder: "./output_data"
+  predict_rul:
+    _type: predict_rul_tool
+    output_folder: "./output_data"
+    scaler_path: "./models/scaler_model.pkl"
+    model_path: "./models/xgb_model_fd001.pkl"
+  plot_distribution:
+    _type: plot_distribution_tool
+    output_folder: "./output_data"    
+  plot_comparison:
+    _type: plot_comparison_tool
+    output_folder: "./output_data"
+  plot_line_chart:
+    _type: plot_line_chart_tool
+    output_folder: "./output_data"
+  plotting_agent:
+    _type: react_agent
+    llm_name: nim_llm
+    tool_names: [plot_line_chart, plot_comparison, plot_distribution]
+    verbose: true
+    handle_tool_errors: true
+    max_iterations: 1
+    description: "Use this agent to generate plots from the retrieved SQL data. Provide a description of the plot required along with the JSON file path containing the SQL output in the input message.
+    for example: Plot the sensor_measurement_1 vs time_in_cycles for unit 1 from the file ./output_data/sql_output.json"
+
+workflow:
+  _type: react_agent
+  llm_name: nim_llm
+  tool_names: 
+    - sql_retriever
+    - plotting_agent
+    - predict_rul
+  verbose: true
+  system_prompt: |
+    You are a conversational helpful assistant that can help with predictive maintenance tasks for a turbofan engine.
+    Answer the user's question as best as you can while not doing more than what is asked. You can optionally use the following tools to help with your task:
+    {tools}
+    Not all queries require you to use the tools, only use them if you need to.
+    If a tool returns an HTML file, send it to the user.
+    DO NOT GENERATE SQL QUERIES BY YOURSELF, ONLY USE THE TOOLS!!!
+    You may respond in one of two formats:
+
+    Use the following format exactly when you want to use a tool:
+    
+    Question: the input question you must answer
+    Thought: you should always think about what to do
+    Action: the action to take, should be one of [{tool_names}]
+    Action Input: the input to the action (if there is no required input, include "Action Input: None")
+    Observation: wait for the tool to finish execution
+
+    Use the following format exactly when you don't want to use a tool:
+
+    Question: the input question you must answer
+    Thought: you should always think about what to do
+    Final Answer: the final answer to the original input question
