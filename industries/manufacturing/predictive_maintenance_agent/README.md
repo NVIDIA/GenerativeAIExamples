@@ -123,20 +123,15 @@ Test the system with these prompts:
 
 **Data Retrieval:**
 ```
-Show me sensor readings for engine unit 1 for the last 50 cycles.
-Retrieve RUL of each unit from train_FD001 table and plot the distribution.
+Retrieve RUL of each unit from the FD001 dataset. Then plot the distribution of RUL.
 ```
-
 **Visualization:**
 ```
-Plot degradation trend of sensor_measurement_11 vs time_in_cycles for engine unit 2.
-Create comparison plot showing sensor_measurement_21 for engines 1 and 2.
+Retrieve the time in cycles and operational setting 1 from the FD001 test table for unit number 1 and plot its value vs time.
 ```
-
-**Prediction:**
+**Prediction**
 ```
-Predict remaining useful life for engine unit 5 based on current sensor readings.
-Retrieve data for engine unit 24, predict RUL, and compare actual vs predicted values.
+Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.
 ```
 
 ## Observability (Optional)
