@@ -35,3 +35,6 @@ RAG/notebooks/langchain/data/save_embedding
 
 # Environment variables
 .env
+
+# egg-info directories
+**/egg-info
