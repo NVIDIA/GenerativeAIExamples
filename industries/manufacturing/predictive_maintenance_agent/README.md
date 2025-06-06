@@ -32,6 +32,8 @@ Multi-agent architecture with:
 - **Plotting Agent**: Multi-tool agent for data visualization
 - **Vector Database**: ChromaDB for schema information storage
 
+![Architecture Workflow](imgs/intermediate_steps.png)
+
 ## Setup and Installation
 
 ### Prerequisites
@@ -70,15 +72,8 @@ uv pip install -e .
 
 ### 4. Environment Setup
 
-Create `.env` file:
 ```bash
-NVIDIA_API_KEY=your_nvidia_api_key_here
-NIM_BASE_URL=https://integrate.api.nvidia.com/v1
-```
-
-Load environment variables:
-```bash
-export $(cat .env | grep -v '^#' | xargs)
+export NVIDIA_API_KEY=your_nvidia_api_key_here
 ```
 
 ### 5. Database Setup
@@ -101,6 +96,15 @@ Update `configs/config.yml` with your local paths for database, models, and outp
 aiq serve --config_file=configs/config.yml
 ```
 Server runs on `http://localhost:8000`
+
+Note: When using the provided config file, you need to set the PWD_PATH environment variable before starting the AIQ server. This ensures the server can locate all required paths correctly.
+
+Here's how to do it:
+
+```bash
+export PWD_PATH=$(pwd)
+aiq serve --config_file=configs/config.yml "$@"
+```
 
 ### Setup Web Interface
 
@@ -125,14 +129,22 @@ Test the system with these prompts:
 ```
 Retrieve RUL of each unit from the FD001 dataset. Then plot the distribution of RUL.
 ```
+
+![Data Retrieval Example](imgs/test_prompt_1.png)
+
 **Visualization:**
 ```
 Retrieve the time in cycles and operational setting 1 from the FD001 test table for unit number 1 and plot its value vs time.
 ```
+
+![Visualization Example](imgs/test_prompt_2.png)
+
 **Prediction**
 ```
 Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.
 ```
+
+![Prediction Example](imgs/test_prompt_3.png)
 
 ## Observability (Optional)
 

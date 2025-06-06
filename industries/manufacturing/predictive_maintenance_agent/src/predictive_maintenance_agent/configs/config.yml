@@ -35,23 +35,23 @@ functions:
     _type: generate_sql_query_and_retrieve_tool
     llm_name: sql_llm
     embedding_name: vanna_embedder
-    vector_store_path: "./database"
-    db_path: "./database/nasa_turbo.db"
-    output_folder: "./output_data"
+    vector_store_path: "${PWD_PATH}/database"
+    db_path: "${PWD_PATH}/database/nasa_turbo.db"
+    output_folder: "${PWD_PATH}/output_data"
   predict_rul:
     _type: predict_rul_tool
-    output_folder: "./output_data"
-    scaler_path: "./models/scaler_model.pkl"
-    model_path: "./models/xgb_model_fd001.pkl"
+    output_folder: "${PWD_PATH}/output_data"
+    scaler_path: "${PWD_PATH}/models/scaler_model.pkl"
+    model_path: "${PWD_PATH}/models/xgb_model_fd001.pkl"
   plot_distribution:
     _type: plot_distribution_tool
-    output_folder: "./output_data"    
+    output_folder: "${PWD_PATH}/output_data"
   plot_comparison:
     _type: plot_comparison_tool
-    output_folder: "./output_data"
+    output_folder: "${PWD_PATH}/output_data"
   plot_line_chart:
     _type: plot_line_chart_tool
-    output_folder: "./output_data"
+    output_folder: "${PWD_PATH}/output_data"
   plotting_agent:
     _type: react_agent
     llm_name: nim_llm
@@ -60,7 +60,7 @@ functions:
     handle_tool_errors: true
     max_iterations: 1
     description: "Use this agent to generate plots from the retrieved SQL data. Provide a description of the plot required along with the JSON file path containing the SQL output in the input message.
-    for example: Plot the sensor_measurement_1 vs time_in_cycles for unit 1 from the file ./output_data/sql_output.json"
+    for example: Plot the sensor_measurement_1 vs time_in_cycles for unit 1 from the file ${PWD_PATH}/output_data/sql_output.json"
 
 workflow:
   _type: react_agent
