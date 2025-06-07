@@ -85,6 +85,9 @@ After running the shutdown notebook, you can restart the lab by re-running `DLI_
   - `agentic_pipeline-DLI.ipynb`: Notebook for running the LangGraph agent UI.
   - `requirements.txt`: Python dependencies for the agentic workflow.
 
+## License
+- This repository is based on OAI 5G RAN, CN, and UE, and it is released under [OAI Public License](https://openairinterface.org/legal/oai-public-license/)
+
 ## References
 
 - [Open Air Interface 5G Core Network](https://openairinterface.org/oai-5g-core-network-project/)
