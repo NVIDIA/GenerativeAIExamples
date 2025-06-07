@@ -14,14 +14,17 @@ A shutdown notebook is also provided to reinitialize the lab if needed.
 
 To run the lab, ensure you have:
 - **Operating System**: Ubuntu (tested on 20.04 or later).
-- **Hardware**: A machine with sufficient resources (e.g., 8GB RAM, multi-core CPU, optional GPU for Kinetica).
+- **Hardware**:
+  - CPU: 12+ cores @ 3,8 GHz, AVX-512 is a necessary
+  - RAM: 32 GB
+  - OS: Modern Linux (e.g., Ubuntu 22.04)
+  - Docker & Docker Compose (latest stable)
 - **Software**:
   - Docker and Docker Compose for the 5G Core Network.
   - Python 3.10+ with Jupyter Notebook.
   - iPerf3 (`sudo apt install -y iperf3`).
   - Kinetica database access (credentials in `.env` file).
 - **Dependencies**: Listed in `requirements.txt` in the respective directories.
-- **Repository Contents**: Clone this repository and verify the presence of all files, including configuration files (`ran-conf/`), scripts (`build_ric_oai_ne.sh`, `multi_ue.sh`, `change_rc_slice.sh`), and Docker Compose files.
 
 ## Lab Setup
 
