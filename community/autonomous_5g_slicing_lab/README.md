@@ -91,3 +91,18 @@ After running the shutdown notebook, you can restart the lab by re-running `DLI_
 - [LangGraph](https://github.com/langchain-ai/langgraph)
 
 For issues or contributions, please open a GitHub issue or submit a pull request.
+
+1. [Aaron Bossert](https://www.linkedin.com/in/aaron-bossert/), Director of Solutions Engineering, [Kinetica](https://www.kinetica.com/)
+2. [Stefan Spettel](https://www.linkedin.com/in/stefan-spettel/), CEO & Co-Founder, [phine.tech](https://phine.tech/)
+4. [Fransiscus Asisi Bimo](https://www.linkedin.com/in/fransiscusbimo/), Ph.D., National Taiwan University of Science and Technology
+6. [Shibani Likhite](https://www.linkedin.com/in/shibani-likhite/), Solution Architect, NVIDIA
+7. [Swastika Dutta](https://www.linkedin.com/in/swastika-dutta/), Solution Architect, NVIDIA
+8. [Ari Uskudar](https://www.linkedin.com/in/ari-u-628b30148/), Product Manager, NVIDIA.
+9. [Maria Amparo Canaveras Galdon](https://www.linkedin.com/in/amparo-canaveras-b2152522/), Senior Solution Architect, NVIDIA
+10. [Ira Bargon III](https://www.linkedin.com/in/ira-bargon-iii-a8661514/), Sr. Director of Technology and Innovation, Sterling
+11. [Lukas Rothender](https://www.linkedin.com/in/lukas-rotheneder-82984327a/), CTO & Co-Founder, [phine.tech](https://phine.tech/)
+
+
+
+
+
