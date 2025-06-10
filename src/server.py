@@ -882,44 +882,88 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
         def response_generator():
             """Convert generator streaming response into `data: ChainResponse` format for chunk"""
             try:
+                import json
                 # unique response id for every query
                 resp_id = str(uuid4())
                 if generator:
                     logger.debug("Generated response chunks\n")
-                    # Create ChainResponse object for every token generated
                     first_chunk = True
+                    accumulated_response = ""
+                    
                     for chunk in generator:
                         # TODO: This is a hack to clear contexts if we get an error response from nemoguardrails
                         if chunk == "I'm sorry, I can't respond to that.":
                             # Clear contexts if we get an error response
                             nonlocal contexts
                             contexts = list()
-                        chain_response = ChainResponse()
-                        response_choice = ChainResponseChoices(
-                            index=0,
-                            message=Message(role="assistant", content=chunk),
-                            delta=Message(role=None, content=chunk),
-                            finish_reason=None
-
-                        )
-                        chain_response.id = resp_id
-                        chain_response.choices.append(response_choice)  # pylint: disable=E1101
-                        chain_response.model = prompt.model
-                        chain_response.object = "chat.completion.chunk"
-                        chain_response.created = int(time.time())
-                        if first_chunk:
-                            chain_response.citations = prepare_citations(
-                                retrieved_documents=contexts,
-                                collection_name=collection_name,
-                                enable_citations=prompt.enable_citations,
+                        
+                        # Try to parse chunk as JSON (structured output)
+                        try:
+                            structured_data = json.loads(chunk)
+                            
+                            # Log vGPU configuration metadata for debugging/monitoring
+                            if structured_data.get("title"):
+                                logger.info(f"vGPU Config Title: {structured_data.get('title')}")
+                            if structured_data.get("parameters"):
+                                logger.info(f"vGPU Parameters: {structured_data.get('parameters')}")
+                            
+                            # Return the complete JSON response instead of just the description
+                            # Format the JSON nicely for display
+                            json_response = json.dumps(structured_data, indent=2, ensure_ascii=False)
+                            accumulated_response += json_response
+                            
+                            chain_response = ChainResponse()
+                            response_choice = ChainResponseChoices(
+                                index=0,
+                                message=Message(role="assistant", content=accumulated_response),
+                                delta=Message(role=None, content=json_response),
+                                finish_reason=None
                             )
-                            first_chunk = False
-                        logger.debug(response_choice)
-                        # Send generator with tokens in ChainResponse format
-                        yield "data: " + str(chain_response.json()) + "\n\n"
-                    chain_response = ChainResponse()
+                            chain_response.id = resp_id
+                            chain_response.choices.append(response_choice)  # pylint: disable=E1101
+                            chain_response.model = prompt.model
+                            chain_response.object = "chat.completion.chunk"
+                            chain_response.created = int(time.time())
+                            
+                            # Add citations to the first chunk
+                            if first_chunk:
+                                chain_response.citations = prepare_citations(
+                                    retrieved_documents=contexts,
+                                    collection_name=collection_name,
+                                    enable_citations=prompt.enable_citations,
+                                )
+                                first_chunk = False
+                            
+                            logger.debug(response_choice)
+                            yield "data: " + str(chain_response.model_dump_json()) + "\n\n"
+                                
+                        except json.JSONDecodeError:
+                            # If not JSON, treat as regular text chunk (fallback for backward compatibility)
+                            accumulated_response += chunk
+                            chain_response = ChainResponse()
+                            response_choice = ChainResponseChoices(
+                                index=0,
+                                message=Message(role="assistant", content=accumulated_response),
+                                delta=Message(role=None, content=chunk),
+                                finish_reason=None
+                            )
+                            chain_response.id = resp_id
+                            chain_response.choices.append(response_choice)  # pylint: disable=E1101
+                            chain_response.model = prompt.model
+                            chain_response.object = "chat.completion.chunk"
+                            chain_response.created = int(time.time())
+                            if first_chunk:
+                                chain_response.citations = prepare_citations(
+                                    retrieved_documents=contexts,
+                                    collection_name=collection_name,
+                                    enable_citations=prompt.enable_citations,
+                                )
+                                first_chunk = False
+                            logger.debug(response_choice)
+                            yield "data: " + str(chain_response.model_dump_json()) + "\n\n"
 
                     # [DONE] indicate end of response from server
+                    chain_response = ChainResponse()
                     response_choice = ChainResponseChoices(
                         finish_reason="stop",
                     )
@@ -929,10 +973,10 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
                     chain_response.object = "chat.completion.chunk"
                     chain_response.created = int(time.time())
                     logger.debug(response_choice)
-                    yield "data: " + str(chain_response.json()) + "\n\n"
+                    yield "data: " + str(chain_response.model_dump_json()) + "\n\n"
                 else:
                     chain_response = ChainResponse()
-                    yield "data: " + str(chain_response.json()) + "\n\n"
+                    yield "data: " + str(chain_response.model_dump_json()) + "\n\n"
 
             except Exception as e:
                 logger.exception("Error from response generator in /generate endpoint. Error details: %s", e)
@@ -1042,3 +1086,171 @@ async def document_search(request: Request, data: DocumentSearch) -> Dict[str, L
         logger.error("Error from POST /search endpoint. Error details: %s", e,
                      exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
         return JSONResponse(content={"message": "Error occurred while searching documents."}, status_code=500)
+
+@app.post(
+    "/generate_structured",
+    tags=["RAG APIs"],
+    responses={
+        499: {
+            "description": "Client Closed Request",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "The client cancelled the request"
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error", 
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Internal server error occurred"
+                    }
+                }
+            },
+        }
+    },
+)
+async def generate_structured_answer(request: Request, prompt: Prompt) -> JSONResponse:
+    """Generate a structured JSON response with metadata (reasoning, confidence, sources_used)."""
+    
+    if metrics:
+        metrics.update_api_requests(method=request.method, endpoint=request.url.path)
+    try:
+        import json
+        logger.debug(f"Prompt: {prompt}")
+        chat_history = [msg for msg in prompt.messages if not (msg.role == 'assistant' and not msg.content.strip())]
+        logger.debug(f"Chat history: {chat_history}")
+        collection_name = prompt.collection_name
+
+        # Helper function to escape JSON-like structures in content
+        def escape_json_content(content: str) -> str:
+            """Escape curly braces in content to avoid JSON parsing issues"""
+            return content.replace("{", "{{").replace("}", "}}")
+
+        # The last user message will be the query for the rag or llm chain
+        last_user_message = next((message.content for message in reversed(chat_history) if message.role == 'user'),
+                                None)
+        if last_user_message:
+            last_user_message = escape_json_content(last_user_message)
+
+        # Process chat history and escape JSON-like structures  
+        processed_chat_history = []
+        for message in chat_history:
+            if message.role == 'user':
+                # Skip the last user message as it's handled separately
+                continue
+            # Create new Message with escaped content
+            processed_message = Message(
+                role=message.role,
+                content=escape_json_content(message.content)
+            )
+            processed_chat_history.append(processed_message)
+
+        # All the other information from the prompt like the temperature, top_p etc., are llm_settings
+        kwargs = {
+            key: value
+            for key, value in vars(prompt).items() if key not in ['messages', 'use_knowledge_base', 'collection_name', 'vdb_top_k', 'reranker_top_k']
+        }
+        
+        # Initialize contexts variable
+        contexts = list()
+        structured_response = None
+
+        if prompt.use_knowledge_base:
+            logger.info("Knowledge base is enabled. Using rag chain for structured response generation.")
+            generator, contexts = UNSTRUCTURED_RAG.rag_chain(query=last_user_message,
+                                          chat_history=processed_chat_history,
+                                          reranker_top_k=prompt.reranker_top_k,
+                                          vdb_top_k=prompt.vdb_top_k,
+                                          collection_name=collection_name,
+                                          **kwargs)
+        else:
+            generator = UNSTRUCTURED_RAG.llm_chain(query=last_user_message, chat_history=processed_chat_history, **kwargs)
+
+        # Extract the structured response from the generator
+        if generator:
+            for chunk in generator:
+                try:
+                    structured_response = json.loads(chunk)
+                    break  # We only need the first (and only) structured response
+                except json.JSONDecodeError:
+                    # If not JSON, create a structured vGPU wrapper
+                    structured_response = {
+                        "title": "generate_vgpu_config",
+                        "description": f"vGPU configuration recommendation: {chunk}",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "vGPU_profile": {
+                                    "type": "string",
+                                    "description": "NVIDIA vGPU profile name",
+                                    "enum": ["A100-40C", "A100-80C", "L40-6Q", "L40-12Q", "L4-2Q", "L4-4Q", "RTX6000-8Q", "RTX6000-16Q", "RTX5000-4Q", "RTX5000-8Q"]
+                                },
+                                "RAM": {
+                                    "type": "integer", 
+                                    "description": "System RAM required in GB",
+                                    "enum": [32, 64, 96, 128, 256]
+                                }
+                            },
+                            "required": ["vGPU_profile", "RAM"]
+                        }
+                    }
+                    break
+
+        # Add citations if available
+        citations = prepare_citations(
+            retrieved_documents=contexts,
+            collection_name=collection_name,
+            enable_citations=prompt.enable_citations,
+        )
+
+        # Create the final response with structured data and citations
+        final_response = {
+            "structured_output": structured_response or {
+                "title": "generate_vgpu_config",
+                "description": "No vGPU configuration response generated",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "vGPU_profile": {
+                            "type": "string",
+                            "description": "NVIDIA vGPU profile name", 
+                            "enum": ["A100-40C", "A100-80C", "L40-6Q", "L40-12Q", "L4-2Q", "L4-4Q", "RTX6000-8Q", "RTX6000-16Q", "RTX5000-4Q", "RTX5000-8Q"]
+                        },
+                        "RAM": {
+                            "type": "integer",
+                            "description": "System RAM required in GB",
+                            "enum": [32, 64, 96, 128, 256]
+                        }
+                    },
+                    "required": ["vGPU_profile", "RAM"]
+                }
+            },
+            "citations": citations.model_dump() if citations else None,
+            "model": prompt.model,
+            "created": int(time.time()),
+            "id": str(uuid4())
+        }
+
+        return JSONResponse(content=final_response)
+
+    except asyncio.CancelledError as e:
+        logger.warning(f"Request cancelled during structured response generation. {str(e)}")
+        return JSONResponse(content={"message": "Request was cancelled by the client."}, status_code=499)
+
+    except (MilvusException, MilvusUnavailableException) as e:
+        exception_msg = ("Error from milvus server. Please ensure you have ingested some documents. "
+                         "Please check rag-server logs for more details.")
+        logger.error(
+            "Error from Milvus database in /generate_structured endpoint. Please ensure you have ingested some documents. " +
+            "Error details: %s",
+            e, exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
+        return JSONResponse(content={"error": exception_msg}, status_code=500)
+
+    except Exception as e:
+        logger.error("Error from /generate_structured endpoint. Error details: %s", e,
+                     exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
+        return JSONResponse(content={"error": "Internal server error occurred"}, status_code=500)

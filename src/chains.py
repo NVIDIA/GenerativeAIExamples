@@ -17,10 +17,8 @@ import logging
 import os
 import requests
 from traceback import print_exc
-from typing import Any, Iterable
-from typing import Dict
-from typing import Generator
-from typing import List
+from typing import Any, Iterable, Dict, Generator, List, Optional
+import json
 
 from langchain_nvidia_ai_endpoints.callbacks import get_usage_callback
 from langchain_community.document_loaders import UnstructuredFileLoader
@@ -30,6 +28,7 @@ from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import RunnableAssign
 from langchain_core.runnables import RunnablePassthrough
 from requests import ConnectTimeout
+from pydantic import BaseModel, Field
 
 from .base import BaseExample
 from .utils import create_vectorstore_langchain
@@ -44,6 +43,74 @@ from .utils import format_document_with_source
 from .utils import streaming_filter_think, get_streaming_filter_think_parser
 from .reflection import ReflectionCounter, check_context_relevance, check_response_groundedness
 from .utils import normalize_relevance_scores
+
+# Structured Response Model for vGPU Configuration
+class StructuredResponse(BaseModel):
+    """Structured response model for vGPU configuration recommendations."""
+    
+    title: str = Field(
+        default="generate_vgpu_config",
+        description="Function title for vGPU configuration generation"
+    )
+    description: str = Field(
+        description="Description of the recommended vGPU configuration based on workload requirements and hardware specs"
+    )
+    parameters: Dict[str, Any] = Field(
+        description="vGPU configuration parameters"
+    )
+
+    def __init__(self, **data):
+        # If parameters is not provided, create the default structure
+        if 'parameters' not in data:
+            data['parameters'] = {
+                "type": "object",
+                "properties": {
+                    "vGPU_profile": {
+                        "type": ["string", "null"],
+                        "description": "NVIDIA vGPU profile name",
+                        "enum": [
+                            "A100-40C", "A100-80C", "L40-6Q", "L40-12Q", "L4-2Q", "L4-4Q",
+                            "RTX6000-8Q", "RTX6000-16Q", "RTX5000-4Q", "RTX5000-8Q", None
+                        ]
+                    },
+                    "vCPU_count": {
+                        "type": ["integer", "null"],
+                        "description": "Number of virtual CPUs allocated to the VM",
+                        "enum": [4, 8, 16, 32, 64, None]
+                    },
+                    "gpu_memory_size": {
+                        "type": ["integer", "null"],
+                        "description": "Total GPU memory in GB needed by the workload",
+                        "enum": [8, 12, 16, 24, 40, 48, 80, None]
+                    },
+                    "driver_version": {
+                        "type": ["string", "null"],
+                        "description": "Compatible NVIDIA driver version",
+                        "enum": ["535.86", "550.54", "550.78", "551.61", None]
+                    },
+                    "relevant_aiwb_toolkit": {
+                        "type": ["string", "null"],
+                        "description": "AI Workbench toolkit best matched to the workload",
+                        "enum": ["inference", "training", "rag", "embedding", "fine-tuning", None]
+                    },
+                    "RAM": {
+                        "type": ["integer", "null"],
+                        "description": "System RAM required in GB",
+                        "enum": [32, 64, 96, 128, 256, None]
+                    }
+                },
+                "required": []
+            }
+        
+        # Set default title if not provided
+        if 'title' not in data:
+            data['title'] = "generate_vgpu_config"
+            
+        # Set default description if not provided
+        if 'description' not in data:
+            data['description'] = "Generate the recommended vGPU configuration based on workload requirements and hardware specs."
+            
+        super().__init__(**data)
 
 logger = logging.getLogger(__name__)
 VECTOR_STORE_PATH = "vectorstore.pkl"
@@ -176,11 +243,31 @@ class UnstructuredRAG(BaseExample):
             prompt_template = ChatPromptTemplate.from_messages(message)
             llm = get_llm(**kwargs)
 
-            chain = prompt_template | llm | StreamingFilterThinkParser | StrOutputParser()
-            return chain.stream({"question": query}, config={'run_name':'llm-stream'})
+            # Use structured output for consistent JSON responses
+            structured_llm = llm.with_structured_output(StructuredResponse)
+            chain = prompt_template | structured_llm
+            
+            # Stream the structured response as JSON
+            def stream_structured_response():
+                try:
+                    structured_result = chain.invoke({"question": query}, config={'run_name':'llm-stream'})
+                    # Convert to JSON and yield as a single chunk
+                    json_response = json.dumps(structured_result.model_dump(), ensure_ascii=False, indent=2)
+                    yield json_response
+                except Exception as e:
+                    logger.error("Error in structured response: %s", e)
+                    error_response = StructuredResponse(
+                        description=f"Error generating vGPU configuration: {str(e)}. Unable to provide recommendation."
+                    )
+                    yield json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)
+            
+            return stream_structured_response()
         except ConnectTimeout as e:
             logger.warning("Connection timed out while making a request to the LLM endpoint: %s", e)
-            return iter(["Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available."])
+            error_response = StructuredResponse(
+                description="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available. Unable to generate vGPU configuration."
+            )
+            return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
         except Exception as e:
             logger.warning("Failed to generate response due to exception %s", e)
@@ -188,12 +275,21 @@ class UnstructuredRAG(BaseExample):
 
             if "[403] Forbidden" in str(e) and "Invalid UAM response" in str(e):
                 logger.warning("Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.")
-                return iter(["Authentication or permission error: Verify the validity and permissions of your NVIDIA API key."])
+                error_response = StructuredResponse(
+                    description="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key. Unable to generate vGPU configuration."
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             elif "[404] Not Found" in str(e):
                 logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid.")
-                return iter(["Please verify the API endpoint and your payload. Ensure that the model name is valid."])
+                error_response = StructuredResponse(
+                    description="Please verify the API endpoint and your payload. Ensure that the model name is valid. Unable to generate vGPU configuration."
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             else:
-                return iter([f"Failed to generate RAG chain response. {str(e)}"])
+                error_response = StructuredResponse(
+                    description=f"Failed to generate RAG chain response. {str(e)}. Unable to generate vGPU configuration."
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
     def rag_chain(  # pylint: disable=arguments-differ
             self,
@@ -293,42 +389,80 @@ class UnstructuredRAG(BaseExample):
                 else:
                     context_to_show = retriever.invoke(query)
             docs = [format_document_with_source(d) for d in context_to_show]
-            chain = prompt | llm | StreamingFilterThinkParser | StrOutputParser()
+            
+            # Use structured output for consistent JSON responses
+            structured_llm = llm.with_structured_output(StructuredResponse)
+            chain = prompt | structured_llm
 
             # Check response groundedness if we still have reflection iterations available
             if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true" and reflection_counter.remaining > 0:
                 initial_response = chain.invoke({"question": query, "context": docs})
                 final_response, is_grounded = check_response_groundedness(
-                    initial_response,
+                    initial_response.response if hasattr(initial_response, 'response') else str(initial_response),
                     docs,
                     reflection_counter
                 )
                 if not is_grounded:
                     logger.warning("Could not generate sufficiently grounded response after %d total reflection attempts",
                                     reflection_counter.current_count)
-                return iter([final_response]), context_to_show
+                structured_final = StructuredResponse(
+                    description=f"vGPU configuration generated with reflection and grounding checks: {final_response}"
+                )
+                return iter([json.dumps(structured_final.model_dump(), ensure_ascii=False, indent=2)]), context_to_show
             else:
-                return chain.stream({"question": query, "context": docs}, config={'run_name':'llm-stream'}), context_to_show
+                def stream_structured_rag_response():
+                    try:
+                        structured_result = chain.invoke({"question": query, "context": docs}, config={'run_name':'llm-stream'})
+                        json_response = json.dumps(structured_result.model_dump(), ensure_ascii=False, indent=2)
+                        yield json_response
+                    except Exception as e:
+                        logger.error("Error in structured RAG response: %s", e)
+                        error_response = StructuredResponse(
+                            description=f"Error generating RAG vGPU configuration: {str(e)}. Unable to provide recommendation."
+                        )
+                        yield json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)
+                
+                return stream_structured_rag_response(), context_to_show
         except ConnectTimeout as e:
             logger.warning("Connection timed out while making a request to the LLM endpoint: %s", e)
-            return iter(["Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available."])
+            error_response = StructuredResponse(
+                response="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available.",
+                sources_used=True
+            )
+            return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
         except requests.exceptions.ConnectionError as e:
             if "HTTPConnectionPool" in str(e):
                 logger.warning("Connection pool error while connecting to service: %s", e)
-                return iter(["Connection error: Failed to connect to service. Please verify if all required services are running and accessible."])
+                error_response = StructuredResponse(
+                    response="Connection error: Failed to connect to service. Please verify if all required services are running and accessible.",
+                    sources_used=True
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
         except Exception as e:
             logger.warning("Failed to generate response due to exception %s", e)
             print_exc()
 
             if "[403] Forbidden" in str(e) and "Invalid UAM response" in str(e):
                 logger.warning("Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.")
-                return iter(["Authentication or permission error: Verify the validity and permissions of your NVIDIA API key."])
+                error_response = StructuredResponse(
+                    response="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.",
+                    sources_used=True
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             elif "[404] Not Found" in str(e):
                 logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid.")
-                return iter(["Please verify the API endpoint and your payload. Ensure that the model name is valid."])
+                error_response = StructuredResponse(
+                    response="Please verify the API endpoint and your payload. Ensure that the model name is valid.",
+                    sources_used=True
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             else:
-                return iter([f"Failed to generate RAG chain response. {str(e)}"])
+                error_response = StructuredResponse(
+                    response=f"Failed to generate RAG chain response. {str(e)}",
+                    sources_used=True
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
 
     def rag_chain_with_multiturn(self,
@@ -453,31 +587,63 @@ class UnstructuredRAG(BaseExample):
                     context_to_show = docs
 
             docs = [format_document_with_source(d) for d in context_to_show]
-            chain = prompt | llm | StreamingFilterThinkParser | StrOutputParser()
+            
+            # Use structured output for consistent JSON responses
+            structured_llm = llm.with_structured_output(StructuredResponse)
+            chain = prompt | structured_llm
 
             # Check response groundedness if we still have reflection iterations available
             if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true" and reflection_counter.remaining > 0:
                 initial_response = chain.invoke({"question": query, "context": docs})
                 final_response, is_grounded = check_response_groundedness(
-                    initial_response,
+                    initial_response.response if hasattr(initial_response, 'response') else str(initial_response),
                     docs,
                     reflection_counter
                 )
                 if not is_grounded:
                     logger.warning("Could not generate sufficiently grounded response after %d total reflection attempts",
                                     reflection_counter.current_count)
-                return iter([final_response]), context_to_show
+                structured_final = StructuredResponse(
+                    response=final_response,
+                    sources_used=True,
+                    reasoning="Response generated with multiturn RAG, reflection and grounding checks"
+                )
+                return iter([json.dumps(structured_final.model_dump(), ensure_ascii=False, indent=2)]), context_to_show
             else:
-                return chain.stream({"question": query, "context": docs}, config={'run_name':'llm-stream'}), context_to_show
+                def stream_structured_multiturn_response():
+                    try:
+                        structured_result = chain.invoke({"question": query, "context": docs}, config={'run_name':'llm-stream'})
+                        # Ensure sources_used is marked as True for RAG responses
+                        if hasattr(structured_result, 'sources_used') and structured_result.sources_used is None:
+                            structured_result.sources_used = True
+                        json_response = json.dumps(structured_result.model_dump(), ensure_ascii=False, indent=2)
+                        yield json_response
+                    except Exception as e:
+                        logger.error("Error in structured multiturn RAG response: %s", e)
+                        error_response = StructuredResponse(
+                            response=f"Error generating multiturn RAG response: {str(e)}",
+                            sources_used=True
+                        )
+                        yield json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)
+                
+                return stream_structured_multiturn_response(), context_to_show
 
         except ConnectTimeout as e:
             logger.warning("Connection timed out while making a request to the LLM endpoint: %s", e)
-            return iter(["Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available."])
+            error_response = StructuredResponse(
+                response="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available.",
+                sources_used=True
+            )
+            return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
         except requests.exceptions.ConnectionError as e:
             if "HTTPConnectionPool" in str(e):
                 logger.error("Connection pool error while connecting to service: %s", e)
-                return iter(["Connection error: Failed to connect to service. Please verify if all required NIMs are running and accessible."])
+                error_response = StructuredResponse(
+                    response="Connection error: Failed to connect to service. Please verify if all required NIMs are running and accessible.",
+                    sources_used=True
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
         except Exception as e:
             logger.warning("Failed to generate response due to exception %s", e)
@@ -485,12 +651,24 @@ class UnstructuredRAG(BaseExample):
 
             if "[403] Forbidden" in str(e) and "Invalid UAM response" in str(e):
                 logger.warning("Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.")
-                return iter(["Authentication or permission error: Verify the validity and permissions of your NVIDIA API key."])
+                error_response = StructuredResponse(
+                    response="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.",
+                    sources_used=True
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             elif "[404] Not Found" in str(e):
                 logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid.")
-                return iter(["Please verify the API endpoint and your payload. Ensure that the model name is valid."])
+                error_response = StructuredResponse(
+                    response="Please verify the API endpoint and your payload. Ensure that the model name is valid.",
+                    sources_used=True
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             else:
-                return iter([f"Failed to generate RAG chain with multi-turn response. {str(e)}"])
+                error_response = StructuredResponse(
+                    response=f"Failed to generate RAG chain with multi-turn response. {str(e)}",
+                    sources_used=True
+                )
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
 
     def document_search(self, content: str, messages: List, reranker_top_k: int, vdb_top_k: int, collection_name: str = "", **kwargs) -> List[Dict[str, Any]]:
