@@ -35,55 +35,11 @@ BOOTSTRAP_TIMEOUT = int(os.getenv("BOOTSTRAP_TIMEOUT", "300"))  # 5 minutes
 MAX_RETRIES = int(os.getenv("BOOTSTRAP_MAX_RETRIES", "10"))
 RETRY_DELAY = int(os.getenv("BOOTSTRAP_RETRY_DELAY", "30"))  # 30 seconds
 
-# vGPU Collections Configuration
-VGPU_COLLECTIONS = [
-    {
-        "name": "vgpu_baseline",
-        "description": "Core NVIDIA vGPU documentation and fundamentals",
-        "docs_subdir": "baseline"
-    },
-    {
-        "name": "vgpu_hypervisor", 
-        "description": "ESXi, VMware, Citrix hypervisor documentation",
-        "docs_subdir": "hypervisor"
-    },
-    {
-        "name": "vgpu_cost_efficiency",
-        "description": "Cost optimization and efficiency guides",
-        "docs_subdir": "cost_efficiency"
-    },
-    {
-        "name": "vgpu_performance",
-        "description": "Performance benchmarks and sizing guides",
-        "docs_subdir": "performance"
-    },
-    {
-        "name": "vgpu_a40",
-        "description": "NVIDIA A40 GPU-specific documentation",
-        "docs_subdir": "gpu_specific/a40"
-    },
-    {
-        "name": "vgpu_l40s",
-        "description": "NVIDIA L40S GPU-specific documentation", 
-        "docs_subdir": "gpu_specific/l40s"
-    },
-    {
-        "name": "vgpu_l4",
-        "description": "NVIDIA L4 GPU-specific documentation",
-        "docs_subdir": "gpu_specific/l4"
-    },
-    {
-        "name": "vgpu_sizing",
-        "description": "VM sizing and capacity planning guides",
-        "docs_subdir": "sizing"
-    }
-]
-
-# Default collection for backward compatibility
-DEFAULT_COLLECTION = {
-    "name": "multimodal_data",
-    "description": "Default multimodal data collection",
-    "docs_subdir": None  # No automatic docs ingestion for this one
+# Single collection configuration - ALL vGPU docs go here
+MAIN_COLLECTION = {
+    "name": "vgpu_knowledge_base",
+    "description": "Complete NVIDIA vGPU documentation knowledge base",
+    "docs_path": VGPU_DOCS_PATH  # Will ingest ALL PDFs from vgpu_docs folder
 }
 
 class BootstrapError(Exception):
@@ -102,7 +58,7 @@ class VGPUBootstrap:
         retry_strategy = Retry(
             total=3,
             status_forcelist=[429, 500, 502, 503, 504],
-            method_whitelist=["HEAD", "GET", "POST"],
+            allowed_methods=["HEAD", "GET", "POST"],  # Updated for newer urllib3
             backoff_factor=1
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -154,14 +110,10 @@ class VGPUBootstrap:
         raise BootstrapError(f"Failed to connect to {service_name} after {MAX_RETRIES} retries")
     
     async def create_collections(self):
-        """Create all required vGPU collections"""
-        logger.info("Creating vGPU collections...")
+        """Create the single vGPU knowledge base collection"""
+        logger.info("Creating vGPU knowledge base collection...")
         
-        # Include default collection for backward compatibility
-        all_collections = [DEFAULT_COLLECTION] + VGPU_COLLECTIONS
-        
-        for collection_config in all_collections:
-            await self._create_single_collection(collection_config)
+        await self._create_single_collection(MAIN_COLLECTION)
     
     async def _create_single_collection(self, collection_config: Dict[str, Any]):
         """Create a single collection"""
@@ -176,16 +128,17 @@ class VGPUBootstrap:
                     logger.info(f"✅ Collection '{collection_name}' already exists")
                     return
             
-            # Create collection
-            create_data = {
-                "collection_names": [collection_name],
+            # Create collection - API expects collection names as JSON array in body
+            # and other parameters as query parameters
+            params = {
                 "embedding_dimension": 1024,  # Default for NVIDIA embeddings
                 "collection_type": "text"
             }
             
             response = self.session.post(
                 f"{INGESTOR_URL}/v1/collections",
-                json=create_data,
+                params=params,
+                json=[collection_name],  # Send as JSON array
                 timeout=60
             )
             
@@ -198,17 +151,85 @@ class VGPUBootstrap:
             logger.error(f"❌ Error creating collection '{collection_name}': {e}")
     
     async def ingest_vgpu_documentation(self):
-        """Ingest pre-loaded vGPU documentation into collections"""
-        logger.info("Ingesting vGPU documentation...")
+        """Ingest ALL vGPU documentation into the single knowledge base"""
+        logger.info("Ingesting all vGPU documentation...")
         
-        docs_base_path = Path(VGPU_DOCS_PATH)
-        if not docs_base_path.exists():
+        docs_path = Path(VGPU_DOCS_PATH)
+        if not docs_path.exists():
             logger.warning(f"vGPU documentation path {VGPU_DOCS_PATH} does not exist. Skipping documentation ingestion.")
             return
         
-        for collection_config in VGPU_COLLECTIONS:
-            if collection_config["docs_subdir"]:
-                await self._ingest_collection_docs(collection_config, docs_base_path)
+        # Find ALL PDF files recursively in the vgpu_docs directory
+        pdf_files = list(docs_path.rglob("*.pdf"))
+        
+        if not pdf_files:
+            logger.warning(f"No PDF files found in {docs_path}. Skipping ingestion.")
+            return
+        
+        logger.info(f"Found {len(pdf_files)} PDF files to ingest")
+        
+        # Check if collection already has documents
+        try:
+            response = self.session.get(
+                f"{INGESTOR_URL}/v1/documents",
+                params={"collection_name": MAIN_COLLECTION["name"]}
+            )
+            
+            if response.status_code == 200:
+                existing_docs = response.json().get("documents", [])
+                if existing_docs:
+                    logger.info(f"✅ Collection '{MAIN_COLLECTION['name']}' already has {len(existing_docs)} documents")
+                    return
+        except Exception as e:
+            logger.warning(f"Could not check existing documents: {e}")
+        
+        # Ingest all PDFs in batches
+        batch_size = 10
+        for i in range(0, len(pdf_files), batch_size):
+            batch_files = pdf_files[i:i+batch_size]
+            await self._ingest_pdf_batch(batch_files, MAIN_COLLECTION["name"])
+    
+    async def _ingest_pdf_batch(self, pdf_files: List[Path], collection_name: str):
+        """Ingest a batch of PDF files into the collection"""
+        try:
+            # Prepare multipart form data
+            files = []
+            for pdf_file in pdf_files:
+                files.append(('documents', (pdf_file.name, open(pdf_file, 'rb'), 'application/pdf')))
+            
+            metadata = {
+                "collection_name": collection_name,
+                "blocking": True,
+                "split_options": {
+                    "chunk_size": 1024,
+                    "chunk_overlap": 150
+                }
+            }
+            
+            data = {'data': json.dumps(metadata)}
+            
+            # Upload documents
+            response = self.session.post(
+                f"{INGESTOR_URL}/v1/documents",
+                files=files,
+                data=data,
+                timeout=600  # 10 minutes for large documents
+            )
+            
+            # Close file handles
+            for _, file_tuple in files:
+                if hasattr(file_tuple[1], 'close'):
+                    file_tuple[1].close()
+            
+            if response.status_code == 200:
+                result = response.json()
+                doc_count = result.get("total_documents", 0)
+                logger.info(f"✅ Ingested {doc_count} documents into collection '{collection_name}'")
+            else:
+                logger.error(f"❌ Failed to ingest documents: {response.text}")
+                
+        except Exception as e:
+            logger.error(f"❌ Error ingesting documents: {e}")
     
     async def _ingest_collection_docs(self, collection_config: Dict[str, Any], docs_base_path: Path):
         """Ingest documentation for a specific collection"""
@@ -291,23 +312,18 @@ class VGPUBootstrap:
                 
                 logger.info(f"Available collections: {collection_names}")
                 
-                # Verify vGPU collections exist
-                missing_collections = []
-                for collection_config in VGPU_COLLECTIONS:
-                    if collection_config["name"] not in collection_names:
-                        missing_collections.append(collection_config["name"])
-                
-                if missing_collections:
-                    logger.warning(f"Missing vGPU collections: {missing_collections}")
+                # Verify main collection exists
+                if MAIN_COLLECTION["name"] not in collection_names:
+                    logger.warning(f"❌ Main collection '{MAIN_COLLECTION['name']}' not found!")
                 else:
-                    logger.info("✅ All vGPU collections are available")
+                    logger.info(f"✅ Main collection '{MAIN_COLLECTION['name']}' is available")
                 
-                # Check document counts
-                for collection in collections:
-                    name = collection.get("collection_name")
-                    count = collection.get("num_entities", 0)
-                    if name.startswith("vgpu_"):
-                        logger.info(f"Collection '{name}': {count} documents")
+                    # Check document count
+                    for collection in collections:
+                        if collection.get("collection_name") == MAIN_COLLECTION["name"]:
+                            count = collection.get("num_entities", 0)
+                            logger.info(f"📚 Collection has {count} documents")
+                            break
                 
             else:
                 logger.error(f"Failed to verify collections: {response.text}")
@@ -316,109 +332,57 @@ class VGPUBootstrap:
             logger.error(f"Error during verification: {e}")
     
     def create_sample_docs_structure(self):
-        """Create sample directory structure for vGPU documentation"""
-        docs_base_path = Path(VGPU_DOCS_PATH)
+        """Create vGPU documentation directory"""
+        docs_path = Path(VGPU_DOCS_PATH)
         
-        if docs_base_path.exists():
+        if docs_path.exists():
             logger.info("vGPU documentation directory already exists")
             return
         
-        logger.info(f"Creating sample vGPU documentation structure at {docs_base_path}")
+        logger.info(f"Creating vGPU documentation directory at {docs_path}")
+        docs_path.mkdir(parents=True, exist_ok=True)
         
-        # Create directory structure
-        for collection_config in VGPU_COLLECTIONS:
-            if collection_config["docs_subdir"]:
-                dir_path = docs_base_path / collection_config["docs_subdir"]
-                dir_path.mkdir(parents=True, exist_ok=True)
-                
-                # Create README file explaining what docs should go here
-                readme_path = dir_path / "README.md"
-                readme_content = f"""# {collection_config['name']} Documentation
+        # Create simple README
+        readme_path = docs_path / "README.md"
+        readme_content = """# NVIDIA vGPU Documentation
 
-{collection_config['description']}
+This directory contains ALL NVIDIA vGPU documentation PDFs that will be automatically loaded into the RAG system.
 
-## Instructions
+## How to Use
 
-Place NVIDIA vGPU PDF documentation files in this directory. The bootstrap process will automatically:
-1. Create the `{collection_config['name']}` collection in Milvus
-2. Ingest all PDF files from this directory into the collection
-3. Process documents through NV-Ingest for text extraction and chunking
+1. **Add PDFs**: Simply place ALL your NVIDIA vGPU documentation PDFs in this directory
+   - User guides
+   - Installation manuals
+   - Hardware specifications
+   - Performance guides
+   - Best practices
+   - ANY vGPU-related PDFs
 
-## Expected Files
+2. **Automatic Loading**: When the system starts, it will:
+   - Create a single knowledge base collection
+   - Automatically ingest ALL PDFs found in this directory
+   - Make them searchable through the chat interface
 
-This directory should contain relevant NVIDIA vGPU documentation PDFs such as:
-- Installation guides
-- User manuals
-- Release notes
-- Best practices guides
-- Hardware compatibility matrices
-- Performance benchmarks
+3. **No Manual Steps**: You don't need to:
+   - Select collections
+   - Upload through the UI
+   - Configure anything
 
-## File Naming
+Just drop your PDFs here and restart the system!
 
-Use descriptive names for PDF files. Examples:
-- `nvidia_vgpu_software_user_guide.pdf`
-- `vgpu_profile_specifications.pdf`
-- `hypervisor_installation_guide.pdf`
+## Supported Files
+- *.pdf files (all PDFs in this directory and subdirectories will be loaded)
+
+## Example PDFs to Add
+- nvidia_vgpu_software_user_guide.pdf
+- vgpu_profile_specifications.pdf
+- a40_datasheet.pdf
+- l40s_specifications.pdf
+- esxi_vgpu_deployment_guide.pdf
+- vgpu_sizing_guide.pdf
 """
-                readme_path.write_text(readme_content)
-        
-        # Create main README
-        main_readme = docs_base_path / "README.md"
-        main_readme_content = """# NVIDIA vGPU Documentation
-
-This directory contains the pre-loaded NVIDIA vGPU documentation that powers the enhanced vGPU RAG system.
-
-## Directory Structure
-
-The documentation is organized into specialized collections for optimal retrieval:
-
-"""
-        
-        for collection_config in VGPU_COLLECTIONS:
-            if collection_config["docs_subdir"]:
-                main_readme_content += f"- **{collection_config['docs_subdir']}/**: {collection_config['description']}\n"
-        
-        main_readme_content += """
-## Setup Instructions
-
-1. **Obtain NVIDIA vGPU Documentation**: Download official NVIDIA vGPU documentation PDFs from:
-   - NVIDIA Developer Documentation
-   - NVIDIA Enterprise Support Portal
-   - NVIDIA vGPU Software Documentation
-
-2. **Organize Documentation**: Place PDF files in the appropriate subdirectories based on their content type
-
-3. **Restart Containers**: The bootstrap process will automatically create collections and ingest documents on startup
-
-## Bootstrap Process
-
-When containers start up with `ENABLE_VGPU_BOOTSTRAP=true`, the system will:
-
-1. Wait for all services (Milvus, Ingestor) to be healthy
-2. Create all vGPU collections if they don't exist
-3. Ingest PDF files from each subdirectory into corresponding collections
-4. Verify the setup was successful
-
-## Environment Variables
-
-- `ENABLE_VGPU_BOOTSTRAP`: Enable/disable automatic bootstrap (default: true)
-- `VGPU_DOCS_PATH`: Path to vGPU documentation directory (default: /app/vgpu_docs)
-- `BOOTSTRAP_TIMEOUT`: Maximum time to wait for services (default: 300 seconds)
-
-## Enhanced RAG Features
-
-With proper documentation loaded, the enhanced vGPU RAG system provides:
-
-- **Multi-collection document chaining**: Retrieves from multiple relevant collections
-- **vGPU profile validation**: Only suggests officially documented profiles  
-- **Hardware-specific guidance**: GPU model-specific recommendations
-- **Cost optimization insights**: Cost-efficiency focused suggestions
-- **Hypervisor compatibility**: Platform-specific deployment guidance
-"""
-        
-        main_readme.write_text(main_readme_content)
-        logger.info(f"✅ Created sample vGPU documentation structure at {docs_base_path}")
+        readme_path.write_text(readme_content)
+        logger.info(f"✅ Created vGPU documentation directory at {docs_path}")
 
 async def main():
     """Main bootstrap function"""

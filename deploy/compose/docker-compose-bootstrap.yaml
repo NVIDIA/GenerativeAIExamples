@@ -23,11 +23,8 @@ services:
       # Mount vGPU documentation directory
       - ${VGPU_DOCS_VOLUME:-./vgpu_docs}:/app/vgpu_docs
       
-    depends_on:
-      milvus:
-        condition: service_started
-      ingestor-server:
-        condition: service_started
+    # Removed depends_on since services are in different compose files
+    # The bootstrap script itself waits for services to be ready
     
     # Restart policy - run once successfully then stop
     restart: "no"

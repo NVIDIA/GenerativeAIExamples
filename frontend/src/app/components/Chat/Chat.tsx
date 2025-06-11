@@ -16,13 +16,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Collections from "../Collections/Collections";
 import RightSidebar from "../RightSidebar/RightSidebar";
 import MessageInput from "./MessageInput";
 import VGPUConfigCard from "./VGPUConfigCard";
 import WorkloadConfigWizard from "./WorkloadConfigWizard";
 import { v4 as uuidv4 } from "uuid";
-import { useApp } from "../../context/AppContext";
 import { API_CONFIG } from "@/app/config/api";
 import { marked } from "marked";
 import { useChatStream } from "../../hooks/useChatStream";
@@ -38,7 +36,6 @@ export default function Chat() {
   const { streamState, processStream, startStream, resetStream, stopStream } =
     useChatStream();
 
-  const { selectedCollection } = useApp();
   const {
     temperature,
     topP,
@@ -168,19 +165,19 @@ export default function Chat() {
   });
 
   const createRequestBody = (userMessage: ChatMessage) => {
-    // Create base request body
+    // Create base request body - always use the vGPU knowledge base
     const requestBody: GenerateRequest = {
       messages: messages.concat(userMessage).map((msg) => ({
         role: msg.role,
         content: msg.content,
       })),
-      collection_name: selectedCollection || "",
+      collection_name: "vgpu_knowledge_base",  // Always use the pre-loaded collection
       temperature,
       top_p: topP,
       reranker_top_k: rerankerTopK,
       vdb_top_k: vdbTopK,
       confidence_threshold: confidenceScoreThreshold,
-      use_knowledge_base: !!selectedCollection,
+      use_knowledge_base: true,  // Always use knowledge base
       enable_citations: includeCitations,
       enable_guardrails: useGuardrails,
     };
@@ -230,7 +227,6 @@ export default function Chat() {
 
   return (
     <div className="flex h-[calc(100vh-56px)] bg-[#121212]">
-      <Collections />
       <div
         className={`flex flex-1 transition-all duration-300 ${
           !!activePanel ? "mr-[400px]" : ""

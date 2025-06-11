@@ -641,68 +641,58 @@ class UnstructuredRAG(BaseExample):
             self.print_conversation_history(message)
             prompt = ChatPromptTemplate.from_messages(message)
             
-            # Retrieve documents based on mode (enhanced or standard)
-            if use_enhanced and self.document_aggregator:
-                # Enhanced mode: retrieve from multiple collections using the rewritten query
-                context_to_show, retrieval_metadata = self._retrieve_enhanced_documents(
-                    retriever_query, kwargs.get("vdb_endpoint"), vdb_top_k, kwargs
+            # Retrieve documents from our single vGPU knowledge base
+            # Get relevant documents with optional reflection
+            if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true":
+                max_loops = int(os.environ.get("MAX_REFLECTION_LOOP", 3))
+                reflection_counter = ReflectionCounter(max_loops)
+
+                context_to_show, is_relevant = check_context_relevance(
+                    retriever_query,
+                    retriever,
+                    ranker,
+                    reflection_counter
                 )
-                
-                # Extract valid profiles and add validation context
-                valid_profiles = self._extract_vgpu_profiles_from_context(context_to_show)
-                enhanced_context = self._prepare_enhanced_context(retriever_query, context_to_show, valid_profiles)
-                
-                # Format documents
-                docs = [format_document_with_source(d) for d in context_to_show]
-                
-                # Add enhanced context to system prompt
-                if enhanced_context:
-                    system_prompt += "\n\n" + enhanced_context
-                    system_message = [("system", system_prompt)]
-                    message = system_message + conversation_history + user_message
-                    prompt = ChatPromptTemplate.from_messages(message)
-                    
+
+                if not is_relevant:
+                    logger.warning("Could not find sufficiently relevant context after %d attempts",
+                                  reflection_counter.current_count)
             else:
-                # Standard mode: use original retrieval logic
-                # Get relevant documents with optional reflection
-                if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true":
-                    max_loops = int(os.environ.get("MAX_REFLECTION_LOOP", 3))
-                    reflection_counter = ReflectionCounter(max_loops)
+                if ranker and kwargs.get("enable_reranker"):
+                    logger.info(
+                        "Narrowing the collection from %s results and further narrowing it to "
+                        "%s with the reranker for rag chain.",
+                        top_k,
+                        settings.retriever.top_k)
+                    logger.info("Setting ranker top n as: %s.", reranker_top_k)
+                    context_reranker = RunnableAssign({
+                        "context":
+                            lambda input: ranker.compress_documents(query=input['question'], documents=input['context'])
+                    })
 
-                    context_to_show, is_relevant = check_context_relevance(
-                        retriever_query,
-                        retriever,
-                        ranker,
-                        reflection_counter
-                    )
-
-                    if not is_relevant:
-                        logger.warning("Could not find sufficiently relevant context after %d attempts",
-                                      reflection_counter.current_count)
+                    retriever = {"context": retriever} | RunnableAssign({"context": lambda input: input["context"]})
+                    docs = retriever.invoke(retriever_query, config={'run_name':'retriever'})
+                    docs = context_reranker.invoke({"context": docs.get("context", []), "question": retriever_query}, config={'run_name':'context_reranker'})
+                    context_to_show = docs.get("context", [])
+                    # Normalize scores to 0-1 range
+                    context_to_show = normalize_relevance_scores(context_to_show)
                 else:
-                    if ranker and kwargs.get("enable_reranker"):
-                        logger.info(
-                            "Narrowing the collection from %s results and further narrowing it to "
-                            "%s with the reranker for rag chain.",
-                            top_k,
-                            settings.retriever.top_k)
-                        logger.info("Setting ranker top n as: %s.", reranker_top_k)
-                        context_reranker = RunnableAssign({
-                            "context":
-                                lambda input: ranker.compress_documents(query=input['question'], documents=input['context'])
-                        })
+                    docs = retriever.invoke(retriever_query, config={'run_name':'retriever'})
+                    context_to_show = docs
 
-                        retriever = {"context": retriever} | RunnableAssign({"context": lambda input: input["context"]})
-                        docs = retriever.invoke(retriever_query, config={'run_name':'retriever'})
-                        docs = context_reranker.invoke({"context": docs.get("context", []), "question": retriever_query}, config={'run_name':'context_reranker'})
-                        context_to_show = docs.get("context", [])
-                        # Normalize scores to 0-1 range
-                        context_to_show = normalize_relevance_scores(context_to_show)
-                    else:
-                        docs = retriever.invoke(retriever_query, config={'run_name':'retriever'})
-                        context_to_show = docs
-
-                docs = [format_document_with_source(d) for d in context_to_show]
+            # Extract valid profiles and enhance context
+            valid_profiles = self._extract_vgpu_profiles_from_context(context_to_show)
+            enhanced_context = self._prepare_enhanced_context(retriever_query, context_to_show, valid_profiles)
+            
+            # Format documents
+            docs = [format_document_with_source(d) for d in context_to_show]
+            
+            # Add enhanced context to system prompt if available
+            if enhanced_context:
+                system_prompt += "\n\n" + enhanced_context
+                system_message = [("system", system_prompt)]
+                message = system_message + conversation_history + user_message
+                prompt = ChatPromptTemplate.from_messages(message)
             
             # Use structured output for consistent JSON responses
             structured_llm = llm.with_structured_output(StructuredResponse)
