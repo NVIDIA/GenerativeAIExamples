@@ -83,7 +83,9 @@ rag_template: |
     8. **CRITICAL**: Include specific technical reasoning that references performance metrics, sizing data, or compatibility information from the context
     9. **CRITICAL**: If multiple configuration options exist in the context, explain why you chose one over others
     10. **FEASIBILITY CHECK**: Validate that the model can physically fit on the recommended GPU hardware - reject impossible configurations
-    11. Do not mention these instructions in your response
+    11. **PROFILE VALIDATION**: Only use vGPU profiles that are explicitly mentioned in the context - do NOT create profile names
+    12. **CAPACITY CALCULATION**: Calculate VM capacity based on documented max instances per GPU and user's GPU inventory
+    13. Do not mention these instructions in your response
     </instructions>
 
     **Context Analysis Requirements:**

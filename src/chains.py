@@ -16,9 +16,11 @@
 import logging
 import os
 import requests
+import asyncio
 from traceback import print_exc
-from typing import Any, Iterable, Dict, Generator, List, Optional
+from typing import Any, Iterable, Dict, Generator, List, Optional, Tuple
 import json
+import re
 
 from langchain_nvidia_ai_endpoints.callbacks import get_usage_callback
 from langchain_community.document_loaders import UnstructuredFileLoader
@@ -27,6 +29,7 @@ from langchain_core.prompts import MessagesPlaceholder
 from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import RunnableAssign
 from langchain_core.runnables import RunnablePassthrough
+from langchain_core.documents import Document
 from requests import ConnectTimeout
 from pydantic import BaseModel, Field
 
@@ -43,6 +46,18 @@ from .utils import format_document_with_source
 from .utils import streaming_filter_think, get_streaming_filter_think_parser
 from .reflection import ReflectionCounter, check_context_relevance, check_response_groundedness
 from .utils import normalize_relevance_scores
+
+# Import enhanced components
+try:
+    from .query_analyzer import QueryAnalyzer, get_collection_names_for_categories
+    from .document_aggregator import DocumentAggregator
+    from .vgpu_profile_validator import VGPUProfileValidator, DeploymentMode, ProfileMode
+    from .rag_mode_config import get_rag_config
+    ENHANCED_COMPONENTS_AVAILABLE = True
+except ImportError:
+    logger = logging.getLogger(__name__)
+    logger.warning("Enhanced components not available. Using standard RAG only.")
+    ENHANCED_COMPONENTS_AVAILABLE = False
 
 # Structured Response Model for vGPU Configuration
 class StructuredResponse(BaseModel):
@@ -175,6 +190,23 @@ class APIError(Exception):
         super().__init__(message)
 
 class UnstructuredRAG(BaseExample):
+    
+    def __init__(self):
+        """Initialize UnstructuredRAG with enhanced components if available."""
+        super().__init__()
+        self.settings = get_config()
+        
+        # Initialize enhanced components if available
+        if ENHANCED_COMPONENTS_AVAILABLE:
+            self.query_analyzer = QueryAnalyzer()
+            self.document_aggregator = DocumentAggregator(self.settings)
+            self.profile_validator = VGPUProfileValidator()
+            self.rag_config = get_rag_config()
+        else:
+            self.query_analyzer = None
+            self.document_aggregator = None
+            self.profile_validator = None
+            self.rag_config = None
 
     def ingest_docs(self, data_dir: str, filename: str, collection_name: str = "", vdb_endpoint: str = "") -> None:
         """Ingests documents to the VectorDB.
@@ -344,7 +376,10 @@ class UnstructuredRAG(BaseExample):
 
         if os.environ.get("ENABLE_MULTITURN", "false").lower() == "true":
             return self.rag_chain_with_multiturn(query=query, chat_history=chat_history, reranker_top_k=reranker_top_k, vdb_top_k=vdb_top_k, collection_name=collection_name, **kwargs)
-        logger.info("Using rag to generate response from document for the query: %s", query)
+        
+        # Determine if enhanced mode should be used
+        use_enhanced = self._should_use_enhanced_mode(query)
+        logger.info("Using %s RAG mode for query: %s", "enhanced" if use_enhanced else "standard", query)
 
         try:
             document_embedder = get_embedding_model(model=kwargs.get("embedding_model"), url=kwargs.get("embedding_endpoint"))
@@ -383,44 +418,67 @@ class UnstructuredRAG(BaseExample):
             message = system_message + conversation_history + user_message
             self.print_conversation_history(message)
             prompt = ChatPromptTemplate.from_messages(message)
-            # Get relevant documents with optional reflection
-            if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true":
-                max_loops = int(os.environ.get("MAX_REFLECTION_LOOP", 3))
-                reflection_counter = ReflectionCounter(max_loops)
-
-                context_to_show, is_relevant = check_context_relevance(
-                    query,
-                    retriever,
-                    ranker,
-                    reflection_counter
+            # Retrieve documents based on mode
+            if use_enhanced and self.document_aggregator:
+                # Enhanced mode: retrieve from multiple collections
+                context_to_show, retrieval_metadata = self._retrieve_enhanced_documents(
+                    query, kwargs.get("vdb_endpoint"), vdb_top_k, kwargs
                 )
-
-                if not is_relevant:
-                    logger.warning("Could not find sufficiently relevant context after maximum attempts")
+                
+                # Extract valid profiles and add validation context
+                valid_profiles = self._extract_vgpu_profiles_from_context(context_to_show)
+                enhanced_context = self._prepare_enhanced_context(query, context_to_show, valid_profiles)
+                
+                # Format documents
+                docs = [format_document_with_source(d) for d in context_to_show]
+                
+                # Add enhanced context to system prompt
+                if enhanced_context:
+                    system_prompt += "\n\n" + enhanced_context
+                    system_message = [("system", system_prompt)]
+                    message = system_message + conversation_history + user_message
+                    prompt = ChatPromptTemplate.from_messages(message)
+                
             else:
-                if ranker and kwargs.get("enable_reranker"):
-                    logger.info(
-                        "Narrowing the collection from %s results and further narrowing it to "
-                        "%s with the reranker for rag chain.",
-                        top_k,
-                        reranker_top_k)
-                    logger.info("Setting ranker top n as: %s.", reranker_top_k)
-                    context_reranker = RunnableAssign({
-                        "context":
-                            lambda input: ranker.compress_documents(query=input['question'], documents=input['context'])
-                    })
-                    # Create a chain with retriever and reranker
-                    retriever = {"context": retriever} | RunnableAssign({"context": lambda input: input["context"]})
-                    docs = retriever.invoke(query, config={'run_name':'retriever'})
-                    docs = context_reranker.invoke({"context": docs.get("context", []), "question": query}, config={'run_name':'context_reranker'})
-                    context_to_show = docs.get("context", [])
-                    # Normalize scores to 0-1 range
-                    context_to_show = normalize_relevance_scores(context_to_show)
-                    # Remove metadata from context
-                    logger.debug("Document Retrieved: %s", docs)
+                # Standard mode: use original retrieval logic
+                # Get relevant documents with optional reflection
+                if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true":
+                    max_loops = int(os.environ.get("MAX_REFLECTION_LOOP", 3))
+                    reflection_counter = ReflectionCounter(max_loops)
+
+                    context_to_show, is_relevant = check_context_relevance(
+                        query,
+                        retriever,
+                        ranker,
+                        reflection_counter
+                    )
+
+                    if not is_relevant:
+                        logger.warning("Could not find sufficiently relevant context after maximum attempts")
                 else:
-                    context_to_show = retriever.invoke(query)
-            docs = [format_document_with_source(d) for d in context_to_show]
+                    if ranker and kwargs.get("enable_reranker"):
+                        logger.info(
+                            "Narrowing the collection from %s results and further narrowing it to "
+                            "%s with the reranker for rag chain.",
+                            top_k,
+                            reranker_top_k)
+                        logger.info("Setting ranker top n as: %s.", reranker_top_k)
+                        context_reranker = RunnableAssign({
+                            "context":
+                                lambda input: ranker.compress_documents(query=input['question'], documents=input['context'])
+                        })
+                        # Create a chain with retriever and reranker
+                        retriever = {"context": retriever} | RunnableAssign({"context": lambda input: input["context"]})
+                        docs = retriever.invoke(query, config={'run_name':'retriever'})
+                        docs = context_reranker.invoke({"context": docs.get("context", []), "question": query}, config={'run_name':'context_reranker'})
+                        context_to_show = docs.get("context", [])
+                        # Normalize scores to 0-1 range
+                        context_to_show = normalize_relevance_scores(context_to_show)
+                        # Remove metadata from context
+                        logger.debug("Document Retrieved: %s", docs)
+                    else:
+                        context_to_show = retriever.invoke(query)
+                docs = [format_document_with_source(d) for d in context_to_show]
             
             # Use structured output for consistent JSON responses
             structured_llm = llm.with_structured_output(StructuredResponse)
@@ -506,7 +564,9 @@ class UnstructuredRAG(BaseExample):
                                  **kwargs) -> Generator[str, None, None]:
         """Execute a Retrieval Augmented Generation chain using the components defined above."""
 
-        logger.info("Using multiturn rag to generate response from document for the query: %s", query)
+        # Determine if enhanced mode should be used
+        use_enhanced = self._should_use_enhanced_mode(query)
+        logger.info("Using %s multiturn RAG mode for query: %s", "enhanced" if use_enhanced else "standard", query)
 
         try:
             document_embedder = get_embedding_model(model=kwargs.get("embedding_model"), url=kwargs.get("embedding_endpoint"))
@@ -580,45 +640,69 @@ class UnstructuredRAG(BaseExample):
             message = system_message + conversation_history + user_message
             self.print_conversation_history(message)
             prompt = ChatPromptTemplate.from_messages(message)
-            # Get relevant documents with optional reflection
-            if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true":
-                max_loops = int(os.environ.get("MAX_REFLECTION_LOOP", 3))
-                reflection_counter = ReflectionCounter(max_loops)
-
-                context_to_show, is_relevant = check_context_relevance(
-                    retriever_query,
-                    retriever,
-                    ranker,
-                    reflection_counter
+            
+            # Retrieve documents based on mode (enhanced or standard)
+            if use_enhanced and self.document_aggregator:
+                # Enhanced mode: retrieve from multiple collections using the rewritten query
+                context_to_show, retrieval_metadata = self._retrieve_enhanced_documents(
+                    retriever_query, kwargs.get("vdb_endpoint"), vdb_top_k, kwargs
                 )
-
-                if not is_relevant:
-                    logger.warning("Could not find sufficiently relevant context after %d attempts",
-                                  reflection_counter.current_count)
+                
+                # Extract valid profiles and add validation context
+                valid_profiles = self._extract_vgpu_profiles_from_context(context_to_show)
+                enhanced_context = self._prepare_enhanced_context(retriever_query, context_to_show, valid_profiles)
+                
+                # Format documents
+                docs = [format_document_with_source(d) for d in context_to_show]
+                
+                # Add enhanced context to system prompt
+                if enhanced_context:
+                    system_prompt += "\n\n" + enhanced_context
+                    system_message = [("system", system_prompt)]
+                    message = system_message + conversation_history + user_message
+                    prompt = ChatPromptTemplate.from_messages(message)
+                    
             else:
-                if ranker and kwargs.get("enable_reranker"):
-                    logger.info(
-                        "Narrowing the collection from %s results and further narrowing it to "
-                        "%s with the reranker for rag chain.",
-                        top_k,
-                        settings.retriever.top_k)
-                    logger.info("Setting ranker top n as: %s.", reranker_top_k)
-                    context_reranker = RunnableAssign({
-                        "context":
-                            lambda input: ranker.compress_documents(query=input['question'], documents=input['context'])
-                    })
+                # Standard mode: use original retrieval logic
+                # Get relevant documents with optional reflection
+                if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true":
+                    max_loops = int(os.environ.get("MAX_REFLECTION_LOOP", 3))
+                    reflection_counter = ReflectionCounter(max_loops)
 
-                    retriever = {"context": retriever} | RunnableAssign({"context": lambda input: input["context"]})
-                    docs = retriever.invoke(retriever_query, config={'run_name':'retriever'})
-                    docs = context_reranker.invoke({"context": docs.get("context", []), "question": retriever_query}, config={'run_name':'context_reranker'})
-                    context_to_show = docs.get("context", [])
-                    # Normalize scores to 0-1 range
-                    context_to_show = normalize_relevance_scores(context_to_show)
+                    context_to_show, is_relevant = check_context_relevance(
+                        retriever_query,
+                        retriever,
+                        ranker,
+                        reflection_counter
+                    )
+
+                    if not is_relevant:
+                        logger.warning("Could not find sufficiently relevant context after %d attempts",
+                                      reflection_counter.current_count)
                 else:
-                    docs = retriever.invoke(retriever_query, config={'run_name':'retriever'})
-                    context_to_show = docs
+                    if ranker and kwargs.get("enable_reranker"):
+                        logger.info(
+                            "Narrowing the collection from %s results and further narrowing it to "
+                            "%s with the reranker for rag chain.",
+                            top_k,
+                            settings.retriever.top_k)
+                        logger.info("Setting ranker top n as: %s.", reranker_top_k)
+                        context_reranker = RunnableAssign({
+                            "context":
+                                lambda input: ranker.compress_documents(query=input['question'], documents=input['context'])
+                        })
 
-            docs = [format_document_with_source(d) for d in context_to_show]
+                        retriever = {"context": retriever} | RunnableAssign({"context": lambda input: input["context"]})
+                        docs = retriever.invoke(retriever_query, config={'run_name':'retriever'})
+                        docs = context_reranker.invoke({"context": docs.get("context", []), "question": retriever_query}, config={'run_name':'context_reranker'})
+                        context_to_show = docs.get("context", [])
+                        # Normalize scores to 0-1 range
+                        context_to_show = normalize_relevance_scores(context_to_show)
+                    else:
+                        docs = retriever.invoke(retriever_query, config={'run_name':'retriever'})
+                        context_to_show = docs
+
+                docs = [format_document_with_source(d) for d in context_to_show]
             
             # Use structured output for consistent JSON responses
             structured_llm = llm.with_structured_output(StructuredResponse)
@@ -809,3 +893,222 @@ class UnstructuredRAG(BaseExample):
                 logger.info("Content: %s\n", content)
         if query is not None:
             logger.info("Query: %s\n", query)
+    
+    def _should_use_enhanced_mode(self, query: str) -> bool:
+        """Determine if enhanced RAG mode should be used for this query."""
+        if not ENHANCED_COMPONENTS_AVAILABLE or not self.rag_config:
+            return False
+        
+        return self.rag_config.should_use_enhanced(query)
+    
+    def _retrieve_enhanced_documents(self, query: str, vdb_endpoint: str, 
+                                   vdb_top_k: int, kwargs: Dict) -> Tuple[List[Document], Dict]:
+        """Retrieve documents using enhanced multi-collection approach."""
+        try:
+            # Always include baseline collection
+            baseline_collection = kwargs.get("collection_name", "multimodal_data")
+            
+            # Use async retrieval for multiple collections
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            documents, metadata = loop.run_until_complete(
+                self.document_aggregator.retrieve_chained_documents(
+                    query=query,
+                    vdb_endpoint=vdb_endpoint or self.settings.vector_store.url,
+                    top_k=max(1, vdb_top_k // 3),  # Distribute across collections
+                    enable_reranker=kwargs.get("enable_reranker", True),
+                    **kwargs
+                )
+            )
+            
+            # Also retrieve from baseline collection if not already included
+            if baseline_collection not in metadata.get("collections_searched", []):
+                baseline_docs = self._retrieve_from_single_collection(
+                    query, baseline_collection, vdb_endpoint, vdb_top_k // 2, kwargs
+                )
+                documents.extend(baseline_docs)
+                metadata["baseline_docs_added"] = len(baseline_docs)
+            
+            logger.info("Enhanced retrieval completed: %d documents from %d collections", 
+                       len(documents), len(metadata.get("collections_searched", [])))
+            
+            return documents, metadata
+            
+        except Exception as e:
+            logger.error("Error in enhanced document retrieval: %s", e)
+            # Fallback to baseline collection only
+            return self._retrieve_from_single_collection(
+                query, kwargs.get("collection_name", "multimodal_data"), 
+                vdb_endpoint, vdb_top_k, kwargs
+            ), {"error": str(e), "fallback": True}
+    
+    def _retrieve_from_single_collection(self, query: str, collection_name: str,
+                                       vdb_endpoint: str, top_k: int, 
+                                       kwargs: Dict) -> List[Document]:
+        """Retrieve documents from a single collection."""
+        try:
+            document_embedder = get_embedding_model(
+                model=kwargs.get("embedding_model"), 
+                url=kwargs.get("embedding_endpoint")
+            )
+            vs = get_vectorstore(document_embedder, collection_name, vdb_endpoint)
+            
+            if vs is None:
+                logger.warning(f"Collection {collection_name} not found")
+                return []
+            
+            retriever = vs.as_retriever(search_kwargs={"k": top_k})
+            documents = retriever.invoke(query)
+            
+            # Add collection metadata
+            for doc in documents:
+                doc.metadata["collection"] = collection_name
+                
+            return documents
+            
+        except Exception as e:
+            logger.error(f"Error retrieving from collection {collection_name}: {e}")
+            return []
+    
+    def _extract_vgpu_profiles_from_context(self, documents: List[Document]) -> set:
+        """Extract valid vGPU profile names from retrieved documents."""
+        if not self.profile_validator:
+            return set()
+        
+        profile_pattern = r'\b([A-Z0-9]+)-(\d+)([A-Z])\b'
+        found_profiles = set()
+        
+        for doc in documents:
+            matches = re.findall(profile_pattern, doc.page_content)
+            for match in matches:
+                profile_name = f"{match[0]}-{match[1]}{match[2]}"
+                # Validate it looks like a real profile
+                if match[0] in ["A100", "A40", "L40S", "L40", "L4", "RTX6000", "H100"]:
+                    # Check if it's a valid profile
+                    is_valid, _ = self.profile_validator.validate_profile(profile_name)
+                    if is_valid:
+                        found_profiles.add(profile_name)
+        
+        logger.info(f"Found valid vGPU profiles in context: {found_profiles}")
+        return found_profiles
+    
+    def _extract_gpu_inventory_from_query(self, query: str) -> Dict[str, int]:
+        """Extract GPU inventory from query text."""
+        inventory = {}
+        
+        # Pattern to match "2x L40S", "4x L4", etc.
+        pattern = r'(\d+)x?\s*(A100|A40|L40S?|L4|H100|RTX\d+)'
+        matches = re.findall(pattern, query, re.IGNORECASE)
+        
+        for match in matches:
+            count = int(match[0])
+            gpu_model = match[1].upper()
+            # Normalize GPU names
+            if gpu_model == "L40":
+                gpu_model = "L40"
+            elif gpu_model == "L40S":
+                gpu_model = "L40S"
+            inventory[gpu_model] = count
+        
+        return inventory
+    
+    def _prepare_enhanced_context(self, query: str, documents: List[Document], 
+                                valid_profiles: set) -> str:
+        """Prepare enhanced context with validation constraints."""
+        if not valid_profiles and not self.profile_validator:
+            return ""
+        
+        context_parts = []
+        
+        # Add valid profiles constraint
+        if valid_profiles:
+            context_parts.append(f"VALID vGPU PROFILES found in context: {', '.join(sorted(valid_profiles))}")
+            context_parts.append("You MUST ONLY use profiles from this list. Do NOT create or modify profile names.")
+        
+        # Extract GPU inventory from query
+        gpu_inventory = self._extract_gpu_inventory_from_query(query)
+        if gpu_inventory:
+            inventory_str = ", ".join([f"{count}x {gpu}" for gpu, count in gpu_inventory.items()])
+            context_parts.append(f"\nUSER'S GPU INVENTORY: {inventory_str}")
+            context_parts.append("You MUST only recommend configurations compatible with this inventory.")
+            
+            # Get recommendations if profile validator is available
+            if self.profile_validator:
+                try:
+                    workload_requirements = self._extract_workload_requirements_from_query(query)
+                    recommendations = self.profile_validator.recommend_deployment_strategy(
+                        gpu_inventory, workload_requirements
+                    )
+                    
+                    if recommendations:
+                        context_parts.append("\nPRE-VALIDATED CONFIGURATION OPTIONS:")
+                        for i, rec in enumerate(recommendations[:3]):  # Top 3 recommendations
+                            if rec.vgpu_profile:
+                                context_parts.append(f"{i+1}. {rec.vgpu_profile}: {rec.max_vms} VMs, "
+                                                    f"{rec.gpu_memory_gb}GB GPU memory, {rec.concurrent_users} users")
+                            else:
+                                context_parts.append(f"{i+1}. GPU Passthrough on {rec.gpu_count} GPUs: "
+                                                    f"{rec.max_vms} VMs, {rec.gpu_memory_gb}GB GPU memory")
+                except Exception as e:
+                    logger.warning(f"Error generating recommendations: {e}")
+        
+        # Add calculation rules
+        context_parts.append("\nVM CAPACITY CALCULATION RULES:")
+        context_parts.append("- For vGPU: Use the max instances per GPU from the context")
+        context_parts.append("- For passthrough: 1 VM per physical GPU")
+        context_parts.append("- Calculate total VMs = (number of GPUs) × (VMs per GPU)")
+        
+        return "\n".join(context_parts)
+    
+    def _extract_workload_requirements_from_query(self, query: str) -> Dict[str, Any]:
+        """Extract workload requirements from query."""
+        requirements = {
+            "concurrent_users": 1,
+            "model_memory_gb": 0,
+            "deployment_mode": "vgpu",
+            "performance_level": "standard"
+        }
+        
+        # Extract user counts
+        user_patterns = [
+            r'(\d+)[-–]\s*(\d+)\s*(?:concurrent\s*)?users?',
+            r'(\d+)\s*(?:concurrent\s*)?users?',
+            r'support\s*(\d+)'
+        ]
+        
+        for pattern in user_patterns:
+            matches = re.findall(pattern, query, re.IGNORECASE)
+            for match in matches:
+                if isinstance(match, tuple):
+                    counts = [int(x) for x in match if x.isdigit()]
+                    if counts:
+                        requirements["concurrent_users"] = max(counts)
+                else:
+                    requirements["concurrent_users"] = int(match)
+        
+        # Extract model size (rough estimate)
+        model_patterns = [r'(\d+)[Bb]\+?\s*(?:parameter|param)?', r'(\d+)[Bb]\+?']
+        for pattern in model_patterns:
+            matches = re.findall(pattern, query)
+            for match in matches:
+                param_count = int(match)
+                # Rough estimate: 2 bytes per parameter for FP16
+                requirements["model_memory_gb"] = max(
+                    requirements["model_memory_gb"],
+                    param_count * 2
+                )
+        
+        # Check deployment mode
+        if "passthrough" in query.lower() or "pass-through" in query.lower():
+            requirements["deployment_mode"] = "passthrough"
+        
+        # Extract performance level
+        if "high performance" in query.lower():
+            requirements["performance_level"] = "high"
+        elif "maximum performance" in query.lower():
+            requirements["performance_level"] = "maximum"
+        elif "cost" in query.lower() or "efficient" in query.lower():
+            requirements["performance_level"] = "standard"
+        
+        return requirements
