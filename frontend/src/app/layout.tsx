@@ -31,7 +31,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RAG Blueprint 2.0",
+  title: "AI vWS Sizing Advisor",
   description: "By NVIDIA",
 };
 

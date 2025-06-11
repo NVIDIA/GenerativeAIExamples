@@ -67,36 +67,68 @@ class StructuredResponse(BaseModel):
                 "properties": {
                     "vGPU_profile": {
                         "type": ["string", "null"],
-                        "description": "NVIDIA vGPU profile name",
-                        "enum": [
-                            "A100-40C", "A100-80C", "L40-6Q", "L40-12Q", "L4-2Q", "L4-4Q",
-                            "RTX6000-8Q", "RTX6000-16Q", "RTX5000-4Q", "RTX5000-8Q", None
-                        ]
+                        "description": "Exact NVIDIA vGPU profile name found in context documentation (must match documented profiles exactly)",
+                        "pattern": "^[A-Z0-9]+-[0-9]+[A-Z]?$"
+                    },
+                    "total_CPUs": {
+                        "type": ["integer", "null"],
+                        "description": "Total number of physical CPU cores allocated to the VM host",
+                        "minimum": 1,
+                        "maximum": 256
                     },
                     "vCPU_count": {
                         "type": ["integer", "null"],
-                        "description": "Number of virtual CPUs allocated to the VM",
-                        "enum": [4, 8, 16, 32, 64, None]
+                        "description": "Number of virtual CPUs allocated to the VM guest based on workload requirements",
+                        "minimum": 1,
+                        "maximum": 128
                     },
                     "gpu_memory_size": {
                         "type": ["integer", "null"],
-                        "description": "Total GPU memory in GB needed by the workload",
-                        "enum": [8, 12, 16, 24, 40, 48, 80, None]
+                        "description": "GPU frame buffer memory in GB assigned to the vGPU profile (must match profile specifications)",
+                        "minimum": 1,
+                        "maximum": 128
+                    },
+                    "video_card_total_memory": {
+                        "type": ["integer", "null"],
+                        "description": "Total video card memory capacity in GB of the physical GPU hardware",
+                        "minimum": 4,
+                        "maximum": 200
+                    },
+                    "system_RAM": {
+                        "type": ["integer", "null"],
+                        "description": "System RAM allocated to the VM in GB based on workload analysis",
+                        "minimum": 8,
+                        "maximum": 2048
+                    },
+                    "storage_capacity": {
+                        "type": ["integer", "null"],
+                        "description": "Hard disk storage capacity in GB required for the workload including OS, model files, and data",
+                        "minimum": 50,
+                        "maximum": 10000
+                    },
+                    "storage_type": {
+                        "type": ["string", "null"],
+                        "description": "Recommended storage type based on performance requirements",
+                        "enum": ["SSD", "NVMe", "HDD", "Network Storage"]
                     },
                     "driver_version": {
                         "type": ["string", "null"],
-                        "description": "Compatible NVIDIA driver version",
-                        "enum": ["535.86", "550.54", "550.78", "551.61", None]
+                        "description": "Compatible NVIDIA driver version determined from context documentation"
                     },
-                    "relevant_aiwb_toolkit": {
+                    "AI_framework": {
                         "type": ["string", "null"],
-                        "description": "AI Workbench toolkit best matched to the workload",
-                        "enum": ["inference", "training", "rag", "embedding", "fine-tuning", None]
+                        "description": "Recommended AI framework or toolkit based on context analysis and workload requirements"
                     },
-                    "RAM": {
+                    "performance_tier": {
+                        "type": ["string", "null"],
+                        "description": "Performance classification based on workload requirements",
+                        "enum": ["Entry", "Standard", "High Performance", "Maximum Performance"]
+                    },
+                    "concurrent_users": {
                         "type": ["integer", "null"],
-                        "description": "System RAM required in GB",
-                        "enum": [32, 64, 96, 128, 256, None]
+                        "description": "Number of concurrent users the configuration can support",
+                        "minimum": 1,
+                        "maximum": 1000
                     }
                 },
                 "required": []

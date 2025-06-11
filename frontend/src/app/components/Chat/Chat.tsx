@@ -19,6 +19,8 @@ import { useState, useRef, useEffect } from "react";
 import Collections from "../Collections/Collections";
 import RightSidebar from "../RightSidebar/RightSidebar";
 import MessageInput from "./MessageInput";
+import VGPUConfigCard from "./VGPUConfigCard";
+import WorkloadConfigWizard from "./WorkloadConfigWizard";
 import { v4 as uuidv4 } from "uuid";
 import { useApp } from "../../context/AppContext";
 import { API_CONFIG } from "@/app/config/api";
@@ -32,6 +34,7 @@ export default function Chat() {
   const { activePanel, toggleSidebar, setActiveCitations } = useSidebar();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const { streamState, processStream, startStream, resetStream, stopStream } =
     useChatStream();
 
@@ -111,10 +114,31 @@ export default function Chat() {
     }
   };
 
+  const isVGPUConfig = (content: string): boolean => {
+    try {
+      const parsed = JSON.parse(content.trim());
+      return parsed.title === "generate_vgpu_config" && parsed.parameters;
+    } catch {
+      return false;
+    }
+  };
+
   const renderMessageContent = (content: string, isTyping: boolean) => {
     if (isTyping) {
       return <span className="typing-dots">Thinking</span>;
     }
+    
+    // Check if content is a vGPU configuration JSON
+    if (isVGPUConfig(content)) {
+      try {
+        const vgpuConfig = JSON.parse(content.trim());
+        return <VGPUConfigCard config={vgpuConfig} />;
+      } catch (error) {
+        console.error("Error parsing vGPU config:", error);
+        // Fall back to regular markdown rendering
+      }
+    }
+    
     return (
       <div
         className="prose prose-invert max-w-none text-sm"
@@ -196,6 +220,14 @@ export default function Chat() {
     setMessage("");
   };
 
+  const handleWizardSubmit = (generatedQuery: string) => {
+    setMessage(generatedQuery);
+    // Automatically submit the generated query
+    setTimeout(() => {
+      handleSubmit();
+    }, 100);
+  };
+
   return (
     <div className="flex h-[calc(100vh-56px)] bg-[#121212]">
       <Collections />
@@ -262,6 +294,25 @@ export default function Chat() {
           </div>
         </div>
       </div>
+
+      {/* Floating Wizard Button */}
+      <button
+        onClick={() => setIsWizardOpen(true)}
+        className="fixed bottom-24 right-6 bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-full shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 hover:scale-105 z-40"
+        title="Open Workload Configuration Wizard"
+      >
+        <div className="flex items-center space-x-2">
+          <span className="text-lg font-bold">GPU</span>
+          <span className="hidden sm:inline font-medium">Configure Workload</span>
+        </div>
+      </button>
+
+      {/* Workload Configuration Wizard */}
+      <WorkloadConfigWizard
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+        onSubmit={handleWizardSubmit}
+      />
     </div>
   );
 }

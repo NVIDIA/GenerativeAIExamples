@@ -32,7 +32,7 @@ export default function Header({ onToggleSidebar, activePanel }: HeaderProps) {
           width={128}
           height={24}
         />
-        <span className="text-lg font-semibold text-white">RAG Blueprint</span>
+        <span className="text-lg font-semibold text-white">AI vWS Sizing Advisor</span>
       </div>
 
       <div className="absolute left-1/2 -translate-x-1/2 transform"></div>

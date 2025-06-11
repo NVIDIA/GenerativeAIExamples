@@ -907,7 +907,7 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
                             if structured_data.get("parameters"):
                                 logger.info(f"vGPU Parameters: {structured_data.get('parameters')}")
                             
-                            # Return the complete JSON response instead of just the description
+                                                        # Return the clean structured JSON response
                             # Format the JSON nicely for display
                             json_response = json.dumps(structured_data, indent=2, ensure_ascii=False)
                             accumulated_response += json_response
@@ -1186,16 +1186,51 @@ async def generate_structured_answer(request: Request, prompt: Prompt) -> JSONRe
                             "properties": {
                                 "vGPU_profile": {
                                     "type": "string",
-                                    "description": "NVIDIA vGPU profile name",
-                                    "enum": ["A100-40C", "A100-80C", "L40-6Q", "L40-12Q", "L4-2Q", "L4-4Q", "RTX6000-8Q", "RTX6000-16Q", "RTX5000-4Q", "RTX5000-8Q"]
+                                    "description": "Exact NVIDIA vGPU profile name from context documentation",
+                                    "pattern": "^[A-Z0-9]+-[0-9]+[A-Z]?$"
                                 },
-                                "RAM": {
+                                "total_CPUs": {
+                                    "type": "integer",
+                                    "description": "Total physical CPU cores for VM host",
+                                    "minimum": 1,
+                                    "maximum": 256
+                                },
+                                "vCPU_count": {
+                                    "type": "integer",
+                                    "description": "Virtual CPUs for VM guest",
+                                    "minimum": 1,
+                                    "maximum": 128
+                                },
+                                "gpu_memory_size": {
+                                    "type": "integer",
+                                    "description": "GPU frame buffer memory in GB",
+                                    "minimum": 1,
+                                    "maximum": 128
+                                },
+                                "video_card_total_memory": {
+                                    "type": "integer",
+                                    "description": "Total video card memory capacity in GB",
+                                    "minimum": 4,
+                                    "maximum": 200
+                                },
+                                "system_RAM": {
                                     "type": "integer", 
-                                    "description": "System RAM required in GB",
-                                    "enum": [32, 64, 96, 128, 256]
+                                    "description": "VM system RAM in GB",
+                                    "minimum": 8,
+                                    "maximum": 2048
+                                },
+                                "storage_capacity": {
+                                    "type": "integer",
+                                    "description": "Storage capacity in GB",
+                                    "minimum": 50,
+                                    "maximum": 10000
+                                },
+                                "storage_type": {
+                                    "type": "string",
+                                    "description": "Storage type recommendation"
                                 }
                             },
-                            "required": ["vGPU_profile", "RAM"]
+                            "required": ["vGPU_profile"]
                         }
                     }
                     break
@@ -1217,16 +1252,51 @@ async def generate_structured_answer(request: Request, prompt: Prompt) -> JSONRe
                     "properties": {
                         "vGPU_profile": {
                             "type": "string",
-                            "description": "NVIDIA vGPU profile name", 
-                            "enum": ["A100-40C", "A100-80C", "L40-6Q", "L40-12Q", "L4-2Q", "L4-4Q", "RTX6000-8Q", "RTX6000-16Q", "RTX5000-4Q", "RTX5000-8Q"]
+                            "description": "Exact NVIDIA vGPU profile name from context documentation", 
+                            "pattern": "^[A-Z0-9]+-[0-9]+[A-Z]?$"
                         },
-                        "RAM": {
+                        "total_CPUs": {
                             "type": "integer",
-                            "description": "System RAM required in GB",
-                            "enum": [32, 64, 96, 128, 256]
+                            "description": "Total physical CPU cores for VM host",
+                            "minimum": 1,
+                            "maximum": 256
+                        },
+                        "vCPU_count": {
+                            "type": "integer",
+                            "description": "Virtual CPUs for VM guest",
+                            "minimum": 1,
+                            "maximum": 128
+                        },
+                        "gpu_memory_size": {
+                            "type": "integer",
+                            "description": "GPU frame buffer memory in GB",
+                            "minimum": 1,
+                            "maximum": 128
+                        },
+                        "video_card_total_memory": {
+                            "type": "integer",
+                            "description": "Total video card memory capacity in GB",
+                            "minimum": 4,
+                            "maximum": 200
+                        },
+                        "system_RAM": {
+                            "type": "integer",
+                            "description": "VM system RAM in GB",
+                            "minimum": 8,
+                            "maximum": 2048
+                        },
+                        "storage_capacity": {
+                            "type": "integer",
+                            "description": "Storage capacity in GB",
+                            "minimum": 50,
+                            "maximum": 10000
+                        },
+                        "storage_type": {
+                            "type": "string",
+                            "description": "Storage type recommendation"
                         }
                     },
-                    "required": ["vGPU_profile", "RAM"]
+                    "required": ["vGPU_profile"]
                 }
             },
             "citations": citations.model_dump() if citations else None,
