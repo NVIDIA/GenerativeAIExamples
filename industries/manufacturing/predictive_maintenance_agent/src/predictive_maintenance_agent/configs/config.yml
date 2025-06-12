@@ -58,7 +58,6 @@ functions:
     tool_names: [plot_line_chart, plot_comparison, plot_distribution]
     verbose: true
     handle_tool_errors: true
-    max_iterations: 1
     description: "Use this agent to generate plots from the retrieved SQL data. Provide a description of the plot required along with the JSON file path containing the SQL output in the input message.
     for example: Plot the sensor_measurement_1 vs time_in_cycles for unit 1 from the file ${PWD_PATH}/output_data/sql_output.json"
 

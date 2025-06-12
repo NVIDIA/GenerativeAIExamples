@@ -6,7 +6,7 @@ import pickle
 import joblib
 import numpy as np
 
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 from aiq.builder.builder import Builder
 from aiq.builder.function_info import FunctionInfo
@@ -51,7 +51,7 @@ class PredictRulToolConfig(FunctionBaseConfig, name="predict_rul_tool"):
     """
     AIQ Toolkit function to predict RUL (Remaining Useful Life) using trained models and provided data.
     """
-    # Configuration parameters
+    # Runtime configuration parameters
     scaler_path: str = Field(description="Path to the trained StandardScaler model.", default="./models/scaler_model.pkl")
     model_path: str = Field(description="Path to the trained XGBoost model.", default="./models/xgb_model_fd001.pkl")
     output_folder: str = Field(description="The path to the output folder to save prediction results.", default="./output_data")
@@ -60,6 +60,9 @@ class PredictRulToolConfig(FunctionBaseConfig, name="predict_rul_tool"):
 async def predict_rul_tool(
     config: PredictRulToolConfig, builder: Builder
 ):
+    class PredictRulInputSchema(BaseModel):
+        json_file_path: str = Field(description="Path to a JSON file containing sensor measurements data for RUL prediction")
+
     def load_data_from_json(json_path: str):
         """Load data from JSON file into a pandas DataFrame."""
         import pandas as pd
@@ -156,12 +159,12 @@ async def predict_rul_tool(
         
         return y_pred, data_json_path
 
-    async def _response_fn(input_message: str) -> str:
+    async def _response_fn(json_file_path: str) -> str:
         """
         Process the input message and generate RUL predictions using trained models.
         """
-        logger.info(f"Input message: {input_message}")
-        data_json_path = verify_json_path(input_message)
+        logger.info(f"Input message: {json_file_path}")
+        data_json_path = verify_json_path(json_file_path)
         try:
             predictions, output_filepath = predict_rul_from_data(
                 data_json_path=data_json_path,
@@ -238,6 +241,7 @@ All columns from the original dataset have been preserved, and the predicted RUL
     - Updated JSON file with predictions added as 'predicted_RUL' column
     """
     yield FunctionInfo.from_fn(_response_fn, 
+                               input_schema=PredictRulInputSchema,
                                description=prompt)
     try:
         pass

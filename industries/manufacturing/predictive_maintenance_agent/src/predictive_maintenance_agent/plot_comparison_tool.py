@@ -3,7 +3,7 @@ import logging
 import os
 import pandas as pd
 
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 from aiq.builder.builder import Builder
 from aiq.builder.function_info import FunctionInfo
@@ -120,17 +120,19 @@ class PlotComparisonToolConfig(FunctionBaseConfig, name="plot_comparison_tool"):
     """
     AIQ Toolkit function to plot comparison of two y-axis columns against an x-axis column.
     """
-    # Configuration parameters
-    # x_axis_column: str = Field(description="The column name for x-axis data.", default="time_in_cycles")
-    # y_axis_column_1: str = Field(description="The first column name for y-axis data.", default="actual_RUL")
-    # y_axis_column_2: str = Field(description="The second column name for y-axis data.", default="predicted_RUL")
-    # plot_title: str = Field(description="The title for the plot.", default="Comparison Plot")
     output_folder: str = Field(description="The path to the output folder to save plots.", default="./output_data")
 
 @register_function(config_type=PlotComparisonToolConfig)
 async def plot_comparison_tool(
     config: PlotComparisonToolConfig, builder: Builder
 ):
+    class PlotComparisonInputSchema(BaseModel):
+        data_json_path: str = Field(description="The path to the JSON file containing the data")
+        x_axis_column: str = Field(description="The column name for x-axis data", default="time_in_cycles")
+        y_axis_column_1: str = Field(description="The first column name for y-axis data", default="actual_RUL")
+        y_axis_column_2: str = Field(description="The second column name for y-axis data", default="predicted_RUL")
+        plot_title: str = Field(description="The title for the plot", default="Comparison Plot")
+
     def load_data_from_json(json_path: str):
         """Load data from JSON file into a pandas DataFrame."""
         import pandas as pd
@@ -310,7 +312,7 @@ async def plot_comparison_tool(
             
             # Add info about RUL transformation if applied
             rul_info = ""
-            if y_axis_column_1 == "RUL" or y_axis_column_2 == "RUL":
+            if y_axis_column_1 == "actual_RUL" or y_axis_column_2 == "actual_RUL":
                 rul_info = f"\n- Piecewise RUL transformation applied (max_life=125)"
             
             # Return a clear completion message that the LLM will understand
@@ -351,6 +353,7 @@ async def plot_comparison_tool(
     - HTML file containing the comparison plot
     """
     yield FunctionInfo.from_fn(_response_fn, 
+                               input_schema=PlotComparisonInputSchema,
                                description=prompt)
     try:
         pass

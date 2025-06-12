@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 from aiq.builder.builder import Builder
 from aiq.builder.function_info import FunctionInfo
@@ -47,16 +47,17 @@ class PlotDistributionToolConfig(FunctionBaseConfig, name="plot_distribution_too
     """
     AIQ Toolkit function to plot distribution histogram of a specified column.
     """
-    # Configuration parameters
-    data_json_path: str = Field(description="The path to the JSON file containing the data.", default="")
-    column_name: str = Field(description="The column name to create distribution plot for.", default="RUL")
-    plot_title: str = Field(description="The title for the plot.", default="Distribution Plot")
     output_folder: str = Field(description="The path to the output folder to save plots.", default="./output_data")
 
 @register_function(config_type=PlotDistributionToolConfig)
 async def plot_distribution_tool(
     config: PlotDistributionToolConfig, builder: Builder
 ):
+    class PlotDistributionInputSchema(BaseModel):
+        data_json_path: str = Field(description="The path to the JSON file containing the data")
+        column_name: str = Field(description="The column name to create distribution plot for", default="RUL")
+        plot_title: str = Field(description="The title for the plot", default="Distribution Plot")
+
     def load_data_from_json(json_path: str):
         """Load data from JSON file into a pandas DataFrame."""
         import pandas as pd
@@ -160,8 +161,8 @@ async def plot_distribution_tool(
             if df is None or df.empty:
                 return "Could not load data or data is empty from the provided JSON file"
             
-            if config.column_name not in df.columns:
-                return f"Column '{config.column_name}' not found in data. Available columns: {df.columns.tolist()}"
+            if column_name not in df.columns:
+                return f"Column '{column_name}' not found in data. Available columns: {df.columns.tolist()}"
             
             output_filepath = create_distribution_plot_html(
                 output_dir=config.output_folder,
@@ -200,6 +201,7 @@ async def plot_distribution_tool(
     - HTML file containing the distribution histogram
     """
     yield FunctionInfo.from_fn(_response_fn, 
+                               input_schema=PlotDistributionInputSchema,
                                description=prompt)
     try:
         pass

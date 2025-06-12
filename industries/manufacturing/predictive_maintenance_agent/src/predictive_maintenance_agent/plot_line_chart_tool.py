@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 from aiq.builder.builder import Builder
 from aiq.builder.function_info import FunctionInfo
@@ -47,17 +47,18 @@ class PlotLineChartToolConfig(FunctionBaseConfig, name="plot_line_chart_tool"):
     """
     AIQ Toolkit function to plot a line chart with specified x and y axis columns.
     """
-    # Configuration parameters
-    # data_json_path: str = Field(description="The path to the JSON file containing the data.", default="./output_data/sql_output.json")
-    # x_axis_column: str = Field(description="The column name for x-axis data.", default="time_in_cycles")
-    # y_axis_column: str = Field(description="The column name for y-axis data.", default="RUL")
-    # plot_title: str = Field(description="The title for the plot.", default="Line Chart")
     output_folder: str = Field(description="The path to the output folder to save plots.", default="./output_data")
 
 @register_function(config_type=PlotLineChartToolConfig)
 async def plot_line_chart_tool(
     config: PlotLineChartToolConfig, builder: Builder
 ):
+    class PlotLineChartInputSchema(BaseModel):
+        data_json_path: str = Field(description="The path to the JSON file containing the data")
+        x_axis_column: str = Field(description="The column name for x-axis data", default="time_in_cycles")
+        y_axis_column: str = Field(description="The column name for y-axis data", default="RUL")
+        plot_title: str = Field(description="The title for the plot", default="Line Chart")
+
     def load_data_from_json(json_path: str):
         """Load data from JSON file into a pandas DataFrame."""
         import pandas as pd
@@ -231,6 +232,7 @@ async def plot_line_chart_tool(
     - HTML file containing the line chart
     """
     yield FunctionInfo.from_fn(_response_fn, 
+                               input_schema=PlotLineChartInputSchema,
                                description=prompt)
     try:
         pass

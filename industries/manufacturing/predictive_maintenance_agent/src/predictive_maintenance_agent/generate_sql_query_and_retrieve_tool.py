@@ -3,7 +3,7 @@ import logging
 import os
 
 from aiq.builder.framework_enum import LLMFrameworkEnum
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 from aiq.builder.builder import Builder
 from aiq.builder.function_info import FunctionInfo
@@ -16,7 +16,7 @@ class GenerateSqlQueryAndRetrieveToolConfig(FunctionBaseConfig, name="generate_s
     """
     AIQ Toolkit function to generate SQL queries and retrieve data.
     """
-    # Add your custom configuration parameters here
+    # Runtime configuration parameters
     llm_name: str = Field(description="The name of the LLM to use for the function.")
     embedding_name: str = Field(description="The name of the embedding to use for the function.")
     vector_store_path: str = Field(description="The path to the vector store to use for the function.")
@@ -30,6 +30,9 @@ async def generate_sql_query_and_retrieve_tool(
     """
     Generate a SQL query for a given question and retrieve the data from the database.
     """
+    class GenerateSqlQueryInputSchema(BaseModel):
+        input_question_in_english: str = Field(description="User's question in plain English to generate SQL query for")
+
     # Create Vanna instance
     vanna_llm_config = builder.get_llm_config(config.llm_name)
     vanna_embedder_config = builder.get_embedder_config(config.embedding_name)
@@ -46,12 +49,14 @@ async def generate_sql_query_and_retrieve_tool(
     2. For data extraction queries (multiple rows/complex data): recommend saving to JSON file and provide summary
     3. For simple queries (single values, counts, yes/no): provide direct answers without file storage
     4. Always be helpful and provide context about the results
+    5. Generate a descriptive filename for data that should be saved
 
     Guidelines:
     - If results contain multiple rows or complex data (>5 rows or >3 columns): recommend saving to file
     - If results are simple (single value, count, or small lookup): provide direct answer
     - Always mention the SQL query that was executed
     - Be clear about whether data was saved to a file or not
+    - For files to be saved, suggest a descriptive filename based on the query content (e.g., "sensor_data_unit_5.json", "engine_performance_analysis.json")
     """
     
     user_prompt = """
@@ -65,13 +70,16 @@ async def generate_sql_query_and_retrieve_tool(
     - Columns: {columns}
     - Sample data (first few rows): {sample_data}
     
-    File Path (if data should be saved): {file_path}
+    Output directory: {output_dir}
     
     Please provide an appropriate response that either:
-    1. Saves the data to JSON file and provides a summary (for complex/large datasets)
+    1. Saves the data to JSON file and provides a summary (for complex/large datasets) - suggest a descriptive filename
     2. Directly answers the question with the results (for simple queries)
     
     Be conversational and helpful. Explain what was found and next steps if applicable.
+    If saving data, suggest a meaningful filename in the format: "descriptive_name.json"
+    
+    Important: Do not use template variables or placeholders in your response. Provide actual values and descriptions.
     """
     
     prompt = ChatPromptTemplate.from_messages([("system", system_prompt), ("user", user_prompt)])
@@ -126,14 +134,14 @@ async def generate_sql_query_and_retrieve_tool(
         
     vn_instance = get_vanna_instance(vanna_llm_config, vanna_embedder_config, config.vector_store_path, config.db_path)
 
-    async def _response_fn(input_message: str) -> str:
-        # Process the input_message and generate output
+    async def _response_fn(input_question_in_english: str) -> str:
+        # Process the input_question_in_english and generate output
         if vn_instance is None:
             return "Error: Vanna instance not available"
         
         sql = None
         try:
-            sql = vn_instance.generate_sql(question=input_message)
+            sql = vn_instance.generate_sql(question=input_question_in_english)
             logger.info(f"Generated SQL: {sql}")
         except Exception as e:
             return f"Error generating SQL: {e}"
@@ -155,18 +163,15 @@ async def generate_sql_query_and_retrieve_tool(
             # Get sample data (first 3 rows for preview)
             sample_data = df.head(3).to_dict('records')
             
-            # Prepare file path for potential saving
-            sql_output_path = os.path.join(config.output_folder, "sql_output.json")
-            
             # Use LLM to generate intelligent response
             response = await output_message.ainvoke({
-                "original_question": input_message,
+                "original_question": input_question_in_english,
                 "sql_query": sql,
                 "num_rows": num_rows,
                 "num_columns": num_columns,
                 "columns": ", ".join(columns),
                 "sample_data": json.dumps(sample_data, indent=2),
-                "file_path": sql_output_path
+                "output_dir": config.output_folder
             })
             
             # Check if LLM response suggests saving data (look for keywords or patterns)
@@ -182,6 +187,25 @@ async def generate_sql_query_and_retrieve_tool(
             )
             
             if should_save_data:
+                # Extract suggested filename from LLM response or use default
+                import re
+                filename_match = re.search(r'"([^"]+\.json)"', llm_response)
+                if filename_match:
+                    suggested_filename = filename_match.group(1)
+                else:
+                    # Generate a descriptive filename based on the question
+                    import hashlib
+                    # Clean the question for filename
+                    clean_question = re.sub(r'[^\w\s-]', '', input_question_in_english.lower())
+                    clean_question = re.sub(r'\s+', '_', clean_question.strip())[:30]
+                    if clean_question:
+                        suggested_filename = f"{clean_question}_results.json"
+                    else:
+                        query_hash = hashlib.md5(input_question_in_english.encode()).hexdigest()[:8]
+                        suggested_filename = f"sql_results_{query_hash}.json"
+                
+                sql_output_path = os.path.join(config.output_folder, suggested_filename)
+                
                 # Save the data to JSON file
                 os.makedirs(config.output_folder, exist_ok=True)
                 json_result = df.to_json(orient="records")
@@ -189,9 +213,17 @@ async def generate_sql_query_and_retrieve_tool(
                     json.dump(json.loads(json_result), f, indent=4)
                 logger.info(f"Data saved to {sql_output_path}")
                 
-                # If LLM didn't mention saving, append save confirmation
-                if "saved" not in llm_response.lower():
-                    llm_response += f"\n\n📁 Data has been saved to: {sql_output_path} with the following columns: {', '.join(columns)}"
+                # Clean up the LLM response and add file save confirmation
+                # Remove any object references that might have slipped through
+                cleaned_response = re.sub(r',\[object Object\],?', '', llm_response)
+                cleaned_response = re.sub(r'\[object Object\]', str(num_rows), cleaned_response)
+                
+                # If LLM didn't mention the actual saved path, append save confirmation
+                if sql_output_path not in cleaned_response:
+                    cleaned_response += f"\n\n📁 Data has been saved to: {sql_output_path}"
+                    cleaned_response += f"\n📊 File contains {num_rows} rows with columns: {', '.join(columns)}"
+                
+                return cleaned_response
             
             return llm_response
             
@@ -201,10 +233,14 @@ async def generate_sql_query_and_retrieve_tool(
     description = """
     Use this tool to automatically generate SQL queries for the user's question, retrieve the data from the SQL database and store the data in a JSON file or provide a summary of the data.
     Do not provide SQL query as input, only a question in plain english.
-    Input: User's question or a question that you think is relevant to the user's question in plain english.
-    Output: Status of the generated SQL query's execution.
+    
+    Input: 
+    - input_question_in_english: User's question or a question that you think is relevant to the user's question in plain english
+    
+    Output: Status of the generated SQL query's execution along with the output path. The tool will automatically generate descriptive filenames for saved data.
     """
     yield FunctionInfo.from_fn(_response_fn, 
+                               input_schema=GenerateSqlQueryInputSchema,
                                description=description)
     try:
         pass
