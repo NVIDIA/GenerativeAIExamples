@@ -280,12 +280,14 @@ class UnstructuredRAG(BaseExample):
 
             if "llama-3.3-nemotron-super-49b" in str(kwargs.get("model")):
                 if os.environ.get("ENABLE_NEMOTRON_THINKING", "false").lower() == "true":
-                    logger.info("Setting system prompt as detailed thinking on")
+                    logger.info("Using nemotron thinking prompt")
                     system_prompt = "detailed thinking on"
+                    # For chat mode, we don't have context, so use the chat template
+                    nemotron_message += [("user", prompts.get("chat_template", ""))]
                 else:
                     logger.info("Setting system prompt as detailed thinking off")
                     system_prompt = "detailed thinking off"
-                nemotron_message += [("user", prompts.get("chat_template", ""))]
+                    nemotron_message += [("user", prompts.get("chat_template", ""))]
 
             for message in chat_history:
                 if message.role ==  "system":
@@ -400,12 +402,14 @@ class UnstructuredRAG(BaseExample):
 
             if "llama-3.3-nemotron-super-49b" in str(kwargs.get("model")):
                 if os.environ.get("ENABLE_NEMOTRON_THINKING", "false").lower() == "true":
-                    logger.info("Setting system prompt as detailed thinking on")
+                    logger.info("Using nemotron thinking prompt for RAG")
                     system_prompt = "detailed thinking on"
+                    # Use the nemotron_thinking_prompt instead of rag_template
+                    user_message += [("user", prompts.get("nemotron_thinking_prompt", prompts.get("rag_template", "")))]
                 else:
                     logger.info("Setting system prompt as detailed thinking off")
                     system_prompt = "detailed thinking off"
-                user_message += [("user", prompts.get("rag_template", ""))]
+                    user_message += [("user", prompts.get("rag_template", ""))]
 
             for message in chat_history:
                 if message.role ==  "system":
@@ -592,12 +596,14 @@ class UnstructuredRAG(BaseExample):
 
             if "llama-3.3-nemotron-super-49b" in str(kwargs.get("model")):
                 if os.environ.get("ENABLE_NEMOTRON_THINKING", "false").lower() == "true":
-                    logger.info("Setting system prompt as detailed thinking on")
+                    logger.info("Using nemotron thinking prompt for multiturn RAG")
                     system_prompt = "detailed thinking on"
+                    # Use the nemotron_thinking_prompt instead of rag_template
+                    user_message += [("user", prompts.get("nemotron_thinking_prompt", prompts.get("rag_template", "")))]
                 else:
                     logger.info("Setting system prompt as detailed thinking off")
                     system_prompt = "detailed thinking off"
-                user_message += [("user", prompts.get("rag_template", ""))]
+                    user_message += [("user", prompts.get("rag_template", ""))]
 
             for message in chat_history:
                 if message.role ==  "system":
