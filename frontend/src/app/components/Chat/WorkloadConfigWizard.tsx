@@ -28,6 +28,18 @@ interface WorkloadConfig {
   gpuInventory: { [key: string]: number };
   framework: string;
   priority: string;
+  // RAG-specific fields
+  embeddingModel: string;
+  retrievalModel: string;
+  inferenceModel: string;
+  // Inference-specific fields
+  inferenceBatchSize: string;
+  inferenceConcurrency: string;
+  // Training-specific fields
+  trainingEpochs: string;
+  datasetSize: string;
+  trainingModel: string;
+  optimizer: string;
 }
 
 interface WorkloadConfigWizardProps {
@@ -52,6 +64,18 @@ export default function WorkloadConfigWizard({
     gpuInventory: {},
     framework: "",
     priority: "",
+    // RAG-specific fields
+    embeddingModel: "",
+    retrievalModel: "",
+    inferenceModel: "",
+    // Inference-specific fields
+    inferenceBatchSize: "",
+    inferenceConcurrency: "",
+    // Training-specific fields
+    trainingEpochs: "",
+    datasetSize: "",
+    trainingModel: "",
+    optimizer: "",
   });
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -117,6 +141,31 @@ export default function WorkloadConfigWizard({
     { value: "other", label: "Other" }
   ];
 
+  const embeddingModels = [
+    { value: "text-embedding-ada-002", label: "OpenAI text-embedding-ada-002" },
+    { value: "e5-large", label: "E5-Large" },
+    { value: "bge-large", label: "BGE-Large" },
+    { value: "gte-large", label: "GTE-Large" },
+    { value: "all-mpnet-base-v2", label: "All-MPNet-Base-v2" },
+    { value: "custom", label: "Custom Embedding Model" }
+  ];
+
+  const retrievalModels = [
+    { value: "bge-reranker-large", label: "BGE Reranker Large" },
+    { value: "cross-encoder-ms-marco", label: "Cross-Encoder MS-MARCO" },
+    { value: "colbert-v2", label: "ColBERT v2" },
+    { value: "dense-passage-retrieval", label: "Dense Passage Retrieval" },
+    { value: "none", label: "No Retrieval Model (Direct Vector Search)" }
+  ];
+
+  const optimizers = [
+    { value: "adamw", label: "AdamW" },
+    { value: "adam", label: "Adam" },
+    { value: "sgd", label: "SGD with Momentum" },
+    { value: "rmsprop", label: "RMSprop" },
+    { value: "lion", label: "Lion" }
+  ];
+
   const handleInputChange = (field: keyof WorkloadConfig, value: string) => {
     setConfig((prev: WorkloadConfig) => ({ ...prev, [field]: value }));
   };
@@ -134,7 +183,7 @@ export default function WorkloadConfigWizard({
   };
 
   const getTotalGPUs = (): number => {
-    return Object.values(config.gpuInventory).reduce((sum: number, count: number) => sum + count, 0);
+    return Object.values(config.gpuInventory).reduce<number>((sum, count) => sum + (count || 0), 0);
   };
 
   const generateQuery = (): string => {
@@ -149,8 +198,8 @@ export default function WorkloadConfigWizard({
       parts.push(`${workloadLabel.trim()}`);
     }
     
-    // Model size
-    if (config.modelSize) {
+    // Model size (for backward compatibility)
+    if (config.modelSize && config.workloadType !== 'rag' && config.workloadType !== 'inference' && config.workloadType !== 'training') {
       const sizeLabel = modelSizes.find(s => s.value === config.modelSize)?.label || config.modelSize;
       parts.push(`with ${sizeLabel.toLowerCase()}`);
     }
@@ -158,32 +207,81 @@ export default function WorkloadConfigWizard({
     // GPU Inventory - Enhanced with specific quantities
     if (config.gpuInventory && Object.keys(config.gpuInventory).length > 0) {
       const gpuLabels = Object.entries(config.gpuInventory)
-        .filter(([_, quantity]: [string, number]) => quantity > 0)
-        .map(([gpu, quantity]: [string, number]) => {
+        .filter(([_, quantity]) => (quantity as number) > 0)
+        .map(([gpu, quantity]) => {
           const gpuInfo = availableGPUInventory.find(g => g.value === gpu);
-          return `${quantity}x ${gpuInfo?.label || gpu}`;
+          return `${quantity as number}x ${gpuInfo?.label || gpu}`;
         });
       parts.push(`using available GPU inventory: ${gpuLabels.join(', ')}`);
     }
     
-    // Specific Model
-    if (config.specificModel && config.specificModel !== 'unknown') {
-      const modelLabel = specificModels.find(m => m.value === config.specificModel)?.label || config.specificModel;
-      parts.push(`running ${modelLabel}`);
+    // Workload-specific configurations
+    if (config.workloadType === 'rag') {
+      const ragDetails = [];
+      if (config.embeddingModel) {
+        ragDetails.push(`embedding model: ${config.embeddingModel}`);
+      }
+      if (config.retrievalModel) {
+        ragDetails.push(`retrieval model: ${config.retrievalModel}`);
+      }
+      if (config.inferenceModel) {
+        ragDetails.push(`inference model: ${config.inferenceModel}`);
+      }
+      if (ragDetails.length > 0) {
+        parts.push(`with ${ragDetails.join(', ')}`);
+      }
+    } else if (config.workloadType === 'inference') {
+      const inferenceDetails = [];
+      if (config.specificModel && config.specificModel !== 'unknown') {
+        const modelLabel = specificModels.find(m => m.value === config.specificModel)?.label || config.specificModel;
+        inferenceDetails.push(`running ${modelLabel}`);
+      }
+      if (config.inferenceBatchSize) {
+        inferenceDetails.push(`batch size: ${config.inferenceBatchSize}`);
+      }
+      if (config.inferenceConcurrency) {
+        inferenceDetails.push(`concurrency: ${config.inferenceConcurrency}`);
+      }
+      if (inferenceDetails.length > 0) {
+        parts.push(inferenceDetails.join(' with '));
+      }
+    } else if (config.workloadType === 'training' || config.workloadType === 'fine-tuning') {
+      const trainingDetails = [];
+      if (config.trainingModel) {
+        trainingDetails.push(`model: ${config.trainingModel}`);
+      }
+      if (config.trainingEpochs) {
+        trainingDetails.push(`${config.trainingEpochs} epochs`);
+      }
+      if (config.datasetSize) {
+        trainingDetails.push(`dataset size: ${config.datasetSize}`);
+      }
+      if (config.optimizer) {
+        trainingDetails.push(`optimizer: ${config.optimizer}`);
+      }
+      if (trainingDetails.length > 0) {
+        parts.push(`with ${trainingDetails.join(', ')}`);
+      }
+    } else {
+      // For other workload types, use the original logic
+      if (config.specificModel && config.specificModel !== 'unknown') {
+        const modelLabel = specificModels.find(m => m.value === config.specificModel)?.label || config.specificModel;
+        parts.push(`running ${modelLabel}`);
+      }
     }
     
-    // Performance requirements
-    if (config.performanceLevel) {
+    // Performance requirements (for non-RAG workloads)
+    if (config.performanceLevel && config.workloadType !== 'rag') {
       const perfLabel = performanceLevels.find(p => p.value === config.performanceLevel)?.label || config.performanceLevel;
       parts.push(`requiring ${perfLabel.toLowerCase()} performance`);
     }
     
-    // Memory and batch size
+    // Memory and batch size (general requirements)
     const requirements = [];
     if (config.memoryRequirement) {
       requirements.push(`${config.memoryRequirement} memory`);
     }
-    if (config.batchSize) {
+    if (config.batchSize && config.workloadType !== 'inference') {
       requirements.push(`batch size of ${config.batchSize}`);
     }
     if (config.concurrentUsers) {
@@ -229,6 +327,18 @@ export default function WorkloadConfigWizard({
       gpuInventory: {},
       framework: "",
       priority: "",
+      // RAG-specific fields
+      embeddingModel: "",
+      retrievalModel: "",
+      inferenceModel: "",
+      // Inference-specific fields
+      inferenceBatchSize: "",
+      inferenceConcurrency: "",
+      // Training-specific fields
+      trainingEpochs: "",
+      datasetSize: "",
+      trainingModel: "",
+      optimizer: "",
     });
     setCurrentStep(1);
   };
@@ -238,7 +348,16 @@ export default function WorkloadConfigWizard({
       case 1:
         return config.workloadType && getTotalGPUs() > 0;
       case 2:
-        return (config.specificModel || config.modelSize) && config.performanceLevel;
+        // Different validation based on workload type
+        if (config.workloadType === 'rag') {
+          return config.embeddingModel && config.inferenceModel;
+        } else if (config.workloadType === 'inference') {
+          return config.specificModel && config.inferenceBatchSize;
+        } else if (config.workloadType === 'training' || config.workloadType === 'fine-tuning') {
+          return config.trainingModel && config.trainingEpochs;
+        } else {
+          return (config.specificModel || config.modelSize) && config.performanceLevel;
+        }
       case 3:
         return true; // Final step, can always proceed
       default:
@@ -373,13 +492,13 @@ export default function WorkloadConfigWizard({
                     <h4 className="text-sm font-medium text-green-300 mb-2">Selected GPU Inventory:</h4>
                     <div className="space-y-1">
                       {Object.entries(config.gpuInventory)
-                        .filter(([_, quantity]) => quantity > 0)
+                        .filter(([_, quantity]) => (quantity as number) > 0)
                         .map(([gpu, quantity]) => {
                           const gpuInfo = availableGPUInventory.find(g => g.value === gpu);
                           return (
                             <div key={gpu} className="flex items-center justify-between text-sm">
                               <span className="text-white">{gpuInfo?.label || gpu}</span>
-                              <span className="text-green-300 font-medium">{quantity} units</span>
+                              <span className="text-green-300 font-medium">{quantity as number} units</span>
                             </div>
                           );
                         })}
@@ -399,66 +518,240 @@ export default function WorkloadConfigWizard({
           {/* Step 2: Performance Requirements */}
           {currentStep === 2 && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Model Size & Performance</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Specific Model (if known)</label>
-                    <select
-                      value={config.specificModel}
-                      onChange={(e) => handleInputChange("specificModel", e.target.value)}
-                      className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white mb-4"
-                    >
-                      <option value="">Select a specific model</option>
-                      {specificModels.map((model) => (
-                        <option key={model.value} value={model.value}>{model.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {(config.specificModel === 'unknown' || config.specificModel === '') && (
+              {/* RAG Workload Configuration */}
+              {config.workloadType === 'rag' && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4">RAG Pipeline Configuration</h3>
+                  <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Model Size Category</label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {modelSizes.map((size) => (
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Embedding Model</label>
+                      <select
+                        value={config.embeddingModel}
+                        onChange={(e) => handleInputChange("embeddingModel", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select embedding model</option>
+                        {embeddingModels.map((model) => (
+                          <option key={model.value} value={model.value}>{model.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Retrieval Model (Optional)</label>
+                      <select
+                        value={config.retrievalModel}
+                        onChange={(e) => handleInputChange("retrievalModel", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select retrieval/reranking model</option>
+                        {retrievalModels.map((model) => (
+                          <option key={model.value} value={model.value}>{model.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Inference Model</label>
+                      <select
+                        value={config.inferenceModel}
+                        onChange={(e) => handleInputChange("inferenceModel", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select inference model</option>
+                        {specificModels.map((model) => (
+                          <option key={model.value} value={model.value}>{model.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Inference Workload Configuration */}
+              {config.workloadType === 'inference' && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4">Inference Configuration</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Model Name</label>
+                      <select
+                        value={config.specificModel}
+                        onChange={(e) => handleInputChange("specificModel", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select model for inference</option>
+                        {specificModels.map((model) => (
+                          <option key={model.value} value={model.value}>{model.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Batch Size</label>
+                      <select
+                        value={config.inferenceBatchSize}
+                        onChange={(e) => handleInputChange("inferenceBatchSize", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select batch size</option>
+                        <option value="1">1 (Real-time inference)</option>
+                        <option value="4">4 (Small batch)</option>
+                        <option value="8">8 (Medium batch)</option>
+                        <option value="16">16 (Large batch)</option>
+                        <option value="32">32 (Very large batch)</option>
+                        <option value="64+">64+ (Bulk processing)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Concurrency Level</label>
+                      <select
+                        value={config.inferenceConcurrency}
+                        onChange={(e) => handleInputChange("inferenceConcurrency", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select concurrency level</option>
+                        <option value="low">Low (1-5 concurrent requests)</option>
+                        <option value="medium">Medium (5-20 concurrent requests)</option>
+                        <option value="high">High (20-50 concurrent requests)</option>
+                        <option value="very-high">Very High (50+ concurrent requests)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Training/Fine-tuning Workload Configuration */}
+              {(config.workloadType === 'training' || config.workloadType === 'fine-tuning') && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4">Training Configuration</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Model</label>
+                      <select
+                        value={config.trainingModel}
+                        onChange={(e) => handleInputChange("trainingModel", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select model to train</option>
+                        {specificModels.map((model) => (
+                          <option key={model.value} value={model.value}>{model.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Number of Epochs</label>
+                      <select
+                        value={config.trainingEpochs}
+                        onChange={(e) => handleInputChange("trainingEpochs", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select number of epochs</option>
+                        <option value="1-5">1-5 epochs (Quick fine-tuning)</option>
+                        <option value="5-10">5-10 epochs (Standard training)</option>
+                        <option value="10-20">10-20 epochs (Extended training)</option>
+                        <option value="20-50">20-50 epochs (Deep training)</option>
+                        <option value="50+">50+ epochs (Extensive training)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Dataset Size</label>
+                      <select
+                        value={config.datasetSize}
+                        onChange={(e) => handleInputChange("datasetSize", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select dataset size</option>
+                        <option value="small">Small (&lt;10K samples)</option>
+                        <option value="medium">Medium (10K-100K samples)</option>
+                        <option value="large">Large (100K-1M samples)</option>
+                        <option value="very-large">Very Large (1M+ samples)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Optimizer</label>
+                      <select
+                        value={config.optimizer}
+                        onChange={(e) => handleInputChange("optimizer", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                      >
+                        <option value="">Select optimizer</option>
+                        {optimizers.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Default configuration for other workload types */}
+              {!['rag', 'inference', 'training', 'fine-tuning'].includes(config.workloadType) && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4">Model Size & Performance</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Specific Model (if known)</label>
+                      <select
+                        value={config.specificModel}
+                        onChange={(e) => handleInputChange("specificModel", e.target.value)}
+                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white mb-4"
+                      >
+                        <option value="">Select a specific model</option>
+                        {specificModels.map((model) => (
+                          <option key={model.value} value={model.value}>{model.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {(config.specificModel === 'unknown' || config.specificModel === '') && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Model Size Category</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {modelSizes.map((size) => (
+                            <button
+                              key={size.value}
+                              onClick={() => handleInputChange("modelSize", size.value)}
+                              className={`p-3 rounded-lg border text-left transition-all ${
+                                config.modelSize === size.value
+                                  ? "border-green-500 bg-green-900/20 text-white"
+                                  : "border-neutral-600 bg-neutral-800 text-gray-300 hover:border-green-600"
+                              }`}
+                            >
+                              <div className="font-medium">{size.label}</div>
+                              <div className="text-sm text-gray-400">{size.desc}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Performance Level</label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {performanceLevels.map((level) => (
                           <button
-                            key={size.value}
-                            onClick={() => handleInputChange("modelSize", size.value)}
-                            className={`p-3 rounded-lg border text-left transition-all ${
-                              config.modelSize === size.value
+                            key={level.value}
+                            onClick={() => handleInputChange("performanceLevel", level.value)}
+                            className={`p-3 rounded-lg border text-center transition-all ${
+                              config.performanceLevel === level.value
                                 ? "border-green-500 bg-green-900/20 text-white"
                                 : "border-neutral-600 bg-neutral-800 text-gray-300 hover:border-green-600"
                             }`}
                           >
-                            <div className="font-medium">{size.label}</div>
-                            <div className="text-sm text-gray-400">{size.desc}</div>
+                            <div className="font-medium">{level.label}</div>
+                            <div className="text-xs text-gray-400 mt-1">{level.desc}</div>
                           </button>
                         ))}
                       </div>
                     </div>
-                  )}
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Performance Level</label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {performanceLevels.map((level) => (
-                        <button
-                          key={level.value}
-                          onClick={() => handleInputChange("performanceLevel", level.value)}
-                          className={`p-3 rounded-lg border text-center transition-all ${
-                            config.performanceLevel === level.value
-                              ? "border-green-500 bg-green-900/20 text-white"
-                              : "border-neutral-600 bg-neutral-800 text-gray-300 hover:border-green-600"
-                          }`}
-                        >
-                          <div className="font-medium">{level.label}</div>
-                          <div className="text-xs text-gray-400 mt-1">{level.desc}</div>
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
