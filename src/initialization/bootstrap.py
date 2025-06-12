@@ -131,8 +131,9 @@ class VGPUBootstrap:
             # Create collection - API expects collection names as JSON array in body
             # and other parameters as query parameters
             params = {
-                "embedding_dimension": 1024,  # Default for NVIDIA embeddings
-                "collection_type": "text"
+                "embedding_dimension": 2048,  # Updated to match actual NVIDIA embedding model dimensions
+                "collection_type": "text",
+                "search_type": "dense"  # Explicitly set search type to match APP_VECTORSTORE_SEARCHTYPE
             }
             
             response = self.session.post(
@@ -159,6 +160,11 @@ class VGPUBootstrap:
             logger.warning(f"vGPU documentation path {VGPU_DOCS_PATH} does not exist. Skipping documentation ingestion.")
             return
         
+        # Debug: List all files in the directory
+        logger.info(f"Contents of {docs_path}:")
+        for item in docs_path.iterdir():
+            logger.info(f"  - {item.name} ({'directory' if item.is_dir() else 'file'})")
+        
         # Find ALL PDF files recursively in the vgpu_docs directory
         pdf_files = list(docs_path.rglob("*.pdf"))
         
@@ -166,7 +172,9 @@ class VGPUBootstrap:
             logger.warning(f"No PDF files found in {docs_path}. Skipping ingestion.")
             return
         
-        logger.info(f"Found {len(pdf_files)} PDF files to ingest")
+        logger.info(f"Found {len(pdf_files)} PDF files to ingest:")
+        for pdf in pdf_files:
+            logger.info(f"  - {pdf.name}")
         
         # Check if collection already has documents
         try:
@@ -203,6 +211,10 @@ class VGPUBootstrap:
                 "split_options": {
                     "chunk_size": 1024,
                     "chunk_overlap": 150
+                },
+                "embedding_config": {
+                    "dimensions": 2048,
+                    "model_name": "nvidia/llama-3.2-nv-embedqa-1b-v2"
                 }
             }
             
@@ -225,6 +237,22 @@ class VGPUBootstrap:
                 result = response.json()
                 doc_count = result.get("total_documents", 0)
                 logger.info(f"✅ Ingested {doc_count} documents into collection '{collection_name}'")
+                
+                # Wait for embeddings to be generated and documents to be indexed
+                logger.info("Waiting for document embeddings to be generated...")
+                await asyncio.sleep(10)  # Give extra time for embedding generation
+                
+                # Verify documents are actually in the collection
+                verify_response = self.session.get(
+                    f"{INGESTOR_URL}/v1/documents",
+                    params={"collection_name": collection_name}
+                )
+                
+                if verify_response.status_code == 200:
+                    docs = verify_response.json().get("documents", [])
+                    logger.info(f"✅ Verified {len(docs)} documents are now in collection '{collection_name}'")
+                else:
+                    logger.warning(f"Could not verify document ingestion: {verify_response.text}")
             else:
                 logger.error(f"❌ Failed to ingest documents: {response.text}")
                 
@@ -271,6 +299,10 @@ class VGPUBootstrap:
                 "split_options": {
                     "chunk_size": 1024,
                     "chunk_overlap": 150
+                },
+                "embedding_config": {
+                    "dimensions": 2048,
+                    "model_name": "nvidia/llama-3.2-nv-embedqa-1b-v2"
                 }
             }
             
@@ -318,12 +350,28 @@ class VGPUBootstrap:
                 else:
                     logger.info(f"✅ Main collection '{MAIN_COLLECTION['name']}' is available")
                 
-                    # Check document count
-                    for collection in collections:
-                        if collection.get("collection_name") == MAIN_COLLECTION["name"]:
-                            count = collection.get("num_entities", 0)
-                            logger.info(f"📚 Collection has {count} documents")
-                            break
+                    # Check document count using the documents endpoint instead
+                    # This is more reliable than checking num_entities which might not be updated yet
+                    logger.info("Waiting for document processing to complete...")
+                    await asyncio.sleep(5)  # Give time for embeddings to be generated
+                    
+                    doc_response = self.session.get(
+                        f"{INGESTOR_URL}/v1/documents",
+                        params={"collection_name": MAIN_COLLECTION["name"]}
+                    )
+                    
+                    if doc_response.status_code == 200:
+                        documents = doc_response.json().get("documents", [])
+                        logger.info(f"📚 Collection has {len(documents)} documents")
+                        
+                        # Also check the collection metadata
+                        for collection in collections:
+                            if collection.get("collection_name") == MAIN_COLLECTION["name"]:
+                                entities = collection.get("num_entities", 0)
+                                logger.info(f"📊 Collection metadata shows {entities} entities")
+                                break
+                    else:
+                        logger.error(f"Failed to check documents: {doc_response.text}")
                 
             else:
                 logger.error(f"Failed to verify collections: {response.text}")

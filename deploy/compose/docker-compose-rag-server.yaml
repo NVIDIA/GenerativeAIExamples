@@ -27,7 +27,7 @@ services:
       # Type of vectordb used to store embedding supported type milvus
       APP_VECTORSTORE_NAME: "milvus"
       # Type of vectordb search to be used
-      APP_VECTORSTORE_SEARCHTYPE: ${APP_VECTORSTORE_SEARCHTYPE:-"dense"} # Can be dense or hybrid
+      APP_VECTORSTORE_SEARCH_TYPE: ${APP_VECTORSTORE_SEARCH_TYPE:-"dense"} # Can be dense or hybrid
       # vectorstore collection name to store embeddings
       COLLECTION_NAME: ${COLLECTION_NAME:-multimodal_data}
       APP_RETRIEVER_SCORETHRESHOLD: 0.25

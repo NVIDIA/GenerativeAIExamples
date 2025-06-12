@@ -21,7 +21,7 @@ services:
     
     volumes:
       # Mount vGPU documentation directory
-      - ${VGPU_DOCS_VOLUME:-./vgpu_docs}:/app/vgpu_docs
+      - "${VGPU_DOCS_VOLUME:-./vgpu_docs}:/app/vgpu_docs"
       
     # Removed depends_on since services are in different compose files
     # The bootstrap script itself waits for services to be ready

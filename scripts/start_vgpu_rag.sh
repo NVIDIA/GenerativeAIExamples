@@ -21,6 +21,8 @@ COMPOSE_DIR="$PROJECT_ROOT/deploy/compose"
 ENABLE_BOOTSTRAP=${ENABLE_VGPU_BOOTSTRAP:-true}
 SKIP_NIMS=${SKIP_NIMS:-false}
 VGPU_DOCS_PATH=${VGPU_DOCS_VOLUME:-./vgpu_docs}
+# Export VGPU_DOCS_VOLUME for docker-compose
+export VGPU_DOCS_VOLUME=${VGPU_DOCS_PATH}
 
 echo -e "${BLUE}🚀 NVIDIA vGPU RAG System Startup${NC}"
 echo "=================================="

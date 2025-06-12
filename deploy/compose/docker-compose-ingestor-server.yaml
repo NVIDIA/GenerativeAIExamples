@@ -22,7 +22,7 @@ services:
       # Type of vectordb used to store embedding supported type milvus
       APP_VECTORSTORE_NAME: "milvus"
       # Type of vectordb search to be used
-      APP_VECTORSTORE_SEARCHTYPE: ${APP_VECTORSTORE_SEARCHTYPE:-"dense"} # Can be dense or hybrid
+      APP_VECTORSTORE_SEARCH_TYPE: ${APP_VECTORSTORE_SEARCH_TYPE:-"dense"}
       # Boolean to enable GPU index for milvus vectorstore specific to nvingest
       APP_VECTORSTORE_ENABLEGPUINDEX: ${APP_VECTORSTORE_ENABLEGPUINDEX:-True}
       # Boolean to control GPU search for milvus vectorstore specific to nvingest
