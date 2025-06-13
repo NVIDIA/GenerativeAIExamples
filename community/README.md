@@ -83,3 +83,7 @@ Community examples are sample code and deployments for RAG pipelines that are no
 * [AI Podcast Assistant](./ai-podcast-assistant/)
 
   This example demonstrates a comprehensive workflow for processing podcast audio using the Phi-4-Multimodal LLM through NVIDIA NIM Microservices. It includes functionality for generating detailed notes from audio content, creating concise summaries, and translating both transcriptions and summaries into different languages. The implementation handles long audio files by automatically chunking them for efficient processing and preserves formatting during translation.
+
+* [Chat with LLM Llama 3.1 Nemotron Nano 4B](./chat-llama-nemotron/)
+
+  This is a React-based conversational UI designed for interacting with a powerful local LLM. It incorporates RAG to enhance contextual understanding and is backed by an NVIDIA Dynamo inference server running the NVIDIA Llama-3.1-Nemotron-Nano-4B-v1.1 model. The setup enables low-latency, cloud-free AI assistant capabilities, with live document search and reasoning, all deployable on local or edge infrastructure.

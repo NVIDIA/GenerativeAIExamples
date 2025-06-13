@@ -1,0 +1,8 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+numpy==1.24.3
+PyPDF2==3.0.1
+tqdm==4.66.1 
