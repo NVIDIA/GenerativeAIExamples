@@ -1,0 +1,230 @@
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under
+# the OAI Public License, Version 1.1  (the "License"); you may not use this file
+# except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.openairinterface.org/?page_id=698
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+
+# OAI CN Configuration File
+### This file can be used by all OAI NFs
+### Some fields are specific to an NF and will be ignored by other NFs
+
+## NOTE ON YAML ANCHORS ##
+# We use YAML anchors to ease the configuration and to avoid duplicating parts of the configuration.
+# This is especially true for the SNSSAIs, as we have to define them for multiple NFs.
+# Please note that the use of anchors is not mandatory, and you can define the SNSSAI in each NF yourself.
+# You can read more about anchors here: https://yaml.org/spec/1.2.2/#anchors-and-aliases
+
+############# Common configuration
+
+# Log level for all the NFs
+log_level:
+  general: debug
+
+# If you enable registration, the other NFs will use the NRF discovery mechanism
+register_nf:
+  general: yes
+
+http_version: 2
+
+############## SBI Interfaces
+### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
+nfs:
+  amf:
+    host: oai-amf
+    sbi:
+      port: 8080
+      api_version: v1
+      interface_name: eth0
+    n2:
+      interface_name: eth0
+      port: 38412
+  smf:
+    host: oai-smf-slice1
+    sbi:
+      port: 8080
+      api_version: v1
+      interface_name: eth0
+    n4:
+      interface_name: eth0
+      port: 8805
+  upf:
+    host: oai-upf-slice1
+    sbi:
+      port: 8080
+      api_version: v1
+      interface_name: eth0
+    n3:
+      interface_name: eth0
+      port: 2152
+    n4:
+      interface_name: eth0
+      port: 8805
+    n6:
+      interface_name: eth0
+    n9:
+      interface_name: eth0
+      port: 2152
+  udm:
+    host: oai-udm
+    sbi:
+      port: 8080
+      api_version: v1
+      interface_name: eth0
+  udr:
+    host: oai-udr
+    sbi:
+      port: 8080
+      api_version: v1
+      interface_name: eth0
+  ausf:
+    host: oai-ausf
+    sbi:
+      port: 8080
+      api_version: v1
+      interface_name: eth0
+  nrf:
+    host: oai-nrf
+    sbi:
+      port: 8080
+      api_version: v1
+      interface_name: eth0
+  pcf:
+    host: oai-pcf
+    sbi:
+      port: 8080
+      api_version: v1
+      interface_name: eth0
+  nssf:
+    host: oai-nssf
+    sbi:
+      port: 8080
+      api_version: v1
+      interface_name: eth0
+
+#### Common for UDR and AMF
+database:
+  host: mysql
+  user: test
+  type: mysql
+  password: test
+  database_name: oai_db
+  generate_random: true
+  connection_timeout: 300 # seconds
+
+############## NF-specific configuration
+amf:
+  amf_name: "OAI-AMF"
+  # This really depends on if we want to keep the "mini" version or not
+  support_features_options:
+    enable_simple_scenario: no # "no" by default with the normal deployment scenarios with AMF/SMF/UPF/AUSF/UDM/UDR/NRF.
+    # set it to "yes" to use with the minimalist deployment scenario (including only AMF/SMF/UPF) by using the internal AUSF/UDM implemented inside AMF.
+    # There's no NRF in this scenario, SMF info is taken from "nfs" section.
+    enable_nssf: yes
+    enable_smf_selection: yes
+  relative_capacity: 30
+  statistics_timer_interval: 20  # in seconds
+  emergency_support: false
+  served_guami_list:
+    - mcc: 001
+      mnc: 01
+      amf_region_id: 01
+      amf_set_id: 001
+      amf_pointer: 01
+  plmn_support_list:
+    - mcc: 001
+      mnc: 01
+      tac: 0x0001
+      nssai:
+        - sst: 1
+          sd: 000001 # in hex
+        - sst: 1
+          sd: 000005 # in hex
+  supported_integrity_algorithms:
+    - "NIA0"
+    - "NIA1"
+    - "NIA2"
+  supported_encryption_algorithms:
+    - "NEA0"
+    - "NEA1"
+    - "NEA2"
+
+smf:
+  ue_mtu: 1500
+  support_features:
+    use_local_subscription_info: yes # Use infos from local_subscription_info or from UDM
+    use_local_pcc_rules: no # Use infos from local_pcc_rules or from PCF
+  # we resolve from NRF, this is just to configure usage_reporting
+  upfs:
+    - host: oai-upf
+      config:
+        enable_usage_reporting: no
+        enable_qers: no
+  ue_dns:
+    primary_ipv4: "172.21.3.100"
+    primary_ipv6: "2001:4860:4860::8888"
+    secondary_ipv4: "8.8.8.8"
+    secondary_ipv6: "2001:4860:4860::8888"
+  ims:
+    pcscf_ipv4: "127.0.0.1"
+    pcscf_ipv6: "fe80::7915:f408:1787:db8b"
+  # the DNN you configure here should be configured in "dnns"
+  # follows the SmfInfo datatype from 3GPP TS 29.510
+  smf_info:
+    sNssaiSmfInfoList:
+      - sNssai:
+          sst: 1
+          sd: "000001"
+        dnnSmfInfoList:
+          - dnn: "oai"
+  local_subscription_infos:
+    - single_nssai:
+        sst: 1
+        sd: "000001"
+      dnn: "oai"
+      qos_profile:
+        5qi: 9
+        session_ambr_ul: "200Mbps"
+        session_ambr_dl: "400Mbps"
+
+upf:
+  support_features:
+    enable_bpf_datapath: no    # If "on": BPF is used as datapath else simpleswitch is used, DEFAULT= off
+    enable_snat: yes           # If "on": Source natting is done for UE, DEFAULT= off
+  remote_n6_gw: localhost      # Dummy host since simple-switch does not use N6 GW
+  smfs:
+    - host: oai-smf            # To be used for PFCP association in case of no-NRF
+  upf_info:
+    sNssaiUpfInfoList:
+      - sNssai:
+          sst: 1
+          sd: "000001"
+        dnnUpfInfoList:
+          - dnn: "oai"
+
+## DNN configuration
+dnns:
+  - dnn: "oai"
+    pdu_session_type: "IPV4"
+    ipv4_subnet: "12.1.1.0/25"
+
+pcf:
+  local_policy:
+    policy_decisions_path: /openair-pcf/policies/policy_decisions
+    pcc_rules_path: /openair-pcf/policies/pcc_rules
+    traffic_rules_path: /openair-pcf/policies/traffic_rules
+    qos_data_path: /openair-pcf/policies/qos_data
