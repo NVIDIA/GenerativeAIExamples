@@ -37,7 +37,7 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
 * [NVIDIA RAG Streaming Document Ingestion Pipeline](./streaming_ingest_rag)
 
-  This example demonstrate the construction of a performance-oriented pipeline that accepts a stream of heterogenous documents, divides the documents into smaller segments or chunks, computes the embedding vector for each of these chunks, and uploads the text chunks along with their associated embeddings to a Vector Database. This pipeline builds on the [Morpheus SDK](https://docs.nvidia.com/morpheus/index.html) to take advantage of end-to-end asynchronous processing. This pipeline showcases pipeline parallelism (including CPU and GPU-accelerated nodes), as well as, a mechanism to horizontally scale out data ingestion workers.
+  This example demonstrates the construction of a performance-oriented pipeline that accepts a stream of heterogenous documents, divides the documents into smaller segments or chunks, computes the embedding vector for each of these chunks, and uploads the text chunks along with their associated embeddings to a Vector Database. This pipeline builds on the [Morpheus SDK](https://docs.nvidia.com/morpheus/index.html) to take advantage of end-to-end asynchronous processing. This pipeline showcases pipeline parallelism (including CPU- and GPU-accelerated nodes) as well as a mechanism to horizontally scale out data ingestion workers.
 
 * [NVIDIA Live FM Radio ASR RAG](./fm-asr-streaming-rag)
 
@@ -45,7 +45,7 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
 * [NVIDIA ORAN chatbot multimodal Assistant](./oran-chatbot-multimodal/)
 
-  This example is designed to make it extremely easy to set up your own retrieval-augmented generation chatbot for ORAN techncial specifications and processes. The backend here calls the NVIDIA NeMo Service, which makes it very easy to deploy on a thin client or Virtual Machine (ie, without a GPU setup).
+  This example is designed to make it extremely easy to set up your own retrieval-augmented generation chatbot for ORAN technical specifications and processes. The backend here calls the NVIDIA NeMo Service, which makes it very easy to deploy on a thin client or Virtual Machine (i.e., without a GPU setup).
 
 * [NVIDIA Retrieval Customization](./synthetic-data-retriever-customization/)
 
@@ -61,7 +61,7 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
 * [NVIDIA Event Driven RAG for CVE Analysis with NVIDIA Morpheus](./event-driven-rag-cve-analysis/)
 
-  This example demonstrates how NVIDIA Morpheus, NIM microservices, and RAG pipelines can be integrated to create LLM-based agent pipelines. These pipelines will be used to automatically and scalably traige and detect Common Vulnerabilities and Exposures (CVEs) in Docker containers using references to source code, dependencies, and information about the CVEs.
+  This example demonstrates how NVIDIA Morpheus, NIM microservices, and RAG pipelines can be integrated to create LLM-based agent pipelines. These pipelines will be used to automatically and scalably triage and detect Common Vulnerabilities and Exposures (CVEs) in Docker containers using references to source code, dependencies, and information about the CVEs.
 
 * [Digital Human Security Analyst with NVIDIA Morpheus](./digital-human-security-analyst/)
 
