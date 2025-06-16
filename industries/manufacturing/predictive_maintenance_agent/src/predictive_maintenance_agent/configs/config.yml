@@ -38,16 +38,8 @@ functions:
     vector_store_path: "${PWD_PATH}/database"
     db_path: "${PWD_PATH}/database/nasa_turbo.db"
     output_folder: "${PWD_PATH}/output_data"
-  predict_rul:
-    _type: predict_rul_tool
-    output_folder: "${PWD_PATH}/output_data"
-    scaler_path: "${PWD_PATH}/models/scaler_model.pkl"
-    model_path: "${PWD_PATH}/models/xgb_model_fd001.pkl"
   plot_distribution:
     _type: plot_distribution_tool
-    output_folder: "${PWD_PATH}/output_data"
-  plot_comparison:
-    _type: plot_comparison_tool
     output_folder: "${PWD_PATH}/output_data"
   plot_line_chart:
     _type: plot_line_chart_tool
@@ -55,7 +47,7 @@ functions:
   plotting_agent:
     _type: react_agent
     llm_name: nim_llm
-    tool_names: [plot_line_chart, plot_comparison, plot_distribution]
+    tool_names: [plot_line_chart, plot_distribution]
     verbose: true
     handle_tool_errors: true
     description: "Use this agent to generate plots from the retrieved SQL data. Provide a description of the plot required along with the JSON file path containing the SQL output in the input message.
@@ -67,7 +59,6 @@ workflow:
   tool_names: 
     - sql_retriever
     - plotting_agent
-    - predict_rul
   verbose: true
   system_prompt: |
     You are a conversational helpful assistant that can help with predictive maintenance tasks for a turbofan engine.

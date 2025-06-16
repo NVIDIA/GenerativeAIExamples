@@ -32,7 +32,11 @@ Multi-agent architecture with:
 - **Plotting Agent**: Multi-tool agent for data visualization
 - **Vector Database**: ChromaDB for schema information storage
 
-![Architecture Workflow](imgs/intermediate_steps.png)
+#### Agentic workflow architecture diagram
+![Agentic workflow](imgs/pred_maint_arch_diagram_img1.png)
+
+#### Agentic workflow architecture diagram w/ reasoning
+![Agentic workflow w/ reasoning](imgs/pred_maint_arch_diagram_img2.png)
 
 ## Setup and Installation
 
@@ -99,11 +103,16 @@ Server runs on `http://localhost:8000`
 
 Note: When using the provided config file, you need to set the PWD_PATH environment variable before starting the AIQ server. This ensures the server can locate all required paths correctly.
 
-Here's how to do it:
+Here's how to do it: 
 
 ```bash
 export PWD_PATH=$(pwd)
 aiq serve --config_file=configs/config.yml "$@"
+```
+(or)
+```bash
+export PWD_PATH=$(pwd)
+aiq serve --config_file=configs/config-reasoning.yml "$@"
 ```
 
 ### Setup Web Interface
@@ -127,14 +136,14 @@ Test the system with these prompts:
 
 **Data Retrieval:**
 ```
-Retrieve RUL of each unit from the FD001 dataset. Then plot the distribution of RUL.
+Retrieve the time in cycles and operational setting 1 from the FD001 test table for unit number 1 and plot its value vs time.
 ```
 
 ![Data Retrieval Example](imgs/test_prompt_1.png)
 
 **Visualization:**
 ```
-Retrieve the time in cycles and operational setting 1 from the FD001 test table for unit number 1 and plot its value vs time.
+Retrieve real RUL of each unit in the FD001 test dataset. Then plot a distribution of it.
 ```
 
 ![Visualization Example](imgs/test_prompt_2.png)
