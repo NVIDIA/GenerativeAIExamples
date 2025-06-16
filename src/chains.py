@@ -46,13 +46,11 @@ from .utils import format_document_with_source
 from .utils import streaming_filter_think, get_streaming_filter_think_parser
 from .reflection import ReflectionCounter, check_context_relevance, check_response_groundedness
 from .utils import normalize_relevance_scores
+from .vsphere_integration import VSphereIntegration
 
 # Import enhanced components
 try:
-    from .query_analyzer import QueryAnalyzer, get_collection_names_for_categories
     from .document_aggregator import DocumentAggregator
-    from .vgpu_profile_validator import VGPUProfileValidator, DeploymentMode, ProfileMode
-    from .rag_mode_config import get_rag_config
     ENHANCED_COMPONENTS_AVAILABLE = True
 except ImportError:
     logger = logging.getLogger(__name__)
@@ -83,11 +81,11 @@ class StructuredResponse(BaseModel):
                     "vGPU_profile": {
                         "type": ["string", "null"],
                         "description": "Exact NVIDIA vGPU profile name found in context documentation (must match documented profiles exactly)",
-                        "pattern": "^[A-Z0-9]+-[0-9]+[A-Z]?$"
+                        "pattern": ["^[A-Z0-9]+-[0-9]+Q$"]
                     },
                     "total_CPUs": {
                         "type": ["integer", "null"],
-                        "description": "Total number of physical CPU cores allocated to the VM host",
+                        "description": "Total number of CPU cores allocated to the VM host",
                         "minimum": 1,
                         "maximum": 256
                     },
@@ -99,15 +97,11 @@ class StructuredResponse(BaseModel):
                     },
                     "gpu_memory_size": {
                         "type": ["integer", "null"],
-                        "description": "GPU frame buffer memory in GB assigned to the vGPU profile (must match profile specifications)",
-                        "minimum": 1,
-                        "maximum": 128
+                        "description": "GPU frame buffer memory in GB assigned to the vGPU profile (must match vGPU profile (the memory constraint specifications)",
                     },
                     "video_card_total_memory": {
                         "type": ["integer", "null"],
-                        "description": "Total video card memory capacity in GB of the physical GPU hardware",
-                        "minimum": 4,
-                        "maximum": 200
+                        "description": "Total video card memory capacity in GB of the vGPU hardware",
                     },
                     "system_RAM": {
                         "type": ["integer", "null"],
@@ -115,29 +109,10 @@ class StructuredResponse(BaseModel):
                         "minimum": 8,
                         "maximum": 2048
                     },
-                    "storage_capacity": {
-                        "type": ["integer", "null"],
-                        "description": "Hard disk storage capacity in GB required for the workload including OS, model files, and data",
-                        "minimum": 50,
-                        "maximum": 10000
-                    },
                     "storage_type": {
                         "type": ["string", "null"],
                         "description": "Recommended storage type based on performance requirements",
                         "enum": ["SSD", "NVMe", "HDD", "Network Storage"]
-                    },
-                    "driver_version": {
-                        "type": ["string", "null"],
-                        "description": "Compatible NVIDIA driver version determined from context documentation"
-                    },
-                    "AI_framework": {
-                        "type": ["string", "null"],
-                        "description": "Recommended AI framework or toolkit based on context analysis and workload requirements"
-                    },
-                    "performance_tier": {
-                        "type": ["string", "null"],
-                        "description": "Performance classification based on workload requirements",
-                        "enum": ["Entry", "Standard", "High Performance", "Maximum Performance"]
                     },
                     "concurrent_users": {
                         "type": ["integer", "null"],
@@ -198,15 +173,16 @@ class UnstructuredRAG(BaseExample):
         
         # Initialize enhanced components if available
         if ENHANCED_COMPONENTS_AVAILABLE:
-            self.query_analyzer = QueryAnalyzer()
             self.document_aggregator = DocumentAggregator(self.settings)
-            self.profile_validator = VGPUProfileValidator()
-            self.rag_config = get_rag_config()
+            self.profile_validator = None
+            self.rag_config = None
+            # Initialize vSphere integration
+            self.vsphere = VSphereIntegration()
         else:
-            self.query_analyzer = None
             self.document_aggregator = None
             self.profile_validator = None
             self.rag_config = None
+            self.vsphere = None
 
     def ingest_docs(self, data_dir: str, filename: str, collection_name: str = "", vdb_endpoint: str = "") -> None:
         """Ingests documents to the VectorDB.
@@ -319,6 +295,7 @@ class UnstructuredRAG(BaseExample):
                     structured_result = chain.invoke({"question": query}, config={'run_name':'llm-stream'})
                     # Convert to JSON and yield as a single chunk
                     json_response = json.dumps(structured_result.model_dump(), ensure_ascii=False, indent=2)
+
                     yield json_response
                 except Exception as e:
                     logger.error("Error in structured response: %s", e)
@@ -331,7 +308,7 @@ class UnstructuredRAG(BaseExample):
         except ConnectTimeout as e:
             logger.warning("Connection timed out while making a request to the LLM endpoint: %s", e)
             error_response = StructuredResponse(
-                description="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available. Unable to generate vGPU configuration."
+                description="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available."
             )
             return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
@@ -342,18 +319,18 @@ class UnstructuredRAG(BaseExample):
             if "[403] Forbidden" in str(e) and "Invalid UAM response" in str(e):
                 logger.warning("Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.")
                 error_response = StructuredResponse(
-                    description="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key. Unable to generate vGPU configuration."
+                    description="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key."
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             elif "[404] Not Found" in str(e):
                 logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid.")
                 error_response = StructuredResponse(
-                    description="Please verify the API endpoint and your payload. Ensure that the model name is valid. Unable to generate vGPU configuration."
+                    description="Please verify the API endpoint and your payload. Ensure that the model name is valid."
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             else:
                 error_response = StructuredResponse(
-                    description=f"Failed to generate RAG chain response. {str(e)}. Unable to generate vGPU configuration."
+                    description=f"Failed to generate RAG chain response. {str(e)}"
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
@@ -491,17 +468,33 @@ class UnstructuredRAG(BaseExample):
             # Check response groundedness if we still have reflection iterations available
             if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true" and reflection_counter.remaining > 0:
                 initial_response = chain.invoke({"question": query, "context": docs})
-                final_response, is_grounded = check_response_groundedness(
-                    initial_response.response if hasattr(initial_response, 'response') else str(initial_response),
+                final_description, is_grounded = check_response_groundedness(
+                    initial_response.description,
                     docs,
                     reflection_counter
                 )
-                if not is_grounded:
-                    logger.warning("Could not generate sufficiently grounded response after %d total reflection attempts",
-                                    reflection_counter.current_count)
-                structured_final = StructuredResponse(
-                    description=f"vGPU configuration generated with reflection and grounding checks: {final_response}"
-                )
+                
+                if is_grounded:
+                    # If the initial response was grounded, use it as-is
+                    structured_final = initial_response
+                else:
+                    # If reflection improved the description, re-run the chain with enhanced prompt
+                    logger.info("Re-running structured chain with grounded description from reflection")
+                    
+                    # Create an enhanced prompt that includes the grounded description
+                    enhanced_query = f"""Original query: {query}
+
+Based on the context documents, here is a grounded analysis:
+{final_description}
+
+Now provide a complete structured vGPU configuration based on this grounded analysis."""
+                    
+                    # Re-invoke the chain with the enhanced query
+                    structured_final = chain.invoke({"question": enhanced_query, "context": docs})
+                    
+                    # Log for debugging
+                    logger.info(f"Final structured response after reflection: {structured_final.description[:200]}...")
+                
                 return iter([json.dumps(structured_final.model_dump(), ensure_ascii=False, indent=2)]), context_to_show
             else:
                 def stream_structured_rag_response():
@@ -520,8 +513,7 @@ class UnstructuredRAG(BaseExample):
         except ConnectTimeout as e:
             logger.warning("Connection timed out while making a request to the LLM endpoint: %s", e)
             error_response = StructuredResponse(
-                response="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available.",
-                sources_used=True
+                description="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available."
             )
             return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
@@ -529,8 +521,7 @@ class UnstructuredRAG(BaseExample):
             if "HTTPConnectionPool" in str(e):
                 logger.warning("Connection pool error while connecting to service: %s", e)
                 error_response = StructuredResponse(
-                    response="Connection error: Failed to connect to service. Please verify if all required services are running and accessible.",
-                    sources_used=True
+                    description="Connection error: Failed to connect to service. Please verify if all required services are running and accessible."
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
         except Exception as e:
@@ -540,21 +531,18 @@ class UnstructuredRAG(BaseExample):
             if "[403] Forbidden" in str(e) and "Invalid UAM response" in str(e):
                 logger.warning("Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.")
                 error_response = StructuredResponse(
-                    response="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.",
-                    sources_used=True
+                    description="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key."
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             elif "[404] Not Found" in str(e):
                 logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid.")
                 error_response = StructuredResponse(
-                    response="Please verify the API endpoint and your payload. Ensure that the model name is valid.",
-                    sources_used=True
+                    description="Please verify the API endpoint and your payload. Ensure that the model name is valid."
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             else:
                 error_response = StructuredResponse(
-                    response=f"Failed to generate RAG chain response. {str(e)}",
-                    sources_used=True
+                    description=f"Failed to generate RAG chain response. {str(e)}"
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
@@ -707,34 +695,44 @@ class UnstructuredRAG(BaseExample):
             # Check response groundedness if we still have reflection iterations available
             if os.environ.get("ENABLE_REFLECTION", "false").lower() == "true" and reflection_counter.remaining > 0:
                 initial_response = chain.invoke({"question": query, "context": docs})
-                final_response, is_grounded = check_response_groundedness(
-                    initial_response.response if hasattr(initial_response, 'response') else str(initial_response),
+                final_description, is_grounded = check_response_groundedness(
+                    initial_response.description,
                     docs,
                     reflection_counter
                 )
-                if not is_grounded:
-                    logger.warning("Could not generate sufficiently grounded response after %d total reflection attempts",
-                                    reflection_counter.current_count)
-                structured_final = StructuredResponse(
-                    response=final_response,
-                    sources_used=True,
-                    reasoning="Response generated with multiturn RAG, reflection and grounding checks"
-                )
+                
+                if is_grounded:
+                    # If the initial response was grounded, use it as-is
+                    structured_final = initial_response
+                else:
+                    # If reflection improved the description, re-run the chain with enhanced prompt
+                    logger.info("Re-running structured chain with grounded description from reflection")
+                    
+                    # Create an enhanced prompt that includes the grounded description
+                    enhanced_query = f"""Original query: {query}
+
+Based on the context documents, here is a grounded analysis:
+{final_description}
+
+Now provide a complete structured vGPU configuration based on this grounded analysis."""
+                    
+                    # Re-invoke the chain with the enhanced query
+                    structured_final = chain.invoke({"question": enhanced_query, "context": docs})
+                    
+                    # Log for debugging
+                    logger.info(f"Final structured response after reflection: {structured_final.description[:200]}...")
+                
                 return iter([json.dumps(structured_final.model_dump(), ensure_ascii=False, indent=2)]), context_to_show
             else:
                 def stream_structured_multiturn_response():
                     try:
                         structured_result = chain.invoke({"question": query, "context": docs}, config={'run_name':'llm-stream'})
-                        # Ensure sources_used is marked as True for RAG responses
-                        if hasattr(structured_result, 'sources_used') and structured_result.sources_used is None:
-                            structured_result.sources_used = True
                         json_response = json.dumps(structured_result.model_dump(), ensure_ascii=False, indent=2)
                         yield json_response
                     except Exception as e:
                         logger.error("Error in structured multiturn RAG response: %s", e)
                         error_response = StructuredResponse(
-                            response=f"Error generating multiturn RAG response: {str(e)}",
-                            sources_used=True
+                            description=f"Error generating multiturn RAG response: {str(e)}"
                         )
                         yield json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)
                 
@@ -743,8 +741,7 @@ class UnstructuredRAG(BaseExample):
         except ConnectTimeout as e:
             logger.warning("Connection timed out while making a request to the LLM endpoint: %s", e)
             error_response = StructuredResponse(
-                response="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available.",
-                sources_used=True
+                description="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available."
             )
             return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
@@ -752,8 +749,7 @@ class UnstructuredRAG(BaseExample):
             if "HTTPConnectionPool" in str(e):
                 logger.error("Connection pool error while connecting to service: %s", e)
                 error_response = StructuredResponse(
-                    response="Connection error: Failed to connect to service. Please verify if all required NIMs are running and accessible.",
-                    sources_used=True
+                    description="Connection error: Failed to connect to service. Please verify if all required NIMs are running and accessible."
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
@@ -764,21 +760,18 @@ class UnstructuredRAG(BaseExample):
             if "[403] Forbidden" in str(e) and "Invalid UAM response" in str(e):
                 logger.warning("Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.")
                 error_response = StructuredResponse(
-                    response="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key.",
-                    sources_used=True
+                    description="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key."
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             elif "[404] Not Found" in str(e):
                 logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid.")
                 error_response = StructuredResponse(
-                    response="Please verify the API endpoint and your payload. Ensure that the model name is valid.",
-                    sources_used=True
+                    description="Please verify the API endpoint and your payload. Ensure that the model name is valid."
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             else:
                 error_response = StructuredResponse(
-                    response=f"Failed to generate RAG chain with multi-turn response. {str(e)}",
-                    sources_used=True
+                    description=f"Failed to generate RAG chain with multi-turn response. {str(e)}"
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
@@ -892,10 +885,8 @@ class UnstructuredRAG(BaseExample):
     
     def _should_use_enhanced_mode(self, query: str) -> bool:
         """Determine if enhanced RAG mode should be used for this query."""
-        if not ENHANCED_COMPONENTS_AVAILABLE or not self.rag_config:
-            return False
-        
-        return self.rag_config.should_use_enhanced(query)
+        # Since we removed rag_config, always return False to use standard mode
+        return False
     
     def _retrieve_enhanced_documents(self, query: str, vdb_endpoint: str, 
                                    vdb_top_k: int, kwargs: Dict) -> Tuple[List[Document], Dict]:
@@ -969,24 +960,20 @@ class UnstructuredRAG(BaseExample):
     
     def _extract_vgpu_profiles_from_context(self, documents: List[Document]) -> set:
         """Extract valid vGPU profile names from retrieved documents."""
-        if not self.profile_validator:
-            return set()
-        
-        profile_pattern = r'\b([A-Z0-9]+)-(\d+)([A-Z])\b'
+        # Since we removed the profile validator, we'll just extract profile patterns
+        # and rely on the context to provide valid profiles
+        profile_pattern = r'\b([A-Z0-9]+)-(\d+)([Q])\b'  
         found_profiles = set()
         
         for doc in documents:
             matches = re.findall(profile_pattern, doc.page_content)
             for match in matches:
                 profile_name = f"{match[0]}-{match[1]}{match[2]}"
-                # Validate it looks like a real profile
-                if match[0] in ["A100", "A40", "L40S", "L40", "L4", "RTX6000", "H100"]:
-                    # Check if it's a valid profile
-                    is_valid, _ = self.profile_validator.validate_profile(profile_name)
-                    if is_valid:
-                        found_profiles.add(profile_name)
+                # Basic validation - check if it looks like a real GPU profile
+                if match[0] in ["A40", "L40S", "L40", "L4", "RTX6000"]:
+                    found_profiles.add(profile_name)
         
-        logger.info(f"Found valid vGPU profiles in context: {found_profiles}")
+        logger.info(f"Found vGPU profiles in context: {found_profiles}")
         return found_profiles
     
     def _extract_gpu_inventory_from_query(self, query: str) -> Dict[str, int]:
@@ -994,7 +981,7 @@ class UnstructuredRAG(BaseExample):
         inventory = {}
         
         # Pattern to match "2x L40S", "4x L4", etc.
-        pattern = r'(\d+)x?\s*(A100|A40|L40S?|L4|H100|RTX\d+)'
+        pattern = r'(\d+)x?\s*(A40|L40S?|L4|RTX\d+)'
         matches = re.findall(pattern, query, re.IGNORECASE)
         
         for match in matches:
@@ -1011,49 +998,48 @@ class UnstructuredRAG(BaseExample):
     
     def _prepare_enhanced_context(self, query: str, documents: List[Document], 
                                 valid_profiles: set) -> str:
-        """Prepare enhanced context with validation constraints."""
-        if not valid_profiles and not self.profile_validator:
-            return ""
-        
+        """Prepare enhanced context with vGPU profile validation and recommendations."""
         context_parts = []
-        
-        # Add valid profiles constraint
-        if valid_profiles:
-            context_parts.append(f"VALID vGPU PROFILES found in context: {', '.join(sorted(valid_profiles))}")
-            context_parts.append("You MUST ONLY use profiles from this list. Do NOT create or modify profile names.")
         
         # Extract GPU inventory from query
         gpu_inventory = self._extract_gpu_inventory_from_query(query)
-        if gpu_inventory:
-            inventory_str = ", ".join([f"{count}x {gpu}" for gpu, count in gpu_inventory.items()])
-            context_parts.append(f"\nUSER'S GPU INVENTORY: {inventory_str}")
-            context_parts.append("You MUST only recommend configurations compatible with this inventory.")
-            
-            # Get recommendations if profile validator is available
-            if self.profile_validator:
-                try:
-                    workload_requirements = self._extract_workload_requirements_from_query(query)
-                    recommendations = self.profile_validator.recommend_deployment_strategy(
-                        gpu_inventory, workload_requirements
-                    )
-                    
-                    if recommendations:
-                        context_parts.append("\nPRE-VALIDATED CONFIGURATION OPTIONS:")
-                        for i, rec in enumerate(recommendations[:3]):  # Top 3 recommendations
-                            if rec.vgpu_profile:
-                                context_parts.append(f"{i+1}. {rec.vgpu_profile}: {rec.max_vms} VMs, "
-                                                    f"{rec.gpu_memory_gb}GB GPU memory, {rec.concurrent_users} users")
-                            else:
-                                context_parts.append(f"{i+1}. GPU Passthrough on {rec.gpu_count} GPUs: "
-                                                    f"{rec.max_vms} VMs, {rec.gpu_memory_gb}GB GPU memory")
-                except Exception as e:
-                    logger.warning(f"Error generating recommendations: {e}")
         
-        # Add calculation rules
-        context_parts.append("\nVM CAPACITY CALCULATION RULES:")
-        context_parts.append("- For vGPU: Use the max instances per GPU from the context")
-        context_parts.append("- For passthrough: 1 VM per physical GPU")
-        context_parts.append("- Calculate total VMs = (number of GPUs) × (VMs per GPU)")
+        # Extract workload requirements
+        workload_requirements = self._extract_workload_requirements_from_query(query)
+        
+        if gpu_inventory and workload_requirements:
+            # Since we don't have the profile validator, we'll add basic guidance
+            context_parts.append("\n## vGPU Configuration Guidelines\n")
+            
+            # Add GPU inventory information
+            context_parts.append(f"\n### Available GPU Inventory")
+            for gpu_model, count in gpu_inventory.items():
+                context_parts.append(f"- {count}x {gpu_model}")
+            
+            # Add workload requirements
+            context_parts.append(f"\n### Workload Requirements")
+            context_parts.append(f"- Concurrent Users: {workload_requirements.get('concurrent_users', 1)}")
+            context_parts.append(f"- Model Memory: {workload_requirements.get('model_memory_gb', 0)}GB")
+            context_parts.append(f"- Performance Level: {workload_requirements.get('performance_level', 'standard')}")
+            
+            # Add profile validation rules
+            context_parts.append(f"\n### CRITICAL: vGPU Profile Validation Rules")
+            context_parts.append("- NVIDIA vGPU profiles ALWAYS end with specific suffixes:")
+            context_parts.append("  - 'Q' for time-sliced vGPU (e.g., L40S-8Q, L4-4Q)")
+            context_parts.append("- NEVER create profiles with 'A' suffix - this is NOT a valid vGPU profile suffix")
+            context_parts.append("- Only use profiles that are explicitly mentioned in the documentation")
+        
+        # Add valid profiles from context
+        if valid_profiles:
+            context_parts.append(f"\n### Valid vGPU Profiles Found in Documentation")
+            for profile in sorted(valid_profiles):
+                context_parts.append(f"- {profile}")
+            
+            # Add warning about invalid profiles
+            context_parts.append(f"\n### WARNING")
+            context_parts.append("- Only use the exact profile names listed above")
+            context_parts.append("- Do NOT modify profile names or create new ones")
+            context_parts.append("- If you see 'L40S-8A' or similar with 'A' suffix, it's INVALID")
         
         return "\n".join(context_parts)
     
@@ -1062,8 +1048,7 @@ class UnstructuredRAG(BaseExample):
         requirements = {
             "concurrent_users": 1,
             "model_memory_gb": 0,
-            "deployment_mode": "vgpu",
-            "performance_level": "standard"
+
         }
         
         # Extract user counts
@@ -1083,21 +1068,6 @@ class UnstructuredRAG(BaseExample):
                 else:
                     requirements["concurrent_users"] = int(match)
         
-        # Extract model size (rough estimate)
-        model_patterns = [r'(\d+)[Bb]\+?\s*(?:parameter|param)?', r'(\d+)[Bb]\+?']
-        for pattern in model_patterns:
-            matches = re.findall(pattern, query)
-            for match in matches:
-                param_count = int(match)
-                # Rough estimate: 2 bytes per parameter for FP16
-                requirements["model_memory_gb"] = max(
-                    requirements["model_memory_gb"],
-                    param_count * 2
-                )
-        
-        # Check deployment mode
-        if "passthrough" in query.lower() or "pass-through" in query.lower():
-            requirements["deployment_mode"] = "passthrough"
         
         # Extract performance level
         if "high performance" in query.lower():

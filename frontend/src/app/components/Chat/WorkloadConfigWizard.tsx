@@ -264,9 +264,9 @@ export default function WorkloadConfigWizard({
       }
     } else {
       // For other workload types, use the original logic
-      if (config.specificModel && config.specificModel !== 'unknown') {
-        const modelLabel = specificModels.find(m => m.value === config.specificModel)?.label || config.specificModel;
-        parts.push(`running ${modelLabel}`);
+    if (config.specificModel && config.specificModel !== 'unknown') {
+      const modelLabel = specificModels.find(m => m.value === config.specificModel)?.label || config.specificModel;
+      parts.push(`running ${modelLabel}`);
       }
     }
     
@@ -356,7 +356,7 @@ export default function WorkloadConfigWizard({
         } else if (config.workloadType === 'training' || config.workloadType === 'fine-tuning') {
           return config.trainingModel && config.trainingEpochs;
         } else {
-          return (config.specificModel || config.modelSize) && config.performanceLevel;
+        return (config.specificModel || config.modelSize) && config.performanceLevel;
         }
       case 3:
         return true; // Final step, can always proceed
@@ -691,66 +691,66 @@ export default function WorkloadConfigWizard({
 
               {/* Default configuration for other workload types */}
               {!['rag', 'inference', 'training', 'fine-tuning'].includes(config.workloadType) && (
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-4">Model Size & Performance</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Specific Model (if known)</label>
-                      <select
-                        value={config.specificModel}
-                        onChange={(e) => handleInputChange("specificModel", e.target.value)}
-                        className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white mb-4"
-                      >
-                        <option value="">Select a specific model</option>
-                        {specificModels.map((model) => (
-                          <option key={model.value} value={model.value}>{model.label}</option>
-                        ))}
-                      </select>
-                    </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Model Size & Performance</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Specific Model (if known)</label>
+                    <select
+                      value={config.specificModel}
+                      onChange={(e) => handleInputChange("specificModel", e.target.value)}
+                      className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white mb-4"
+                    >
+                      <option value="">Select a specific model</option>
+                      {specificModels.map((model) => (
+                        <option key={model.value} value={model.value}>{model.label}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                    {(config.specificModel === 'unknown' || config.specificModel === '') && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Model Size Category</label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {modelSizes.map((size) => (
-                            <button
-                              key={size.value}
-                              onClick={() => handleInputChange("modelSize", size.value)}
-                              className={`p-3 rounded-lg border text-left transition-all ${
-                                config.modelSize === size.value
-                                  ? "border-green-500 bg-green-900/20 text-white"
-                                  : "border-neutral-600 bg-neutral-800 text-gray-300 hover:border-green-600"
-                              }`}
-                            >
-                              <div className="font-medium">{size.label}</div>
-                              <div className="text-sm text-gray-400">{size.desc}</div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
+                  {(config.specificModel === 'unknown' || config.specificModel === '') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Performance Level</label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {performanceLevels.map((level) => (
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Model Size Category</label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {modelSizes.map((size) => (
                           <button
-                            key={level.value}
-                            onClick={() => handleInputChange("performanceLevel", level.value)}
-                            className={`p-3 rounded-lg border text-center transition-all ${
-                              config.performanceLevel === level.value
+                            key={size.value}
+                            onClick={() => handleInputChange("modelSize", size.value)}
+                            className={`p-3 rounded-lg border text-left transition-all ${
+                              config.modelSize === size.value
                                 ? "border-green-500 bg-green-900/20 text-white"
                                 : "border-neutral-600 bg-neutral-800 text-gray-300 hover:border-green-600"
                             }`}
                           >
-                            <div className="font-medium">{level.label}</div>
-                            <div className="text-xs text-gray-400 mt-1">{level.desc}</div>
+                            <div className="font-medium">{size.label}</div>
+                            <div className="text-sm text-gray-400">{size.desc}</div>
                           </button>
                         ))}
                       </div>
                     </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Performance Level</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {performanceLevels.map((level) => (
+                        <button
+                          key={level.value}
+                          onClick={() => handleInputChange("performanceLevel", level.value)}
+                          className={`p-3 rounded-lg border text-center transition-all ${
+                            config.performanceLevel === level.value
+                              ? "border-green-500 bg-green-900/20 text-white"
+                              : "border-neutral-600 bg-neutral-800 text-gray-300 hover:border-green-600"
+                          }`}
+                        >
+                          <div className="font-medium">{level.label}</div>
+                          <div className="text-xs text-gray-400 mt-1">{level.desc}</div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              </div>
               )}
             </div>
           )}
