@@ -208,4 +208,4 @@ async def plot_distribution_tool(
     except GeneratorExit:
         logger.info("Plot distribution function exited early!")
     finally:
-        logger.info("Cleaning up plot_distribution_tool workflow.") 
+        logger.info("Cleaning up plot_distribution_tool workflow.")

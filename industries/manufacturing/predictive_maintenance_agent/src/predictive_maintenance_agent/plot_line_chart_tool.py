@@ -239,4 +239,4 @@ async def plot_line_chart_tool(
     except GeneratorExit:
         logger.info("Plot line chart function exited early!")
     finally:
-        logger.info("Cleaning up plot_line_chart_tool workflow.") 
+        logger.info("Cleaning up plot_line_chart_tool workflow.")

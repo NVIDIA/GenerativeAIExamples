@@ -360,4 +360,4 @@ async def plot_comparison_tool(
     except GeneratorExit:
         logger.info("Plot comparison function exited early!")
     finally:
-        logger.info("Cleaning up plot_comparison_tool workflow.") 
+        logger.info("Cleaning up plot_comparison_tool workflow.")
