@@ -133,7 +133,7 @@ class VGPUBootstrap:
             params = {
                 "embedding_dimension": 2048,  # Updated to match actual NVIDIA embedding model dimensions
                 "collection_type": "text",
-                "search_type": "dense"  # Explicitly set search type to match APP_VECTORSTORE_SEARCHTYPE
+                "search_type": "hybrid"  # Explicitly set search type to match APP_VECTORSTORE_SEARCHTYPE
             }
             
             response = self.session.post(
@@ -186,8 +186,8 @@ class VGPUBootstrap:
             if response.status_code == 200:
                 existing_docs = response.json().get("documents", [])
                 if existing_docs:
-                    logger.info(f"✅ Collection '{MAIN_COLLECTION['name']}' already has {len(existing_docs)} documents")
-                    return
+                    logger.info(f"ℹ️ Collection '{MAIN_COLLECTION['name']}' already has {len(existing_docs)} documents, will check for new files...")
+                    # Don't return - continue with ingestion to add any new documents
         except Exception as e:
             logger.warning(f"Could not check existing documents: {e}")
         
@@ -200,9 +200,35 @@ class VGPUBootstrap:
     async def _ingest_pdf_batch(self, pdf_files: List[Path], collection_name: str):
         """Ingest a batch of PDF files into the collection"""
         try:
+            # First, check which documents already exist
+            response = self.session.get(
+                f"{INGESTOR_URL}/v1/documents",
+                params={"collection_name": collection_name}
+            )
+            
+            existing_doc_names = set()
+            if response.status_code == 200:
+                existing_docs = response.json().get("documents", [])
+                existing_doc_names = {doc.get("document_name", "") for doc in existing_docs}
+                logger.info(f"Found {len(existing_doc_names)} existing documents in collection")
+            
+            # Filter out documents that already exist
+            new_pdf_files = []
+            for pdf_file in pdf_files:
+                if pdf_file.name in existing_doc_names:
+                    logger.info(f"⏭️  Skipping '{pdf_file.name}' - already exists in collection")
+                else:
+                    new_pdf_files.append(pdf_file)
+            
+            if not new_pdf_files:
+                logger.info("✅ All documents already exist in collection, nothing to upload")
+                return
+            
+            logger.info(f"📤 Uploading {len(new_pdf_files)} new documents...")
+            
             # Prepare multipart form data
             files = []
-            for pdf_file in pdf_files:
+            for pdf_file in new_pdf_files:
                 files.append(('documents', (pdf_file.name, open(pdf_file, 'rb'), 'application/pdf')))
             
             metadata = {
@@ -434,7 +460,7 @@ Just drop your PDFs here and restart the system!
 
 async def main():
     """Main bootstrap function"""
-    logger.info("🚀 Starting vGPU RAG System Bootstrap")
+    logger.info("Starting vGPU RAG System Bootstrap")
     
     if not ENABLE_VGPU_BOOTSTRAP:
         logger.info("Bootstrap disabled via ENABLE_VGPU_BOOTSTRAP=false. Exiting.")
@@ -458,13 +484,13 @@ async def main():
         # Verify setup
         await bootstrap.verify_setup()
         
-        logger.info("🎉 vGPU RAG System Bootstrap completed successfully!")
+        logger.info("vGPU RAG System Bootstrap completed successfully!")
         
     except BootstrapError as e:
-        logger.error(f"💥 Bootstrap failed: {e}")
+        logger.error(f"Bootstrap failed: {e}")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"💥 Unexpected error during bootstrap: {e}")
+        logger.error(f"Unexpected error during bootstrap: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -321,7 +321,7 @@ nim-llm:
   service:
     name: "nim-llm"
   image:
-      repository: nvcr.io/nim/nvidia/llama-3.3-nemotron-super-49b-v1
+      repository: nvcr.io/nim/meta/llama-3.1-8b-instruct:1.8.5
       pullPolicy: IfNotPresent
       tag: "1.8.3"
   resources:
@@ -478,7 +478,7 @@ frontend:
     port: 3000
   envVars:
     - name: NEXT_PUBLIC_MODEL_NAME
-      value: "nvidia/llama-3.3-nemotron-super-49b-v1"
+      value: "meta/llama-3.1-8b-instruct"
     - name: NEXT_PUBLIC_EMBEDDING_MODEL
       value: "nvidia/llama-3.2-nv-embedqa-1b-v2"
     - name: NEXT_PUBLIC_RERANKER_MODEL

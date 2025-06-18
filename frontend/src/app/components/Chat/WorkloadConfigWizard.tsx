@@ -24,8 +24,7 @@ interface WorkloadConfig {
   batchSize: string;
   memoryRequirement: string;
   performanceLevel: string;
-  concurrentUsers: string;
-  gpuInventory: { [key: string]: number };
+  selectedGPU: string;
   framework: string;
   priority: string;
   // RAG-specific fields
@@ -60,8 +59,7 @@ export default function WorkloadConfigWizard({
     batchSize: "",
     memoryRequirement: "",
     performanceLevel: "",
-    concurrentUsers: "",
-    gpuInventory: {},
+    selectedGPU: "",
     framework: "",
     priority: "",
     // RAG-specific fields
@@ -170,20 +168,15 @@ export default function WorkloadConfigWizard({
     setConfig((prev: WorkloadConfig) => ({ ...prev, [field]: value }));
   };
 
-  const handleGPUInventoryChange = (gpuType: string, quantity: number) => {
-    setConfig((prev: WorkloadConfig) => {
-      const newInventory = { ...prev.gpuInventory };
-      if (quantity <= 0) {
-        delete newInventory[gpuType];
-      } else {
-        newInventory[gpuType] = quantity;
-      }
-      return { ...prev, gpuInventory: newInventory };
-    });
+  const handleGPUSelection = (gpuType: string) => {
+    setConfig((prev: WorkloadConfig) => ({ 
+      ...prev, 
+      selectedGPU: prev.selectedGPU === gpuType ? "" : gpuType 
+    }));
   };
 
-  const getTotalGPUs = (): number => {
-    return Object.values(config.gpuInventory).reduce<number>((sum, count) => sum + (count || 0), 0);
+  const hasSelectedGPU = (): boolean => {
+    return config.selectedGPU !== "";
   };
 
   const generateQuery = (): string => {
@@ -204,15 +197,10 @@ export default function WorkloadConfigWizard({
       parts.push(`with ${sizeLabel.toLowerCase()}`);
     }
     
-    // GPU Inventory - Enhanced with specific quantities
-    if (config.gpuInventory && Object.keys(config.gpuInventory).length > 0) {
-      const gpuLabels = Object.entries(config.gpuInventory)
-        .filter(([_, quantity]) => (quantity as number) > 0)
-        .map(([gpu, quantity]) => {
-          const gpuInfo = availableGPUInventory.find(g => g.value === gpu);
-          return `${quantity as number}x ${gpuInfo?.label || gpu}`;
-        });
-      parts.push(`using available GPU inventory: ${gpuLabels.join(', ')}`);
+    // Single GPU Selection
+    if (config.selectedGPU) {
+      const gpuInfo = availableGPUInventory.find(g => g.value === config.selectedGPU);
+      parts.push(`using available GPU inventory: 1x ${gpuInfo?.label || config.selectedGPU}`);
     }
     
     // Workload-specific configurations
@@ -284,9 +272,6 @@ export default function WorkloadConfigWizard({
     if (config.batchSize && config.workloadType !== 'inference') {
       requirements.push(`batch size of ${config.batchSize}`);
     }
-    if (config.concurrentUsers) {
-      requirements.push(`${config.concurrentUsers} concurrent users`);
-    }
     
     if (requirements.length > 0) {
       parts.push(`with ${requirements.join(', ')}`);
@@ -323,8 +308,7 @@ export default function WorkloadConfigWizard({
       batchSize: "",
       memoryRequirement: "",
       performanceLevel: "",
-      concurrentUsers: "",
-      gpuInventory: {},
+      selectedGPU: "",
       framework: "",
       priority: "",
       // RAG-specific fields
@@ -346,7 +330,7 @@ export default function WorkloadConfigWizard({
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return config.workloadType && getTotalGPUs() > 0;
+        return config.workloadType && hasSelectedGPU();
       case 2:
         // Different validation based on workload type
         if (config.workloadType === 'rag') {
@@ -428,86 +412,52 @@ export default function WorkloadConfigWizard({
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">What GPUs do you have available in your inventory?</h3>
-                <p className="text-sm text-gray-400 mb-4">Select all GPU types you have and specify quantities. At least one GPU is required.</p>
+                <h3 className="text-lg font-semibold text-white mb-4">What GPU do you have available?</h3>
+                <p className="text-sm text-gray-400 mb-4">Select one GPU from your inventory. The system will determine if multi-GPU setup is needed.</p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
                   {availableGPUInventory.map((gpu) => {
-                    const currentQuantity = config.gpuInventory[gpu.value] || 0;
-                    const isSelected = currentQuantity > 0;
+                    const isSelected = config.selectedGPU === gpu.value;
                     
                     return (
-                      <div
+                      <button
                         key={gpu.value}
-                        className={`p-4 rounded-lg border transition-all ${
+                        onClick={() => handleGPUSelection(gpu.value)}
+                        className={`p-4 rounded-lg border text-left transition-all ${
                           isSelected
-                            ? "border-green-500 bg-green-900/20"
-                            : "border-neutral-600 bg-neutral-800"
+                            ? "border-green-500 bg-green-900/20 ring-2 ring-green-500"
+                            : "border-neutral-600 bg-neutral-800 hover:border-green-600"
                         }`}
                       >
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="font-medium text-white">{gpu.label}</div>
+                            <div className="font-medium text-white flex items-center">
+                              {gpu.label}
+                              {isSelected && (
+                                <svg className="w-5 h-5 ml-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
                             <div className="text-sm text-gray-400 mt-1">{gpu.desc}</div>
                           </div>
-                          {isSelected && (
-                            <div className="ml-2 px-2 py-1 bg-green-600 text-white text-xs rounded-full font-medium">
-                              {currentQuantity}x
-                            </div>
-                          )}
                         </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleGPUInventoryChange(gpu.value, Math.max(0, currentQuantity - 1))}
-                            disabled={currentQuantity === 0}
-                            className={`w-8 h-8 rounded-full border text-sm font-bold transition-all ${
-                              currentQuantity === 0
-                                ? "border-neutral-500 text-neutral-500 cursor-not-allowed"
-                                : "border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
-                            }`}
-                          >
-                            −
-                          </button>
-                          
-                          <span className="w-12 text-center text-white font-mono">
-                            {currentQuantity}
-                          </span>
-                          
-                          <button
-                            onClick={() => handleGPUInventoryChange(gpu.value, currentQuantity + 1)}
-                            className="w-8 h-8 rounded-full border border-green-500 text-green-500 hover:bg-green-500 hover:text-white text-sm font-bold transition-all"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
 
-                {/* GPU Inventory Summary */}
-                {getTotalGPUs() > 0 && (
+                {/* Selected GPU Summary */}
+                {config.selectedGPU && (
                   <div className="p-4 bg-green-900/20 border border-green-700 rounded-lg">
-                    <h4 className="text-sm font-medium text-green-300 mb-2">Selected GPU Inventory:</h4>
-                    <div className="space-y-1">
-                      {Object.entries(config.gpuInventory)
-                        .filter(([_, quantity]) => (quantity as number) > 0)
-                        .map(([gpu, quantity]) => {
-                          const gpuInfo = availableGPUInventory.find(g => g.value === gpu);
-                          return (
-                            <div key={gpu} className="flex items-center justify-between text-sm">
-                              <span className="text-white">{gpuInfo?.label || gpu}</span>
-                              <span className="text-green-300 font-medium">{quantity as number} units</span>
-                            </div>
-                          );
-                        })}
-                      <div className="border-t border-green-700 pt-2 mt-2">
-                        <div className="flex items-center justify-between text-sm font-medium">
-                          <span className="text-green-300">Total GPUs:</span>
-                          <span className="text-white">{getTotalGPUs()} units</span>
-                        </div>
-                      </div>
+                    <h4 className="text-sm font-medium text-green-300 mb-2">Selected GPU:</h4>
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-medium">
+                        {availableGPUInventory.find(g => g.value === config.selectedGPU)?.label || config.selectedGPU}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        The system will determine if this GPU is sufficient or if multiple GPUs are needed
+                      </span>
                     </div>
                   </div>
                 )}
@@ -773,21 +723,6 @@ export default function WorkloadConfigWizard({
                     <option value="16-32 GB">Medium (16-32 GB)</option>
                     <option value="32-64 GB">High (32-64 GB)</option>
                     <option value="64+ GB">Very High (64+ GB)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Concurrent Users</label>
-                  <select
-                    value={config.concurrentUsers}
-                    onChange={(e) => handleInputChange("concurrentUsers", e.target.value)}
-                    className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
-                  >
-                    <option value="">Select user load</option>
-                    <option value="1-10">Small (1-10 users)</option>
-                    <option value="10-50">Medium (10-50 users)</option>
-                    <option value="50-200">Large (50-200 users)</option>
-                    <option value="200+">Enterprise (200+ users)</option>
                   </select>
                 </div>
 

@@ -22,7 +22,7 @@ services:
       # Type of vectordb used to store embedding supported type milvus
       APP_VECTORSTORE_NAME: "milvus"
       # Type of vectordb search to be used
-      APP_VECTORSTORE_SEARCH_TYPE: ${APP_VECTORSTORE_SEARCH_TYPE:-"dense"}
+      APP_VECTORSTORE_SEARCH_TYPE: ${APP_VECTORSTORE_SEARCH_TYPE:-"hybrid"}
       # Boolean to enable GPU index for milvus vectorstore specific to nvingest
       APP_VECTORSTORE_ENABLEGPUINDEX: ${APP_VECTORSTORE_ENABLEGPUINDEX:-True}
       # Boolean to control GPU search for milvus vectorstore specific to nvingest
@@ -57,8 +57,8 @@ services:
       APP_NVINGEST_TEXTDEPTH: ${APP_NVINGEST_TEXTDEPTH:-page} # extract by "page" or "document"
 
       ##===NV-Ingest Splitting Configurations========
-      APP_NVINGEST_CHUNKSIZE: ${APP_NVINGEST_CHUNKSIZE:-512}
-      APP_NVINGEST_CHUNKOVERLAP: ${APP_NVINGEST_CHUNKOVERLAP:-150}
+      APP_NVINGEST_CHUNKSIZE: ${APP_NVINGEST_CHUNKSIZE:-2000}
+      APP_NVINGEST_CHUNKOVERLAP: ${APP_NVINGEST_CHUNKOVERLAP:-300}
       APP_NVINGEST_ENABLEPDFSPLITTER: ${APP_NVINGEST_ENABLEPDFSPLITTER:-True}
 
       ##===NV-Ingest Caption Model configurations====

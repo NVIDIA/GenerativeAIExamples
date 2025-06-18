@@ -17,7 +17,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import RightSidebar from "../RightSidebar/RightSidebar";
-import MessageInput from "./MessageInput";
 import VGPUConfigCard from "./VGPUConfigCard";
 import VGPUConfigDrawer from "./VGPUConfigDrawer";
 import WorkloadConfigWizard from "./WorkloadConfigWizard";
@@ -31,7 +30,6 @@ import { useSidebar } from "../../context/SidebarContext";
 
 export default function Chat() {
   const { activePanel, toggleSidebar, setActiveCitations } = useSidebar();
-  const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [drawerConfig, setDrawerConfig] = useState<any>(null);
@@ -77,7 +75,7 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (message: string) => {
     if (!message.trim()) return;
 
     resetStream();
@@ -87,7 +85,6 @@ export default function Chat() {
     const assistantMessage = createAssistantMessage();
 
     setMessages((prev) => [...prev, userMessage, assistantMessage]);
-    setMessage("");
 
     // Debug confidence score threshold being used
     console.log(`Submitting with confidence threshold: ${confidenceScoreThreshold} (value type: ${typeof confidenceScoreThreshold})`);
@@ -125,7 +122,12 @@ export default function Chat() {
 
   const renderMessageContent = (content: string, isTyping: boolean) => {
     if (isTyping) {
-      return <span className="typing-dots">Thinking</span>;
+      return (
+        <div className="flex items-center space-x-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-[#76b900]"></div>
+          <span className="text-gray-400">Generating configuration...</span>
+        </div>
+      );
     }
     
     // Check if content is a vGPU configuration JSON
@@ -151,10 +153,10 @@ export default function Chat() {
               <span className="text-xs text-gray-400">Click to view details →</span>
             </div>
             <p className="text-sm text-gray-300 mb-3">{vgpuConfig.description}</p>
-            {vgpuConfig.parameters.vGPU_profile && (
+            {(vgpuConfig.parameters.vgpu_profile || vgpuConfig.parameters.vGPU_profile) && (
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-gray-400">Profile:</span>
-                <span className="text-[#76b900] font-medium">{vgpuConfig.parameters.vGPU_profile}</span>
+                <span className="text-[#76b900] font-medium">{vgpuConfig.parameters.vgpu_profile || vgpuConfig.parameters.vGPU_profile}</span>
                 {vgpuConfig.parameters.gpu_memory_size && (
                   <>
                     <span className="text-gray-400">•</span>
@@ -247,18 +249,72 @@ export default function Chat() {
     );
   };
 
-  const handleReset = () => {
-    setMessages([]);
-    resetStream();
-    setMessage("");
-  };
+  const handleWizardSubmit = async (generatedQuery: string) => {
+    // Process query silently without showing it as a user message
+    if (!generatedQuery.trim()) return;
 
-  const handleWizardSubmit = (generatedQuery: string) => {
-    setMessage(generatedQuery);
-    // Automatically submit the generated query
-    setTimeout(() => {
-      handleSubmit();
-    }, 100);
+    resetStream();
+    const controller = startStream();
+
+    // Clear previous messages and only show the new configuration
+    setMessages([]);
+    
+    // Only create assistant message (no user message shown)
+    const assistantMessage = createAssistantMessage();
+    setMessages([assistantMessage]);
+
+    // Debug confidence score threshold being used
+    console.log(`Submitting wizard query with confidence threshold: ${confidenceScoreThreshold}`);
+
+    try {
+      // Create the request with the query but don't show it in chat
+      const silentUserMessage = createUserMessage(generatedQuery);
+      const requestBody: GenerateRequest = {
+        messages: [silentUserMessage].map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+        collection_name: "vgpu_knowledge_base",
+        temperature,
+        top_p: topP,
+        reranker_top_k: rerankerTopK,
+        vdb_top_k: vdbTopK,
+        confidence_threshold: confidenceScoreThreshold,
+        use_knowledge_base: true,
+        enable_citations: includeCitations,
+        enable_guardrails: useGuardrails,
+      };
+
+      // Include model parameters if set
+      if (process.env.NEXT_PUBLIC_MODEL_NAME) {
+        requestBody.model = process.env.NEXT_PUBLIC_MODEL_NAME;
+      }
+      if (process.env.NEXT_PUBLIC_EMBEDDING_MODEL) {
+        requestBody.embedding_model = process.env.NEXT_PUBLIC_EMBEDDING_MODEL;
+      }
+      if (process.env.NEXT_PUBLIC_RERANKER_MODEL) {
+        requestBody.reranker_model = process.env.NEXT_PUBLIC_RERANKER_MODEL;
+      }
+
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      await processStream(response, assistantMessage.id, setMessages, confidenceScoreThreshold);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === "AbortError") {
+        console.log("Stream aborted");
+        return;
+      }
+      console.error("Error generating response:", error);
+      handleError(assistantMessage.id);
+    }
   };
 
   return (
@@ -314,30 +370,23 @@ export default function Chat() {
             </div>
 
             <div className="flex-shrink-0 border-t border-neutral-800">
-              <MessageInput
-                message={message}
-                setMessage={setMessage}
-                onSubmit={handleSubmit}
-                onAbort={stopStream}
-                isStreaming={streamState.isTyping}
-                onReset={handleReset}
-              />
+              <div className="p-4">
+                <button
+                  onClick={() => setIsWizardOpen(true)}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-lg shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 hover:scale-[1.02] flex items-center justify-center space-x-3"
+                  title="Open Workload Configuration Wizard"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                  </svg>
+                  <span className="text-lg font-bold">GPU</span>
+                  <span className="font-medium">Configure Workload</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Floating Wizard Button */}
-      <button
-        onClick={() => setIsWizardOpen(true)}
-        className="fixed bottom-24 right-6 bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-full shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 hover:scale-105 z-40"
-        title="Open Workload Configuration Wizard"
-      >
-        <div className="flex items-center space-x-2">
-          <span className="text-lg font-bold">GPU</span>
-          <span className="hidden sm:inline font-medium">Configure Workload</span>
-        </div>
-      </button>
 
       {/* Workload Configuration Wizard */}
       <WorkloadConfigWizard

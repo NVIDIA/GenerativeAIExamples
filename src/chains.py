@@ -46,7 +46,6 @@ from .utils import format_document_with_source
 from .utils import streaming_filter_think, get_streaming_filter_think_parser
 from .reflection import ReflectionCounter, check_context_relevance, check_response_groundedness
 from .utils import normalize_relevance_scores
-from .vsphere_integration import VSphereIntegration
 
 # Import enhanced components
 try:
@@ -78,50 +77,47 @@ class StructuredResponse(BaseModel):
             data['parameters'] = {
                 "type": "object",
                 "properties": {
-                    "vGPU_profile": {
+                    "vgpu_profile": {
                         "type": ["string", "null"],
-                        "description": "Exact NVIDIA vGPU profile name found in context documentation (must match documented profiles exactly)",
-                        "pattern": ["^[A-Z0-9]+-[0-9]+Q$"]
+                        "description": "Exact NVIDIA vGPU profile name (must match one of the documented profiles) and must support at least gpu_memory_size GB of VRAM.",
+                        "enum": [
+                            "L40S-1Q", "L40S-2Q", "L40S-3Q", "L40S-4Q", "L40S-6Q", "L40S-8Q", "L40S-12Q", "L40S-16Q",
+                            "L40S-24Q", "L40S-48Q", "L40-1Q", "L40-2Q", "L40-3Q", "L40-4Q", "L40-6Q", "L40-8Q", "L40-12Q", "L40-16Q",
+                            "L40-24Q", "L40-48Q", "A40-1Q", "A40-2Q", "A40-3Q", "A40-4Q", "A40-6Q", "A40-8Q", "A40-12Q", "A40-16Q",
+                            "A40-24Q", "A40-48Q", "L4-1Q", "L4-2Q", "L4-3Q", "L4-4Q", "L4-6Q", "L4-8Q", "L4-12Q", "L4-24Q"
+                        ]
                     },
-                    "total_CPUs": {
+                    "total_CPU_count": {
                         "type": ["integer", "null"],
-                        "description": "Total number of CPU cores allocated to the VM host",
+                        "description": "Total number of physical CPU cores on the host node",
                         "minimum": 1,
                         "maximum": 256
                     },
-                    "vCPU_count": {
+                    "vcpu_count": {
                         "type": ["integer", "null"],
-                        "description": "Number of virtual CPUs allocated to the VM guest based on workload requirements",
+                        "description": "Refer to the sizing guide if the workload is heavy, light, or moderate - take the cpu count here and multiply it by the concurrent users.",
                         "minimum": 1,
-                        "maximum": 128
+                        "maximum": 256
                     },
                     "gpu_memory_size": {
                         "type": ["integer", "null"],
-                        "description": "GPU frame buffer memory in GB assigned to the vGPU profile (must match vGPU profile (the memory constraint specifications)",
-                    },
-                    "video_card_total_memory": {
-                        "type": ["integer", "null"],
-                        "description": "Total video card memory capacity in GB of the vGPU hardware",
+                        "description": "Total VRAM (in GB) needed = sum(model_params in billions) × precision_factor × 1.2 overhead × concurrent_users. Precision factor: INT8 = 1 byte, FP16 = 2 bytes, FP32 = 4 bytes.",
+                        "minimum": 1,
+                        "maximum": 256
                     },
                     "system_RAM": {
                         "type": ["integer", "null"],
-                        "description": "System RAM allocated to the VM in GB based on workload analysis",
+                        "description": "System memory (in GB) allocated to this VM, including OS and framework overhead",
                         "minimum": 8,
                         "maximum": 2048
                     },
-                    "storage_type": {
-                        "type": ["string", "null"],
-                        "description": "Recommended storage type based on performance requirements",
-                        "enum": ["SSD", "NVMe", "HDD", "Network Storage"]
-                    },
                     "concurrent_users": {
                         "type": ["integer", "null"],
-                        "description": "Number of concurrent users the configuration can support",
-                        "minimum": 1,
-                        "maximum": 1000
+                        "description": "Number of simultaneous inference users expected on this VM",
+                        "minimum": 1
                     }
                 },
-                "required": []
+                "required": ["vgpu_profile", "total_CPU_count", "vcpu_count", "gpu_memory_size", "system_RAM", "concurrent_users"]
             }
         
         # Set default title if not provided
@@ -330,7 +326,7 @@ class UnstructuredRAG(BaseExample):
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             else:
                 error_response = StructuredResponse(
-                    description=f"Failed to generate RAG chain response. {str(e)}"
+                    description=f"Failed to generate LLM chain response. {str(e)}"
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
 
@@ -515,7 +511,7 @@ Now provide a complete structured vGPU configuration based on this grounded anal
             error_response = StructuredResponse(
                 description="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available."
             )
-            return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+            return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
 
         except requests.exceptions.ConnectionError as e:
             if "HTTPConnectionPool" in str(e):
@@ -523,7 +519,7 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                 error_response = StructuredResponse(
                     description="Connection error: Failed to connect to service. Please verify if all required services are running and accessible."
                 )
-                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
         except Exception as e:
             logger.warning("Failed to generate response due to exception %s", e)
             print_exc()
@@ -533,18 +529,18 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                 error_response = StructuredResponse(
                     description="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key."
                 )
-                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
             elif "[404] Not Found" in str(e):
                 logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid.")
                 error_response = StructuredResponse(
                     description="Please verify the API endpoint and your payload. Ensure that the model name is valid."
                 )
-                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
             else:
                 error_response = StructuredResponse(
                     description=f"Failed to generate RAG chain response. {str(e)}"
                 )
-                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
 
 
     def rag_chain_with_multiturn(self,
@@ -621,7 +617,7 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                     retriever_query = q_prompt.invoke({"input": query, "chat_history": conversation_history}, config={'run_name':'query-rewriter'})
                     logger.info("Rewritten Query: %s %s", retriever_query, len(retriever_query))
                     if retriever_query.replace('"', "'") == "''" or len(retriever_query) == 0:
-                        return iter([""])
+                        return iter([""]), []
                 else:
                     # Use previous user queries and current query to form a single query for document retrieval
                     user_queries = [msg.content for msg in chat_history if msg.role == "user"]
@@ -743,7 +739,7 @@ Now provide a complete structured vGPU configuration based on this grounded anal
             error_response = StructuredResponse(
                 description="Connection timed out while making a request to the NIM endpoint. Verify if the NIM server is available."
             )
-            return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+            return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
 
         except requests.exceptions.ConnectionError as e:
             if "HTTPConnectionPool" in str(e):
@@ -751,7 +747,7 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                 error_response = StructuredResponse(
                     description="Connection error: Failed to connect to service. Please verify if all required NIMs are running and accessible."
                 )
-                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
 
         except Exception as e:
             logger.warning("Failed to generate response due to exception %s", e)
@@ -762,18 +758,18 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                 error_response = StructuredResponse(
                     description="Authentication or permission error: Verify the validity and permissions of your NVIDIA API key."
                 )
-                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
             elif "[404] Not Found" in str(e):
                 logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid.")
                 error_response = StructuredResponse(
                     description="Please verify the API endpoint and your payload. Ensure that the model name is valid."
                 )
-                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
             else:
                 error_response = StructuredResponse(
                     description=f"Failed to generate RAG chain with multi-turn response. {str(e)}"
                 )
-                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
+                return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)]), []
 
 
     def document_search(self, content: str, messages: List, reranker_top_k: int, vdb_top_k: int, collection_name: str = "", **kwargs) -> List[Dict[str, Any]]:

@@ -27,7 +27,7 @@ services:
       # Type of vectordb used to store embedding supported type milvus
       APP_VECTORSTORE_NAME: "milvus"
       # Type of vectordb search to be used
-      APP_VECTORSTORE_SEARCH_TYPE: ${APP_VECTORSTORE_SEARCH_TYPE:-"dense"} # Can be dense or hybrid
+      APP_VECTORSTORE_SEARCH_TYPE: ${APP_VECTORSTORE_SEARCH_TYPE:-"hybrid"} # Can be dense or hybrid
       # vectorstore collection name to store embeddings
       COLLECTION_NAME: ${COLLECTION_NAME:-multimodal_data}
       APP_RETRIEVER_SCORETHRESHOLD: 0.25
@@ -35,9 +35,9 @@ services:
       VECTOR_DB_TOPK: ${VECTOR_DB_TOPK:-100}
 
       ##===LLM Model specific configurations===
-      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-"nvidia/llama-3.3-nemotron-super-49b-v1"}
+      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-"meta/llama-3.1-8b-instruct"}
       # url on which llm model is hosted. If "", Nvidia hosted API is used
-      APP_LLM_SERVERURL: ${APP_LLM_SERVERURL-"nim-llm:8000"}
+      APP_LLM_SERVERURL: ${APP_LLM_SERVERURL-""}
 
       ##===Query Rewriter Model specific configurations===
       APP_QUERYREWRITER_MODELNAME: ${APP_QUERYREWRITER_MODELNAME:-"meta/llama-3.1-8b-instruct"}
@@ -65,7 +65,7 @@ services:
 
       # enable multi-turn conversation in the rag chain - this controls conversation history usage
       # while doing query rewriting and in LLM prompt
-      ENABLE_MULTITURN: ${ENABLE_MULTITURN:-True}
+      ENABLE_MULTITURN: ${ENABLE_MULTITURN:-False}
 
       # enable query rewriting for multiturn conversation in the rag chain.
       # This will improve accuracy of the retrieiver pipeline but increase latency due to an additional LLM call
@@ -128,7 +128,7 @@ services:
       dockerfile: ./Dockerfile
       args:
         # Model name for LLM
-        NEXT_PUBLIC_MODEL_NAME: ${APP_LLM_MODELNAME:-nvidia/llama-3.3-nemotron-super-49b-v1}
+        NEXT_PUBLIC_MODEL_NAME: ${APP_LLM_MODELNAME:-meta/llama-3.1-8b-instruct}
         # Model name for embeddings
         NEXT_PUBLIC_EMBEDDING_MODEL: ${APP_EMBEDDINGS_MODELNAME:-nvidia/llama-3.2-nv-embedqa-1b-v2}
         # Model name for reranking
