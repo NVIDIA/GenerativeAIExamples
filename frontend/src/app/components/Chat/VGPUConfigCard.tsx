@@ -39,6 +39,12 @@ interface VGPUConfig {
     performance_tier?: string | null;
     relevant_aiwb_toolkit?: string | null;
     RAM?: number | null;
+    // vGPU Calculator metrics
+    max_kv_tokens?: number | null;
+    ttft_s?: number | null;
+    e2e_lat_s?: number | null;
+    throughput_tok_s?: number | null;
+    num_gpus?: number | null;
   };
   // Optional fields for enhanced context
   host_capabilities?: {
@@ -94,7 +100,13 @@ const parameterDefinitions: { [key: string]: string } = {
   storage_type: "Type of storage (SSD, NVMe, HDD) for optimal performance",
   driver_version: "NVIDIA driver version required for this configuration",
   AI_framework: "AI/ML framework optimized for this configuration",
-  performance_tier: "Performance level classification for this setup"
+  performance_tier: "Performance level classification for this setup",
+  // Calculator metrics
+  max_kv_tokens: "Maximum number of KV cache tokens that can fit in GPU memory",
+  ttft_s: "Time to First Token - how quickly the model starts generating output",
+  e2e_lat_s: "End-to-End Latency - total time to generate the complete response",
+  throughput_tok_s: "Throughput - tokens generated per second",
+  num_gpus: "Number of GPUs required for this configuration"
 };
 
 // Key parameters that should be in the primary section
@@ -141,6 +153,18 @@ const ParameterIcon = ({ type, className = "w-4 h-4" }: { type: string; classNam
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
       );
+    case 'performance':
+      return (
+        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      );
+    case 'time':
+      return (
+        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
     default:
       return (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,6 +198,13 @@ const getIconType = (key: string): string => {
       return 'framework';
     case 'concurrent_users':
       return 'users';
+    case 'max_kv_tokens':
+    case 'ttft_s':
+    case 'e2e_lat_s':
+    case 'throughput_tok_s':
+      return 'performance';
+    case 'num_gpus':
+      return 'vGPU_profile';
     default:
       return 'default';
   }
@@ -223,6 +254,16 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
       case 'relevant_aiwb_toolkit':
       case 'performance_tier':
         return String(value);
+      case 'max_kv_tokens':
+        return value.toLocaleString();
+      case 'ttft_s':
+        return `${value} seconds`;
+      case 'e2e_lat_s':
+        return `${value} seconds`;
+      case 'throughput_tok_s':
+        return `${value} tokens/sec`;
+      case 'num_gpus':
+        return `${value} GPU${value > 1 ? 's' : ''}`;
       default:
         return String(value);
     }
@@ -261,6 +302,16 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
         return 'Performance Tier';
       case 'concurrent_users':
         return 'Concurrent Users';
+      case 'max_kv_tokens':
+        return 'Max KV Tokens';
+      case 'ttft_s':
+        return 'Time to First Token';
+      case 'e2e_lat_s':
+        return 'End-to-End Latency';
+      case 'throughput_tok_s':
+        return 'Throughput';
+      case 'num_gpus':
+        return 'Number of GPUs';
       default:
         return key.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase());
     }
@@ -273,6 +324,7 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
     keyParameters.includes(key) && config.parameters[key as keyof typeof config.parameters] !== null
   );
   
+  // Include calculator metrics in advanced params
   const advancedParams = Object.entries(config.parameters).filter(([key]) => 
     !keyParameters.includes(key) && config.parameters[key as keyof typeof config.parameters] !== null
   );
