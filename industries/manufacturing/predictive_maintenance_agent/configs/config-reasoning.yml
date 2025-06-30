@@ -189,7 +189,7 @@ workflow:
     4) Create comprehensive plots showing test data timeline with anomalies highlighted
        - Use different colors/markers to distinguish between normal data and show all different types of anomalies
        - Include hover information and legends for clear interpretation
-       - Save visualizations as interactive HTML files for detailed analysis
+       - Save visualizations as interactive HTML files for detailed analysis       
 
     ----
 
