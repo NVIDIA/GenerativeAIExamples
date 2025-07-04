@@ -48,7 +48,7 @@ llm:
     allow_headers: ["Content-Type", "Accept", "Origin"]
   model:
     name: "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
-    max_tokens: 32768
+    max_tokens: 28000
     temperature: 0.6
     top_p: 0.95
 

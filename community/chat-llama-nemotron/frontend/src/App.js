@@ -37,6 +37,7 @@ function App() {
     const savedIp = localStorage.getItem('serverIp') || '';
     return savedIp;
   });
+  const [showIp, setShowIp] = useState(false);
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
   const errorTimeoutRef = useRef(null);
@@ -322,7 +323,7 @@ function App() {
           model: appConfig?.llm?.model?.name || "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1",
           messages: contextMessages,
           stream: false,
-          max_tokens: appConfig?.llm?.model?.max_tokens || 32768,
+          max_tokens: appConfig?.llm?.model?.max_tokens || 28000,
           temperature: appConfig?.llm?.model?.temperature || 0.6,
           top_p: appConfig?.llm?.model?.top_p || 0.95
         }),
@@ -530,15 +531,25 @@ function App() {
         <h1>Chat with Llama-3.1-Nemotron-Nano-4B-v1.1</h1>
         <div className="server-ip-input">
           <label htmlFor="serverIp">NVIDIA Dynamo server:</label>
-          <input
-            type="text"
-            id="serverIp"
-            value={serverIp}
-            onChange={(e) => {
-              setServerIp(e.target.value);
-            }}
-            placeholder="Enter server IP"
-          />
+          <div className="ip-input-container">
+            <input
+              type={showIp ? "text" : "password"}
+              id="serverIp"
+              value={serverIp}
+              onChange={(e) => {
+                setServerIp(e.target.value);
+              }}
+              placeholder="Enter server IP"
+            />
+            <button
+              type="button"
+              className="toggle-ip-visibility"
+              onClick={() => setShowIp(!showIp)}
+              title={showIp ? "Hide IP address" : "Show IP address"}
+            >
+              {showIp ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
         </div>
         {error && (
           <div className={`error-message ${errorTimeoutRef.current ? 'fade-out' : ''}`} role="alert">

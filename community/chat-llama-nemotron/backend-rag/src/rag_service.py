@@ -27,7 +27,7 @@ import re
 from multiprocessing import Queue
 from config.config_loader import config_loader
 import torch
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+# Simple text splitter implementation
 
 # Load configurations
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class RAGService:
         # Initialize the model with proper configuration
         self.model = SentenceTransformer(
             model_config['name'],
-            device='cuda' if torch.cuda.is_available() else 'cpu'
+            device='cpu'  # Force CPU to avoid MPS/CUDA issues
         )
         self.query_instruction = search_config.get('query_instruction', "Represent this sentence for searching relevant passages: ")
         
@@ -74,15 +74,8 @@ class RAGService:
         self.max_workers = processing_config['max_workers']  # Get max workers from config
         self.search_multiplier = search_config.get('deduplication_multiplier', 2)  # Get search multiplier from config
         
-        # Initialize text splitter
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=self.chunk_size,
-            chunk_overlap=self.chunk_overlap,
-            length_function=len,
-            separators=text_config.get('separators', ["\n\n", "\n", ". ", "! ", "? ", ", ", " "]),
-            is_separator_regex=False,
-            keep_separator=False
-        )
+        # Initialize text splitter configuration
+        self.separators = text_config.get('separators', ["\n\n", "\n", ". ", "! ", "? ", ", ", " "])
         
         # Create index if it doesn't exist
         if not self.index:
@@ -98,12 +91,44 @@ class RAGService:
         logger.info("Cleared documents and metadata lists")
         
     def chunk_text(self, text: str) -> List[str]:
-        """Split text into overlapping chunks using RecursiveCharacterTextSplitter"""
+        """Split text into overlapping chunks using simple implementation"""
         # Clean the text
         text = re.sub(r'\s+', ' ', text).strip()
         
-        # Use the langchain text splitter
-        chunks = self.text_splitter.split_text(text)
+        if len(text) <= self.chunk_size:
+            return [text]
+        
+        chunks = []
+        start = 0
+        
+        while start < len(text):
+            # Find the end of the current chunk
+            end = start + self.chunk_size
+            
+            if end >= len(text):
+                # Last chunk
+                chunk = text[start:].strip()
+                if chunk:
+                    chunks.append(chunk)
+                break
+            
+            # Try to find a good break point
+            best_break = end
+            for separator in self.separators:
+                # Look for the separator in the overlap region
+                overlap_start = max(start, end - self.chunk_overlap)
+                pos = text.rfind(separator, overlap_start, end)
+                if pos > start:
+                    best_break = pos + len(separator)
+                    break
+            
+            # Extract the chunk
+            chunk = text[start:best_break].strip()
+            if chunk:
+                chunks.append(chunk)
+            
+            # Move to next chunk with overlap
+            start = max(start + 1, best_break - self.chunk_overlap)
         
         logger.info(f"Created {len(chunks)} chunks from text")
         return chunks

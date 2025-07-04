@@ -69,6 +69,13 @@
   letter-spacing: 0.01em;
 }
 
+.ip-input-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 0.5rem;
+}
+
 .server-ip-input input {
   flex: 1;
   padding: 0.75rem 1rem;
@@ -97,6 +104,34 @@
 .server-ip-input input:hover:not(:focus) {
   border-color: rgba(255, 255, 255, 0.3);
   background-color: rgba(255, 255, 255, 0.12);
+}
+
+.toggle-ip-visibility {
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.toggle-ip-visibility:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.toggle-ip-visibility:focus {
+  outline: none;
+  border-color: #76B900;
+  box-shadow: 0 0 0 2px rgba(118, 185, 0, 0.25);
 }
 
 .controls {
@@ -455,6 +490,17 @@ input:checked + .slider:before {
   .server-ip-input input {
     width: 100%;
     min-width: unset;
+  }
+
+  .ip-input-container {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .toggle-ip-visibility {
+    min-width: 44px;
+    height: 44px;
+    flex-shrink: 0;
   }
 
   .rag-toggle {

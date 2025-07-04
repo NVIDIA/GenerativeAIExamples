@@ -46,4 +46,7 @@ ui:
       summary:
         max_messages: 5
         system_prompt: "detailed thinking {status}"
+        rag_prefix: "Relevant information from knowledge base:\n"
+      context:
+        system_prompt: "detailed thinking {status}"
         rag_prefix: "Relevant information from knowledge base:\n" 
