@@ -1,0 +1,28 @@
+# Web Framework and API
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+
+# Data Validation
+pydantic==2.5.0
+
+# RAG and ML Dependencies
+sentence-transformers>=2.5.0
+faiss-cpu==1.7.4
+numpy==1.24.3
+torch==2.1.0
+
+# Text Processing
+langchain>=0.1.0
+langchain-community>=0.0.10
+langchain-text-splitters>=0.0.1
+
+# File Processing
+PyPDF2==3.0.1
+python-docx==1.0.1
+beautifulsoup4==4.12.2
+markdown==3.5.1
+
+# Utilities
+tqdm==4.66.1
+PyYAML==6.0.1 
