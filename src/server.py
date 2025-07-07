@@ -1189,12 +1189,6 @@ async def generate_structured_answer(request: Request, prompt: Prompt) -> JSONRe
                                     "description": "Exact NVIDIA vGPU profile name from context documentation",
                                     "pattern": "^[A-Z0-9]+-[0-9]+[A-Z]?$"
                                 },
-                                "total_CPUs": {
-                                    "type": "integer",
-                                    "description": "Total physical CPU cores for VM host",
-                                    "minimum": 1,
-                                    "maximum": 256
-                                },
                                 "vCPU_count": {
                                     "type": "integer",
                                     "description": "Virtual CPUs for VM guest",
@@ -1254,12 +1248,6 @@ async def generate_structured_answer(request: Request, prompt: Prompt) -> JSONRe
                             "type": "string",
                             "description": "Exact NVIDIA vGPU profile name from context documentation", 
                             "pattern": "^[A-Z0-9]+-[0-9]+[A-Z]?$"
-                        },
-                        "total_CPUs": {
-                            "type": "integer",
-                            "description": "Total physical CPU cores for VM host",
-                            "minimum": 1,
-                            "maximum": 256
                         },
                         "vCPU_count": {
                             "type": "integer",

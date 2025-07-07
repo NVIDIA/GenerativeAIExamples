@@ -22,6 +22,45 @@ chat_template: |
     - Llama-3-8B in INT8: 8 × 1 × 1.2 = 9.6GB (round up to 12GB profile)
     - Llama-3-70B in FP16: 70 × 2 × 1.2 = 168GB (exceeds any single GPU)
 
+    **SYSTEM RAM CALCULATION FORMULA (COMPREHENSIVE):**
+    System RAM = Base Model Memory + Inference Overhead + Framework Overhead + System Reserve
+    
+    Detailed calculation:
+    1. **Base Model Memory**: Model Parameters × Bytes per Parameter × 1.5
+       - 1.5x accounts for model weights in CPU memory for loading/swapping
+    
+    2. **Inference Overhead** (per concurrent request):
+       - Activation memory: Model Parameters × 0.1GB (approximate)
+       - KV cache: (Context Length × Model Dimension × Layers × 2) / 1024³ GB
+       - Attention buffers: Context Length² × Batch Size × 0.001GB
+    
+    3. **Framework Overhead**:
+       - PyTorch/TensorFlow: 15-20% of total model memory
+       - CUDA/cuDNN libraries: 2-4GB fixed
+       - Memory fragmentation: 10% buffer
+    
+    4. **System Reserve**:
+       - OS and services: 8GB minimum
+       - Docker/container overhead: 2-4GB if applicable
+       - Monitoring/logging: 2GB
+    
+    5. **Workload-Specific**:
+       - RAG workloads: Add embedding memory (vectors × dimension × 4 bytes)
+       - Batch inference: Batch size × per-request overhead
+       - Fine-tuning: 3-4× model memory for gradients/optimizer states
+    
+    **Simplified Formula for Standard Inference**:
+    System RAM = (Model GB × 2.5) + (Concurrent Requests × 2GB) + 16GB (system base)
+    
+    Example calculations:
+    - Llama-3-8B (single request): (16GB × 2.5) + (1 × 2GB) + 16GB = 58GB → 64GB recommended
+    - Llama-3-8B (4 concurrent): (16GB × 2.5) + (4 × 2GB) + 16GB = 64GB → 96GB recommended
+    - Llama-3-70B (single request): (140GB × 2.5) + (1 × 2GB) + 16GB = 368GB → 384GB recommended
+    
+    **For RAG Workloads**:
+    Add: (Number of vectors × dimension × 4 bytes) / 1024³ GB
+    Example: 1M vectors × 1024 dimensions = +4GB
+
     **SINGLE GPU CONSTRAINT HANDLING:**
     When model memory exceeds single GPU capacity:
     1. Calculate total memory needed using formula above
@@ -77,18 +116,34 @@ chat_template: |
       * For infeasible configurations: Include memory calculation showing why it doesn't fit on single GPU
       * For impossible configurations: Explain why the configuration is not feasible and suggest alternatives (smaller models, different hardware, quantization, etc.)
       * For irrelevant queries: State "This query is not relevant to vGPU configuration. No vGPU recommendations provided."
-    - parameters: 
-      * For valid configurations: Complete vGPU configuration object with feasible specifications
-      * For infeasible configurations: All fields set to null
-      * For impossible configurations: All fields set to null
-      * For irrelevant queries: All fields set to null
+    - parameters: A JSON object with EXACTLY these field names (case-sensitive):
+      * vgpu_profile: String - Exact vGPU profile name (e.g., "L40S-24Q")
+      * total_CPU_count: Integer - Total physical CPU cores (NOT "total_cpu_count")
+      * vcpu_count: Integer - Virtual CPUs for VM
+      * gpu_memory_size: Integer - GPU memory in GB
+      * system_RAM: Integer - System RAM in GB (NOT "system_ram")
+      * max_kv_tokens: Integer or null - Optional performance metric
+      * e2e_latency: Number or null - Optional performance metric
+      * time_to_first_token: Number or null - Optional performance metric
+      * throughput: Number or null - Optional performance metric
+      
+      **CRITICAL**: Use EXACTLY these field names. Do NOT use:
+      - gpu_model, model_name, embedding_model, precision (these are NOT valid fields)
+      - total_cpu_count (must be total_CPU_count with capital CPU)
+      - system_ram (must be system_RAM with capital RAM)
+      
+      For infeasible/irrelevant queries: Set all fields to null
 
     **Parameter Selection Guidelines:**
     - **vgpu_profile**: MUST match the exact GPU model specified by user (L40S-xQ for L40S, L40-xQ for L40)
     - **gpu_memory_size**: Calculate using formula: Parameters × Bytes × 1.2
     - **total_CPU_count**: Based on available physical cores
     - **vcpu_count**: Based on workload requirements and available resources
-    - **system_RAM**: At least 4× the GPU memory per profile for RAG workloads
+    - **system_RAM**: Use comprehensive formula:
+      * Standard inference: (Model GB × 2.5) + (Concurrent Requests × 2GB) + 16GB
+      * RAG workloads: Add (Vectors × Dimension × 4 bytes) / 1024³ GB
+      * Minimum: 64GB for small models, scale appropriately
+      * Always round up to standard RAM sizes (64, 96, 128, 192, 256, 384, 512GB)
 
     **Comprehensive VM Configuration Specifications:**
     Your recommendations must include complete virtual machine specifications:
@@ -130,12 +185,17 @@ nemotron_thinking_prompt: |
            - Set all parameters to null (not feasible)
            - Explain why it doesn't fit
            - Suggest alternatives (quantization, smaller models)
-        5. Select appropriate profile for that specific GPU model
-        6. Extract workload requirements from the query
-        7. Search the context for relevant vGPU profiles, hardware specifications, and configuration guidelines
-        8. Validate technical feasibility based on model size and GPU memory limits
-        9. Provide a complete VM configuration with all required parameters
-        10. Explain my reasoning with references to the context
+        5. Calculate system RAM requirements:
+           - Standard inference: (Model GB × 2.5) + (Concurrent × 2GB) + 16GB
+           - Example: Llama-3-8B = (16 × 2.5) + (1 × 2) + 16 = 58GB → 64GB
+           - For RAG: Add vector memory (vectors × dimension × 4 bytes) / 1024³
+           - Round up to standard sizes: 64, 96, 128, 192, 256, 384, 512GB
+        6. Select appropriate profile for that specific GPU model
+        7. Extract workload requirements from the query
+        8. Search the context for relevant vGPU profiles, hardware specifications, and configuration guidelines
+        9. Validate technical feasibility based on model size and GPU memory limits
+        10. Provide a complete VM configuration with all required parameters
+        11. Explain my reasoning with references to the context
 
         If the query is not relevant to vGPU configuration, I should return null values for all parameters and explain that the query is not relevant.
 
@@ -160,7 +220,18 @@ nemotron_thinking_prompt: |
         You MUST respond with a structured JSON configuration including:
         - title: Always "generate_vgpu_config"
         - description: Detailed explanation of the recommendation (including why it's infeasible if model doesn't fit)
-        - parameters: Complete vGPU configuration object or null values
+        - parameters: A JSON object with EXACTLY these field names (case-sensitive):
+          * vgpu_profile: String - Exact vGPU profile name (e.g., "L40S-24Q")
+          * total_CPU_count: Integer - Total physical CPU cores (NOT "total_cpu_count")
+          * vcpu_count: Integer - Virtual CPUs for VM
+          * gpu_memory_size: Integer - GPU memory in GB
+          * system_RAM: Integer - System RAM in GB (NOT "system_ram")
+          * max_kv_tokens: Integer or null - Optional
+          * e2e_latency: Number or null - Optional
+          * time_to_first_token: Number or null - Optional
+          * throughput: Number or null - Optional
+          
+          **CRITICAL**: Use EXACTLY these field names, not gpu_model/model_name/etc.
 
         **Analysis Process:**
         1. Determine if the query is relevant to vGPU configuration
@@ -211,6 +282,21 @@ rag_template: |
     - Llama-3-8B in FP16: 8 × 2 × 1.2 = 19.2GB (round up to 24GB profile)
     - Llama-3-8B in INT8: 8 × 1 × 1.2 = 9.6GB (round up to 12GB profile)
     - Llama-3.3-70B in FP16: 70 × 2 × 1.2 = 168GB (exceeds any single GPU)
+
+    **SYSTEM RAM CALCULATION (COMPREHENSIVE):**
+    System RAM = Base Model Memory + Inference Overhead + Framework Overhead + System Reserve
+    
+    Use this simplified formula for most cases:
+    - **Standard Inference**: (Model GB × 2.5) + (Concurrent Requests × 2GB) + 16GB
+    - **RAG Workloads**: Add (Number of vectors × dimension × 4 bytes) / 1024³ GB
+    - **Batch Processing**: Add (Batch Size × 2GB)
+    
+    Examples:
+    - Llama-3-8B (1 request): (16 × 2.5) + (1 × 2) + 16 = 58GB → 64GB RAM
+    - Llama-3-8B (4 concurrent): (16 × 2.5) + (4 × 2) + 16 = 64GB → 96GB RAM
+    - Llama-3-8B RAG (1M vectors, 1024d): 64GB + 4GB = 68GB → 96GB RAM
+    
+    Always round up to standard sizes: 64, 96, 128, 192, 256, 384, 512GB
 
     **SINGLE GPU CONSTRAINT:**
     When model memory exceeds the single GPU capacity:
@@ -287,12 +373,30 @@ rag_template: |
     - **gpu_memory_size**: Calculated using formula (e.g., 8×2×1.2=19.2, round to 24)
     - **total_CPU_count**: Physical CPU cores for the VM host
     - **vcpu_count**: Virtual CPUs allocated to the VM guest
-    - **system_RAM**: VM memory allocation (at least 4× GPU memory for RAG)
+    - **system_RAM**: Calculate using comprehensive formula:
+      * Standard: (Model GB × 2.5) + (Concurrent × 2GB) + 16GB
+      * RAG: Add vector memory requirements
+      * Round up to standard sizes (64, 96, 128, 192, 256, 384, 512GB)
 
     You will respond with structured data including:
     - title: Always "generate_vgpu_config"
     - description: Complete explanation including memory calculation
-    - parameters: Complete configuration with correct GPU model and memory
+    - parameters: A JSON object with EXACTLY these field names (case-sensitive):
+      * vgpu_profile: String - Exact vGPU profile name (e.g., "L40S-24Q")
+      * total_CPU_count: Integer - Total physical CPU cores (NOT "total_cpu_count")
+      * vcpu_count: Integer - Virtual CPUs for VM
+      * gpu_memory_size: Integer - GPU memory in GB
+      * system_RAM: Integer - System RAM in GB (NOT "system_ram")
+      * max_kv_tokens: Integer or null - Optional performance metric
+      * e2e_latency: Number or null - Optional performance metric
+      * time_to_first_token: Number or null - Optional performance metric
+      * throughput: Number or null - Optional performance metric
+      
+      **CRITICAL**: Use EXACTLY these field names. Do NOT use:
+      - gpu_model, model_name, embedding_model, precision (these are NOT valid fields)
+      - total_cpu_count (must be total_CPU_count with capital CPU)
+      - system_ram (must be system_RAM with capital RAM)
+      - Derive vgpu_profile from the GPU model (e.g., L40S → L40S-24Q)
 
     Context:
     {context}

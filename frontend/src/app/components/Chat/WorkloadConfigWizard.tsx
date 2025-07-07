@@ -22,12 +22,13 @@ interface WorkloadConfig {
   specificModel: string;
   modelSize: string;
   batchSize: string;
-  memoryRequirement: string;
+  promptSize: string;
+  responseSize: string;
   embeddingModel: string;
-  concurrentUsers: string;
   gpuInventory: { [key: string]: number };
-  framework: string;
   precision: string;
+  vectorDimension?: string;
+  numberOfVectors?: string;
 }
 
 interface WorkloadConfigWizardProps {
@@ -46,12 +47,13 @@ export default function WorkloadConfigWizard({
     specificModel: "",
     modelSize: "",
     batchSize: "",
-    memoryRequirement: "",
+    promptSize: "1024",
+    responseSize: "256",
     embeddingModel: "",
-    concurrentUsers: "",
     gpuInventory: {},
-    framework: "",
     precision: "",
+    vectorDimension: "384",  // Default to 384
+    numberOfVectors: "10000", // Default to 10,000
   });
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -59,7 +61,6 @@ export default function WorkloadConfigWizard({
 
   const workloadTypes = [
     { value: "rag", label: "RAG (Retrieval-Augmented Generation)", desc: "Document search and generation workflows" },
-    { value: "training", label: "Model Training", desc: "Training neural networks and deep learning models" },
     { value: "inference", label: "LLM Inference", desc: "Running predictions and serving trained models" },
     { value: "fine-tuning", label: "Model Fine-Tuning", desc: "Adapting pre-trained models for specific tasks" }
   ];
@@ -92,10 +93,6 @@ export default function WorkloadConfigWizard({
     { value: "l40", label: "NVIDIA L40", desc: "48GB GDDR6 with ECC, Ada Lovelace - Virtual workstations & compute workloads" },
     { value: "l4", label: "NVIDIA L4", desc: "24GB GDDR6 with ECC, Ada Lovelace, 72W - AI inference, small model training & 3D graphics" },
     { value: "a40", label: "NVIDIA A40", desc: "48GB GDDR6 with ECC, Ampere, 300W - 3D design & mixed virtual workstation workloads" },
-    { value: "a16", label: "NVIDIA A16", desc: "4x 16GB GDDR6 with ECC, Ampere, 250W - Entry-level virtual workstations" },
-    { value: "a10", label: "NVIDIA A10", desc: "24GB GDDR6 with ECC, Ampere, 140W - Mainstream professional visualization" },
-    { value: "blackwell", label: "NVIDIA Blackwell", desc: "Next-generation architecture (specifications pending)" },
-    { value: "mixed", label: "Mixed RTX vWS GPUs", desc: "Multiple different RTX vWS compatible GPU models" }
   ];
 
   const specificModels = [
@@ -108,15 +105,6 @@ export default function WorkloadConfigWizard({
     { value: "falcon-40b", label: "Falcon-40B" },
     { value: "falcon-180b", label: "Falcon-180B" },
     { value: "qwen-14b", label: "Qwen-14B" },
-  ];
-
-  const frameworks = [
-    { value: "pytorch", label: "PyTorch" },
-    { value: "tensorflow", label: "TensorFlow" },
-    { value: "huggingface", label: "Hugging Face" },
-    { value: "nemo", label: "NVIDIA NeMo" },
-    { value: "triton", label: "NVIDIA Triton" },
-    { value: "other", label: "Other" }
   ];
 
   const precisionOptions = [
@@ -144,6 +132,49 @@ export default function WorkloadConfigWizard({
     return Object.values(config.gpuInventory).reduce((sum, count) => {
       return sum + (count as number);
     }, 0);
+  };
+
+  const getRecommendedEmbeddingModel = (): string => {
+    // First check for specific model recommendations
+    if (config.specificModel && config.specificModel !== 'unknown') {
+      if (config.specificModel.includes('llama-3')) {
+        return 'llama-3-2-nv-embedqa-1b-v2';
+      }
+      if (config.specificModel.includes('mistral')) {
+        return 'nvidia/nemo-embed-qa-200M';
+      }
+      if (config.specificModel.includes('falcon-180b')) {
+        return 'nvidia/nvolveqa-embed-large-1B';
+      }
+      if (config.specificModel.includes('falcon-40b')) {
+        return 'nvidia/nvolveqa-embed-base-400M';
+      }
+      if (config.specificModel.includes('falcon-7b')) {
+        return 'all-MiniLM-L6-v2-80M';
+      }
+      if (config.specificModel.includes('qwen')) {
+        return 'text-embedding-ada-002-350M';
+      }
+    }
+    
+    // Fall back to model size category recommendations
+    if (config.modelSize) {
+      switch (config.modelSize) {
+        case 'small':
+          return 'all-MiniLM-L6-v2-80M';
+        case 'medium':
+          return 'nvidia/nvolveqa-embed-base-400M';
+        case 'large':
+          return 'nvidia/nvolveqa-embed-large-1B';
+        case 'xlarge':
+          return 'llama-3-2-nv-embedqa-1b-v2';
+        default:
+          return 'nvidia/nvolveqa-embed-large-1B';
+      }
+    }
+    
+    // Default recommendation
+    return 'nvidia/nvolveqa-embed-large-1B';
   };
 
   const generateQuery = (): string => {
@@ -185,33 +216,30 @@ export default function WorkloadConfigWizard({
     }
     
     // Performance requirements
-    if (config.embeddingModel) {
+    if (config.workloadType === 'rag' && config.embeddingModel) {
       const modelLabel = embeddingModels.find(m => m.value === config.embeddingModel)?.label || config.embeddingModel;
       parts.push(`using embedding model ${modelLabel}`);
-    } else {
-      // Recommended embedding model
-      parts.push(`using embedding model nvidia/nvolveqa-embed-large-1B`);
+    } else if (config.workloadType === 'rag') {
+      // Use recommended embedding model based on selection
+      const recommendedModel = getRecommendedEmbeddingModel();
+      const modelLabel = embeddingModels.find(m => m.value === recommendedModel)?.label || recommendedModel;
+      parts.push(`using embedding model ${modelLabel}`);
     }
     
-    // Memory and batch size
+    // Performance requirements
     const requirements = [];
-    if (config.memoryRequirement) {
-      requirements.push(`${config.memoryRequirement} memory`);
+    if (config.promptSize) {
+      requirements.push(`prompt size of ${config.promptSize} tokens`);
+    }
+    if (config.responseSize) {
+      requirements.push(`response size of ${config.responseSize} tokens`);
     }
     if (config.batchSize) {
       requirements.push(`batch size of ${config.batchSize}`);
     }
-    if (config.concurrentUsers) {
-      requirements.push(`${config.concurrentUsers} concurrent users`);
-    }
     
     if (requirements.length > 0) {
       parts.push(`with ${requirements.join(', ')}`);
-    }
-    
-    // Framework
-    if (config.framework && config.framework !== 'other') {
-      parts.push(`using ${config.framework}`);
     }
     
     // Precision
@@ -223,7 +251,46 @@ export default function WorkloadConfigWizard({
       parts.push(`with FP16 precision`);
     }
     
-    return parts.join(' ') + '.';
+    // Add retrieval configuration for RAG workloads
+    if (config.workloadType === 'rag' && (config.vectorDimension || config.numberOfVectors)) {
+      const retrievalParts = [];
+      if (config.vectorDimension) {
+        retrievalParts.push(`${config.vectorDimension}d vectors`);
+      }
+      if (config.numberOfVectors) {
+        retrievalParts.push(`${config.numberOfVectors} total vectors`);
+      }
+      if (retrievalParts.length > 0) {
+        parts.push(`with retrieval configuration: ${retrievalParts.join(', ')}`);
+      }
+    }
+    
+    const naturalLanguageQuery = parts.join(' ') + '.';
+    
+    // EMBED THE STRUCTURED CONFIG DATA AS JSON
+    // This preserves all the original user selections
+    const structuredConfig = {
+      workloadType: config.workloadType,
+      specificModel: config.specificModel,
+      modelSize: config.modelSize,
+      batchSize: config.batchSize,
+      promptSize: config.promptSize ? parseInt(config.promptSize) : 1024,
+      responseSize: config.responseSize ? parseInt(config.responseSize) : 256,
+      embeddingModel: config.workloadType === 'rag' ? (config.embeddingModel || getRecommendedEmbeddingModel()) : null,
+      gpuInventory: config.gpuInventory,
+      precision: config.precision || 'fp16',
+      // Add retrieval config for RAG
+      ...(config.workloadType === 'rag' && {
+        vectorDimension: config.vectorDimension ? parseInt(config.vectorDimension) : null,
+        numberOfVectors: config.numberOfVectors ? parseInt(config.numberOfVectors) : null,
+      }),
+      // Add computed values for easier backend processing
+      selectedGPU: Object.keys(config.gpuInventory)[0] || 'l40s',
+      gpuCount: Object.values(config.gpuInventory)[0] as number || 1,
+    };
+    
+    // Embed as HTML comment that won't be visible to user but can be parsed in backend
+    return naturalLanguageQuery + `\n<!--VGPU_CONFIG:${JSON.stringify(structuredConfig)}-->`;
   };
 
   const handleSubmit = () => {
@@ -236,12 +303,13 @@ export default function WorkloadConfigWizard({
       specificModel: "",
       modelSize: "",
       batchSize: "",
-      memoryRequirement: "",
+      promptSize: "1024",
+      responseSize: "256",
       embeddingModel: "",
-      concurrentUsers: "",
       gpuInventory: {},
-      framework: "",
       precision: "",
+      vectorDimension: "384",  // Default to 384
+      numberOfVectors: "10000", // Default to 10,000
     });
     setCurrentStep(1);
   };
@@ -251,7 +319,12 @@ export default function WorkloadConfigWizard({
       case 1:
         return config.workloadType !== "";
       case 2:
-        return config.specificModel || config.modelSize;
+        // If "unknown" is selected, user must also select a model size
+        if (config.specificModel === 'unknown') {
+          return config.modelSize !== '';
+        }
+        // Otherwise, just need a specific model selected
+        return config.specificModel !== '';
       case 3:
         return true; // Additional requirements are optional
       default:
@@ -336,7 +409,8 @@ export default function WorkloadConfigWizard({
                       onChange={(e) => handleInputChange("specificModel", e.target.value)}
                       className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white mb-4"
                     >
-                      <option value="">Select a specific model</option>
+                      <option value="" disabled>Select a specific model</option>
+                      <option value="unknown">Unknown / Not Sure</option>
                       {specificModels.map((model) => (
                         <option key={model.value} value={model.value}>{model.label}</option>
                       ))}
@@ -350,7 +424,11 @@ export default function WorkloadConfigWizard({
                         {modelSizes.map((size) => (
                           <button
                             key={size.value}
-                            onClick={() => handleInputChange("modelSize", size.value)}
+                            onClick={() => {
+                              handleInputChange("modelSize", size.value);
+                              // Also set specific model to unknown when selecting a size category
+                              handleInputChange("specificModel", "unknown");
+                            }}
                             className={`p-3 rounded-lg border text-left transition-all ${
                               config.modelSize === size.value
                                 ? "border-green-500 bg-green-900/20 text-white"
@@ -365,40 +443,34 @@ export default function WorkloadConfigWizard({
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Embedding Model (Optional)</label>
-                    <select
-                      value={config.embeddingModel}
-                      onChange={(e) => handleInputChange("embeddingModel", e.target.value)}
-                      className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
-                    >
-                      <option value="">Recommended (nvidia/nvolveqa-embed-large-1B)</option>
-                      {embeddingModels.map((model) => (
-                        <option key={model.value} value={model.value}>{model.label}</option>
-                      ))}
-                    </select>
-                    {config.embeddingModel && (
-                      <p className="text-sm text-gray-400 mt-2">
-                        {embeddingModels.find(m => m.value === config.embeddingModel)?.desc}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Only show embedding model for RAG workloads */}
+                  {config.workloadType === 'rag' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Framework</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Embedding Model</label>
                       <select
-                        value={config.framework}
-                        onChange={(e) => handleInputChange("framework", e.target.value)}
+                        value={config.embeddingModel}
+                        onChange={(e) => handleInputChange("embeddingModel", e.target.value)}
                         className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
                       >
-                        <option value="">Select framework</option>
-                        {frameworks.map((fw) => (
-                          <option key={fw.value} value={fw.value}>{fw.label}</option>
+                        <option value="">Recommended ({getRecommendedEmbeddingModel()})</option>
+                        {embeddingModels.map((model) => (
+                          <option key={model.value} value={model.value}>{model.label}</option>
                         ))}
                       </select>
+                      {config.embeddingModel && (
+                        <p className="text-sm text-gray-400 mt-2">
+                          {embeddingModels.find(m => m.value === config.embeddingModel)?.desc}
+                        </p>
+                      )}
+                      {!config.embeddingModel && (
+                        <p className="text-sm text-gray-400 mt-2">
+                          {embeddingModels.find(m => m.value === getRecommendedEmbeddingModel())?.desc}
+                        </p>
+                      )}
                     </div>
+                  )}
 
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Precision</label>
                       <select
@@ -418,6 +490,51 @@ export default function WorkloadConfigWizard({
                       )}
                     </div>
                   </div>
+
+                  {/* Retrieval Section - Only for RAG workload */}
+                  {config.workloadType === 'rag' && (
+                    <div className="mt-6 pt-6 border-t border-neutral-700">
+                      <h4 className="text-md font-semibold text-white mb-4">Retrieval Configuration</h4>
+                      <p className="text-sm text-gray-400 mb-4">
+                        Configure vector database settings for RAG retrieval
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Vector Dimension</label>
+                          <select
+                            value={config.vectorDimension || ""}
+                            onChange={(e) => handleInputChange("vectorDimension", e.target.value)}
+                            className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
+                          >
+                            <option value="">Select dimension</option>
+                            <option value="384">384 (Compact)</option>
+                            <option value="768">768 (Standard)</option>
+                            <option value="1024">1024 (Large)</option>
+                          </select>
+                          <p className="text-sm text-gray-400 mt-1">
+                            Must match your embedding model's output dimension
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Number of Vectors</label>
+                          <input
+                            type="number"
+                            value={config.numberOfVectors || ""}
+                            onChange={(e) => handleInputChange("numberOfVectors", e.target.value)}
+                            placeholder="e.g., 1000000"
+                            min="1000"
+                            step="1000"
+                            className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white placeholder-gray-500"
+                          />
+                          <p className="text-sm text-gray-400 mt-1">
+                            Total vectors in your knowledge base
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -430,33 +547,37 @@ export default function WorkloadConfigWizard({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Memory Requirement</label>
-                  <select
-                    value={config.memoryRequirement}
-                    onChange={(e) => handleInputChange("memoryRequirement", e.target.value)}
-                    className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
-                  >
-                    <option value="">Select memory needs</option>
-                    <option value="8-16 GB">Low (8-16 GB)</option>
-                    <option value="16-32 GB">Medium (16-32 GB)</option>
-                    <option value="32-64 GB">High (32-64 GB)</option>
-                    <option value="64+ GB">Very High (64+ GB)</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Prompt Size (tokens)</label>
+                  <input
+                    type="number"
+                    value={config.promptSize}
+                    onChange={(e) => handleInputChange("promptSize", e.target.value)}
+                    placeholder="e.g., 1024"
+                    min="256"
+                    max="32768"
+                    step="256"
+                    className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white placeholder-gray-500"
+                  />
+                  <p className="text-sm text-gray-400 mt-1">
+                    Maximum input prompt length in tokens
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Concurrent Users</label>
-                  <select
-                    value={config.concurrentUsers}
-                    onChange={(e) => handleInputChange("concurrentUsers", e.target.value)}
-                    className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white"
-                  >
-                    <option value="">Select user load</option>
-                    <option value="1-10">Small (1-10 users)</option>
-                    <option value="10-50">Medium (10-50 users)</option>
-                    <option value="50-200">Large (50-200 users)</option>
-                    <option value="200+">Enterprise (200+ users)</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Response Size (tokens)</label>
+                  <input
+                    type="number"
+                    value={config.responseSize}
+                    onChange={(e) => handleInputChange("responseSize", e.target.value)}
+                    placeholder="e.g., 256"
+                    min="128"
+                    max="8192"
+                    step="128"
+                    className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white placeholder-gray-500"
+                  />
+                  <p className="text-sm text-gray-400 mt-1">
+                    Maximum response length in tokens
+                  </p>
                 </div>
               </div>
 
@@ -489,38 +610,6 @@ export default function WorkloadConfigWizard({
                       ))}
                     </select>
                   </div>
-
-                  {/* Quantity selector for selected GPU */}
-                  {Object.keys(config.gpuInventory)[0] && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Quantity</label>
-                      <div className="flex items-center space-x-3">
-                        <button
-                          onClick={() => {
-                            const gpuType = Object.keys(config.gpuInventory)[0];
-                            const currentQty = config.gpuInventory[gpuType] || 1;
-                            handleGPUInventoryChange(gpuType, Math.max(1, currentQty - 1));
-                          }}
-                          className="w-10 h-10 rounded-full border border-green-500 text-green-500 hover:bg-green-500 hover:text-white text-lg font-bold transition-all"
-                        >
-                          −
-                        </button>
-                        <span className="w-16 text-center text-white font-mono text-lg">
-                          {Object.values(config.gpuInventory)[0] || 1}
-                        </span>
-                        <button
-                          onClick={() => {
-                            const gpuType = Object.keys(config.gpuInventory)[0];
-                            const currentQty = config.gpuInventory[gpuType] || 1;
-                            handleGPUInventoryChange(gpuType, currentQty + 1);
-                          }}
-                          className="w-10 h-10 rounded-full border border-green-500 text-green-500 hover:bg-green-500 hover:text-white text-lg font-bold transition-all"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 
                 {/* Show selected GPU description */}

@@ -18,8 +18,8 @@
 import Image from "next/image";
 
 interface HeaderProps {
-  onToggleSidebar: (panel: "citations" | "settings") => void;
-  activePanel: "citations" | "settings" | null;
+  onToggleSidebar: (panel: "citations") => void;
+  activePanel: "citations" | null;
 }
 
 export default function Header({ onToggleSidebar, activePanel }: HeaderProps) {
@@ -54,20 +54,6 @@ export default function Header({ onToggleSidebar, activePanel }: HeaderProps) {
             height={16}
           />
           Citations
-        </button>
-        <button
-          onClick={() => onToggleSidebar("settings")}
-          className={`flex items-center gap-2 text-sm ${
-            activePanel === "settings" ? "text-white" : "text-gray-400"
-          } transition-colors hover:text-white`}
-        >
-          <Image
-            src="/settings.svg"
-            alt="Settings Icon"
-            width={16}
-            height={16}
-          />
-          Settings
         </button>
       </div>
     </div>

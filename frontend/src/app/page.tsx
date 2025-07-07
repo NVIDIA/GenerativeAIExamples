@@ -24,7 +24,7 @@ export default function Home() {
 
   return (
     <div className="flex h-screen flex-col">
-      <Header onToggleSidebar={toggleSidebar} activePanel={activePanel} />
+      <Header onToggleSidebar={toggleSidebar} activePanel={activePanel === "citations" ? "citations" : null} />
       <div className="flex-1">
         <Chat />
       </div>

@@ -50,7 +50,7 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleToggleSidebar = (
-    panel: "citations" | "settings",
+    panel: "citations",
     citations?: {
       text: string;
       source: string;

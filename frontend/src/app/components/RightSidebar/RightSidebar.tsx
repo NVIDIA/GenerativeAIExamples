@@ -16,7 +16,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Settings from "./Settings";
 import Citations from "./Citations";
 import { useSidebar } from "../../context/SidebarContext";
 
@@ -44,7 +43,7 @@ export default function RightSidebar() {
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between border-b border-neutral-800 p-4">
           <h2 className="text-xl font-semibold text-white">
-            {displayPanel === "citations" ? "Citations" : "Settings"}
+            Citations
           </h2>
           <button
             onClick={closeSidebar}
@@ -55,11 +54,7 @@ export default function RightSidebar() {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          {displayPanel === "citations" ? (
-            <Citations citations={activeCitations} />
-          ) : (
-            <Settings />
-          )}
+          <Citations citations={activeCitations} />
         </div>
       </div>
     </div>

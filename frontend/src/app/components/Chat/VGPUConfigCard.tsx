@@ -22,16 +22,13 @@ interface VGPUConfig {
   description: string;
   parameters: {
     vgpu_profile?: string | null;
-    total_CPU_count?: number | null;
     vcpu_count?: number | null;
     gpu_memory_size?: number | null;
     system_RAM?: number | null;
     concurrent_users?: number | null;
     // Legacy fields for backward compatibility (to be removed)
     vGPU_profile?: string | null;
-    total_CPUs?: number | null;
     vCPU_count?: number | null;
-    video_card_total_memory?: number | null;
     storage_capacity?: number | null;
     storage_type?: string | null;
     driver_version?: string | null;
@@ -39,12 +36,6 @@ interface VGPUConfig {
     performance_tier?: string | null;
     relevant_aiwb_toolkit?: string | null;
     RAM?: number | null;
-    // vGPU Calculator metrics
-    max_kv_tokens?: number | null;
-    ttft_s?: number | null;
-    e2e_lat_s?: number | null;
-    throughput_tok_s?: number | null;
-    num_gpus?: number | null;
   };
   // Optional fields for enhanced context
   host_capabilities?: {
@@ -87,9 +78,7 @@ const Tooltip = ({ content, children }: { content: string; children: ReactNode }
 const parameterDefinitions: { [key: string]: string } = {
   vgpu_profile: "Virtual GPU profile that defines the GPU partitioning and resource allocation",
   vGPU_profile: "Virtual GPU profile that defines the GPU partitioning and resource allocation",
-  total_CPU_count: "Total number of physical CPU cores on the host node",
-  total_CPUs: "Total number of physical CPU cores available in the host system",
-  vcpu_count: "Calculated as: ceil(concurrent_users × CPU-factor × 1.2), capped by total_CPU_count",
+  vcpu_count: "Number of virtual CPU cores allocated to this configuration",
   vCPU_count: "Number of virtual CPU cores allocated to this configuration",
   gpu_memory_size: "Total VRAM (in GB) needed = sum(model_params in billions) × precision_factor × 1.2 overhead × concurrent_users",
   system_RAM: "System memory (in GB) allocated to this VM, including OS and framework overhead",
@@ -100,13 +89,7 @@ const parameterDefinitions: { [key: string]: string } = {
   storage_type: "Type of storage (SSD, NVMe, HDD) for optimal performance",
   driver_version: "NVIDIA driver version required for this configuration",
   AI_framework: "AI/ML framework optimized for this configuration",
-  performance_tier: "Performance level classification for this setup",
-  // Calculator metrics
-  max_kv_tokens: "Maximum number of KV cache tokens that can fit in GPU memory",
-  ttft_s: "Time to First Token - how quickly the model starts generating output",
-  e2e_lat_s: "End-to-End Latency - total time to generate the complete response",
-  throughput_tok_s: "Throughput - tokens generated per second",
-  num_gpus: "Number of GPUs required for this configuration"
+  performance_tier: "Performance level classification for this setup"
 };
 
 // Key parameters that should be in the primary section
@@ -153,18 +136,6 @@ const ParameterIcon = ({ type, className = "w-4 h-4" }: { type: string; classNam
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
       );
-    case 'performance':
-      return (
-        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      );
-    case 'time':
-      return (
-        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      );
     default:
       return (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,8 +151,6 @@ const getIconType = (key: string): string => {
     case 'vgpu_profile':
     case 'vGPU_profile':
       return 'vGPU_profile';
-    case 'total_CPU_count':
-    case 'total_CPUs':
     case 'vcpu_count':
     case 'vCPU_count':
       return 'cpu';
@@ -198,13 +167,6 @@ const getIconType = (key: string): string => {
       return 'framework';
     case 'concurrent_users':
       return 'users';
-    case 'max_kv_tokens':
-    case 'ttft_s':
-    case 'e2e_lat_s':
-    case 'throughput_tok_s':
-      return 'performance';
-    case 'num_gpus':
-      return 'vGPU_profile';
     default:
       return 'default';
   }
@@ -241,8 +203,6 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
       case 'vgpu_profile':
       case 'vGPU_profile':
         return value;
-      case 'total_CPU_count':
-      case 'total_CPUs':
       case 'vcpu_count':
       case 'vCPU_count':
         return `${value} cores`;
@@ -254,16 +214,6 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
       case 'relevant_aiwb_toolkit':
       case 'performance_tier':
         return String(value);
-      case 'max_kv_tokens':
-        return value.toLocaleString();
-      case 'ttft_s':
-        return `${value} seconds`;
-      case 'e2e_lat_s':
-        return `${value} seconds`;
-      case 'throughput_tok_s':
-        return `${value} tokens/sec`;
-      case 'num_gpus':
-        return `${value} GPU${value > 1 ? 's' : ''}`;
       default:
         return String(value);
     }
@@ -274,9 +224,6 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
       case 'vgpu_profile':
       case 'vGPU_profile':
         return 'vGPU Profile';
-      case 'total_CPU_count':
-      case 'total_CPUs':
-        return 'Total CPUs';
       case 'vcpu_count':
       case 'vCPU_count':
         return 'vCPU Count';
@@ -302,16 +249,6 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
         return 'Performance Tier';
       case 'concurrent_users':
         return 'Concurrent Users';
-      case 'max_kv_tokens':
-        return 'Max KV Tokens';
-      case 'ttft_s':
-        return 'Time to First Token';
-      case 'e2e_lat_s':
-        return 'End-to-End Latency';
-      case 'throughput_tok_s':
-        return 'Throughput';
-      case 'num_gpus':
-        return 'Number of GPUs';
       default:
         return key.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase());
     }
@@ -319,14 +256,20 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
 
   const isRelevantConfig = Object.values(config.parameters).some(value => value !== null && value !== undefined);
 
-  // Separate key and advanced parameters
+  // Fields to exclude from display
+  const excludedFields = ['total_CPU_count', 'total_cpu_count'];
+  
+  // Separate key and advanced parameters, excluding unwanted fields
   const keyParams = Object.entries(config.parameters).filter(([key]) => 
-    keyParameters.includes(key) && config.parameters[key as keyof typeof config.parameters] !== null
+    keyParameters.includes(key) && 
+    config.parameters[key as keyof typeof config.parameters] !== null &&
+    !excludedFields.includes(key)
   );
   
-  // Include calculator metrics in advanced params
   const advancedParams = Object.entries(config.parameters).filter(([key]) => 
-    !keyParameters.includes(key) && config.parameters[key as keyof typeof config.parameters] !== null
+    !keyParameters.includes(key) && 
+    config.parameters[key as keyof typeof config.parameters] !== null &&
+    !excludedFields.includes(key)
   );
 
   return (
