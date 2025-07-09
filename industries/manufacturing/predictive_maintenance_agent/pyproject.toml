@@ -1,0 +1,19 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 64"]
+
+[project]
+name = "predictive_maintenance_agent"
+version = "0.1.0"
+dependencies = [
+  "aiqtoolkit[profiling, langchain, telemetry]",
+  "pydantic ~= 2.10.0, <2.11.0",
+]
+requires-python = ">=3.11,<3.13"
+description = "Predictive maintenance workflow using AIQ"
+classifiers = ["Programming Language :: Python"]
+authors = [{ name = "Vineeth Kalluru" }]
+maintainers = [{ name = "NVIDIA Corporation" }]
+
+[project.entry-points.'aiq.components']
+predictive_maintenance_agent = "predictive_maintenance_agent.register"
