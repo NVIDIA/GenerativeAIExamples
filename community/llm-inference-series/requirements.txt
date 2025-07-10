@@ -1,0 +1,12 @@
+jupyterlab>=4.1
+ipywidgets>=8.0
+jupyterlab_widgets
+tqdm>=4.66
+huggingface_hub>=0.33.0
+transformers>=4.40.0
+scipy
+matplotlib
+requests
+jupytext
+jupyterlab_code_formatter
+jupyterlab_tensorboard_pro
