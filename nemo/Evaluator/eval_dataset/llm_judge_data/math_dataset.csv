@@ -1,0 +1,11 @@
+id,question,answer,reference_answer
+0,What is 2+2?,4,The answer is 4
+1,Square root of 256?,16,The answer is 16
+2,What power of 2 is 1024?,10,The answer is 10
+3,What is 5*6?,30,The answer is 30
+4,Cube of 3?,27,The answer is 27
+5,What is 100 divided by 4?,25,The answer is 25
+6,What is 9 squared?,81,The answer is 81
+7,What is the result of 7+8?,15,The answer is 15
+8,What is 81 divided by 9?,9,The answer is 9
+9,What is 11 minus 3?,8,The answer is 8
