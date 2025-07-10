@@ -1,11 +1,7 @@
 huggingface_hub
-transformers>=4.36.0
-peft
 datasets
-trl
 jsonschema
-litellm
 jinja2>=3.1.0
-torch>=2.0.0
 openai
 jupyterlab
+nemo-microservices

@@ -54,9 +54,6 @@ To follow this tutorial, you will need at least two NVIDIA GPUs, which will be a
 - **Fine-tuning:** One GPU for fine-tuning the `llama-3.2-1b-instruct` model using NeMo Customizer.
 - **Inference:** One GPU for deploying the `llama-3.2-1b-instruct` NIM for inference.
 
-
-`NOTE`: Notebook [4_adding_safety_guardrails](./4_adding_safety_guardrails.ipynb) asks the user to use one GPU for deploying the `llama-3.1-nemoguard-8b-content-safety` NIM to add content safety guardrails to user input. This will re-use the GPU that was previously used for finetuning in notebook 2.
-
 Refer to the [platform prerequisites and installation guide](https://docs.nvidia.com/nemo/microservices/latest/get-started/platform-prereq.html) to deploy NeMo Microservices.
 
 
@@ -93,7 +90,9 @@ The NIM deployment described above should take approximately 10 minutes to go li
 
 ### Managing GPU Resources for Model Deployment (If Applicable)
 
-If you previously deployed the `meta/llama-3.1-8b-instruct` NIM during the [Beginner Tutorial](https://docs.nvidia.com/nemo/microservices/latest/get-started/platform-prereq.html), and are running on a cluster with at most two NVIDIA GPUs, you will need to delete the previous `meta/llama-3.1-8b-instruct` deployment to free up resources. This ensures sufficient GPU availability to run the `meta/llama-3.2-1b-instruct` model while keeping one GPU available for fine-tuning, and another for the content safety NIM.
+If you previously deployed the `meta/llama-3.1-8b-instruct` NIM during the [Beginner Tutorial](https://docs.nvidia.com/nemo/microservices/latest/get-started/platform-prereq.html), and are running on a cluster with at most two NVIDIA GPUs, you will need to delete the previous `meta/llama-3.1-8b-instruct` deployment to free up resources. This ensures sufficient GPU availability to run the `meta/llama-3.2-1b-instruct` model while keeping one GPU available for fine-tuning.
+
+Note that you can use the content safety NIM via [build.nvidia.com](https://build.nvidia.com/) (using the `integrate.api.nvidia.com` API endpoint). In this case, you do not need to deploy that model within your cluster. Refer to [docs](https://docs.nvidia.com/nemo/microservices/latest/set-up/deploy-as-microservices/guardrails.html) for more information.
 
 ```bash
 export NEMO_URL="http://nemo.test"
