@@ -1,7 +1,7 @@
 
-<h1><img align="center" src="https://github.com/user-attachments/assets/cbe0d62f-c856-4e0b-b3ee-6184b7c4d96f">NVIDIA RAG Blueprint with vGPU Advisor</h1>
+<h1><img align="center" src="https://github.com/user-attachments/assets/cbe0d62f-c856-4e0b-b3ee-6184b7c4d96f">AI vWS Sizing Advisor</h1>
 
-Use the following documentation to learn about the NVIDIA RAG Blueprint and its integrated vGPU Configuration Advisor.
+Use the following documentation to learn about the AI vWS Sizing Advisor.
 
 - [Overview](#overview)
 - [Key Features](#key-features)
@@ -23,10 +23,10 @@ Use the following documentation to learn about the NVIDIA RAG Blueprint and its 
 
 ## Overview
 
-This blueprint serves as a reference solution for a foundational Retrieval Augmented Generation (RAG) pipeline with an integrated vGPU Configuration Advisor. It combines two key capabilities:
+This blueprint serves as a reference solution for a foundational Retrieval Augmented Generation (RAG) pipeline with an integrated AI vWS Sizing Advisor. It combines two key capabilities:
 
 1. **Enterprise RAG Pipeline**: Enable users to ask questions and receive answers based on their enterprise data corpus.
-2. **vGPU Configuration Advisor**: Provide intelligent, validated recommendations for NVIDIA vGPU deployments, including profile validation, capacity calculations, and deployment strategies.
+2. **AI vWS Sizing Advisor**: Provide intelligent, validated recommendations for NVIDIA vGPU deployments, including profile validation, capacity calculations, and deployment strategies.
 
 By default, this blueprint leverages locally-deployed NVIDIA NIM microservices to meet specific data governance and latency requirements.
 However, you can replace these models with your NVIDIA-hosted models available in the [NVIDIA API Catalog](https://build.nvidia.com).
