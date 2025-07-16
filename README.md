@@ -159,8 +159,8 @@ Ubuntu 22.04 OS
 
 ### Hardware Requirements
 By default, this blueprint deploys the referenced NIM microservices locally. For this, you will require a minimum of:
- - 2xH100
- - 3xA100
+ - 24Q profile
+ 
 The blueprint can be also modified to use NIM microservices hosted by NVIDIA in [NVIDIA API Catalog](https://build.nvidia.com/explore/discover).
 
 Following are the hardware requirements for each component.
