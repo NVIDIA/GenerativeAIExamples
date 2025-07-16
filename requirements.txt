@@ -22,3 +22,4 @@ opentelemetry-exporter-prometheus==0.50b0
 opentelemetry-instrumentation-milvus==0.36.0
 opentelemetry-instrumentation-fastapi==0.50b0
 opentelemetry-processor-baggage==0.50b0
+paramiko==3.4.0

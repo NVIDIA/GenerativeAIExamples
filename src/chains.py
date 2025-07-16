@@ -158,7 +158,7 @@ class StructuredResponse(BaseModel):
         description="Function title for vGPU configuration generation"
     )
     description: str = Field(
-        description="Description of the recommended vGPU configuration based on workload requirements and hardware specs"
+        description="Description of the recommended vGPU configuration based on workload requirements, should specify the model name selection if mentioned in request (if not - the size of the model in request), and hardware specs"
     )
     parameters: Dict[str, Any] = Field(
         description="vGPU configuration parameters"
@@ -174,10 +174,9 @@ class StructuredResponse(BaseModel):
                         "type": "string",
                         "description": "Exact NVIDIA vGPU profile name (must match one of the documented profiles) and must support at least gpu_memory_size GB of VRAM.",
                         "enum": [
-                            "L40S-8Q", "L40S-12Q", "L40S-16Q",
                             "L40S-24Q", "L40S-48Q", "L40-8Q", "L40-12Q", "L40-16Q",
                             "L40-24Q", "L40-48Q", "A40-8Q", "A40-12Q", "A40-16Q",
-                            "A40-24Q", "A40-48Q", "L4-8Q", "L4-12Q", "L4-24Q"
+                            "A40-24Q", "A40-48Q", "L4-12Q", "L4-24Q"
                         ]
                     },
                     "vcpu_count": {
@@ -620,6 +619,7 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                         gpu_model = params.get("gpu_model") or params.get("vgpu_profile", "").split('-')[0]
                         model_name = params.get("model_name") or params.get("model")
                         
+        
                         # Try to extract from description if not in parameters
                         if not model_name or not gpu_model:
                             payload = parse_vgpu_query(query)
@@ -631,6 +631,26 @@ Now provide a complete structured vGPU configuration based on this grounded anal
 
                             logger.info("Extracted model name: %s, precision: %s, workload: %s, prompt size: %s, response size: %s", model_name, precision, workload, prompt_size, response_size)
                         # Build properly structured parameters with correct field names
+                        model_tag = None
+                        if model_name:
+                            if model_name == "Llama-3-8B" or model_name == "llama-3-8b" or model_name == "Llama-3-8B" == model_name is "llama-3-8b-instruct" or model_name is "Llama-3-8b-Instruct":
+                                model_tag = "meta-llama/Meta-Llama-3-8B-Instruct"
+                            elif model_name == "Llama-3-70B" or model_name == "llama-3-70b":
+                                model_tag = "meta-llama/Meta-Llama-3-70B-Instruct"
+                            elif model_name == "Llama-3.1-8B" or model_name == "llama-3.1-8b":
+                                model_tag = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+                            elif model_name == "Llama-3.1-70B" or model_name == "llama-3.1-70b":
+                                model_tag = "meta-llama/Meta-Llama-3.3-70B-Instruct"
+                            elif model_name == "Mistral-7B" or model_name == "mistral-7b":
+                                model_tag = "mistralai/Mistral-7B-Instruct-v0.3"
+                            elif model_name == "Falcon-7B" or model_name == "falcon-7b":
+                                model_tag = "tiiuae/falcon-7B-instruct"
+                            elif model_name == "Falcon-40B" or model_name == "falcon-40b":
+                                model_tag = "tiiuae/falcon-40B-instruct"
+                            elif model_name == "Falcon-180B" or model_name == "falcon-180b":
+                                model_tag = "tiiuae/falcon-180B"
+                            elif model_name == "Qwen-14B" or model_name == "qwen-14b":
+                                model_tag = "Qwen/Qwen3-14B"
 
                         corrected_params = {
                             "vgpu_profile": params.get("vgpu_profile"),
@@ -640,7 +660,8 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                             "max_kv_tokens": None,
                             "e2e_latency": None,
                             "time_to_first_token": None,
-                            "throughput": None
+                            "throughput": None,
+                            "model_tag": model_tag,
                         }
                         
                         if precision == "int8":
@@ -687,7 +708,10 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                                     import math 
                                     corrected_params["vgpu_profile"] = calculation.resultant_configuration.gpu_name
                                     corrected_params["max_kv_tokens"] = calculation.resultant_configuration.max_kv_tokens
-                                    if extra_gpu_memory is not None:
+                                    if extra_gpu_memory is None:
+                                        extra_gpu_memory = 0
+                                        corrected_params["gpu_memory_size"] = math.ceil((calculation.resultant_configuration.total_memory_gb + extra_gpu_memory))
+                                    else:
                                         corrected_params["gpu_memory_size"] = math.ceil((calculation.resultant_configuration.total_memory_gb + extra_gpu_memory))
                                     if calculation.performance_metrics:
                                         corrected_params["e2e_latency"] = calculation.performance_metrics.e2e_latency_seconds if isinstance(calculation.performance_metrics.e2e_latency_seconds, (int, float)) else None
@@ -972,7 +996,8 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                             "max_kv_tokens": None,
                             "e2e_latency": None,
                             "time_to_first_token": None,
-                            "throughput": None
+                            "throughput": None,
+                            "model_tag": model_tag
                         }
                         
                         # If we have model info and it's a workload we can calculate, enhance with calculator

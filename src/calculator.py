@@ -1,7 +1,12 @@
 """
 vGPU Calculator - A modular tool for optimizing GPU configurations for LLM deployments
+
+Total Memory = Model Weights + KV Cache Memory
+KV Cache Memory ≈ (Prompt Size + Response Size) × kv_cache_bytes_per_token × num_concurrent_requests
 """
 
+import logging
+import math
 from typing import List, Optional, Dict, Any, Union, Tuple
 from datetime import datetime
 from pydantic import BaseModel, Field, validator
@@ -190,6 +195,19 @@ class VGPUCalculator:
                                                       "fp16" if bytes_per_param == 2 else "int8")
         return kv_size * context * concurrent + model.params_billion * bytes_per_param
     
+    def _calc_total_memory_with_kv_cache(self, model: ModelSpec, context_window: int,
+                                         concurrent_requests: int, bytes_per_param: int,
+                                         quantization: str) -> float:
+        """Calculate total memory including model weights and KV cache"""
+        # Model weights memory
+        model_memory = model.params_billion * bytes_per_param
+        
+        # KV cache memory for the context window
+        kv_size_per_token = self._calc_kv_cache_size_per_token(model.n_layers, model.d_model, quantization)
+        kv_cache_memory = kv_size_per_token * context_window * concurrent_requests
+        
+        return model_memory + kv_cache_memory
+    
     def _calc_kv_cache_tokens(self, num_gpu: int, gpu_mem: int, params_billion: float, 
                               kv_size: float, bytes_per_param: int) -> float:
         """Calculate maximum KV cache tokens"""
@@ -313,7 +331,7 @@ class VGPUCalculator:
         model_memory_footprint = self._calc_memory_footprint(
             model, request.n_concurrent_request, context_window, bytes_per_param
         )
-        
+        logging.info(f"hello: {model_memory_footprint:.2f} GB")
         # Calculate initial metrics
         kv_size = self._calc_kv_cache_size_per_token(model.n_layers, model.d_model, request.quantization)
         max_kv = self._calc_kv_cache_tokens(request.num_gpu, gpu.memory_gb, model.params_billion, 
@@ -330,15 +348,43 @@ class VGPUCalculator:
             all_configs = self._find_all_viable_configurations(
                 model, gpu, request.n_concurrent_request, context_window, request.quantization
             )
+
             
             if all_configs:
                 optimal = all_configs[0]
                 gpu_family, _ = self._get_gpu_family_and_size(gpu.name)
                 
+                logging.info(f"kv_cache_tokens: {max_kv}, optimal config: {optimal['max_kv']}")
+                # Calculate total memory with KV cache for the optimal config
+                total_memory_required = self._calc_total_memory_with_kv_cache(
+                    model, optimal['context'], optimal['concurrent'],
+                    bytes_per_param, request.quantization
+                )
+                logging.info(f"Optimal memory footprint: {total_memory_required:.2f} GB")
+                if self._get_gpu_family_and_size(optimal['gpu'].name)[1] < math.ceil(total_memory_required - (self._calc_kv_cache_size_per_token(model.n_layers, model.d_model, request.quantization) * (request.prompt_size + request.response_size))  + (optimal['max_kv'] * self._calc_kv_cache_size_per_token(model.n_layers, model.d_model, request.quantization))):
+                        gpu_family, current_size = self._get_gpu_family_and_size(gpu.name)
+                        family_gpus = [g for g in self.gpu_specs if g.name.startswith(gpu_family)]
+                        family_gpus_sorted = sorted(
+                            family_gpus, key=lambda g: self._get_gpu_family_and_size(g.name)[1]
+                        )
+
+                        current_index = None
+                        for idx, g in enumerate(family_gpus_sorted):
+                            _, g_size = self._get_gpu_family_and_size(g.name)
+                            if g.name == gpu.name:
+                                current_index = idx
+                                break
+
+                        upgraded_gpu = None
+                        if current_index is not None and current_index + 1 < len(family_gpus_sorted):
+                            upgraded_gpu = family_gpus_sorted[current_index + 1]
+                            if upgraded_gpu:
+                                optimal['gpu'] = upgraded_gpu  # Replace entire gpu object instead of modifying name
+                precision = request.quantization
                 resultant_configuration = Configuration(
                     gpu_name=optimal['gpu'].name,
                     num_gpus=optimal['num_gpu'],
-                    total_memory_gb=int(model_memory_footprint),
+                    total_memory_gb=math.ceil(total_memory_required * 1.2),
                     gpu_memory_gb=optimal['total_memory'],
                     max_kv_tokens=int(optimal['max_kv']),
                     concurrent_requests=optimal['concurrent'],
@@ -351,17 +397,23 @@ class VGPUCalculator:
                     request.quantization, exclude_family=gpu_family
                 )
                 
-                alternative_configurations = [
-                    AlternativeConfiguration(
-                        gpu_name=config['gpu'].name,
-                        num_gpus=config['num_gpu'],
-                        gpu_family=config['family'],
-                        total_memory_gb=int(model_memory_footprint),
-                        gpu_memory_gb=config['total_memory'],
-                        max_kv_tokens=int(config['max_kv'])
+                alternative_configurations = []
+                for config in cross_family_configs:
+                    # Calculate total memory for each alternative
+                    alt_total_memory = self._calc_total_memory_with_kv_cache(
+                        model, config['context'], config['concurrent'],
+                        bytes_per_param, request.quantization
                     )
-                    for config in cross_family_configs
-                ]
+                    alternative_configurations.append(
+                        AlternativeConfiguration(
+                            gpu_name=config['gpu'].name,
+                            num_gpus=config['num_gpu'],
+                            gpu_family=config['family'],
+                            total_memory_gb=int(alt_total_memory),
+                            gpu_memory_gb=config['total_memory'],
+                            max_kv_tokens=int(config['max_kv'])
+                        )
+                    )
                 
                 used_gpu = optimal['gpu']
                 used_num_gpu = optimal['num_gpu']
@@ -370,15 +422,140 @@ class VGPUCalculator:
                 raise ValueError(f"No viable configuration found for {model.name}")
         else:
             # Original configuration is viable
-            resultant_configuration = Configuration(
-                gpu_name=gpu.name,
-                num_gpus=request.num_gpu,
-                total_memory_gb=int(model_memory_footprint),  # Model memory footprint
-                gpu_memory_gb=gpu.memory_gb * request.num_gpu,  # Total GPU memory
-                max_kv_tokens=int(max_kv),
-                concurrent_requests=request.n_concurrent_request,
-                context_window=context_window
+            # Calculate total memory with KV cache
+            logging.info(f"kv_cache_tokens: {max_kv}")
+            total_memory_required = self._calc_total_memory_with_kv_cache(
+                model, context_window, request.n_concurrent_request,
+                bytes_per_param, request.quantization
             )
+            
+            # Check if we need to upgrade due to 3GB margin
+            available_memory = gpu.memory_gb * request.num_gpu
+            memory_margin = available_memory - total_memory_required
+            
+            # If margin is less than 3GB, try to upgrade to next profile
+            if 0 <= memory_margin < 3:
+                gpu_family, current_size = self._get_gpu_family_and_size(gpu.name)
+                family_gpus = [g for g in self.gpu_specs if g.name.startswith(gpu_family)]
+                family_gpus.sort(key=lambda g: self._get_gpu_family_and_size(g.name)[1])
+                
+                # Find next larger GPU in the family
+                upgraded_gpu = None
+                for g in family_gpus:
+                    _, g_size = self._get_gpu_family_and_size(g.name)
+                    if g_size > current_size:
+                        upgraded_gpu = g
+                        break
+                
+                if upgraded_gpu:
+                    # Use the upgraded GPU
+                    used_gpu = upgraded_gpu
+                    # Recalculate max_kv with upgraded GPU
+                    max_kv = self._calc_kv_cache_tokens(request.num_gpu, upgraded_gpu.memory_gb, 
+                                                         model.params_billion, kv_size, bytes_per_param)
+                    logging.info(f"total memory required: {total_memory_required:.2f} GB, upgraded GPU: {upgraded_gpu.memory_gb * request.num_gpu} GB")
+                    if self._get_gpu_family_and_size(upgraded_gpu.name)[1] < math.ceil(total_memory_required*1.2):
+                        gpu_family, current_size = self._get_gpu_family_and_size(gpu.name)
+                        family_gpus = [g for g in self.gpu_specs if g.name.startswith(gpu_family)]
+                        family_gpus_sorted = sorted(
+                            family_gpus, key=lambda g: self._get_gpu_family_and_size(g.name)[1]
+                        )
+
+                        current_index = None
+                        for idx, g in enumerate(family_gpus_sorted):
+                            _, g_size = self._get_gpu_family_and_size(g.name)
+                            if g.name == gpu.name:
+                                current_index = idx
+                                break
+
+                        upgraded_gpu = None
+                        if current_index is not None and current_index + 1 < len(family_gpus_sorted):
+                            upgraded_gpu = family_gpus_sorted[current_index + 1]
+
+
+                    resultant_configuration = Configuration(
+                        gpu_name=upgraded_gpu.name,
+                        num_gpus=request.num_gpu,
+                        total_memory_gb=math.ceil(total_memory_required * 1.2),
+                        gpu_memory_gb=upgraded_gpu.memory_gb * request.num_gpu,
+                        max_kv_tokens=int(max_kv),
+                        concurrent_requests=request.n_concurrent_request,
+                        context_window=context_window
+                    )
+                    
+                    logging.info(f"Upgraded GPU from {gpu.name} to {upgraded_gpu.name} for 3GB memory margin")
+                else:
+                    logging.info(f"total memory required: {total_memory_required:.2f} GB, no upgrade available")
+                    # No upgrade available, use original
+                    if self._get_gpu_family_and_size(gpu.name)[1] < math.ceil(total_memory_required * 1.2):
+                        gpu_family, current_size = self._get_gpu_family_and_size(gpu.name)
+                        family_gpus = [g for g in self.gpu_specs if g.name.startswith(gpu_family)]
+                        family_gpus_sorted = sorted(
+                            family_gpus, key=lambda g: self._get_gpu_family_and_size(g.name)[1]
+                        )
+
+                        current_index = None
+                        for idx, g in enumerate(family_gpus_sorted):
+                            _, g_size = self._get_gpu_family_and_size(g.name)
+                            if g.name == gpu.name:
+                                current_index = idx
+                                break
+
+                        upgraded_gpu = None
+                        if current_index is not None and current_index + 1 < len(family_gpus_sorted):
+                            upgraded_gpu = family_gpus_sorted[current_index + 1]
+                            if upgraded_gpu:
+                                # Use upgraded_gpu instead of modifying frozen instance
+                                used_gpu = upgraded_gpu
+                            
+                    resultant_configuration = Configuration(
+                        gpu_name=used_gpu.name,
+                        num_gpus=request.num_gpu,
+                        total_memory_gb=math.ceil(total_memory_required * 1.2),
+                        gpu_memory_gb=used_gpu.memory_gb * request.num_gpu,
+                        max_kv_tokens=int(max_kv),
+                        concurrent_requests=request.n_concurrent_request,
+                        context_window=context_window
+                    )
+            else:
+                # Sufficient margin, use original configuration
+                logging.info(f"total memory required: {total_memory_required:.2f} GB, sufficient margin: {memory_margin:.2f} GB")
+                if self._get_gpu_family_and_size(gpu.name)[1] < math.ceil(total_memory_required * 1.2):
+                    gpu_family, current_size = self._get_gpu_family_and_size(gpu.name)
+                    family_gpus = [g for g in self.gpu_specs if g.name.startswith(gpu_family)]
+                    family_gpus_sorted = sorted(
+                        family_gpus, key=lambda g: self._get_gpu_family_and_size(g.name)[1]
+                    )
+
+                    current_index = None
+                    for idx, g in enumerate(family_gpus_sorted):
+                        _, g_size = self._get_gpu_family_and_size(g.name)
+                        if g.name == gpu.name:
+                            current_index = idx
+                            break
+
+                    upgraded_gpu = None
+                    if current_index is not None and current_index + 1 < len(family_gpus_sorted):
+                        upgraded_gpu = family_gpus_sorted[current_index + 1]
+                        if upgraded_gpu:
+                            # Use upgraded_gpu instead of modifying frozen instance  
+                            used_gpu = upgraded_gpu
+                        else:
+                            used_gpu = gpu
+                    else:
+                        used_gpu = gpu
+                else:
+                    used_gpu = gpu
+                    
+                resultant_configuration = Configuration(
+                    gpu_name=used_gpu.name,
+                    num_gpus=request.num_gpu,
+                    total_memory_gb=math.ceil(total_memory_required * 1.2),
+                    gpu_memory_gb=used_gpu.memory_gb * request.num_gpu,
+                    max_kv_tokens=int(max_kv),
+                    concurrent_requests=request.n_concurrent_request,
+                    context_window=context_window
+                )
         
         # Calculate performance metrics
         pre = self._calc_prefill_time(model.params_billion, used_gpu, bytes_per_param, used_num_gpu)
@@ -528,7 +705,7 @@ def main():
     parser.add_argument("--n_concurrent_request", type=int, default=1, help="Concurrent requests")
     parser.add_argument("--quantization", choices=["fp16", "int8"], default="fp16", help="Quantization")
     parser.add_argument("--model", type=str, default="Llama-3-8B", help="Model name")
-    parser.add_argument("--vgpu_profile", type=str, default="A40-12Q", help="vGPU profile")
+    parser.add_argument("--vgpu_profile", type=str, default="L40S-12Q", help="vGPU profile")
     parser.add_argument("--show_memory_analysis", action="store_true", help="Show memory analysis")
     parser.add_argument("--show_oom_warnings", action="store_true", help="Show OOM warnings")
     parser.add_argument("--output_json", action="store_true", help="Output results as JSON")
@@ -566,8 +743,9 @@ def main():
             print(f"Original Request: {args.vgpu_profile} x{args.num_gpu}")
             print(f"\nOptimal Configuration:")
             print(f"  GPU: {result.resultant_configuration.gpu_name} x{result.resultant_configuration.num_gpus}")
-            print(f"  Model Memory Footprint: {result.resultant_configuration.total_memory_gb} GB")
-            print(f"  Total GPU Memory: {result.resultant_configuration.gpu_memory_gb} GB")
+            print(f"  Total Memory Required (Model + KV Cache): {result.resultant_configuration.total_memory_gb} GB")
+            print(f"  GPU Memory Available: {result.resultant_configuration.gpu_memory_gb} GB")
+            print(f"  Memory Margin: {result.resultant_configuration.gpu_memory_gb - result.resultant_configuration.total_memory_gb} GB")
             print(f"  Max KV Tokens: {result.resultant_configuration.max_kv_tokens:,}")
             
             if result.alternative_configurations:
@@ -607,4 +785,4 @@ def main():
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main()) 
+    sys.exit(main())

@@ -14,6 +14,7 @@
 # limitations under the License.
 """The definition of the NVIDIA RAG server which acts as the main orchestrator."""
 import asyncio
+import json
 import logging
 import os
 import time
@@ -42,6 +43,8 @@ from pymilvus.exceptions import MilvusUnavailableException
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 from langchain_core.documents import Document
 from src.chains import UnstructuredRAG
+from src.apply_configuration import VGPUConfigurationApplier, ApplyConfigurationRequest
+
 from .utils import (
     get_config,
     get_minio_operator,
@@ -1312,3 +1315,88 @@ async def generate_structured_answer(request: Request, prompt: Prompt) -> JSONRe
         logger.error("Error from /generate_structured endpoint. Error details: %s", e,
                      exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
         return JSONResponse(content={"error": "Internal server error occurred"}, status_code=500)
+
+@app.post(
+    "/apply-configuration",
+    tags=["vGPU Configuration APIs"],
+    responses={
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Invalid configuration parameters"
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Failed to apply configuration"
+                    }
+                }
+            },
+        }
+    },
+)
+async def apply_configuration(request: Request, config_request: ApplyConfigurationRequest) -> StreamingResponse:
+    """Apply vGPU configuration to a remote host via SSH."""
+    
+    if metrics:
+        metrics.update_api_requests(method=request.method, endpoint=request.url.path)
+    
+    try:
+        logger.info(f"Applying configuration to host: {config_request.vm_ip}")
+        logger.info(f"Configuration details: {config_request.configuration}")
+        logger.info(f"SSH Port: {config_request.description}")
+        logger.info(f"Username: {config_request.username}")
+        
+        # Create the configuration applier instance
+        applier = VGPUConfigurationApplier()
+        
+        # Validate the configuration
+        try:
+            applier.validate_configuration(config_request.configuration)
+            logger.info("Configuration validation passed")
+        except ValueError as e:
+            logger.error(f"Invalid configuration: {str(e)}")
+            logger.error(f"Received configuration fields: {list(config_request.configuration.keys())}")
+            return JSONResponse(
+                content={"error": f"Invalid configuration: {str(e)}"},
+                status_code=400
+            )
+        
+        # Apply configuration and stream results
+        async def stream_configuration_progress():
+            """Stream configuration progress as Server-Sent Events."""
+            try:
+                async for progress in applier.apply_configuration_async(config_request):
+                    yield f"data: {progress}\n\n"
+            except Exception as e:
+                logger.error(f"Error during configuration: {str(e)}")
+                error_response = {
+                    "status": "error",
+                    "message": "Configuration failed",
+                    "error": str(e)
+                }
+                yield f"data: {json.dumps(error_response)}\n\n"
+        
+        return StreamingResponse(
+            stream_configuration_progress(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in /apply-configuration endpoint: {str(e)}", 
+                    exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
+        return JSONResponse(
+            content={"error": "Failed to apply configuration"},
+            status_code=500
+        )

@@ -62,7 +62,7 @@ export default function WorkloadConfigWizard({
   const workloadTypes = [
     { value: "rag", label: "RAG (Retrieval-Augmented Generation)", desc: "Document search and generation workflows" },
     { value: "inference", label: "LLM Inference", desc: "Running predictions and serving trained models" },
-    { value: "fine-tuning", label: "Model Fine-Tuning", desc: "Adapting pre-trained models for specific tasks" }
+    // { value: "fine-tuning", label: "Model Fine-Tuning", desc: "Adapting pre-trained models for specific tasks" }
   ];
 
   const modelSizes = [
@@ -96,15 +96,15 @@ export default function WorkloadConfigWizard({
   ];
 
   const specificModels = [
-    { value: "llama-3-8b", label: "Llama-3-8B" },
-    { value: "llama-3-70b", label: "Llama-3-70B" },
-    { value: "llama-3.1-8b", label: "Llama-3.1-8B" },
-    { value: "llama-3.1-70b", label: "Llama-3.1-70B" },
-    { value: "mistral-7b", label: "Mistral-7B" },
-    { value: "falcon-7b", label: "Falcon-7B" },
-    { value: "falcon-40b", label: "Falcon-40B" },
-    { value: "falcon-180b", label: "Falcon-180B" },
-    { value: "qwen-14b", label: "Qwen-14B" },
+    { value: "llama-3-8b", label: "Llama-3-8B", modelTag: "meta-llama/Meta-Llama-3-8B-Instruct" },
+    { value: "llama-3-70b", label: "Llama-3-70B", modelTag: "meta-llama/Meta-Llama-3-70B-Instruct" },
+    { value: "llama-3.1-8b", label: "Llama-3.1-8B", modelTag: "meta-llama/Llama-3.1-8B-Instruct" },
+    { value: "llama-3.1-70b", label: "Llama-3.1-70B", modelTag: "meta-llama/Llama-3.3-70B-Instruct" },
+    { value: "mistral-7b", label: "Mistral-7B", modelTag: "mistralai/Mistral-7B-Instruct-v0.3" },
+    { value: "falcon-7b", label: "Falcon-7B", modelTag: "tiiuae/falcon-7b-instruct" },
+    { value: "falcon-40b", label: "Falcon-40B", modelTag: "tiiuae/falcon-40b-instruct" },
+    { value: "falcon-180b", label: "Falcon-180B", modelTag: "tiiuae/falcon-180B" },
+    { value: "qwen-14b", label: "Qwen-14B", modelTag: "Qwen/Qwen3-14B" },
   ];
 
   const precisionOptions = [
@@ -272,6 +272,7 @@ export default function WorkloadConfigWizard({
     const structuredConfig = {
       workloadType: config.workloadType,
       specificModel: config.specificModel,
+      modelTag: config.specificModel ? specificModels.find(m => m.value === config.specificModel)?.modelTag : null,
       modelSize: config.modelSize,
       batchSize: config.batchSize,
       promptSize: config.promptSize ? parseInt(config.promptSize) : 1024,

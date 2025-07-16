@@ -118,7 +118,6 @@ chat_template: |
       * For irrelevant queries: State "This query is not relevant to vGPU configuration. No vGPU recommendations provided."
     - parameters: A JSON object with EXACTLY these field names (case-sensitive):
       * vgpu_profile: String - Exact vGPU profile name (e.g., "L40S-24Q")
-      * total_CPU_count: Integer - Total physical CPU cores (NOT "total_cpu_count")
       * vcpu_count: Integer - Virtual CPUs for VM
       * gpu_memory_size: Integer - GPU memory in GB
       * system_RAM: Integer - System RAM in GB (NOT "system_ram")
@@ -129,7 +128,6 @@ chat_template: |
       
       **CRITICAL**: Use EXACTLY these field names. Do NOT use:
       - gpu_model, model_name, embedding_model, precision (these are NOT valid fields)
-      - total_cpu_count (must be total_CPU_count with capital CPU)
       - system_ram (must be system_RAM with capital RAM)
       
       For infeasible/irrelevant queries: Set all fields to null
@@ -137,7 +135,6 @@ chat_template: |
     **Parameter Selection Guidelines:**
     - **vgpu_profile**: MUST match the exact GPU model specified by user (L40S-xQ for L40S, L40-xQ for L40)
     - **gpu_memory_size**: Calculate using formula: Parameters × Bytes × 1.2
-    - **total_CPU_count**: Based on available physical cores
     - **vcpu_count**: Based on workload requirements and available resources
     - **system_RAM**: Use comprehensive formula:
       * Standard inference: (Model GB × 2.5) + (Concurrent Requests × 2GB) + 16GB
@@ -222,7 +219,6 @@ nemotron_thinking_prompt: |
         - description: Detailed explanation of the recommendation (including why it's infeasible if model doesn't fit)
         - parameters: A JSON object with EXACTLY these field names (case-sensitive):
           * vgpu_profile: String - Exact vGPU profile name (e.g., "L40S-24Q")
-          * total_CPU_count: Integer - Total physical CPU cores (NOT "total_cpu_count")
           * vcpu_count: Integer - Virtual CPUs for VM
           * gpu_memory_size: Integer - GPU memory in GB
           * system_RAM: Integer - System RAM in GB (NOT "system_ram")
@@ -371,7 +367,6 @@ rag_template: |
     Extract and specify complete virtual machine configuration including:
     - **vgpu_profile**: Exact name matching user's GPU (e.g., L40S-24Q for L40S with Llama-3-8B)
     - **gpu_memory_size**: Calculated using formula (e.g., 8×2×1.2=19.2, round to 24)
-    - **total_CPU_count**: Physical CPU cores for the VM host
     - **vcpu_count**: Virtual CPUs allocated to the VM guest
     - **system_RAM**: Calculate using comprehensive formula:
       * Standard: (Model GB × 2.5) + (Concurrent × 2GB) + 16GB
@@ -383,7 +378,6 @@ rag_template: |
     - description: Complete explanation including memory calculation
     - parameters: A JSON object with EXACTLY these field names (case-sensitive):
       * vgpu_profile: String - Exact vGPU profile name (e.g., "L40S-24Q")
-      * total_CPU_count: Integer - Total physical CPU cores (NOT "total_cpu_count")
       * vcpu_count: Integer - Virtual CPUs for VM
       * gpu_memory_size: Integer - GPU memory in GB
       * system_RAM: Integer - System RAM in GB (NOT "system_ram")
@@ -394,9 +388,10 @@ rag_template: |
       
       **CRITICAL**: Use EXACTLY these field names. Do NOT use:
       - gpu_model, model_name, embedding_model, precision (these are NOT valid fields)
-      - total_cpu_count (must be total_CPU_count with capital CPU)
       - system_ram (must be system_RAM with capital RAM)
       - Derive vgpu_profile from the GPU model (e.g., L40S → L40S-24Q)
+      - Do NOT create or modify profile names - use only those found in the context [32Q for example does NOT exist]
+      - Workloads: LLM Inference, RAG, Training
 
     Context:
     {context}
