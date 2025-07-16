@@ -1,7 +1,7 @@
 
-<h1><img align="center" src="https://github.com/user-attachments/assets/cbe0d62f-c856-4e0b-b3ee-6184b7c4d96f">NVIDIA RAG Blueprint</h1>
+<h1><img align="center" src="https://github.com/user-attachments/assets/cbe0d62f-c856-4e0b-b3ee-6184b7c4d96f">NVIDIA RAG Blueprint with vGPU Advisor</h1>
 
-Use the following documentation to learn about the NVIDIA RAG Blueprint.
+Use the following documentation to learn about the NVIDIA RAG Blueprint and its integrated vGPU Configuration Advisor.
 
 - [Overview](#overview)
 - [Key Features](#key-features)
@@ -23,34 +23,44 @@ Use the following documentation to learn about the NVIDIA RAG Blueprint.
 
 ## Overview
 
-This blueprint serves as a reference solution for a foundational Retrieval Augmented Generation (RAG) pipeline.
-One of the key use cases in Generative AI is enabling users to ask questions and receive answers based on their enterprise data corpus.
-This blueprint demonstrates how to set up a RAG solution that uses NVIDIA NIM and GPU-accelerated components.
+This blueprint serves as a reference solution for a foundational Retrieval Augmented Generation (RAG) pipeline with an integrated vGPU Configuration Advisor. It combines two key capabilities:
+
+1. **Enterprise RAG Pipeline**: Enable users to ask questions and receive answers based on their enterprise data corpus.
+2. **vGPU Configuration Advisor**: Provide intelligent, validated recommendations for NVIDIA vGPU deployments, including profile validation, capacity calculations, and deployment strategies.
+
 By default, this blueprint leverages locally-deployed NVIDIA NIM microservices to meet specific data governance and latency requirements.
 However, you can replace these models with your NVIDIA-hosted models available in the [NVIDIA API Catalog](https://build.nvidia.com).
 
 ## Key Features
+
+### Core RAG Features
 - Multimodal data extraction support with text, tables, charts, and infographics
 - Hybrid search with dense and sparse search
 - Multilingual and cross-lingual retrieval
 - Reranking to further improve accuracy
 - GPU-accelerated Index creation and search
-- Multi-turn conversations. Opt-in query rewriting for better accuracy.
+- Multi-turn conversations with opt-in query rewriting
 - Multi-session support
 - Telemetry and observability
-- Opt-in for query rewriting to improve multiturn accuracy
-- Opt-in for reflection to improve accuracy
-- Opt-in for guardrailing conversations
-- Opt-in image captioning with vision language models (VLMs)
-- Sample user interface
 - OpenAI-compatible APIs
 - Decomposable and customizable
+
+### vGPU Advisor Features
+- Automatic validation of vGPU profiles against NVIDIA specifications
+- Accurate VM capacity calculations based on GPU inventory
+- Support for heterogeneous GPU configurations
+- Intelligent recommendations for vGPU vs. passthrough modes
+- Cost-efficiency and performance trade-off analysis
+- Integration with official NVIDIA vGPU documentation
+- Single pre-loaded knowledge base for simplified operation
 
 ## Target Audience
 
 This blueprint is for:
 
-- **Developers**: Developers who want a quick start to set up a RAG solution with a path-to-production with the NVIDIA NIM.
+- **IT System Administrators**: Looking for validated vGPU configuration recommendations
+- **DevOps Engineers**: Deploying virtualized GPU environments
+- **Solution Architects**: Designing GPU-accelerated infrastructure
 
 ## Software Components
 
@@ -58,7 +68,7 @@ The following are the default components included in this blueprint:
 
 * NVIDIA NIM Microservices
    * Response Generation (Inference)
-      * [NIM of nvidia/llama-3.3-nemotron-super-49b-v1](https://build.nvidia.com/nvidia/llama-3_3-nemotron-super-49b-v1)
+      * [nvcr.io/nim/meta/llama-3.1-8b-instruct:1.8.6](https://catalog.ngc.nvidia.com/orgs/nim/teams/meta/containers/llama-3.1-8b-instruct/tags)
     * Retriever Models
       * [NIM of nvidia/llama-3_2-nv-embedqa-1b-v2]( https://build.nvidia.com/nvidia/llama-3_2-nv-embedqa-1b-v2)
       * [NIM of nvidia/llama-3_2-nv-rerankqa-1b-v2](https://build.nvidia.com/nvidia/llama-3_2-nv-rerankqa-1b-v2)
@@ -114,27 +124,24 @@ We also provide a sample user interface named `rag-playground`.
 The image represents the architecture and workflow. Here's a step-by-step explanation of the workflow from end-user perspective:
 
 1. **User Interaction via RAG Playground or APIs**:
-   - The user interacts with this blueprint by typing queries into the sample UI microservice named as **RAG Playground**. These queries are sent to the system through the `POST /generate` API exposed by the RAG server microservice. There are separate [notebooks](./notebooks/) available which showcase API usage as well.
+   - Users interact through the **RAG Playground** UI or APIs, sending queries about vGPU configurations or general knowledge base questions
+   - For vGPU queries, the system automatically validates profiles and calculates capacities
+   - The `POST /generate` API handles both RAG and vGPU advisor functionalities
 
-2. **Query Processing**:
-   - The query enters the **RAG Server**, which is based on LangChain. An optional **Query Rewriter** component may refine or decontextualize the query for better retrieval results at this stage. An optional NeMoGuardrails component can be enabled as well to help filter out queries at input of the pipeline.
+2. **Query Processing with Enhanced vGPU Support**:
+   - The **RAG Server** processes queries using LangChain
+   - For vGPU queries, additional validation and calculation modules ensure accurate recommendations
+   - Optional components like Query Rewriter and NeMoGuardrails enhance accuracy
 
-3. **Retrieval of Relevant Documents**:
-   - The refined query is passed to the **Retriever** module if the **RAG Server microservice**. This component queries the **Milvus Vector Database microservice**, which stores embeddings of the data, generated using **NeMo Retriever Embedding microservice**. The retriever module identifies the top K most relevant chunks of information related to the query.
+3. **Intelligent Document Retrieval**:
+   - The system maintains a unified `vgpu_knowledge_base` collection
+   - For vGPU queries, it automatically includes baseline documentation and relevant specialized collections
+   - The **Retriever** module identifies the most relevant information using the Milvus Vector Database
 
-4. **Reranking for Precision**:
-   - The top K chunks are passed to the optional **NeMo Retriever reranking microservice**. The reranker narrows down the results to the top N most relevant chunks, improving precision.
-
-5. **Response Generation**:
-   - The top N chunks are injected in the prompt and sent to the **Response Generation** module, which leverages **NeMo LLM inference Microservice** to generate a natural language response based on the retrieved information. Optionally, a reflection module can be enabled which makes additional LLM calls to improve the response by verifying its groundness based on retrieved context at this stage. NeMo guardrails can also be enabled at this stage to guardrail the output against toxicity.
-
-6. **Delivery of Response**:
-   - The generated response is sent back to the **RAG Playground**, where the user can view the answer to their query as well as check the output of the retriever module using the `Citations` option.
-
-7. **Ingestion of Data**:
-   - Separately, unstructured data is ingested into the system via the `POST /documents` API using the **Ingestor server microservice**. This data is preprocessed, split into chunks and stored in the **Milvus Vector Database** using **Nvingest microservice** which is called from the ingestor microservice.
-
-This modular design ensures efficient query processing, accurate retrieval of information, and easy customization.
+4. **Enhanced Response Generation**:
+   - Responses are generated using NeMo LLM inference
+   - For vGPU configurations, additional validation ensures only valid profiles are recommended
+   - Capacity calculations and deployment recommendations are included where relevant
 
 ## Minimum System Requirements
 
@@ -203,6 +210,7 @@ The following are some of the customizations that you can make after you complet
 - [Enable NeMo Guardrails for guardrails at input/output](docs/nemo-guardrails.md)
 - [Enable hybrid search for milvus](docs/hybrid_search.md)
 - [Enable text-only ingestion of files](docs/text_only_ingest.md)
+- [Customize vGPU Advisor Settings](docs/VGPU_SIMPLIFIED_SETUP.md)
 
 
 ## Inviting the community to contribute
