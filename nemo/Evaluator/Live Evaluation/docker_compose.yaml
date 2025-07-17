@@ -1,0 +1,310 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+# docker compose -f docker_compose.yaml up -d
+services:
+  customizer:
+    image: ${CUSTOMIZER_IMAGE:-""}
+    container_name: nemo-customizer
+    restart: on-failure
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./customizer:/mount/cfg
+      # map a path to model if already exists
+      # otherwise, the model will be auotmatically downloaded from NGC to /app/models and /app
+      # Ex: /raid/models/llama-3_1-8b-instruct:/app/models/llama-3_1-8b-instruct
+      # - <INSERT_ABS_PATH_TO_MODEL>/llama-3_1-8b-instruct:/app/models/llama-3_1-8b-instruct
+    environment:
+      - CONFIG_PATH=/mount/cfg/customizer_config.yaml
+      - DB_HOST=nemo-postgresql
+      - DB_PORT=5432
+      - DB_USER=test_user
+      - DB_PASSWORD=1234
+      - DB_NAME=customizer
+      - PORT=8001
+      - NGC_API_KEY=${NGC_API_KEY:-""}
+      - OTEL_SDK_DISABLED=true
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:8001/v1/health/live"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    depends_on:
+      nemo-postgresql:
+        condition: service_healthy
+      entity-store:
+        condition: service_started
+      data-store:
+        condition: service_started
+    networks:
+      - nemo-ms
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              count: all
+    shm_size: "1G"
+
+  entity-store:
+    image: ${ENTITY_STORE_IMAGE:-""}
+    platform: linux/amd64
+    container_name: nemo-entity-store
+    restart: on-failure
+    ports:
+      - "8003:8000"
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=test_user
+      - POSTGRES_HOST=nemo-postgresql
+      - POSTGRES_DB=entity-store
+      - BASE_URL_DATASTORE=http://data-store:3000/v1/hf
+      - BASE_URL_NIM=http://nim:8002
+    depends_on:
+      entity-store-initializer:
+        condition: service_completed_successfully
+    networks:
+      - nemo-ms
+
+  entity-store-initializer:
+    image: ${ENTITY_STORE_IMAGE:-""}
+    platform: linux/amd64
+    working_dir: /app/services/entity-store
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=test_user
+      - POSTGRES_HOST=nemo-postgresql
+      - POSTGRES_DB=entity-store
+    depends_on:
+      nemo-postgresql:
+        condition: service_healthy
+    entrypoint: ["/app/.venv/bin/python3", "-m", "scripts.run_db_migration"]
+    networks:
+      - nemo-ms
+
+  evaluator:
+    image: ${EVALUATOR_IMAGE:-""}
+    container_name: nemo-evaluator
+    restart: on-failure
+    ports:
+      - 7331:7331
+    depends_on:
+      data-store:
+        condition: service_started
+      nemo-postgresql:
+        condition: service_healthy
+      evaluator-postgres-db-migration:
+        condition: service_completed_successfully
+      otel-collector:
+        condition: service_started
+    networks:
+      - nemo-ms
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:7331/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    environment:
+      MODE: standalone
+      # Dependencies
+      POSTGRES_URI: postgresql://test_user:1234@nemo-postgresql:5432/evaluation
+      ARGO_HOST: none
+      NAMESPACE: nemo-evaluation
+      DATA_STORE_URL: http://data-store:3000/v1/hf
+      EVAL_CONTAINER: ${EVALUATOR_IMAGE}
+      SERVICE_ACCOUNT: nemo-evaluator-test-workflow-executor
+      EVAL_ENABLE_VALIDATION: False
+      # OpenTelemetry environmental variables
+      OTEL_SERVICE_NAME: nemo-evaluator
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_PYTHON_EXCLUDED_URLS: "health"
+      OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"
+      CONSOLE_LOG_LEVEL: DEBUG
+      OTEL_LOG_LEVEL: DEBUG
+      LOG_LEVEL: DEBUG
+
+  evaluator-postgres-db-migration:
+    image: ${EVALUATOR_IMAGE:-""}
+    environment:
+      MODE: standalone
+      POSTGRES_URI: postgresql://test_user:1234@nemo-postgresql:5432/evaluation
+      DATA_STORE_URL: none
+      ARGO_HOST: none
+      NAMESPACE: none
+      EVAL_CONTAINER: none
+      LOG_LEVEL: INFO
+    entrypoint: /bin/sh
+    command: ["-c", "/app/scripts/run-db-migration.sh"]
+    depends_on:
+      nemo-postgresql:
+        condition: service_healthy
+    networks:
+      - nemo-ms
+
+  nemo-postgresql:
+    image: bitnami/postgresql:16.1.0-debian-11-r20
+    container_name: nemo-postgresql
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      - POSTGRESQL_VOLUME_DIR=/bitnami/postgresql
+      - PGDATA=/bitnami/postgresql/data
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DATABASE=postgres
+      # List of databases to create if they do not exist
+      - DATABASES=entity-store,ndsdb,customizer,evaluation
+    ports:
+      - "5432:5432"
+    volumes:
+      - nemo-postgresql:/bitnami/postgresql:rw
+      - ./init_scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - nemo-ms
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DATABASE}"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  data-store-volume-init:
+    image: busybox
+    command: ["sh", "-c", "chmod -R 777 /nds-data"]
+    volumes:
+      - nemo-data-store:/nds-data
+    restart: no
+    deploy:
+      restart_policy:
+        condition: none
+
+  data-store:
+    image: ${DATA_STORE_IMAGE:-""}
+    platform: linux/amd64
+    container_name: nemo-data-store
+    restart: on-failure
+    environment:
+      - USER_UID=${USER_ID} # match this to the UID of the owner of the data directory
+      - USER_GID=${GROUP_ID} # match this to the GID of the owner of the data directory
+      - APP_NAME=Datastore
+      - INSTALL_LOCK=true
+      - DISABLE_SSH=true
+      - GITEA_WORK_DIR=/nds-data
+      - GITEA__SERVER__APP_DATA_PATH=/nds-data
+      - GITEA__DAEMON_USER=git
+      - GITEA__HTTP_PORT=3000
+      - GITEA__APP__NAME=datastore
+      - GITEA__SERVER__LFS_START_SERVER=true
+      - GITEA__LFS__SERVE_DIRECT=true
+      - GITEA__LFS__STORAGE_TYPE=local
+      - GITEA__LFS_START__SERVER=true
+      - GITEA__SECURITY__INSTALL_LOCK=true
+      - GITEA__SERVICE__DEFAULT_ALLOW_CREATE_ORGANIZATION=true
+      - GITEA__SMTP_ENABLED=false
+      # Database
+      - GITEA__DATABASE__DB_TYPE=postgres
+      - GITEA__DATABASE__HOST=nemo-postgresql:5432
+      - GITEA__DATABASE__NAME=ndsdb
+      - GITEA__DATABASE__USER=test_user
+      - GITEA__DATABASE__PASSWD=1234
+      - GITEA__DATABASE_SSL_MODE=disable
+    volumes:
+      - nemo-data-store:/nds-data:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:3000/v1/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    depends_on:
+      nemo-postgresql:
+        condition: service_healthy
+      data-store-volume-init:
+        condition: service_completed_successfully
+    networks:
+      - nemo-ms
+
+  # Optional NIM requires additional 1 GPU of at least 40GB /v1/health/ready
+  # nim:
+  #   image: ${NIM_IMAGE:-""}
+  #   container_name: nim
+  #   restart: on-failure
+  #   ports:
+  #     - 8002:8000
+  #   environment:
+  #     - NGC_API_KEY=${NGC_API_KEY}
+  #     - NIM_SERVER_PORT=8000
+  #     - NIM_SERVED_MODEL_NAME=${NIM_MODEL_ID}
+  #     - NIM_PEFT_REFRESH_INTERVAL=60
+  #     - NIM_MAX_GPU_LORAS=1
+  #     - NIM_MAX_CPU_LORAS=16
+  #     - NIM_PEFT_SOURCE=http://entity-store:8000
+  #   runtime: nvidia
+  #   volumes: []
+  #     # Map a local directory to the cache directory to avoid downloading the model every time
+  #     # Ensure to set write permissions on the local directory for all users: chmod -R a+w /path/to/directory
+  #     # Ex: /raid/nim-cache:/opt/nim/.cache. Brev: - /ephemeral/.cache/nim-cache:/opt/nim/.cache
+  #   networks:
+  #     - nemo-ms
+  #   shm_size: 16GB
+  #   user: root
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             capabilities: [gpu]
+  #             count: all
+  #   healthcheck:
+  #     test: [
+  #       "CMD",
+  #       "python3",
+  #       "-c",
+  #       "import requests, sys; sys.exit(0 if requests.get('http://localhost:8002/v1/health/live').ok else 1)"
+  #     ]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 20
+  #     # allow for 60 seconds to download a model and start up
+  #     start_period: 60s
+
+
+  ###
+  # OpenTelemetry Collector (local)
+  #  adapted from https://jessitron.com/2021/08/11/run-an-opentelemetry-collector-locally-in-docker/
+  #  and https://github.com/open-telemetry/opentelemetry-demo/blob/main/docker-compose.yml
+  ###
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.91.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317" # OTLP over gRPC receiver
+      - "55679:55679" # UI
+    networks:
+      - nemo-ms
+
+networks:
+  nemo-ms:
+    driver: bridge
+
+volumes:
+  nemo-data-store:
+    driver: local
+  nemo-postgresql:
+    driver: local
