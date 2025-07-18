@@ -158,7 +158,7 @@ ingestor-server:
 
     # === Embeddings Configurations ===
     APP_EMBEDDINGS_SERVERURL: "nemo-retriever-embedding-ms:8000"
-    APP_EMBEDDINGS_MODELNAME: "nvidia/llama-3.2-nv-embedqa-1b-v2"
+    APP_EMBEDDINGS_MODELNAME: "nvidia/nv-embedqa-mistral-7b-v2"
     APP_EMBEDDINGS_DIMENSIONS: "2048"
 
     # === NV-Ingest Configurations ===

@@ -121,7 +121,7 @@ export default function VGPUConfigDrawer({ config, isOpen, onClose }: VGPUConfig
                 onClick={() => setIsApplyFormOpen(true)}
                 className="px-4 py-2 bg-[#76b900] hover:bg-[#5a8c00] text-white rounded-lg font-medium transition-colors"
               >
-                Apply Configuration
+                Verify Configuration
               </button>
 
             </div>

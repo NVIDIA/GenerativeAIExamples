@@ -46,13 +46,13 @@ services:
 
       ##===Embedding Model specific configurations===
       # url on which embedding model is hosted. If "", Nvidia hosted API is used
-      APP_EMBEDDINGS_SERVERURL: ${APP_EMBEDDINGS_SERVERURL-"nemoretriever-embedding-ms:8000"}
-      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-nvidia/llama-3.2-nv-embedqa-1b-v2}
+      APP_EMBEDDINGS_SERVERURL: ${APP_EMBEDDINGS_SERVERURL-""}
+      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-nvidia/nv-embedqa-mistral-7b-v2}
 
       ##===Reranking Model specific configurations===
       # url on which ranking model is hosted. If "", Nvidia hosted API is used
-      APP_RANKING_SERVERURL: ${APP_RANKING_SERVERURL-"nemoretriever-ranking-ms:8000"}
-      APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-"nvidia/llama-3.2-nv-rerankqa-1b-v2"}
+      APP_RANKING_SERVERURL: ${APP_RANKING_SERVERURL-""}
+      APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-nvidia/llama-3.2-nemoretriever-500m-rerank-v2}
       ENABLE_RERANKER: ${ENABLE_RERANKER:-True}
 
       NVIDIA_API_KEY: ${NGC_API_KEY:?"NGC_API_KEY is required"}
@@ -130,9 +130,9 @@ services:
         # Model name for LLM
         NEXT_PUBLIC_MODEL_NAME: ${APP_LLM_MODELNAME:-meta/llama-3.1-8b-instruct}
         # Model name for embeddings
-        NEXT_PUBLIC_EMBEDDING_MODEL: ${APP_EMBEDDINGS_MODELNAME:-nvidia/llama-3.2-nv-embedqa-1b-v2}
+        NEXT_PUBLIC_EMBEDDING_MODEL: ${APP_EMBEDDINGS_MODELNAME:-nvidia/nv-embedqa-mistral-7b-v2}
         # Model name for reranking
-        NEXT_PUBLIC_RERANKER_MODEL: ${APP_RANKING_MODELNAME:-nvidia/llama-3.2-nv-rerankqa-1b-v2}
+        NEXT_PUBLIC_RERANKER_MODEL: ${APP_RANKING_MODELNAME:-nvidia/llama-3.2-nemoretriever-500m-rerank-v2}
         # URL for rag server container
         NEXT_PUBLIC_CHAT_BASE_URL: "http://rag-server:8081/v1"
         # URL for ingestor container

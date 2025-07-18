@@ -11,7 +11,8 @@ import difflib
 
 logger = logging.getLogger(__name__)
 
-def map_system_string(query: str):
+
+def map_os(query: str):
     """
     Fuzzy-match a system string to a known hypervisor and OS.
 
@@ -21,7 +22,6 @@ def map_system_string(query: str):
     Returns:
         (matched_hypervisor, matched_os)
     """
-    HYPERVISORS = ["ESXI", "VMware", "KVM", "Red Hat"]
     OS = ["Linux", "Windows"]
 
     query_lower = query.lower()
@@ -33,11 +33,36 @@ def map_system_string(query: str):
         # fallback: fuzzy match
         return difflib.get_close_matches(query_lower, [c.lower() for c in candidates], n=1, cutoff=0.4)[0] if difflib.get_close_matches(query_lower, [c.lower() for c in candidates], n=1, cutoff=0.4) else None
 
-    hypervisor_match = match_any(HYPERVISORS)
     os_match = match_any(OS)
 
-    logger.info(f"Hypervisor match: {hypervisor_match}, OS match: {os_match}")
-    return hypervisor_match, os_match
+    return os_match
+
+
+
+def map_hypervisor(query: str):
+    """
+    Fuzzy-match a system string to a known hypervisor and OS.
+
+    Args:
+        query (str): The raw system string (e.g., output of uname -a)
+
+    Returns:
+        (matched_hypervisor, matched_os)
+    """
+    HYPERVISORS = ["ESXI", "VMware", "KVM"]
+
+    query_lower = query.lower()
+
+    def match_any(candidates):
+        for candidate in candidates:
+            if candidate.lower() in query_lower:
+                return candidate
+        # fallback: fuzzy match
+        return difflib.get_close_matches(query_lower, [c.lower() for c in candidates], n=1, cutoff=0.4)[0] if difflib.get_close_matches(query_lower, [c.lower() for c in candidates], n=1, cutoff=0.4) else None
+
+    hypervisor_match = match_any(HYPERVISORS)
+
+    return hypervisor_match
     
 def grab_total_size(query: Optional[str]) -> Optional[int]:
     """
@@ -539,10 +564,13 @@ class VGPUConfigurationApplier:
                     total_steps=5
                 ).model_dump()) + "\n"
                 
-                output, error, status = self.execute_command(ssh_client, "uname -a")
+                hypervisor_output, error_hp, status_hp = self.execute_command(ssh_client, "cat /sys/class/dmi/id/product_name")
+                os_output, error_os, status_os = self.execute_command(ssh_client, "uname -a")
                 # transcribe the OS and the Hypervisor Layer
-                if output and status == 0:
-                    hypervisor_layer, os_info = map_system_string(output)
+                if status_hp and status_os == 0:
+                    hypervisor_layer = map_hypervisor(output)
+                    os_info = map_os(os_output)
+                    
                     if hypervisor_layer and os_info:
                         yield json.dumps(ConfigurationProgress(
                             status="executing",
@@ -551,10 +579,11 @@ class VGPUConfigurationApplier:
                             total_steps=5
                         ).model_dump()) + "\n"
                         steps_successful.append(f"✓ System identified: {hypervisor_layer} on {os_info}")
+
                     else:
                         yield json.dumps(ConfigurationProgress(
                             status="error",
-                            message=output,
+                            message="Here is the hypervisor output: " + hypervisor_output + "\n" + "Here is the OS output: " + os_output,
                             current_step=1,
                             total_steps=5
                         ).model_dump()) + "\n"
@@ -569,7 +598,7 @@ class VGPUConfigurationApplier:
                 
                 output, error, status = self.execute_command(ssh_client, "nvidia-smi --query-gpu=name --format=csv,noheader")
                 gpu_info = "No GPU detected" if status != 0 else f"GPU: {output}"
-                logger.info(f"request configuration: {request.configuration.get('vgpu_profile', 'N/A').split('-')[0]}, detected GPU: {gpu_info}")
+                logger.info(f"request configuration: {request.configuration.get('vgpu_profile', 'N/A')}, detected GPU: {gpu_info}")
                 detected_gpu_name = output.strip().split("\n")[0]  # Handles multiple GPUs too
                 expected_prefix = request.configuration.get("vgpu_profile", "N/A").split('-')[0]
 
@@ -587,13 +616,13 @@ class VGPUConfigurationApplier:
                     else:
                         gpu_info += " (does not match requested configuration), config gives: " + request.configuration.get("vgpu_profile") + ";you have this GPU: " + gpu_info
                         yield json.dumps(ConfigurationProgress(
-                            status="executing",
+                            status="error",
                             message=gpu_info,
                             current_step=2,
                             total_steps=5
                         ).model_dump()) + "\n"
 
-                        return  # Stop if GPU does not match requested configuration
+                        return 
                 
                 
                 # Setup phase with fallback logic
@@ -627,7 +656,14 @@ class VGPUConfigurationApplier:
                     ).model_dump()) + "\n"
                     
                     # Create venv if needed
-                    venv_check = "test -d hf_env || python3 -m venv hf_env"
+                    venv_check = '''
+                    if test -d hf_env; then
+                        echo "Virtual environment already exists"
+                    else
+                        echo "Creating virtual environment..."
+                        python3 -m venv hf_env && echo "Virtual environment created"
+                    fi
+                    '''
                     self.execute_command(ssh_client, venv_check, timeout=30)
                     
                     # Install huggingface-hub in the virtual environment
@@ -667,10 +703,10 @@ class VGPUConfigurationApplier:
                     ).model_dump()) + "\n"
                     
                     hf_auth_cmd = (
-                        "bash -c '"
-                        "source hf_env/bin/activate && "
+                        f"bash -c '"
+                        f"source hf_env/bin/activate && "
                         f"huggingface-cli login --token {request.hf_token}"
-                        "'"
+                        f"'"
                     )
                     output, error, status = self.execute_command(ssh_client, hf_auth_cmd, timeout=60)
                     
@@ -712,7 +748,7 @@ class VGPUConfigurationApplier:
                     
                     # Start installation
                     start_time = time.time()
-                    output, error, status = self.execute_command(ssh_client, pip_cmd, timeout=900)  # 15 min timeout
+                    output, error, status = self.execute_command(ssh_client, pip_cmd, timeout=300)  # 15 min timeout
                     
                     if status != 0:
                         # Installation failed

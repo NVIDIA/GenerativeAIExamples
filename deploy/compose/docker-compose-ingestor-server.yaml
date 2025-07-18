@@ -40,7 +40,7 @@ services:
       ##===Embedding Model specific configurations===
       # url on which embedding model is hosted. If "", Nvidia hosted API is used
       APP_EMBEDDINGS_SERVERURL: ${APP_EMBEDDINGS_SERVERURL-"nemoretriever-embedding-ms:8000"}
-      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-nvidia/llama-3.2-nv-embedqa-1b-v2}
+      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-nvidia/nv-embedqa-mistral-7b-v2}
       APP_EMBEDDINGS_DIMENSIONS: ${APP_EMBEDDINGS_DIMENSIONS:-2048}
 
       ##===NV-Ingest Connection Configurations=======
@@ -115,7 +115,7 @@ services:
       - AUDIO_INFER_PROTOCOL=grpc
       - CUDA_VISIBLE_DEVICES=0
       - MAX_INGEST_PROCESS_WORKERS=${MAX_INGEST_PROCESS_WORKERS:-16}
-      - EMBEDDING_NIM_MODEL_NAME=${EMBEDDING_NIM_MODEL_NAME:-${APP_EMBEDDINGS_MODELNAME:-nvidia/llama-3.2-nv-embedqa-1b-v2}}
+      - EMBEDDING_NIM_MODEL_NAME=${EMBEDDING_NIM_MODEL_NAME:-${APP_EMBEDDINGS_MODELNAME:-nvidia/nv-embedqa-7b-v2}}
       # Incase of self-hosted embedding model, use the endpoint url as - https://integrate.api.nvidia.com/v1
       - EMBEDDING_NIM_ENDPOINT=${EMBEDDING_NIM_ENDPOINT:-${APP_EMBEDDINGS_SERVERURL-http://nemoretriever-embedding-ms:8000/v1}}
       - INGEST_LOG_LEVEL=DEFAULT
