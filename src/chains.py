@@ -446,7 +446,7 @@ class UnstructuredRAG(BaseExample):
                 )
                 return iter([json.dumps(error_response.model_dump(), ensure_ascii=False, indent=2)])
             elif "[404] Not Found" in str(e):
-                logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid.")
+                logger.warning("Please verify the API endpoint and your payload. Ensure that the model name is valid. Errror %s", e)
                 error_response = StructuredResponse(
                     description="Please verify the API endpoint and your payload. Ensure that the model name is valid."
                 )
@@ -633,23 +633,24 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                         # Build properly structured parameters with correct field names
                         model_tag = None
                         if model_name:
-                            if model_name == "Llama-3-8B" or model_name == "llama-3-8b" or model_name == "Llama-3-8B" == model_name is "llama-3-8b-instruct" or model_name is "Llama-3-8b-Instruct":
+                            llm_model_name = model_name.lower()
+                            if llm_model_name in ['llama-3-8b', 'llama-3-8b-instruct']:
                                 model_tag = "meta-llama/Meta-Llama-3-8B-Instruct"
-                            elif model_name == "Llama-3-70B" or model_name == "llama-3-70b":
+                            elif llm_model_name in ['llama-3-70b', 'llama-3-70b-instruct']:
                                 model_tag = "meta-llama/Meta-Llama-3-70B-Instruct"
-                            elif model_name == "Llama-3.1-8B" or model_name == "llama-3.1-8b":
+                            elif llm_model_name in ['llama-3.1-8b', 'llama-3.1-8b-instruct']:
                                 model_tag = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-                            elif model_name == "Llama-3.1-70B" or model_name == "llama-3.1-70b":
+                            elif llm_model_name in ['llama-3.1-70b', 'llama-3.1-70b-instruct']:
                                 model_tag = "meta-llama/Meta-Llama-3.3-70B-Instruct"
-                            elif model_name == "Mistral-7B" or model_name == "mistral-7b":
+                            elif llm_model_name in ['mistral-7b', 'mistral-7b-instruct']:
                                 model_tag = "mistralai/Mistral-7B-Instruct-v0.3"
-                            elif model_name == "Falcon-7B" or model_name == "falcon-7b":
+                            elif llm_model_name in ['falcon-7b', 'falcon-7b-instruct']:
                                 model_tag = "tiiuae/falcon-7B-instruct"
-                            elif model_name == "Falcon-40B" or model_name == "falcon-40b":
+                            elif llm_model_name in ['falcon-40b', 'falcon-40b-instruct']:
                                 model_tag = "tiiuae/falcon-40B-instruct"
-                            elif model_name == "Falcon-180B" or model_name == "falcon-180b":
+                            elif llm_model_name in ['falcon-180b', 'falcon-180b-instruct']:
                                 model_tag = "tiiuae/falcon-180B"
-                            elif model_name == "Qwen-14B" or model_name == "qwen-14b":
+                            elif llm_model_name in ['qwen-14b', 'qwen-14b-instruct']:
                                 model_tag = "Qwen/Qwen3-14B"
 
                         corrected_params = {
@@ -664,8 +665,8 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                             "model_tag": model_tag,
                         }
                         
-                        if precision == "int8":
-                            corrected_params["vgpu_profile"] = f"{gpu_model}-12Q"
+
+                        corrected_params["vgpu_profile"] = f"{gpu_model}-12Q"
                         
                         extra_gpu_memory = None
 
@@ -691,7 +692,7 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                         # If we have model info and it's a workload we can calculate, enhance with calculator
                         if model_name and workload in ["RAG", "LLM Inference", "Inference"]:
                             try:
-
+                                
                                 vgpu_request = VGPURequest(
                                     model_name=model_name,
                                     quantization=precision,

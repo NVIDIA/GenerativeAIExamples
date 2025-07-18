@@ -107,9 +107,9 @@ start_nims() {
     
     cd "$PROJECT_ROOT"
     
-    # Pull and start NIMs
-    docker compose -f deploy/compose/nims.yaml pull --quiet
-    USERID=$(id -u) docker compose -f deploy/compose/nims.yaml up -d
+    # Pull and start NIMs with sudo -E
+    sudo -E docker compose -f deploy/compose/nims.yaml pull --quiet
+    sudo -E USERID=$(id -u) docker compose -f deploy/compose/nims.yaml up -d
     
     print_status "NIMs deployment initiated"
     print_info "Waiting for NIMs to become healthy (this may take up to 30 minutes)..."
@@ -155,8 +155,8 @@ start_vectordb() {
     
     cd "$PROJECT_ROOT"
     
-    docker compose -f deploy/compose/vectordb.yaml pull --quiet
-    docker compose -f deploy/compose/vectordb.yaml up -d
+    sudo -E docker compose -f deploy/compose/vectordb.yaml pull --quiet
+    sudo -E docker compose -f deploy/compose/vectordb.yaml up -d
     
     # Wait for Milvus to be ready
     print_info "Waiting for Milvus to be ready..."
@@ -188,8 +188,8 @@ start_ingestion() {
     
     cd "$PROJECT_ROOT"
     
-    docker compose -f deploy/compose/docker-compose-ingestor-server.yaml pull --quiet
-    docker compose -f deploy/compose/docker-compose-ingestor-server.yaml up -d
+    sudo -E docker compose -f deploy/compose/docker-compose-ingestor-server.yaml pull --quiet
+    sudo -E docker compose -f deploy/compose/docker-compose-ingestor-server.yaml up -d --build
     
     # Wait for ingestor server
     print_info "Waiting for ingestor server to be ready..."
@@ -226,9 +226,9 @@ run_bootstrap() {
     
     cd "$PROJECT_ROOT"
     
-    # Build and run bootstrap
-    docker compose -f deploy/compose/docker-compose-bootstrap.yaml build
-    docker compose -f deploy/compose/docker-compose-bootstrap.yaml up
+    # Build and run bootstrap with sudo -E
+    sudo -E docker compose -f deploy/compose/docker-compose-bootstrap.yaml build
+    sudo -E docker compose -f deploy/compose/docker-compose-bootstrap.yaml up
     
     # Check if bootstrap succeeded
     if [ $? -eq 0 ]; then
@@ -239,7 +239,7 @@ run_bootstrap() {
     fi
     
     # Clean up bootstrap container
-    docker compose -f deploy/compose/docker-compose-bootstrap.yaml down
+    sudo -E docker compose -f deploy/compose/docker-compose-bootstrap.yaml down
 }
 
 # Function to start RAG services
@@ -248,8 +248,8 @@ start_rag_services() {
     
     cd "$PROJECT_ROOT"
     
-    docker compose -f deploy/compose/docker-compose-rag-server.yaml pull --quiet
-    docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d
+    sudo -E docker compose -f deploy/compose/docker-compose-rag-server.yaml pull --quiet
+    sudo -E docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d --build
     
     # Wait for RAG server
     print_info "Waiting for RAG server to be ready..."
