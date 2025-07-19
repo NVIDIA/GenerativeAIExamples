@@ -87,3 +87,7 @@ Community examples are sample code and deployments for RAG pipelines that are no
 * [Chat with LLM Llama 3.1 Nemotron Nano 4B](./chat-llama-nemotron/)
 
   This is a React-based conversational UI designed for interacting with a powerful local LLM. It incorporates RAG to enhance contextual understanding and is backed by an NVIDIA Dynamo inference server running the NVIDIA Llama-3.1-Nemotron-Nano-4B-v1.1 model. The setup enables low-latency, cloud-free AI assistant capabilities, with live document search and reasoning, all deployable on local or edge infrastructure.
+
+* [LLM Inference Series: Performance, Optimization & Deployment with LLMs](llm-inference-series)
+
+This repository supports a video + notebook series exploring how to run, optimize, and serve Large Language Models (LLMs) with a focus on latency, throughput, user experience (UX), and NVIDIA GPU acceleration.
