@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    ports:
+      - "9001:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpassword
+      - DOCKER_INFLUXDB_INIT_ORG=5g-lab
+      - DOCKER_INFLUXDB_INIT_BUCKET=5g-metrics
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=5g-lab-token
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - 5g-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "9002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - 5g-network
+    depends_on:
+      - influxdb
+
+volumes:
+  influxdb_data:
+  grafana_data:
+
+networks:
+  5g-network:
+    driver: bridge 
