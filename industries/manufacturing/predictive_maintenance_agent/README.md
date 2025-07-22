@@ -115,6 +115,66 @@ export PWD_PATH=$(pwd)
 aiq serve --config_file=configs/config-reasoning.yml "$@"
 ```
 
+### Spin up code execution sandbox for Reasoning workflow
+
+If you plan to use the reasoning config, then it requires you to spin up a code execution sandbox server in a separate terminal.
+
+Note: You will need a system that can run docker. If you are running this on a MacOS laptop with no Docker Desktop then try [Colima](https://github.com/abiosoft/colima)
+
+Go to folder
+
+```bash
+cd /path-to/NeMo-Agent-Toolkit/src/aiq/tool/code_execution/local_sandbox
+```
+
+Run server by mounting your workflow's output folder as an internal volume
+
+```bash
+./start_local_sandbox.sh local-sandbox /path-to-output-folder-as-specified-in-config-yml/
+```
+
+(eg)
+
+```bash
+./start_local_sandbox.sh local-sandbox /path-to/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data
+```
+
+Test sandbox in a new terminal
+```bash
+cd /path-to/NeMo-Agent-Toolkit/src/aiq/tool/code_execution/local_sandbox
+```
+
+```bash
+./test_code_execution_sandbox.sh
+```
+
+You should see output similar to
+
+```bash
+(pdm) ➜  code_execution > ./test_code_execution_sandbox.sh 
+[INFO] Starting Code Execution Sandbox Tests
+========================================
+[INFO] Checking if sandbox server is running...
+[SUCCESS] Sandbox server is running at http://127.0.0.1:6000/execute
+[INFO] Testing: Simple Print
+Response: {"process_status":"completed","stderr":"","stdout":"Hello, World!\n"}
+Status: completed
+Stdout: Hello, World!
+Stderr: 
+[SUCCESS] Simple Print - Status matches expected: completed
+----------------------------------------
+[INFO] Testing: Basic Arithmetic
+Response: {"process_status":"completed","stderr":"","stdout":"Result: 5\n"}
+Status: completed
+Stdout: Result: 5
+Stderr: 
+[SUCCESS] Basic Arithmetic - Status matches expected: completed
+----------------------------------------
+...
+```
+
+Close the new terminal for testing, you don't need it anymore.
+
 ### Setup Web Interface
 
 ```bash
@@ -167,8 +227,14 @@ docker run -p 6006:6006 -p 4317:4317 arizephoenix/phoenix:latest
 uv pip install arize-phoenix
 phoenix serve
 ```
-
 Access dashboard at `http://localhost:6006` to monitor traces, performance, and costs.
+
+With Catalyst:
+
+Follow instructions [here](https://github.com/NVIDIA/NeMo-Agent-Toolkit/blob/develop/docs/source/workflows/observe/observe-workflow-with-catalyst.md) to setup RAGA AI profile
+and setup secrets.
+
+and then 
 
 ## Next Steps
 
