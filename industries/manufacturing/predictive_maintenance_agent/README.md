@@ -53,17 +53,31 @@ conda create -n pdm python=3.11
 conda activate pdm
 ```
 
-### 2. Install NVIDIA AIQ Toolkit
+### 2. Install NVIDIA Nemo Agent Toolkit
 
-```bash
-git clone https://github.com/NVIDIA/AIQToolkit.git
-cd AIQToolkit
-uv pip install -e .
-aiq --help
+1. Clone the NeMo Agent toolkit repository to your local machine.
+   ```bash
+   git clone git@github.com:NVIDIA/NeMo-Agent-Toolkit.git aiqtoolkit
+   cd aiqtoolkit
+   ```
 
-# Optional: Remove cloned repo after installation
-# cd .. && rm -rf AIQToolkit
-```
+2. Initialize, fetch, and update submodules in the Git repository.
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+3. Fetch the data sets by downloading the LFS files.
+   ```bash
+   git lfs install
+   git lfs fetch
+   git lfs pull
+   ```
+4. Install the NeMo Agent toolkit library.
+   To install the NeMo Agent toolkit library along with all of the optional dependencies. Including developer tools (`--all-groups`) and all of the dependencies needed for profiling and plugins (`--all-extras`) in the source repository, run the following:
+   ```bash
+   uv sync --all-groups --all-extras
+   ```
+
 
 ### 3. Install Predictive Maintenance Agent
 
@@ -91,17 +105,25 @@ python setup_database.py
 
 ### 6. Configure Paths
 
-Update `configs/config.yml` with your local paths for database, models, and output directories.
+Update `configs/config.yml`and '`configs/config-reasoning.yml` with your local paths for database, models, and output directories.
+
+### configs/config.yml or configs/config-reasoning.yml
+  The db_path must point to the database inside your data directory.
+```bash
+db_path: "${PWD_PATH}/data/nasa_turbo.db"  # ← set it to something like this
+```
+Create an empty folder for the output data and point the output folder to that path 
+```bash
+output_folder: "${PWD_PATH}/output_data" # ← set it to something like this
+```
+
+
 
 ## Launch Server and UI
 
 ### Start AIQ Server
-```bash
-aiq serve --config_file=configs/config.yml
-```
-Server runs on `http://localhost:8000`
 
-Note: When using the provided config file, you need to set the PWD_PATH environment variable before starting the AIQ server. This ensures the server can locate all required paths correctly.
+When using the provided config file, you need to set the PWD_PATH environment variable before starting the AIQ server. This ensures the server can locate all required paths correctly.
 
 Here's how to do it: 
 
@@ -114,6 +136,7 @@ aiq serve --config_file=configs/config.yml "$@"
 export PWD_PATH=$(pwd)
 aiq serve --config_file=configs/config-reasoning.yml "$@"
 ```
+Server runs on `http://localhost:8000`
 
 ### Spin up code execution sandbox for Reasoning workflow
 
