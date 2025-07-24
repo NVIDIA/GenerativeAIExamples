@@ -53,17 +53,31 @@ conda create -n pdm python=3.11
 conda activate pdm
 ```
 
-### 2. Install NVIDIA AIQ Toolkit
+### 2. Install NVIDIA Nemo Agent Toolkit
 
-```bash
-git clone https://github.com/NVIDIA/AIQToolkit.git
-cd AIQToolkit
-uv pip install -e .
-aiq --help
+1. Clone the NeMo Agent toolkit repository to your local machine.
+   ```bash
+   git clone git@github.com:NVIDIA/NeMo-Agent-Toolkit.git aiqtoolkit
+   cd aiqtoolkit
+   ```
 
-# Optional: Remove cloned repo after installation
-# cd .. && rm -rf AIQToolkit
-```
+2. Initialize, fetch, and update submodules in the Git repository.
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+3. Fetch the data sets by downloading the LFS files.
+   ```bash
+   git lfs install
+   git lfs fetch
+   git lfs pull
+   ```
+4. Install the NeMo Agent toolkit library.
+   To install the NeMo Agent toolkit library along with all of the optional dependencies. Including developer tools (`--all-groups`) and all of the dependencies needed for profiling and plugins (`--all-extras`) in the source repository, run the following:
+   ```bash
+   uv sync --all-groups --all-extras
+   ```
+
 
 ### 3. Install Predictive Maintenance Agent
 
@@ -91,17 +105,25 @@ python setup_database.py
 
 ### 6. Configure Paths
 
-Update `configs/config.yml` with your local paths for database, models, and output directories.
+Update `configs/config.yml`and '`configs/config-reasoning.yml` with your local paths for database, models, and output directories.
+
+### configs/config.yml or configs/config-reasoning.yml
+  The db_path must point to the database inside your data directory.
+```bash
+db_path: "${PWD_PATH}/data/nasa_turbo.db"  # ← set it to something like this
+```
+Create an empty folder for the output data and point the output folder to that path 
+```bash
+output_folder: "${PWD_PATH}/output_data" # ← set it to something like this
+```
+
+
 
 ## Launch Server and UI
 
 ### Start AIQ Server
-```bash
-aiq serve --config_file=configs/config.yml
-```
-Server runs on `http://localhost:8000`
 
-Note: When using the provided config file, you need to set the PWD_PATH environment variable before starting the AIQ server. This ensures the server can locate all required paths correctly.
+When using the provided config file, you need to set the PWD_PATH environment variable before starting the AIQ server. This ensures the server can locate all required paths correctly.
 
 Here's how to do it: 
 
@@ -114,6 +136,7 @@ aiq serve --config_file=configs/config.yml "$@"
 export PWD_PATH=$(pwd)
 aiq serve --config_file=configs/config-reasoning.yml "$@"
 ```
+Server runs on `http://localhost:8000`
 
 ### Spin up code execution sandbox for Reasoning workflow
 
@@ -124,53 +147,27 @@ Note: You will need a system that can run docker. If you are running this on a M
 Go to folder
 
 ```bash
-cd /path-to/NeMo-Agent-Toolkit/src/aiq/tool/code_execution/local_sandbox
+cd /path-to/NeMo-Agent-Toolkit/src/aiq/tool/code_execution
 ```
 
 Run server by mounting your workflow's output folder as an internal volume
 
 ```bash
-./start_local_sandbox.sh local-sandbox /path-to-output-folder-as-specified-in-config-yml/
+./local_sandbox/start_local_sandbox.sh local-sandbox \\
+/path-to-output-folder-as-specified-in-config-yml/
 ```
 
 (eg)
 
 ```bash
-./start_local_sandbox.sh local-sandbox /path-to/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data
+./local_sandbox/start_local_sandbox.sh local-sandbox \\
+/path-to/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data
 ```
 
-Test sandbox in a new terminal
-```bash
-cd /path-to/NeMo-Agent-Toolkit/src/aiq/tool/code_execution/local_sandbox
-```
+[Optional] Create a new terminal to test your sandbox by running the python script.
 
 ```bash
-./test_code_execution_sandbox.sh
-```
-
-You should see output similar to
-
-```bash
-(pdm) ➜  code_execution > ./test_code_execution_sandbox.sh 
-[INFO] Starting Code Execution Sandbox Tests
-========================================
-[INFO] Checking if sandbox server is running...
-[SUCCESS] Sandbox server is running at http://127.0.0.1:6000/execute
-[INFO] Testing: Simple Print
-Response: {"process_status":"completed","stderr":"","stdout":"Hello, World!\n"}
-Status: completed
-Stdout: Hello, World!
-Stderr: 
-[SUCCESS] Simple Print - Status matches expected: completed
-----------------------------------------
-[INFO] Testing: Basic Arithmetic
-Response: {"process_status":"completed","stderr":"","stdout":"Result: 5\n"}
-Status: completed
-Stdout: Result: 5
-Stderr: 
-[SUCCESS] Basic Arithmetic - Status matches expected: completed
-----------------------------------------
-...
+./test_code_execution_sandbox.py
 ```
 
 Close the new terminal for testing, you don't need it anymore.
@@ -189,6 +186,7 @@ UI available at `http://localhost:3000`
 - Click Settings icon (bottom left)
 - Set HTTP URL to `/chat/stream` (recommended)
 - Configure theme and WebSocket URL as needed
+- Check "Enable intermediate results" and "Enable intermediate results by default" if you prefer to see all the agent calls while the workflow runs.
 
 ## Example Prompts
 
@@ -217,7 +215,7 @@ Retrieve time in cycles, all sensor measurements and RUL value for engine unit 2
 
 ## Observability (Optional)
 
-Monitor your system with Phoenix:
+### Monitor your system with Phoenix:
 
 ```bash
 # Docker (recommended)
@@ -229,17 +227,30 @@ phoenix serve
 ```
 Access dashboard at `http://localhost:6006` to monitor traces, performance, and costs.
 
-With Catalyst:
+
+## Evaluation
+
+### Evaluate with AIQ 
+
+[TBD]
+
+### Evaluate With Catalyst:
 
 Follow instructions [here](https://github.com/NVIDIA/NeMo-Agent-Toolkit/blob/develop/docs/source/workflows/observe/observe-workflow-with-catalyst.md) to setup RAGA AI profile
 and setup secrets.
 
-and then 
+[TBD]
 
 ## Next Steps
 
-The agent provides a foundation for industrial AI applications. Planned enhancements include: memory layer for context retention, parallel tool execution for faster responses, action recommendation reasoning agent, real-time fault detection, and integration with NVIDIA's NV-Tesseract foundation models for improved accuracy.
-
+The agent provides a foundation for industrial AI applications. Planned enhancements include:
+- Memory layer for context retention
+- Parallel tool execution for faster responses
+- Action recommendation agent
+- Real-time fault detection agent
+- Integration with NVIDIA's NV-Tesseract foundation models for improved accuracy.
+- Integration with Nemo Retriever for data source context.
+- Expansion of eval dataset with complex queries that involve creating Advanced SQL queries like CTEs etc.
 ---
 
 **Resources:**
