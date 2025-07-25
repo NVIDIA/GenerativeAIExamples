@@ -15,7 +15,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 // Spinner component
 const Spinner = () => (
@@ -64,6 +64,7 @@ export default function ApplyConfigurationForm({
   const [configurationLogs, setConfigurationLogs] = useState<string[]>([]);
   const [isConfigurationComplete, setIsConfigurationComplete] = useState(false);
   const [showDebugLogs, setShowDebugLogs] = useState(false);
+  const [currentDisplayMessage, setCurrentDisplayMessage] = useState<string>("");
 
   // Validate IP address format
   const validateIpAddress = (ip: string): boolean => {
@@ -116,6 +117,7 @@ export default function ApplyConfigurationForm({
     setShowLogs(false); // Hide logs initially
     setIsConfigurationComplete(false);
     setConfigurationLogs(["Starting configuration process..."]);
+    setCurrentDisplayMessage(""); // Initialize with empty string
 
     try {
       // Extract and normalize the configuration data
@@ -127,9 +129,6 @@ export default function ApplyConfigurationForm({
         // Direct configuration object
         configData = configuration;
       }
-
-      // Log the configuration for debugging
-      console.log("Applying configuration:", configData);
 
       const response = await fetch("/api/apply-configuration", {
         method: "POST",
@@ -153,19 +152,29 @@ export default function ApplyConfigurationForm({
       // Read the streaming response
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
 
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n");
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+          
+          // Process complete lines
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ''; // Keep the last incomplete line in buffer
 
           for (const line of lines) {
             if (line.startsWith("data: ")) {
               try {
                 const data = JSON.parse(line.substring(6));
+                
+                // Update display message if present
+                if (data.display_message) {
+                  setCurrentDisplayMessage(data.display_message);
+                }
                 
                 // Update logs based on the progress
                 if (data.message) {
@@ -209,6 +218,7 @@ export default function ApplyConfigurationForm({
                   // Don't add another success message, it's already in the logs
                   setIsConfigurationComplete(true);
                   setShowLogs(true); // Automatically show logs on completion
+                  // Don't clear display message - let the last one persist
                 } else if (data.status === "error") {
                   setConfigurationLogs((prev) => [
                     ...prev,
@@ -216,6 +226,7 @@ export default function ApplyConfigurationForm({
                   ]);
                   setIsConfigurationComplete(true);
                   setShowLogs(true); // Automatically show logs on error
+                  // Don't clear display message - let the last one persist
                 }
               } catch (parseError) {
                 console.error("Error parsing SSE data:", parseError);
@@ -232,9 +243,20 @@ export default function ApplyConfigurationForm({
       ]);
       setIsConfigurationComplete(true);
       setShowLogs(true); // Show logs on error
+      // Don't clear display message here either
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleRetry = () => {
+    // Reset state but keep form data
+    setIsConfigurationComplete(false);
+    setConfigurationLogs([]);
+    setShowLogs(false);
+    setShowDebugLogs(false);
+    setCurrentDisplayMessage("");
+    // Form data is intentionally preserved
   };
 
   const handleClose = () => {
@@ -253,6 +275,7 @@ export default function ApplyConfigurationForm({
     setConfigurationLogs([]);
     setIsConfigurationComplete(false);
     setShowDebugLogs(false);
+    setCurrentDisplayMessage("");
     onClose();
   };
 
@@ -472,21 +495,39 @@ export default function ApplyConfigurationForm({
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting || isConfigurationComplete}
+              disabled={isSubmitting}
               className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
-                isConfigurationComplete
-                  ? "bg-green-600 text-white cursor-default"
-                  : isSubmitting
+                isSubmitting
                   ? "bg-neutral-700 text-gray-400 cursor-not-allowed"
                   : "bg-green-600 text-white hover:bg-green-700"
               }`}
             >
-              {isConfigurationComplete 
-                ? "✓ Configuration Complete" 
-                : isSubmitting 
+              {isSubmitting 
                 ? "Applying Configuration..." 
+                : isConfigurationComplete
+                ? "Apply Configuration Again"
                 : "Apply Configuration"}
             </button>
+
+            {/* Retry Button - Show after completion */}
+            {isConfigurationComplete && (
+              <div className="mt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="flex-1 py-3 px-4 rounded-lg font-medium bg-neutral-700 text-white hover:bg-neutral-600 transition-all"
+                >
+                  Clear Logs & Retry
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="flex-1 py-3 px-4 rounded-lg font-medium bg-neutral-800 text-gray-300 hover:bg-neutral-700 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            )}
           </form>
 
           {/* Configuration Status */}
@@ -501,7 +542,14 @@ export default function ApplyConfigurationForm({
                 <p className="text-xs text-gray-500 mt-2">
                   This process typically takes 1-3 minutes
                 </p>
-                {configurationLogs.length > 0 && (
+                {currentDisplayMessage && (
+                  <div className="mt-4 p-3 bg-neutral-800 rounded-lg border border-neutral-600">
+                    <p className="text-sm text-green-400 font-medium animate-pulse">
+                      {currentDisplayMessage}
+                    </p>
+                  </div>
+                )}
+                {configurationLogs.length > 0 && !currentDisplayMessage && (
                   <p className="text-xs text-gray-400 mt-3 italic">
                     {configurationLogs[configurationLogs.length - 1]}
                   </p>

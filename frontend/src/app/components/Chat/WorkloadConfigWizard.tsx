@@ -93,6 +93,7 @@ export default function WorkloadConfigWizard({
     { value: "l40", label: "NVIDIA L40", desc: "48GB GDDR6 with ECC, Ada Lovelace - Virtual workstations & compute workloads" },
     { value: "l4", label: "NVIDIA L4", desc: "24GB GDDR6 with ECC, Ada Lovelace, 72W - AI inference, small model training & 3D graphics" },
     { value: "a40", label: "NVIDIA A40", desc: "48GB GDDR6 with ECC, Ampere, 300W - 3D design & mixed virtual workstation workloads" },
+    { value: "DC", label: "NVIDIA RTX PRO 6000 Blackwell Server Edition (Refer as DC)", desc: "96GB GDDR7 with ECC, Blackwell, passive‑cooled dual‑slot PCIe Gen5 – Enterprise AI/graphics, scientific computing & virtual workstations" },
   ];
 
   const specificModels = [
@@ -418,18 +419,15 @@ export default function WorkloadConfigWizard({
                     </select>
                   </div>
 
-                  {(config.specificModel === 'unknown' || config.specificModel === '') && (
+                  {/* Only show model size category when "unknown" is selected */}
+                  {config.specificModel === 'unknown' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Model Size Category</label>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {modelSizes.map((size) => (
                           <button
                             key={size.value}
-                            onClick={() => {
-                              handleInputChange("modelSize", size.value);
-                              // Also set specific model to unknown when selecting a size category
-                              handleInputChange("specificModel", "unknown");
-                            }}
+                            onClick={() => handleInputChange("modelSize", size.value)}
                             className={`p-3 rounded-lg border text-left transition-all ${
                               config.modelSize === size.value
                                 ? "border-green-500 bg-green-900/20 text-white"

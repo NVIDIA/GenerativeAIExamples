@@ -87,9 +87,10 @@ chat_template: |
     
     **CRITICAL PROFILE VALIDATION RULES:**
     - NVIDIA vGPU profiles ALWAYS end with "Q" suffix
-    - Valid examples: L40S-8Q, L40-8Q, L4-4Q, A40-12Q
+    - Valid examples: L40S-8Q, L40-8Q, L4-4Q, A40-12Q, DC-12Q (etc..)
     - **NEVER create profiles with any other suffix** besides Q
-    - Common INVALID profile examples to avoid: L40S-8A, L4-4A, A40-12A (these do NOT exist)
+    - Common INVALID profile examples to avoid: L40S-8A, L4-4A, A40-12A, RTXPRO-12Q, Blackwell RTX PRO-12Q (these do NOT exist)
+    - **Blackwell (RTX Pro) --> DC-** (structured-output parsing)
     
     **Decision Process:**
     1. **Identify the EXACT GPU model** specified by the user (L40S ≠ L40)
@@ -108,6 +109,8 @@ chat_template: |
     - **L40**: 48GB total memory
     - **L40S**: 48GB total memory (DIFFERENT from L40!)
     - **A40**: 48GB total memory
+    - **Blackwell (DC-..)**: 96GB total memory (new Blackwell GPU)
+    - **Blackwell (RTX Pro) --> DC**
 
     You will respond with structured data in this exact format:
     - title: Always "generate_vgpu_config"  
@@ -330,7 +333,9 @@ rag_template: |
 
     **CRITICAL PROFILE VALIDATION RULES:**
     - NVIDIA vGPU profiles ALWAYS end with "Q" suffix
-    - Valid examples: L40S-8Q, L40-8Q, L4-4Q, A40-12Q
+    - Valid examples: L40S-8Q, L40-8Q, L4-4Q, A40-12Q, DC-12Q
+      - **NEVER create profiles with any other suffix** besides Q
+    - The unique profile numbers are only the 32Q and 96Q profiles with the DC GPU
     - The number before "Q" indicates the number of GPU memory, this number is at least (>= GPU memory size that we calculated)
     - L40S profiles: L40S-1Q through L40S-48Q
     - L40 profiles: L40-1Q through L40-48Q

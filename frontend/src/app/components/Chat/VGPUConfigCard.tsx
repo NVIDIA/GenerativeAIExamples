@@ -178,6 +178,31 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
   const [showRawJSON, setShowRawJSON] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Function to extract GPU memory capacity from vGPU profile
+  const getGPUCapacityFromProfile = (profile: string | null | undefined): number | null => {
+    if (!profile) return null;
+    
+    // Extract the number after the hyphen (e.g., "L40S-24Q" -> 24)
+    const match = profile.match(/-(\d+)Q?/i);
+    if (match && match[1]) {
+      return parseInt(match[1]);
+    }
+    return null;
+  };
+
+  // Check if multi-GPU is needed
+  const isMultiGPU = (): boolean => {
+    const profile = config.parameters.vgpu_profile || config.parameters.vGPU_profile;
+    const gpuMemoryRequired = config.parameters.gpu_memory_size;
+    
+    if (!profile || !gpuMemoryRequired) return false;
+    
+    const singleGPUCapacity = getGPUCapacityFromProfile(profile);
+    if (!singleGPUCapacity) return false;
+    
+    return gpuMemoryRequired > singleGPUCapacity;
+  };
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
@@ -228,7 +253,7 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
       case 'vCPU_count':
         return 'vCPU Count';
       case 'gpu_memory_size':
-        return 'GPU Memory';
+        return 'Estimated VRAM';
       case 'video_card_total_memory':
         return 'Video Card Total Memory';
       case 'system_RAM':
@@ -277,9 +302,21 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
       {/* Header with NVIDIA green gradient */}
       <div className="bg-gradient-to-r from-[#76b900] to-[#5a8c00] text-white px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">vGPU Configuration Recommendation</h3>
-            <p className="text-sm text-green-100 mt-0.5 opacity-90">Optimized for your AI workload requirements</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h3 className="text-lg font-semibold">vGPU Configuration Recommendation</h3>
+              <p className="text-sm text-green-100 mt-0.5 opacity-90">Optimized for your AI workload requirements</p>
+            </div>
+            {isMultiGPU() && (
+              <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
+                <span className="text-sm font-medium flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                  Multi-GPU
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button

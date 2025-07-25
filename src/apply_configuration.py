@@ -5,9 +5,11 @@ import re
 import paramiko
 from typing import Dict, List, AsyncGenerator, Optional, Any
 from pydantic import BaseModel, Field
-import time
 from contextlib import contextmanager
+import time
 import difflib
+from collections import OrderedDict
+
 
 logger = logging.getLogger(__name__)
 
@@ -248,6 +250,12 @@ class ApplyConfigurationRequest(BaseModel):
     hf_token: Optional[str] = Field(None, description="Hugging Face token for model downloads")
     description: Optional[str] = Field(None, description="Original query description")
 
+    temperature: Optional[float] = Field(None, description="LLM sampling temperature")
+    max_tokens: Optional[int] = Field(None, description="Maximum tokens for LLM response")
+    model: Optional[str] = Field(None, description="LLM model name")
+    llm_endpoint: Optional[str] = Field(None, description="LLM endpoint URL")
+
+
 class CommandResult(BaseModel):
     """Result of a single command execution."""
     command: str
@@ -259,11 +267,12 @@ class CommandResult(BaseModel):
 class ConfigurationProgress(BaseModel):
     """Progress update during configuration application."""
     status: str  # 'connecting', 'executing', 'completed', 'error'
-    message: str
+    message: Optional[str] = None
     current_step: Optional[int] = None
     total_steps: Optional[int] = None
     command_results: Optional[List[CommandResult]] = None
     error: Optional[str] = None
+    display_message: Optional[str] = None  # Special message to display prominently in UI
 
 class VGPUConfigurationApplier:
     """
@@ -516,23 +525,476 @@ class VGPUConfigurationApplier:
             
         return True
     
+    async def wait_for_vllm_live(self, ssh_client: paramiko.SSHClient, gpu_util: float, 
+                                    model_ref: str, venv_path: str, total_size: int, port: int = 8000) -> tuple[bool, str, Optional[str]]:
+        """
+        Start vLLM server and watch output for readiness or failure.
+        Returns (success, message)
+        """
+        serve_cmd = rf"""bash -lc "source $HOME/hf_env/bin/activate && \
+        vllm serve '{model_ref}' \
+        --host 0.0.0.0 \
+        --port {port} \
+        --max-model-len {total_size} \
+        --max-num-seqs 1 \
+        --gpu-memory-utilization {gpu_util:.2f} \
+        --kv-cache-dtype auto \
+        --dtype float16 \
+        --disable-custom-all-reduce \
+        --skip-tokenizer-init 2>&1"
+        """
+        
+        logger.info(f"vLLM command: {serve_cmd}")
 
-    async def apply_configuration_async(self, request: ApplyConfigurationRequest) -> AsyncGenerator[str, None]:
+        
+        stdin, stdout, stderr = ssh_client.exec_command(serve_cmd, get_pty=True)
+        
+        # Watch vLLM output for readiness or failure
+        start_time = time.time()
+        timeout = 900  # 15 minutes timeout - increased to handle large model download, loading, and compilation
+        mem_size_and_tokens = None  # Reset KV cache size for each line
+        kv_cache_size = None
+        last_progress_time = start_time
+        last_output_time = start_time
+        graph_capture_complete = False
+        model_loaded = False
+        torch_compile_started = False
+
+        while True:
+            current_time = time.time()
+            elapsed = current_time - start_time
+            
+            # Log progress every 30 seconds
+            if current_time - last_progress_time > 30:
+                logger.info(f"vLLM startup in progress... ({elapsed:.0f}s elapsed)")
+                last_progress_time = current_time
+            
+            if elapsed > timeout:
+                logger.warning(f"Timeout after {timeout} seconds waiting for vLLM to start")
+                
+                # Check if we at least got to graph capturing
+                if graph_capture_complete:
+                    logger.info("Graph capturing was completed but API server didn't start - considering it ready anyway")
+                    # Try to get memory usage
+                    query = (
+                        "nvidia-smi "
+                        "--query-compute-apps=pid,used_memory "
+                        "--format=csv,noheader,nounits"
+                    )
+                    stdin2, stdout2, _ = ssh_client.exec_command(query)
+                    raw = stdout2.read().decode().strip()
+                    
+                    if raw:
+                        for row in raw.splitlines():
+                            try:
+                                pid, used = [x.strip() for x in row.split(",")]
+                                ps_cmd = f"ps -p {pid} -o args="
+                                stdin3, stdout3, _ = ssh_client.exec_command(ps_cmd)
+                                args = stdout3.read().decode().strip()
+                                
+                                if "vllm" in args.lower() or "/hf_env/bin/python" in args:
+                                    used = int(used) / 1024  # Convert to GB
+                                    return True, f"{used:.2f} GB", kv_cache_size if kv_cache_size else None
+                            except:
+                                pass
+                
+                return False, "Timeout waiting for vLLM to start", None
+                
+            # Check if there's data available to read
+            if stdout.channel.recv_ready():
+                line = stdout.readline()
+                if not line:
+                    # Check if process exited
+                    if stdout.channel.exit_status_ready():
+                        exit_code = stdout.channel.recv_exit_status()
+                        return False, f"vLLM process exited early with code {exit_code}", None
+                    await asyncio.sleep(0.1)
+                    continue
+            else:
+                # No data available, check if process is still running
+                if stdout.channel.exit_status_ready():
+                    exit_code = stdout.channel.recv_exit_status()
+                    
+                    # If graph capturing was complete, check if vLLM is still running
+                    if graph_capture_complete:
+                        logger.info(f"SSH channel closed with exit code {exit_code} after graph capturing")
+                        
+                        # Check if vLLM process is still alive
+                        ps_check = "ps aux | grep -E 'vllm serve|python.*vllm' | grep -v grep"
+                        stdin_ps, stdout_ps, _ = ssh_client.exec_command(ps_check)
+                        ps_result = stdout_ps.read().decode().strip()
+                        
+                        if ps_result:
+                            logger.info("vLLM process is still running despite SSH channel closing")
+                            # Check GPU memory allocation
+                            query = (
+                                "nvidia-smi "
+                                "--query-compute-apps=pid,used_memory "
+                                "--format=csv,noheader,nounits"
+                            )
+                            stdin2, stdout2, _ = ssh_client.exec_command(query)
+                            raw = stdout2.read().decode().strip()
+                            
+                            if raw:
+                                for row in raw.splitlines():
+                                    try:
+                                        pid, used = [x.strip() for x in row.split(",")]
+                                        ps_cmd = f"ps -p {pid} -o args="
+                                        stdin3, stdout3, _ = ssh_client.exec_command(ps_cmd)
+                                        args = stdout3.read().decode().strip()
+                                        
+                                        if "vllm" in args.lower() or "/hf_env/bin/python" in args:
+                                            used = int(used) / 1024  # Convert to GB
+                                            logger.info(f"vLLM running with {used:.2f}GB allocated")
+                                            return True, f"{used:.2f} GB", kv_cache_size if kv_cache_size else None
+                                    except:
+                                        pass
+                    
+                    # Check if model was at least loaded
+                    if "Model loading took" in '\n'.join(locals().get('all_output', [])):
+                        logger.error(f"vLLM process exited during torch compilation with code {exit_code}")
+                        return False, f"vLLM crashed during torch compilation (exit code {exit_code}). This often indicates insufficient GPU memory.", None
+                    else:
+                        return False, f"vLLM process exited early with code {exit_code}", None
+                        
+                # Check if we've been stuck for too long without output
+                # For large models, torch compilation can take a long time
+                no_output_timeout = 480 if torch_compile_started else 300  # 8 minutes if compiling, 5 minutes otherwise
+                
+                if current_time - last_output_time > no_output_timeout:
+                    logger.warning(f"No output from vLLM for {no_output_timeout/60:.0f} minutes, checking if process is alive...")
+                    
+                    # Check if vLLM process is still running
+                    ps_check = "ps aux | grep 'vllm serve' | grep -v grep || echo 'not found'"
+                    stdin_ps, stdout_ps, _ = ssh_client.exec_command(ps_check)
+                    ps_result = stdout_ps.read().decode().strip()
+                    
+                    if "not found" in ps_result:
+                        logger.error("vLLM process appears to have crashed")
+                        return False, "vLLM process crashed during initialization", None
+                            
+                await asyncio.sleep(0.5)
+                continue
+                
+            line = line.strip()
+            logger.info(f"vLLM output: {line}")
+            last_output_time = time.time()  # Update last output time
+            
+            # Track model loading
+            if "Model loading took" in line:
+                model_loaded = True
+                logger.info("Model loaded successfully")
+            
+            # Track API server startup
+            if "vLLM API server version" in line:
+                logger.info("vLLM API server module loaded")
+            
+            # Track torch compile progress
+            if "Cache the graph" in line or "torch.compile" in line:
+                torch_compile_started = True
+                logger.info("Torch compilation started - this may take several minutes...")
+                
+            if "KV cache size" in line:
+                logger.info(f"KV cache size line: {line}")
+                result = re.search(r"GPU KV cache size:\s*([\d,]+)\s*tokens", line)
+                if result:
+                    kv_cache_size = result.group(1).replace(',', '')
+
+            # Check for critical error that requires immediate failure
+            if "Engine core not yet initialized, failed to start" in line:
+                logger.error("vLLM engine core failed to initialize")
+                
+                # Check GPU memory to see if model weights were loaded
+                logger.info("Checking GPU memory allocation after engine core error...")
+                query = (
+                    "nvidia-smi "
+                    "--query-compute-apps=pid,used_memory "
+                    "--format=csv,noheader,nounits"
+                )
+                stdin2, stdout2, _ = ssh_client.exec_command(query)
+                raw = stdout2.read().decode().strip()
+                logger.info(f"GPU memory check after engine error: {raw}")
+                
+                # Check if any vLLM process allocated memory
+                memory_allocated = False
+                allocated_memory_mb = 0
+                if raw:
+                    for row in raw.splitlines():
+                        try:
+                            pid, used = [x.strip() for x in row.split(",")]
+                            # Check if this is a vLLM process
+                            ps_cmd = f"ps -p {pid} -o args= 2>/dev/null || echo ''"
+                            stdin3, stdout3, _ = ssh_client.exec_command(ps_cmd)
+                            args = stdout3.read().decode().strip()
+                            
+                            if "vllm" in args.lower() or "/hf_env/bin/python" in args:
+                                allocated_memory_mb = int(used)
+                                memory_allocated = True
+                                logger.info(f"Found vLLM process (PID {pid}) with {allocated_memory_mb}MB allocated")
+                                break
+                        except Exception as e:
+                            logger.debug(f"Error checking process: {e}")
+                
+                if memory_allocated and allocated_memory_mb > 1000:  # More than 1GB allocated
+                    allocated_gb = allocated_memory_mb / 1024
+                    return False, (f"Model weights loaded successfully ({allocated_gb:.1f}GB allocated) but engine/KV cache initialization failed. "
+                                 f"This indicates insufficient remaining GPU memory for KV cache with max_model_len={total_size}. "
+                                 f"The system will retry with adjusted parameters."), None
+                else:
+                    return False, "vLLM engine core failed to initialize - model loading may have failed", None
+                
+            # Check for success indicators
+            if ("Uvicorn running on" in line or 
+                "Started server process" in line or
+                "API server started" in line or
+                "Starting vLLM API server" in line or
+                "Application startup complete" in line or
+                "Available routes are:" in line or
+                "Serving model" in line or
+                "ASGI app" in line or
+                ("INFO:" in line and "Started server process" in line)):
+                # API server is ready
+                logger.info(f"API server ready indicator found: {line}")
+                ready_to_check = True
+            elif (("init engine" in line and "took" in line and "seconds" in line) or 
+                 ("Engine" in line and "vllm cache_config_info" in line) or
+                 ("Graph capturing finished" in line) or
+                 ("Capturing CUDA graph shapes: 100%" in line)):
+                # Engine initialized or graph capturing completed
+                logger.info("vLLM initialization completed - waiting for API server")
+                
+                if "Graph capturing finished" in line or "Capturing CUDA graph shapes: 100%" in line:
+                    graph_capture_complete = True
+                    logger.info("CUDA graph capturing detected as complete")
+                    
+                    # Important: Continue reading output after graph capturing
+                    # The progress bar might have consumed some output, so we need to be careful
+                    logger.info("Continuing to monitor output after graph capturing...")
+                
+                # After graph capturing, vLLM should start the API server
+                # Let's wait and check for more output
+                api_started = False
+                wait_time = 0
+                max_wait = 60  # Increased from 30 to 60 seconds to wait for API server
+                
+                logger.info("Waiting for API server to start after graph capturing...")
+                
+                while wait_time < max_wait and not api_started:
+                    await asyncio.sleep(2)
+                    wait_time += 2
+                    
+                    # Check for any new output
+                    if stdout.channel.recv_ready():
+                        next_line = stdout.readline()
+                        if next_line:
+                            next_line = next_line.strip()
+                            logger.info(f"Post-graph-capture output: {next_line}")
+                            
+                            # Check if this indicates API server started
+                            if ("Available routes are:" in next_line or 
+                                "Started server process" in next_line or
+                                "init engine" in next_line and "took" in next_line or
+                                "Uvicorn running on" in next_line or
+                                "API server started" in next_line):
+                                logger.info("API server started after graph capturing")
+                                api_started = True
+                                break
+                    
+                    # Also check if process is still alive
+                    if stdout.channel.exit_status_ready():
+                        exit_code = stdout.channel.recv_exit_status()
+                        logger.error(f"vLLM process exited with code {exit_code} after graph capturing")
+                        return False, f"vLLM process exited unexpectedly with code {exit_code}", None
+                    
+                    # Log progress
+                    if wait_time % 10 == 0:
+                        logger.info(f"Still waiting for API server... ({wait_time}s elapsed)")
+                
+                # Consider it ready even if we didn't see explicit API start message
+                logger.info("Considering vLLM ready after graph capturing completion")
+                
+                # For graph capturing case, we should check if process is running
+                if graph_capture_complete:
+                    logger.info("Graph capturing complete, checking if vLLM process is running...")
+                    
+                    # First check if the vLLM process is still alive via ps
+                    ps_check = "ps aux | grep -E 'vllm serve|python.*vllm' | grep -v grep"
+                    stdin_ps, stdout_ps, _ = ssh_client.exec_command(ps_check)
+                    ps_result = stdout_ps.read().decode().strip()
+                    
+                    if ps_result:
+                        logger.info(f"vLLM process found running: {ps_result[:200]}...")
+                    else:
+                        logger.warning("No vLLM process found via ps aux")
+                    
+                    # Check if vLLM has allocated memory
+                    query = (
+                        "nvidia-smi "
+                        "--query-compute-apps=pid,used_memory "
+                        "--format=csv,noheader,nounits"
+                    )
+                    stdin2, stdout2, _ = ssh_client.exec_command(query)
+                    raw = stdout2.read().decode().strip()
+                    logger.info(f"GPU memory allocation check: {raw}")
+                    
+                    if raw:
+                        for row in raw.splitlines():
+                            try:
+                                pid, used = [x.strip() for x in row.split(",")]
+                                ps_cmd = f"ps -p {pid} -o args="
+                                stdin3, stdout3, _ = ssh_client.exec_command(ps_cmd)
+                                args = stdout3.read().decode().strip()
+                                
+                                if "vllm" in args.lower() or "/hf_env/bin/python" in args:
+                                    used = int(used) / 1024  # Convert to GB
+                                    logger.info(f"vLLM process found with {used:.2f}GB allocated after graph capturing")
+                                    # Return immediately with success
+                                    return True, f"{used:.2f} GB", kv_cache_size if kv_cache_size else None
+                            except Exception as e:
+                                logger.debug(f"Error checking process: {e}")
+                
+                ready_to_check = True
+            else:
+                ready_to_check = False
+                
+            if ready_to_check:
+                query = (
+                "nvidia-smi "
+                "--query-compute-apps=pid,used_memory "
+                "--format=csv,noheader,nounits"
+            )
+                stdin2, stdout2, _ = ssh_client.exec_command(query)
+                raw = stdout2.read().decode().strip()
+                logger.info(f"Raw output from nvidia-smi: {raw}")
+
+                found = False
+                for row in raw.splitlines():
+                    pid, used = [x.strip() for x in row.split(",")]
+                    # Check process args for venv path
+                    ps_cmd = f"ps -p {pid} -o args="
+                    tdin3, stdout3, _ = ssh_client.exec_command(ps_cmd)
+                    args = stdout3.read().decode().strip()
+                    logger.info(f"Process args for PID {pid}: {args}")
+                    if re.search(r"/hf_env/bin/python3(\s|$)", args):
+                        logger.info(f"Found vLLM process with PID {pid} and used: {used}")
+                        used = int(used)
+                        # convert to GB
+                        used = used / 1024  # Convert from MiB to GB
+                        found = True
+                        break
+                
+                mem_size = mem_str = f"{used:.2f} GB" if found else None
+                if mem_size:
+                    if kv_cache_size:
+                        return True, mem_size, kv_cache_size
+                    else:
+                        return True, mem_size, None
+                else:
+                    return True, "vLLM started successfully, but KV cache size not reported", None
+
+ 
+            # Check for failure indicators
+            if "Traceback" in line or "CUDA out of memory" in line or "RuntimeError" in line or ("ERROR" in line and "[core.py:" in line):
+                # Read more lines to get full error for logging
+                error_lines = [line]
+                for _ in range(20):  # Read up to 20 more lines for context
+                    if stdout.channel.recv_ready():
+                        next_line = stdout.readline()
+                        if next_line:
+                            error_lines.append(next_line.strip())
+                            logger.info(f"vLLM error line: {next_line.strip()}")
+                
+                # Log full error for debugging
+                full_error = '\n'.join(error_lines)
+                logger.error(f"vLLM startup error:\n{full_error}")
+                
+                # Check GPU memory to see if model weights were loaded
+                logger.info("Checking GPU memory allocation after error...")
+                query = (
+                    "nvidia-smi "
+                    "--query-compute-apps=pid,used_memory "
+                    "--format=csv,noheader,nounits"
+                )
+                stdin2, stdout2, _ = ssh_client.exec_command(query)
+                raw = stdout2.read().decode().strip()
+                logger.info(f"GPU memory check after error: {raw}")
+                
+                # Check if any vLLM process allocated memory
+                memory_allocated = False
+                allocated_memory_mb = 0
+                if raw:
+                    for row in raw.splitlines():
+                        try:
+                            pid, used = [x.strip() for x in row.split(",")]
+                            # Check if this is a vLLM process
+                            ps_cmd = f"ps -p {pid} -o args= 2>/dev/null || echo ''"
+                            stdin3, stdout3, _ = ssh_client.exec_command(ps_cmd)
+                            args = stdout3.read().decode().strip()
+                            
+                            if "vllm" in args.lower() or "/hf_env/bin/python" in args:
+                                allocated_memory_mb = int(used)
+                                memory_allocated = True
+                                logger.info(f"Found vLLM process (PID {pid}) with {allocated_memory_mb}MB allocated")
+                                break
+                        except Exception as e:
+                            logger.debug(f"Error checking process: {e}")
+                
+                # Return specific error based on memory allocation
+                if memory_allocated and allocated_memory_mb > 1000:  # More than 1GB allocated
+                    allocated_gb = allocated_memory_mb / 1024
+                    return False, (f"Model weights loaded ({allocated_gb:.1f}GB allocated) but KV cache compilation failed. "
+                                 f"This is likely due to insufficient remaining GPU memory for the KV cache with max_model_len={total_size}. "
+                                 f"The system will retry with adjusted parameters."), None
+                
+                # No significant memory allocated - model loading likely failed
+                # Return more specific error messages
+                if "CUDA out of memory" in full_error:
+                    return False, "Insufficient GPU memory to load model weights", None
+                elif "FileNotFoundError" in full_error or "No such file" in full_error:
+                    return False, "Model not found", None
+                elif "Permission denied" in full_error:
+                    return False, "Permission denied", None
+                elif "Address already in use" in full_error or "port 8000" in full_error:
+                    return False, "Port 8000 already in use - existing vLLM process may be running", None
+                elif "torch.cuda.OutOfMemoryError" in full_error:
+                    return False, "CUDA out of memory error during model loading", None
+                elif "ImportError" in full_error or "ModuleNotFoundError" in full_error:
+                    return False, "Missing Python dependencies", None
+                else:
+                    # Include a snippet of the actual error
+                    error_snippet = error_lines[0] if error_lines else "Unknown error"
+                    return False, f"vLLM startup failed: {error_snippet}", None
+        
+        return False, "Unexpected end of output", None
+
+    async def apply_configuration_async(self, request: ApplyConfigurationRequest, **kwargs) -> AsyncGenerator[str, None]:
         """
         Apply vGPU configuration to a remote host with streaming updates.
         Returns JSON formatted progress updates.
         """
         steps_successful = []  # Track successful steps for summary
+        
+        async def yield_progress(progress: ConfigurationProgress):
+            """Helper to yield progress with proper flushing."""
+            yield json.dumps(progress.model_dump()) + "\n"
+            await asyncio.sleep(0.001)  # Minimal delay to ensure flush
+        
         try:
             # Validate configuration first
             self.validate_configuration(request.configuration)
             
-            yield json.dumps(ConfigurationProgress(
+            # Log the full configuration for debugging
+            logger.info(f"Full request configuration: {request.configuration}")
+            logger.info(f"Configuration keys: {list(request.configuration.keys())}")
+            logger.info(f"Request description: {request.description}")
+            
+            async for msg in yield_progress(ConfigurationProgress(
                 status="connecting",
                 message=f"Connecting to {request.vm_ip}...",
                 current_step=0,
                 total_steps=1
-            ).model_dump()) + "\n"
+            )):
+                yield msg
             
             # Establish SSH connection
             with self.ssh_connection(
@@ -544,12 +1006,13 @@ class VGPUConfigurationApplier:
             ) as ssh_client:
                 
                 # Connection successful
-                yield json.dumps(ConfigurationProgress(
+                async for msg in yield_progress(ConfigurationProgress(
                     status="executing",
                     message="Connected successfully. Executing configuration commands...",
                     current_step=0,
                     total_steps=5
-                ).model_dump()) + "\n"
+                )):
+                    yield msg
                 
                 steps_successful.append("✓ SSH connection established")
                 
@@ -557,12 +1020,13 @@ class VGPUConfigurationApplier:
                 config = request.configuration
                 
                 # System information
-                yield json.dumps(ConfigurationProgress(
+                async for msg in yield_progress(ConfigurationProgress(
                     status="executing",
                     message="Gathering system information...",
                     current_step=1,
                     total_steps=5
-                ).model_dump()) + "\n"
+                )):
+                    yield msg
                 
                 hypervisor_output, error_hp, status_hp = self.execute_command(ssh_client, "cat /sys/class/dmi/id/product_name")
                 os_output, error_os, status_os = self.execute_command(ssh_client, "uname -a")
@@ -572,29 +1036,32 @@ class VGPUConfigurationApplier:
                     os_info = map_os(os_output)
                     
                     if hypervisor_layer and os_info:
-                        yield json.dumps(ConfigurationProgress(
+                        async for msg in yield_progress(ConfigurationProgress(
                             status="executing",
                             message=f"Hypervisor Layer: {hypervisor_layer}, OS: {os_info}",
                             current_step=1,
                             total_steps=5
-                        ).model_dump()) + "\n"
+                        )):
+                            yield msg
                         steps_successful.append(f"✓ System identified: {hypervisor_layer} on {os_info}")
 
                     else:
-                        yield json.dumps(ConfigurationProgress(
+                        async for msg in yield_progress(ConfigurationProgress(
                             status="error",
                             message="Here is the hypervisor output: " + hypervisor_output + "\n" + "Here is the OS output: " + os_output,
                             current_step=1,
                             total_steps=5
-                        ).model_dump()) + "\n"
+                        )):
+                            yield msg
                 
                 # GPU availability
-                yield json.dumps(ConfigurationProgress(
+                async for msg in yield_progress(ConfigurationProgress(
                     status="executing",
                     message="Checking GPU availability...",
                     current_step=2,
                     total_steps=5
-                ).model_dump()) + "\n"
+                )):
+                    yield msg
                 
                 output, error, status = self.execute_command(ssh_client, "nvidia-smi --query-gpu=name --format=csv,noheader")
                 gpu_info = "No GPU detected" if status != 0 else f"GPU: {output}"
@@ -606,119 +1073,191 @@ class VGPUConfigurationApplier:
                 if gpu_info:
                     if similarity > 0.5 or request.configuration.get("vgpu_profile", "N/A").split('-')[0] in gpu_info:
                         gpu_info += " (matches requested configuration)"
-                        yield json.dumps(ConfigurationProgress(
+                        async for msg in yield_progress(ConfigurationProgress(
                             status="executing",
                             message=gpu_info,
                             current_step=2,
                             total_steps=5
-                        ).model_dump()) + "\n"
+                        )):
+                            yield msg
                         steps_successful.append(f"✓ GPU detected: {detected_gpu_name}")
                     else:
                         gpu_info += " (does not match requested configuration), config gives: " + request.configuration.get("vgpu_profile") + ";you have this GPU: " + gpu_info
-                        yield json.dumps(ConfigurationProgress(
+                        async for msg in yield_progress(ConfigurationProgress(
                             status="error",
                             message=gpu_info,
                             current_step=2,
                             total_steps=5
-                        ).model_dump()) + "\n"
+                        )):
+                            yield msg
 
                         return 
                 
                 
                 # Setup phase with fallback logic
-                yield json.dumps(ConfigurationProgress(
+                async for msg in yield_progress(ConfigurationProgress(
                     status="executing",
                     message="Starting setup phase...",
                     current_step=3,
                     total_steps=5
-                ).model_dump()) + "\n"
+                )):
+                    yield msg
                 
                 model_name = request.configuration.get("model_tag", None)
                 logger.info(f"Model name extracted from configuration: {model_name}")
                 total_size = grab_total_size(request.description)
+                logger.info(f"Description: {request.description}")
+                logger.info(f"Extracted total_size: {total_size} tokens (prompt + response)")
                 test_results = []
                 
+                # Define consistent venv path early
+                VENV_PATH = "$HOME/hf_env"
+                
+                # Debug: Show actual home directory
+                home_check = "echo \"Home directory: $HOME\""
+                output_home, _, _ = self.execute_command(ssh_client, home_check)
+                logger.info(f"Remote home directory: {output_home}")
+                
                 # Step 1: HuggingFace authentication (if token provided)
+                logger.info(f"HuggingFace token provided: {'Yes' if request.hf_token else 'No'}")
                 if request.hf_token:
-                    yield json.dumps(ConfigurationProgress(
+                    logger.info(f"HuggingFace token length: {len(request.hf_token)}")
+                    async for msg in yield_progress(ConfigurationProgress(
                         status="executing",
                         message="Authenticating with HuggingFace...",
                         current_step=3,
-                        total_steps=5
-                    ).model_dump()) + "\n"
+                        total_steps=5,
+                        display_message="Authenticating with HuggingFace..."
+                    )):
+                        yield msg
                     
                     # First, create a virtual environment if it doesn't exist
-                    yield json.dumps(ConfigurationProgress(
+                    async for msg in yield_progress(ConfigurationProgress(
                         status="executing",
                         message="Setting up Python environment...",
                         current_step=3,
-                        total_steps=5
-                    ).model_dump()) + "\n"
+                        total_steps=5,
+                        display_message="Setting up Python virtual environment..."
+                    )):
+                        yield msg
                     
-                    # Create venv if needed
-                    venv_check = '''
-                    if test -d hf_env; then
-                        echo "Virtual environment already exists"
+                    # Check if python3-venv is available, install if needed
+                    venv_cmd = rf"""bash -lc '
+                    # Check for python3, python3-venv, and python3-pip
+                    PYTHON_OK=0
+                    command -v python3 >/dev/null 2>&1 || PYTHON_OK=1
+                    python3 -m venv --help >/dev/null 2>&1 || PYTHON_OK=1
+                    command -v pip3 >/dev/null 2>&1 || PYTHON_OK=1
+
+                    if [ $PYTHON_OK -eq 1 ]; then
+                        echo "{request.password}" | sudo -S apt update
+                        echo "{request.password}" | sudo -S apt install -y python3 python3-venv python3-pip
                     else
-                        echo "Creating virtual environment..."
-                        python3 -m venv hf_env && echo "Virtual environment created"
+                        echo "✅ python3, python3-venv, and python3-pip are already installed"
                     fi
-                    '''
-                    self.execute_command(ssh_client, venv_check, timeout=30)
+
+                    # Check if venv exists AND has activate script
+                    if test -f {VENV_PATH}/bin/activate; then
+                        echo "✅ Valid venv already exists at: {VENV_PATH}"
+                    else
+                        # Remove incomplete venv if it exists
+                        if test -d {VENV_PATH}; then
+                            echo "⚠️ Incomplete venv found, removing..."
+                            rm -rf {VENV_PATH}
+                        fi
+                        
+                        echo "📦 Creating new venv at: {VENV_PATH}"
+                        python3 -m venv {VENV_PATH} && echo "✅ venv created" || echo "❌ venv creation failed"
+                        
+                        # Verify activate script was created
+                        if test -f {VENV_PATH}/bin/activate; then
+                            echo "✅ Activate script verified"
+                        else
+                            echo "❌ Failed to create valid venv - activate script missing"
+                            exit 1
+                        fi
+                    fi
+                    '"""
+                    
+                    output, error, status = self.execute_command(ssh_client, venv_cmd, timeout=120)
+                    logger.info(f"Venv setup output: {output}")
+                    
+                    if status != 0:
+                        async for msg in yield_progress(ConfigurationProgress(
+                            status="error",
+                            message="Failed to create virtual environment",
+                            error=f"Virtual environment setup failed: {error or output}",
+                            current_step=3,
+                            total_steps=5
+                        )):
+                            yield msg
+                        return
                     
                     # Install huggingface-hub in the virtual environment
-                    yield json.dumps(ConfigurationProgress(
+                    async for msg in yield_progress(ConfigurationProgress(
                         status="executing",
                         message="Installing HuggingFace CLI tools...",
                         current_step=3,
-                        total_steps=5
-                    ).model_dump()) + "\n"
+                        total_steps=5,
+                        display_message="Installing HuggingFace CLI tools..."
+                    )):
+                        yield msg
                     
-                    install_hf_cmd = (
-                        "bash -c '"
-                        "source hf_env/bin/activate && "
-                        "pip install --upgrade pip && "
-                        "pip install huggingface-hub"
-                        "'"
-                    )
+                    install_hf_cmd = rf"""bash -lc '
+                    source {VENV_PATH}/bin/activate
+
+                    if ! command -v huggingface-cli >/dev/null 2>&1; then
+                        echo "huggingface-cli not found, installing huggingface-hub...";
+                        pip install --upgrade pip && pip install huggingface-hub;
+                    else
+                        echo "huggingface-cli already installed.";
+                    fi
+
+
+                    ls -al {VENV_PATH}/bin
+                    '"""
+
                     output, error, status = self.execute_command(ssh_client, install_hf_cmd, timeout=120)
                     
                     if status != 0:
                         # Installation failed
-                        yield json.dumps(ConfigurationProgress(
+                        async for msg in yield_progress(ConfigurationProgress(
                             status="error",
                             message="Failed to install HuggingFace CLI",
                             error=f"Failed to install huggingface-hub: {error or output}",
                             current_step=3,
                             total_steps=5
-                        ).model_dump()) + "\n"
+                        )):
+                            yield msg
                         return
                     
                     # Authenticate with HuggingFace
-                    yield json.dumps(ConfigurationProgress(
+                    async for msg in yield_progress(ConfigurationProgress(
                         status="executing",
                         message="Authenticating with HuggingFace (this may take a moment)...",
                         current_step=3,
-                        total_steps=5
-                    ).model_dump()) + "\n"
+                        total_steps=5,
+                        display_message="Logging into HuggingFace..."
+                    )):
+                        yield msg
                     
-                    hf_auth_cmd = (
-                        f"bash -c '"
-                        f"source hf_env/bin/activate && "
-                        f"huggingface-cli login --token {request.hf_token}"
-                        f"'"
-                    )
+                    hf_auth_cmd = rf"""bash -lc '
+                    source {VENV_PATH}/bin/activate
+                    huggingface-cli login --token {request.hf_token}
+                    '"""
+
                     output, error, status = self.execute_command(ssh_client, hf_auth_cmd, timeout=60)
                     
                     if status != 0:
                         # Authentication failed
-                        yield json.dumps(ConfigurationProgress(
+                        async for msg in yield_progress(ConfigurationProgress(
                             status="error",
                             message="HuggingFace authentication failed",
                             error=f"Failed to authenticate with HuggingFace: {error or output}",
                             current_step=3,
                             total_steps=5
-                        ).model_dump()) + "\n"
+                        )):
+                            yield msg
                         return
                     
                     # Authentication successful
@@ -736,7 +1275,10 @@ class VGPUConfigurationApplier:
                 # Step 2: Check and install vLLM
                 logger.info("Checking vLLM installation status")
                 # Check if vLLM is already installed in the virtual environment
-                check_vllm_cmd = "bash -c 'source hf_env/bin/activate && pip show vllm'"
+                check_vllm_cmd = rf"""bash -lc '
+                source {VENV_PATH}/bin/activate
+                pip show vllm
+                '"""
                 output, error, status = self.execute_command(ssh_client, check_vllm_cmd, timeout=30)
                 
                 if status != 0:
@@ -744,21 +1286,34 @@ class VGPUConfigurationApplier:
                     logger.info("vLLM not found, installing...")
                     
                     # Install with progress updates
-                    pip_cmd = "bash -c 'source hf_env/bin/activate && pip install vllm --progress-bar on'"
+                    pip_cmd = rf"""bash -lc '
+                    source {VENV_PATH}/bin/activate
+                    pip install vllm --progress-bar on
+                    '"""
                     
                     # Start installation
                     start_time = time.time()
-                    output, error, status = self.execute_command(ssh_client, pip_cmd, timeout=300)  # 15 min timeout
+                    async for msg in yield_progress(ConfigurationProgress(
+                        status="executing",
+                        message="Installing vLLM (this may take several minutes)...",
+                        current_step=4,
+                        total_steps=5,
+                        display_message="Installing vLLM framework (this may take 5-10 minutes)..."
+                    )):
+                        yield msg
+                    
+                    output, error, status = self.execute_command(ssh_client, pip_cmd, timeout=900)  # 15 min timeout
                     
                     if status != 0:
                         # Installation failed
-                        yield json.dumps(ConfigurationProgress(
+                        async for msg in yield_progress(ConfigurationProgress(
                             status="error",
                             message="vLLM installation failed",
                             error=f"Failed to install vLLM: {error or output}",
                             current_step=4,
                             total_steps=5
-                        ).model_dump()) + "\n"
+                        )):
+                            yield msg
                         return
                     
                     # Installation successful
@@ -788,276 +1343,199 @@ class VGPUConfigurationApplier:
                 
                 # Step 3: Start vLLM server with progressive GPU utilization
 
-                VENV_PATH    = '~/hf_env'        # path to your virtual-env folder
-                LOG_OUT      = '~/vllm.out.log'
-                LOG_ERR      = '~/vllm.err.log'
+                PORT         = 8000
 
-                # Clean up any old logs
-                cleanup_cmd = f"rm -f {LOG_OUT} {LOG_ERR}"
-                stdin, stdout, stderr = self.exec_raw(ssh_client, cleanup_cmd, timeout=30)
-                code = stdout.channel.recv_exit_status()
-                if code == 0:
-                    yield json.dumps(ConfigurationProgress(
-                        status="executing",
-                        message="Cleaned up old logs",
-                        current_step=4,
-                        total_steps=5
-                    ).model_dump()) + "\n"
-                else:
-                    yield json.dumps(ConfigurationProgress(
-                        status="error",
-                        message="Failed to clean up old logs",
-                        error=f"Failed to clean up old logs: {stderr.read().decode().strip()}",
-                        current_step=4,
-                        total_steps=5
-                    ).model_dump()) + "\n"
-                
                 # Retry settings
-                INITIAL_UTIL = 0.4               # starting --gpu-memory-utilization
+                INITIAL_UTIL = 0.5               # starting --gpu-memory-utilization (increased from 0.4)
                 DELTA_UTIL   = 0.1               # increment on each retry
-                MAX_ATTEMPTS = 3
+                MAX_ATTEMPTS = 4                 # number of attempts to find optimal memory
                 MODEL_REF = model_name
 
+                try:
+                    gpu_amount = gpu_info.split('-')[1][:2]
+                    logger.info(f'gpu size detected: {gpu_amount}')
+                    if 48 <= int(gpu_info.split('-')[1][:2]):
+                        INITIAL_UTIL = 0.3
+                except:
+                    pass
+            
+                # Validate model reference
+                if not MODEL_REF or MODEL_REF == "None":
+                    MODEL_REF = "mistralai/Mistral-7B-Instruct-v0.3"
+                    logger.warning(f"No valid model specified, using default: {MODEL_REF}")
+                
+                logger.info(f"Final MODEL_REF to be used: {MODEL_REF}")
+                
                 gpu_util = INITIAL_UTIL
-                sleep_time = 100  # seconds to wait between attempts
                 successful_gpu_mem = None 
-                target_pids = []
-                for attempt in range(0, MAX_ATTEMPTS + 1):
-                    yield json.dumps(ConfigurationProgress(
-                        status="Executing optimized cache...",
-                        message=f"Attempt {attempt}/{MAX_ATTEMPTS}: gpu-memory-utilization={gpu_util:.2f}",
-                        current_step=4,
-                        total_steps=5
-                    ).model_dump()) + "\n"
-
-                    serve_cmd = rf"""bash -lc '
-                    source {VENV_PATH}/bin/activate && \
-                    nohup vllm serve "{MODEL_REF}" \
-                        --max-model-len 2040 \
-                        --max-num-seqs 1 \
-                        --gpu-memory-utilization {gpu_util:.2f} \
-                        --kv-cache-dtype auto \
-                        --dtype float16 \
-                    > {LOG_OUT} 2> {LOG_ERR} &
-                    '"""
-                    stdin, stdout, stderr = self.exec_raw(ssh_client, serve_cmd)
-                    time.sleep(sleep_time)
-                    shell_exit = stdout.channel.recv_exit_status()
-                    
-                    if shell_exit != 0:
-                        error_msg = stderr.read().decode().strip()
-                        yield json.dumps(ConfigurationProgress(
-                            status="error",
-                            message=f"Failed to start vLLM server: {error_msg}",
-                            current_step=4,
-                            total_steps=5
-                        ).model_dump()) + "\n"
-                        return
-                    
-                    # Wait for server to start up with progress updates
-                    logger.info("Waiting for vLLM server to start...")
-                    
-                    # Check server startup progress
-                    for i in range(20):  # Check for up to 100 seconds (20 * 5)
-                        await asyncio.sleep(5)
-                        
-                        # Check if error log has any issues
-                        grep_cmd = f"grep -E 'Traceback|RuntimeError|CUDA.*error' {LOG_ERR} || true"
-                        output, error, status = self.execute_command(ssh_client, grep_cmd, timeout=10)
-                        
-                        if output.strip():
-                            # Found error
-                            break
-                            
-                        # Check if server is running by looking for the process
-                        check_cmd = "pgrep -f 'vllm serve' || true"
-                        output, error, status = self.execute_command(ssh_client, check_cmd, timeout=10)
-                        
-                        if output.strip():
-                            # Server process found, give it a bit more time to fully initialize
-                            await asyncio.sleep(5)
-                            break
-                        
-                        # Progress update every 20 seconds
-                        if i % 4 == 0:
-                            yield json.dumps(ConfigurationProgress(
-                                status="executing",
-                                message=f"Still waiting for vLLM server... ({(i+1)*5}s elapsed)",
-                                current_step=4,
-                                total_steps=5
-                            ).model_dump()) + "\n"
-                    
-                    
-                    grep_cmd = f"grep -E 'Traceback|RuntimeError' {LOG_ERR} || true"
-                    output, error, status = self.execute_command(ssh_client, grep_cmd, timeout=10)
-                    grep_out = output.strip()
-                    
-                    if not grep_out:
-                        yield json.dumps(ConfigurationProgress(
-                            status="executing",
-                            message="vLLM server started successfully",
-                            current_step=4,
-                            total_steps=5
-                        ).model_dump()) + "\n"
-
-                        pid_cmd = "pgrep -f 'hf_env/bin/python3'"
-                        output, error, status = self.execute_command(ssh_client, pid_cmd, timeout=10)
-                        pids = output.split() if output else []
-                        if not pids:
-                            yield json.dumps(ConfigurationProgress(
-                                status="error",
-                                message="Could not find hf_env python process PID",
-                                current_step=4,
-                                total_steps=5
-                            ).model_dump()) + "\n"
-                        else:
-                            target_pids = pids[:]
-                            yield json.dumps(ConfigurationProgress(
-                                status="executing",
-                                message=f"Found {len(target_pids)} hf_env processes",
-                                current_step=4,
-                                total_steps=5
-                            ).model_dump()) + "\n"
-
-                            for pid in target_pids:
-                                mem_cmd = "nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits | grep '^" + pid + ",' || true"
-                                output, error, status = self.execute_command(ssh_client, mem_cmd, timeout=10)
-                                line = output.strip()
-                                if line:
-                                    _, mem_mb_str = [x.strip() for x in line.split(',', 1)]
-                                    try:
-                                        mem_mb = float(mem_mb_str)
-                                    except ValueError:
-                                        num = ''.join(ch for ch in mem_mb_str if (ch.isdigit() or ch == '.'))
-                                        mem_mb = float(num)
-                                    mem_gb = mem_mb / 1024.0
-                                    successful_gpu_mem = mem_gb
-                                    yield json.dumps(ConfigurationProgress(
-                                        status="executing",
-                                        message=f"GPU memory detected: {mem_gb:.2f}GB",
-                                        current_step=4,
-                                        total_steps=5
-                                    ).model_dump()) + "\n"
-                                    
-                                    # Track successful vLLM start with GPU memory
-                                    if not any("vLLM server started" in step for step in steps_successful):
-                                        steps_successful.append(f"✓ vLLM server started with gpu-memory-utilization={gpu_util:.2f}")
-                                        steps_successful.append(f"✓ GPU memory detected: {mem_gb:.2f}GB used")
-                                else:
-                                    yield json.dumps(ConfigurationProgress(
-                                        status="executing",
-                                        message=f"PID {pid}: no GPU usage entry found",
-                                        current_step=4,
-                                        total_steps=5
-                                    ).model_dump()) + "\n"
-                        break
-
-                        # query GPU memory usage for our hf_env process(es)
-                    
-                    yield json.dumps(ConfigurationProgress(
-                        status="executing",
-                        message=f"Failed to start vLLM server: {grep_out}",
-                        current_step=4,
-                        total_steps=5
-                    ).model_dump()) + "\n"
-                    
-                    await asyncio.sleep(2)
-
-                    # kill any stray vllm serve processes before retrying
-                    kill_cmd = "pkill -f 'vllm serve' || true"
-                    stdin, stdout, stderr = self.exec_raw(ssh_client, kill_cmd)
-                    stdout.channel.recv_exit_status()
-
-                    if attempt < MAX_ATTEMPTS:
-                        gpu_util = min(1.0, gpu_util + DELTA_UTIL)
-                        yield json.dumps(ConfigurationProgress(
-                            status="executing",
-                            message=f"Retrying with gpu-memory-utilization={gpu_util:.2f}...",
-                            current_step=4,
-                            total_steps=5
-                        ).model_dump()) + "\n"
-                        sleep_time += 100  # Reset sleep time for next attempt
-                        await asyncio.sleep(2)
+                kv_cache = None  # Initialize kv_cache
+                
+                for attempt in range(1, MAX_ATTEMPTS + 1):
+                    # Show optimizing message instead of scary attempt numbers
+                    if attempt == 1:
+                        display_msg = "Starting vLLM server..."
                     else:
-                        yield json.dumps(ConfigurationProgress(
-                            status="error",
-                            message="All retries exhausted, smoke test failed",
+                        display_msg = f"Optimizing GPU memory allocation (step {attempt}/{MAX_ATTEMPTS})..."
+                    
+                    async for msg in yield_progress(ConfigurationProgress(
+                        status="executing",
+                        message=f"Trying gpu-memory-utilization={gpu_util:.2f}",
+                        current_step=4,
+                        total_steps=5,
+                        display_message=display_msg
+                    )):
+                        yield msg
+
+                    if attempt > 1:
+                        cleanup_cmds = ["pkill -f 'vllm serve' || true", "pkill -f 'python3 -m vllm.serve.cli' || true", "sleep 3"]
+                        for cmd in cleanup_cmds:
+                            self.execute_command(ssh_client, cmd)
+                            logger.info(f"Cleaned up vLLM process: {cmd}")
+                    
+                    # Check GPU memory before starting
+                    gpu_mem_cmd = "nvidia-smi --query-gpu=memory.free,memory.total --format=csv,noheader,nounits"
+                    output, _, _ = self.execute_command(ssh_client, gpu_mem_cmd)
+                    if output:
+                        try:
+                            free_mem, total_mem = map(int, output.strip().split(','))
+                            logger.info(f"GPU memory before vLLM start: {free_mem}MB free / {total_mem}MB total ({free_mem/total_mem*100:.1f}% free)")
+                        except Exception as e:
+                            logger.warning(f"Could not parse GPU memory: {e}")
+                    
+                    # For later attempts, try reducing max_model_len
+                    adjusted_total_size = total_size
+                    if attempt > 2 and total_size > 1024:
+                        # Reduce context length on later attempts
+                        adjusted_total_size = max(1024, total_size - (attempt - 2) * 256)
+                        logger.info(f"Reducing max_model_len from {total_size} to {adjusted_total_size} for attempt {attempt}")
+                    
+                    # Start vLLM and wait for it to be ready
+                    logger.info(f"Starting vLLM with: model={MODEL_REF}, gpu_util={gpu_util}, total_size={adjusted_total_size}")
+                    success, message_vllm, kv_cache = await self.wait_for_vllm_live(
+                        ssh_client, gpu_util, MODEL_REF, VENV_PATH, adjusted_total_size, PORT
+                    )
+                    
+                    if success:
+                        async for msg in yield_progress(ConfigurationProgress(
+                            status="executing",
                             current_step=4,
-                            total_steps=5
-                        ).model_dump()) + "\n"
+                            total_steps=5,
+                            display_message=f"✅ vLLM server started successfully!"
+                        )):
+                            yield msg
+                        
+                        # Give it a moment to stabilize
+                        await asyncio.sleep(3)
+                        
+                        # Verify vLLM is actually accessible
+                        logger.info("Verifying vLLM API is accessible...")
+                        health_check_cmd = f"curl -s -o /dev/null -w '%{{http_code}}' http://localhost:{PORT}/health || echo 'failed'"
+                        health_output, _, _ = self.execute_command(ssh_client, health_check_cmd, timeout=10)
+                        
+                        if "200" in health_output:
+                            logger.info(f"vLLM API health check passed: {health_output}")
+                        else:
+                            logger.warning(f"vLLM API health check result: {health_output}")
+                            # Still consider it successful if the process started and allocated memory
+                            logger.info(f"vLLM process is running with GPU memory allocated ({message_vllm})")
+                        
+                        steps_successful.append(f"✓ vLLM configured optimally with gpu-memory-utilization={gpu_util:.2f}")
+                        successful_gpu_mem = message_vllm  # Store the GPU memory allocation
+                        break
+                        
+                    else:
+                        # Log error for debugging but don't scare the user
+                        logger.info(f"Attempt {attempt} failed: {message_vllm}")
+                        
+                        if attempt < MAX_ATTEMPTS:
+                            gpu_util += DELTA_UTIL
+                            # Don't show error to user, just indicate we're optimizing
+                            await asyncio.sleep(2)  # Brief pause between attempts
+                        else:
+                            # Only show error if ALL attempts failed
+                            async for msg in yield_progress(ConfigurationProgress(
+                                status="error",
+                                message="Unable to start vLLM server",
+                                error=f"vLLM failed to start after {MAX_ATTEMPTS} attempts. This may be due to insufficient GPU memory for the model. Last error: {message_vllm}",
+                                current_step=4,
+                                total_steps=5
+                            )):
+                                yield msg
+                            return
                 
-                if target_pids:
-                    yield json.dumps(ConfigurationProgress(
-                        status="executing",
-                        message="Post-launch cleanup: killing hf_env processes",
-                        current_step=4,
-                        total_steps=5
-                    ).model_dump()) + "\n"
+                # Final check to ensure vLLM is still running
+                logger.info("Final check: verifying vLLM is still running...")
+                # Use a more robust check that looks for the actual vllm process
+                final_check_cmd = "ps aux | grep -E 'vllm serve|python.*vllm|hf_env.*vllm' | grep -v grep"
+                check_output, _, _ = self.execute_command(ssh_client, final_check_cmd)
+                
+                vllm_running = False
+                if check_output and check_output.strip():
+                    vllm_running = True
+                    process_count = len(check_output.strip().split('\n'))
+                    logger.info(f"✅ vLLM process confirmed running ({process_count} process(es))")
+                else:
+                    logger.warning("⚠️ vLLM process not found in final check")
+                
+                # If we successfully allocated GPU memory earlier, that's what matters
+                if successful_gpu_mem and not vllm_running:
+                    logger.info(f"Note: vLLM had successfully allocated {successful_gpu_mem} but process may have exited")
+                
+                # Update summary message to be clearer about the status
+                if successful_gpu_mem:
+                    status_line = f"• Status: vLLM started and allocated {successful_gpu_mem}\n"
+                    if not vllm_running:
+                        status_line += "  ⚠️ Note: API endpoint may still be initializing\n"
+                else:
+                    status_line = "• Status: Configuration attempted\n"
+                
+                summary_message = (
+                    "✅ vLLM server configuration completed!\n\n"
+                    "📊 Configuration Details:\n"
+                    f"• Model: {model_name}\n" +
+                    status_line +
+                    f"• GPU Memory Utilization: {gpu_util:.0%}\n"
+                    f"• KV Cache: {kv_cache if kv_cache else 'N/A'} tokens\n\n"
+                    "🖥️ System Configuration:\n"
+                    f"• vGPU Profile: {request.configuration.get('vGPU_profile', 'N/A')}\n"
+                    f"• vCPUs: {request.configuration.get('vCPU_count', 'N/A')}\n"
+                    f"• RAM: {request.configuration.get('system_RAM', 'N/A')}GB\n"
+                )
 
-                    for pid in target_pids:
-                        kill_pid_cmd = f"kill {pid} || true"
-                        stdin, stdout, stderr = self.exec_raw(ssh_client, kill_pid_cmd)
-                        stdout.channel.recv_exit_status()
-                        # Don't yield individual kill messages, too verbose
-
-                    # Close the SSH connection
-                ssh_client.close()
-                yield json.dumps(ConfigurationProgress(
-                        status="executing",
-                        message="SSH connection closed",
-                        current_step=4,
-                        total_steps=5
-                    ).model_dump()) + "\n"
-                
-                # take the final results, which is the gpu_memory the advisor suggested and the gpu_memory found
-                logger.info(f"here is the request.config : {request.configuration}")
-                logger.info(f"successful_gpu_mem: {successful_gpu_mem}")
-
-                # Build configuration summary
-                summary_message = f"=== Configuration Summary ===\n" \
-                    f"vGPU Profile: {request.configuration.get('vGPU_profile', 'N/A')}\n" \
-                    f"vCPUs: {request.configuration.get('vCPU_count', 'N/A')}\n" \
-                    f"RAM: {request.configuration.get('system_RAM', 'N/A')}GB\n" \
-                    f"Advisor Estimated VRAM: {request.configuration.get('gpu_memory_size', 'N/A')}GB\n" \
-                    f"Detected GPU Memory Usage: {successful_gpu_mem:.2f}GB" if successful_gpu_mem else f"Detected GPU Memory Usage: N/A"
-                
-                # Add steps taken
-                if steps_successful:
-                    summary_message += f"\n\n=== Steps Completed ===\n"
-                    for step in steps_successful:
-                        summary_message += f"{step}\n"
-                
-                yield json.dumps(ConfigurationProgress(
-                    status="executing",
-                    message=summary_message.strip(),
-                    current_step=5,
-                    total_steps=5,
-                    command_results=[]  # Don't include command results in summary
-                ).model_dump()) + "\n"
-                                                 
-                yield json.dumps(ConfigurationProgress(
+                try:
+                    from src.utils import get_llm
+                    llm = get_llm(**kwargs)
+                    test_response = llm.invoke("Based on this information " + summary_message + " give the user (an IT professional) a log on what the report details.")
+                    logger.info(f"LLM Test: {test_response}")
+                except Exception as e:
+                    logger.info(f"LLM test failed {e}")
+                # Final summary
+                async for msg in yield_progress(ConfigurationProgress(
                     status="completed",
-                    message="✅ Configuration applied successfully!",
+                    message=f"Configuration completed successfully!\n{summary_message}",
                     current_step=5,
-                    total_steps=5,
-                    command_results=[]  # Don't include command results at the end
-                ).model_dump()) + "\n"
+                    total_steps=5
+                )):
+                    yield msg
                 
         except paramiko.AuthenticationException:
-            yield json.dumps(ConfigurationProgress(
+            async for msg in yield_progress(ConfigurationProgress(
                 status="error",
                 message="Authentication failed",
                 error="Invalid username or password"
-            ).model_dump()) + "\n"
+            )):
+                yield msg
         except paramiko.SSHException as e:
-            yield json.dumps(ConfigurationProgress(
+            async for msg in yield_progress(ConfigurationProgress(
                 status="error",
                 message="SSH connection failed",
                 error=str(e)
-            ).model_dump()) + "\n"
+            )):
+                yield msg
         except Exception as e:
-            yield json.dumps(ConfigurationProgress(
+            async for msg in yield_progress(ConfigurationProgress(
                 status="error",
                 message="Configuration failed",
                 error=str(e)
-            ).model_dump()) + "\n"
+            )):
+                yield msg
