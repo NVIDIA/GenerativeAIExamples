@@ -1369,12 +1369,21 @@ async def apply_configuration(request: Request, config_request: ApplyConfigurati
                 status_code=400
             )
         
+
+        llm_kwargs = {}
+        for field in ['temperature', 'max_tokens', 'model', 'llm_endpoint']:
+            value = getattr(config_request, field, None)
+            if value is not None:
+                llm_kwargs[field] = value
+
         # Apply configuration and stream results
         async def stream_configuration_progress():
             """Stream configuration progress as Server-Sent Events."""
             try:
-                async for progress in applier.apply_configuration_async(config_request):
+                async for progress in applier.apply_configuration_async(config_request, **llm_kwargs):
                     yield f"data: {progress}\n\n"
+                    # Force flush by yielding empty string
+                    yield ""
             except Exception as e:
                 logger.error(f"Error during configuration: {str(e)}")
                 error_response = {
@@ -1390,6 +1399,7 @@ async def apply_configuration(request: Request, config_request: ApplyConfigurati
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",  # Disable proxy buffering
             }
         )
         

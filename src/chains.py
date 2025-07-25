@@ -176,7 +176,8 @@ class StructuredResponse(BaseModel):
                         "enum": [
                             "L40S-24Q", "L40S-48Q", "L40-8Q", "L40-12Q", "L40-16Q",
                             "L40-24Q", "L40-48Q", "A40-8Q", "A40-12Q", "A40-16Q",
-                            "A40-24Q", "A40-48Q", "L4-12Q", "L4-24Q"
+                            "A40-24Q", "A40-48Q", "L4-12Q", "L4-24Q", "B6000-12Q",
+                            "B6000-24Q", "B6000-32Q", "B6000-48Q", "B6000-96Q"
                         ]
                     },
                     "vcpu_count": {
@@ -724,11 +725,13 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                                         corrected_params["throughput"] = calculation.performance_metrics.throughput_tokens_per_second if isinstance(calculation.performance_metrics.throughput_tokens_per_second, (int, float)) else None
                                         if corrected_params["throughput"] is not None:
                                             corrected_params["throughput"] = str(round(corrected_params["throughput"], 5)) + " (tokens/s)"
-                                    if corrected_params["system_RAM"] is None or corrected_params["system_RAM"] < corrected_params["gpu_memory_size"]:
-                                        if precision:
-                                            corrected_params["system_RAM"] = (calculation.resultant_configuration.total_memory_gb * 1.5) + 16
-                                        else:
-                                            corrected_params["system_RAM"] = (calculation.resultant_configuration.total_memory_gb * 2) + 16
+                                    
+                                    num_gpu = calculation.resultant_configuration.num_gpus
+                                    vCPU_count = 8 * num_gpu
+                                    system_RAM = 8 * vCPU_count
+                                    corrected_params["vcpu_count"] = vCPU_count
+                                    corrected_params["system_RAM"] = system_RAM
+
                                         
                                 logger.info("Enhanced with calculator results: %s", corrected_params)
                             except Exception as e:
