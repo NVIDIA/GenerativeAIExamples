@@ -172,12 +172,12 @@ class StructuredResponse(BaseModel):
                 "properties": {
                     "vgpu_profile": {
                         "type": "string",
-                        "description": "Exact NVIDIA vGPU profile name (must match one of the documented profiles) and must support at least gpu_memory_size GB of VRAM.",
+                        "description": "Exact NVIDIA vGPU profile name (must match one of the documented profiles) and must support at least gpu_memory_size GB of VRAM. ",
                         "enum": [
-                            "L40S-24Q", "L40S-48Q", "L40-8Q", "L40-12Q", "L40-16Q",
+                            "L4-12Q, L4-24Q, L40S-24Q", "L40S-48Q", "L40-8Q", "L40-12Q", "L40-16Q",
                             "L40-24Q", "L40-48Q", "A40-8Q", "A40-12Q", "A40-16Q",
-                            "A40-24Q", "A40-48Q", "L4-12Q", "L4-24Q", "B6000-12Q",
-                            "B6000-24Q", "B6000-32Q", "B6000-48Q", "B6000-96Q"
+                            "A40-24Q", "A40-48Q", "L4-12Q", "L4-24Q", "DC-12Q",
+                            "DC-24Q", "DC-32Q", "DC-48Q", "DC-96Q"
                         ]
                     },
                     "vcpu_count": {
