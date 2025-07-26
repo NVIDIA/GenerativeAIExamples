@@ -77,7 +77,7 @@ async def plot_distribution_tool(
 
     def create_distribution_plot_html(output_dir: str, data_json_path: str, column_name: str, title: str):
         """
-        Generate and save distribution histogram as HTML file using Bokeh.
+        Generate and save distribution histogram as HTML file using Plotly.
         
         Args:
             output_dir (str): Directory to save the plot file.
@@ -88,12 +88,9 @@ async def plot_distribution_tool(
         Returns:
             str: Path to the saved HTML file.
         """
-        import bokeh.plotting as bp
-        from bokeh.models import ColumnDataSource, HoverTool
-        from bokeh.embed import file_html
-        from bokeh.resources import CDN
+        import plotly.graph_objects as go
+        import plotly.offline as pyo
         import pandas as pd
-        import numpy as np
         
         df = load_data_from_json(data_json_path)
         if df is None or df.empty:
@@ -102,50 +99,70 @@ async def plot_distribution_tool(
         if column_name not in df.columns:
             raise KeyError(f"Data from {data_json_path} must contain '{column_name}' column. Found: {df.columns.tolist()}")
 
-        # Create histogram data
-        hist, edges = np.histogram(df[column_name], bins=30)
-        hist_df = pd.DataFrame({
-            f'{column_name}_left': edges[:-1],
-            f'{column_name}_right': edges[1:],
-            'Frequency': hist
-        })
+        # Create the histogram
+        fig = go.Figure()
         
-        source = ColumnDataSource(hist_df)
-        hover = HoverTool(tooltips=[
-            (f"{column_name} Range", f"@{column_name}_left{{0.0}} - @{column_name}_right{{0.0}}"),
-            ("Frequency", "@Frequency")
-        ])
+        fig.add_trace(go.Histogram(
+            x=df[column_name],
+            nbinsx=30,
+            name=column_name,
+            marker=dict(
+                color='#e17160',
+                line=dict(color='white', width=1)
+            ),
+            opacity=0.8,
+            hovertemplate='<b>Range</b>: %{x}<br>' +
+                         '<b>Count</b>: %{y}<br>' +
+                         '<extra></extra>'
+        ))
         
-        fig = bp.figure(
-            title=title,
-            x_axis_label=column_name,
-            y_axis_label='Frequency',
+        # Update layout with styling
+        fig.update_layout(
+            title=dict(
+                text=title,
+                x=0.5,
+                font=dict(size=14)
+            ),
+            xaxis=dict(
+                title=dict(text=column_name, font=dict(size=12)),
+                gridcolor='lightgray',
+                gridwidth=0.5
+            ),
+            yaxis=dict(
+                title=dict(text='Frequency', font=dict(size=12)),
+                gridcolor='lightgray',
+                gridwidth=0.5
+            ),
             width=650,
             height=450,
-            tools=[hover, 'pan', 'box_zoom', 'wheel_zoom', 'reset', 'save'],
-            toolbar_location="above"
+            plot_bgcolor='white',
+            showlegend=False,
+            hovermode='closest'
         )
-        
-        # Add the histogram bars
-        fig.quad(
-            bottom=0, top='Frequency', left=f'{column_name}_left', right=f'{column_name}_right',
-            fill_color='#e17160', line_color='white', alpha=0.8, source=source
-        )
-        
-        # Style the plot
-        fig.title.text_font_size = "14pt"
-        fig.xaxis.axis_label_text_font_size = "12pt"
-        fig.yaxis.axis_label_text_font_size = "12pt"
-        fig.grid.grid_line_alpha = 0.3
 
-        # Generate standalone HTML file
-        html_content = file_html(fig, CDN, title)
-        
         # Save the HTML file
         os.makedirs(output_dir, exist_ok=True)
         output_filepath = os.path.join(output_dir, f"distribution_plot_{column_name}.html")
+        
+        # Generate standalone HTML file
+        html_content = pyo.plot(fig, output_type='div', include_plotlyjs=True)
+        
+        # Create complete HTML page
+        full_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>{title}</title>
+            <meta charset="utf-8">
+        </head>
+        <body>
+            {html_content}
+        </body>
+        </html>
+        """
+        
         with open(output_filepath, 'w', encoding='utf-8') as f:
-            f.write(html_content)
+            f.write(full_html)
         logger.info(f"Distribution plot saved to {output_filepath}")
         
         return output_filepath
@@ -175,7 +192,7 @@ async def plot_distribution_tool(
             file_url = f"file://{output_filepath}"
             
             # Return a clear completion message that the LLM will understand
-            return f"TASK COMPLETED SUCCESSFULLY\n\nDistribution histogram has been generated and saved.\n\nChart Details:\n- Type: Distribution histogram (30 bins)\n- Column: {column_name}\n- Title: {plot_title}\n- Output File: {output_filepath}\n- File URL: {file_url}\n\n✅ CHART GENERATION COMPLETE - NO FURTHER ACTION NEEDED"
+            return f"TASK COMPLETED SUCCESSFULLY\n\nDistribution histogram has been generated and saved.\n\nChart Details:\n- Type: Distribution histogram (30 bins, Plotly)\n- Column: {column_name}\n- Title: {plot_title}\n- Output File: {output_filepath}\n- File URL: {file_url}\n\n✅ CHART GENERATION COMPLETE - NO FURTHER ACTION NEEDED"
             
         except FileNotFoundError as e:
             error_msg = f"Required data file ('{data_json_path}') not found for distribution plot: {e}"
@@ -191,7 +208,7 @@ async def plot_distribution_tool(
             return error_msg
 
     prompt = """
-    Generate interactive distribution histogram from JSON data.
+    Generate interactive distribution histogram from JSON data using Plotly.
     Input:
     - data_json_path: Path to the JSON file containing the data
     - column_name: Column name for the distribution histogram

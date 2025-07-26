@@ -78,7 +78,7 @@ async def plot_line_chart_tool(
 
     def create_line_chart_plot_html(output_dir: str, data_json_path: str, x_col: str, y_col: str, title: str):
         """
-        Generate and save line chart as HTML file using Bokeh.
+        Generate and save line chart as HTML file using Plotly.
         
         Args:
             output_dir (str): Directory to save the plot file.
@@ -90,10 +90,8 @@ async def plot_line_chart_tool(
         Returns:
             str: Path to the saved HTML file.
         """
-        import bokeh.plotting as bp
-        from bokeh.models import ColumnDataSource, HoverTool
-        from bokeh.embed import file_html
-        from bokeh.resources import CDN
+        import plotly.graph_objects as go
+        import plotly.offline as pyo
         import pandas as pd
         
         df = load_data_from_json(data_json_path)
@@ -109,63 +107,76 @@ async def plot_line_chart_tool(
         # Sort by x-axis column for proper line plotting
         df_sorted = df.sort_values(x_col)
         
-        # Create data source
-        source = ColumnDataSource(data=dict(
+        # Create the line chart with markers
+        fig = go.Figure()
+        
+        # Add line trace
+        fig.add_trace(go.Scatter(
             x=df_sorted[x_col],
-            y=df_sorted[y_col]
+            y=df_sorted[y_col],
+            mode='lines+markers',
+            name=y_col,
+            line=dict(color='#1f77b4', width=3),
+            marker=dict(size=6, color='#1f77b4'),
+            hovertemplate=f'<b>{x_col}</b>: %{{x}}<br>' +
+                         f'<b>{y_col}</b>: %{{y:.2f}}<br>' +
+                         '<extra></extra>'
         ))
         
-        # Create hover tool
-        hover = HoverTool(tooltips=[
-            (f"{x_col}", "@x"),
-            (f"{y_col}", "@y{0.00}")
-        ])
-        
-        fig = bp.figure(
-            title=title,
-            x_axis_label=x_col,
-            y_axis_label=y_col,
+        # Update layout with styling
+        fig.update_layout(
+            title=dict(
+                text=title,
+                x=0.5,
+                font=dict(size=16)
+            ),
+            xaxis=dict(
+                title=dict(text=x_col, font=dict(size=14)),
+                gridcolor='lightgray',
+                gridwidth=0.5
+            ),
+            yaxis=dict(
+                title=dict(text=y_col, font=dict(size=14)),
+                gridcolor='lightgray',
+                gridwidth=0.5
+            ),
             width=650,
             height=450,
-            tools=[hover, 'pan', 'box_zoom', 'wheel_zoom', 'reset', 'save'],
-            toolbar_location="above"
+            plot_bgcolor='white',
+            showlegend=False,
+            hovermode='closest'
         )
         
-        # Add the line
-        fig.line(
-            'x', 'y', source=source,
-            line_color='#1f77b4', line_width=3, alpha=0.9
-        )
-        
-        # Add circle markers for data points
-        fig.circle(
-            'x', 'y', source=source,
-            size=6, color='#1f77b4', alpha=0.7
-        )
-        
-        # Style the plot
-        fig.title.text_font_size = "16pt"
-        fig.title.align = "center"
-        fig.xaxis.axis_label_text_font_size = "14pt"
-        fig.yaxis.axis_label_text_font_size = "14pt"
-        fig.grid.grid_line_alpha = 0.3
-        
-        # Set axis ranges for better visualization
+        # Set y-axis range for better visualization
         y_min = df_sorted[y_col].min()
         y_max = df_sorted[y_col].max()
         y_range = y_max - y_min
         if y_range > 0:
-            fig.y_range.start = y_min - y_range * 0.05
-            fig.y_range.end = y_max + y_range * 0.05
-
-        # Generate standalone HTML file
-        html_content = file_html(fig, CDN, title)
+            fig.update_yaxes(range=[y_min - y_range * 0.05, y_max + y_range * 0.05])
         
         # Save the HTML file
         os.makedirs(output_dir, exist_ok=True)
         output_filepath = os.path.join(output_dir, f"line_chart_{x_col}_vs_{y_col}.html")
+        
+        # Generate standalone HTML file
+        html_content = pyo.plot(fig, output_type='div', include_plotlyjs=True)
+        
+        # Create complete HTML page
+        full_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>{title}</title>
+            <meta charset="utf-8">
+        </head>
+        <body>
+            {html_content}
+        </body>
+        </html>
+        """
+        
         with open(output_filepath, 'w', encoding='utf-8') as f:
-            f.write(html_content)
+            f.write(full_html)
         logger.info(f"Line chart saved to {output_filepath}")
         
         return output_filepath
@@ -200,7 +211,7 @@ async def plot_line_chart_tool(
             file_url = f"file://{output_filepath}"
             
             # Return a clear completion message that the LLM will understand
-            return f"TASK COMPLETED SUCCESSFULLY\n\nLine chart has been generated and saved.\n\nChart Details:\n- Type: Line chart with markers\n- X-axis: {x_axis_column}\n- Y-axis: {y_axis_column}\n- Title: {plot_title}\n- Output File: {output_filepath}\n- File URL: {file_url}\n\n✅ CHART GENERATION COMPLETE - NO FURTHER ACTION NEEDED"
+            return f"TASK COMPLETED SUCCESSFULLY\n\nLine chart has been generated and saved.\n\nChart Details:\n- Type: Line chart with markers (Plotly)\n- X-axis: {x_axis_column}\n- Y-axis: {y_axis_column}\n- Title: {plot_title}\n- Output File: {output_filepath}\n- File URL: {file_url}\n\n✅ CHART GENERATION COMPLETE - NO FURTHER ACTION NEEDED"
             
         except FileNotFoundError as e:
             error_msg = f"Required data file ('{data_json_path}') not found for line chart: {e}"
@@ -220,7 +231,7 @@ async def plot_line_chart_tool(
             return error_msg
 
     prompt = """
-    Generate interactive line chart from JSON data.
+    Generate interactive line chart from JSON data using Plotly.
     
     Input:
     - data_json_path: Path to the JSON file containing the data

@@ -152,7 +152,7 @@ async def plot_comparison_tool(
 
     def create_comparison_plot_html(output_dir: str, data_json_path: str, x_col: str, y_col_1: str, y_col_2: str, title: str):
         """
-        Generate and save comparison plot as HTML file using Bokeh.
+        Generate and save comparison plot as HTML file using Plotly.
         
         Args:
             output_dir (str): Directory to save the plot file.
@@ -165,10 +165,8 @@ async def plot_comparison_tool(
         Returns:
             str: Path to the saved HTML file.
         """
-        import bokeh.plotting as bp
-        from bokeh.models import ColumnDataSource, HoverTool, Legend
-        from bokeh.embed import file_html
-        from bokeh.resources import CDN
+        import plotly.graph_objects as go
+        import plotly.offline as pyo
         
         df = load_data_from_json(data_json_path)
         if df is None or df.empty:
@@ -191,93 +189,96 @@ async def plot_comparison_tool(
         # Sort by x-axis column for proper line plotting
         df_sorted = df.sort_values(x_col)
         
-        # Create data sources for each line
-        line1_source = ColumnDataSource(data=dict(
+        # Create the comparison plot
+        fig = go.Figure()
+        
+        # Add first line (dashed)
+        label_1 = y_col_1 + (" (Piecewise)" if y_col_1 == "actual_RUL" and rul_transformation_applied else "")
+        fig.add_trace(go.Scatter(
             x=df_sorted[x_col],
             y=df_sorted[y_col_1],
-            label=[y_col_1] * len(df_sorted)
+            mode='lines',
+            name=label_1,
+            line=dict(color='#20B2AA', width=3, dash='dash'),
+            hovertemplate=f'<b>{x_col}</b>: %{{x}}<br>' +
+                         f'<b>{label_1}</b>: %{{y:.1f}}<br>' +
+                         '<extra></extra>'
         ))
         
-        line2_source = ColumnDataSource(data=dict(
+        # Add second line (solid)
+        fig.add_trace(go.Scatter(
             x=df_sorted[x_col],
             y=df_sorted[y_col_2],
-            label=[y_col_2] * len(df_sorted)
+            mode='lines',
+            name=y_col_2,
+            line=dict(color='#2E8B57', width=3),
+            hovertemplate=f'<b>{x_col}</b>: %{{x}}<br>' +
+                         f'<b>{y_col_2}</b>: %{{y:.1f}}<br>' +
+                         '<extra></extra>'
         ))
         
-        # Create hover tools
-        hover_line1 = HoverTool(tooltips=[
-            (f"{x_col}", "@x"),
-            (f"{y_col_1}", "@y{0.0}"),
-            ("Type", "@label")
-        ], renderers=[])
-        
-        hover_line2 = HoverTool(tooltips=[
-            (f"{x_col}", "@x"),
-            (f"{y_col_2}", "@y{0.0}"),
-            ("Type", "@label")
-        ], renderers=[])
-        
-        fig = bp.figure(
-            title=title,
-            x_axis_label=x_col,
-            y_axis_label='Value',
-            width=800,  # Increased width to provide more space
+        # Update layout with styling
+        fig.update_layout(
+            title=dict(
+                text=title,
+                x=0.5,
+                font=dict(size=16)
+            ),
+            xaxis=dict(
+                title=dict(text=x_col, font=dict(size=14)),
+                gridcolor='lightgray',
+                gridwidth=0.5
+            ),
+            yaxis=dict(
+                title=dict(text='Value', font=dict(size=14)),
+                gridcolor='lightgray',
+                gridwidth=0.5
+            ),
+            width=800,
             height=450,
-            tools=['pan', 'box_zoom', 'wheel_zoom', 'reset', 'save'],
-            toolbar_location="above"
+            plot_bgcolor='white',
+            legend=dict(
+                x=1,
+                y=0,
+                xanchor='right',
+                yanchor='bottom',
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='gray',
+                borderwidth=1,
+                font=dict(size=12)
+            ),
+            hovermode='closest'
         )
         
-        # Add the lines
-        line2_render = fig.line(
-            'x', 'y', source=line2_source,
-            line_color='#2E8B57', line_width=3, alpha=0.9,
-            legend_label=y_col_2
-        )
-        
-        line1_render = fig.line(
-            'x', 'y', source=line1_source,
-            line_color='#20B2AA', line_width=3, alpha=0.9,
-            line_dash='dashed', legend_label=y_col_1 + (" (Piecewise)" if y_col_1 == "actual_RUL" and rul_transformation_applied else "")
-        )
-        
-        # Add hover tools to specific renderers
-        hover_line2.renderers = [line2_render]
-        hover_line1.renderers = [line1_render]
-        fig.add_tools(hover_line2, hover_line1)
-        
-        # Style the plot
-        fig.title.text_font_size = "16pt"
-        fig.title.align = "center"
-        fig.xaxis.axis_label_text_font_size = "14pt"
-        fig.yaxis.axis_label_text_font_size = "14pt"
-        
-        # Position legend in bottom right and style it
-        fig.legend.location = "bottom_right"
-        fig.legend.label_text_font_size = "12pt"
-        fig.legend.glyph_width = 30
-        fig.legend.background_fill_alpha = 0.8
-        fig.legend.background_fill_color = "white"
-        fig.legend.border_line_color = "gray"
-        fig.legend.border_line_width = 1
-        fig.legend.padding = 10
-        
-        fig.grid.grid_line_alpha = 0.3
-        
-        # Set axis ranges for better visualization
+        # Set y-axis range for better visualization
         y_min = min(df_sorted[y_col_1].min(), df_sorted[y_col_2].min())
         y_max = max(df_sorted[y_col_1].max(), df_sorted[y_col_2].max())
         y_range = y_max - y_min
-        fig.y_range.start = max(0, y_min - y_range * 0.05)
-        fig.y_range.end = y_max + y_range * 0.05
+        fig.update_yaxes(range=[max(0, y_min - y_range * 0.05), y_max + y_range * 0.05])
 
-        # Generate standalone HTML file
-        html_content = file_html(fig, CDN, title)
-        
         # Save the HTML file
         os.makedirs(output_dir, exist_ok=True)
         output_filepath = os.path.join(output_dir, f"comparison_plot_{y_col_1}_vs_{y_col_2}.html")
+        
+        # Generate standalone HTML file
+        html_content = pyo.plot(fig, output_type='div', include_plotlyjs=True)
+        
+        # Create complete HTML page
+        full_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>{title}</title>
+            <meta charset="utf-8">
+        </head>
+        <body>
+            {html_content}
+        </body>
+        </html>
+        """
+        
         with open(output_filepath, 'w', encoding='utf-8') as f:
-            f.write(html_content)
+            f.write(full_html)
         logger.info(f"Comparison plot saved to {output_filepath}")
         
         return output_filepath
@@ -316,11 +317,20 @@ async def plot_comparison_tool(
                 rul_info = f"\n- Piecewise RUL transformation applied (max_life=125)"
             
             # Return a clear completion message that the LLM will understand
-            return f"""
-            TASK COMPLETED SUCCESSFULLY\n\nComparison plot has been generated and saved.
-            \n\nChart Details:\n- 
-            Type: Comparison plot with two lines\n- X-axis: {x_axis_column}\n- Y-axis Line 1: {y_axis_column_1} (dashed teal)\n- Y-axis Line 2: {y_axis_column_2} (solid green)\n- Title: {plot_title}{rul_info}\n- Output File: {output_filepath}\n- File URL: {file_url}\n\n✅ CHART GENERATION COMPLETE - NO FURTHER ACTION NEEDED
-            """
+            return f"""TASK COMPLETED SUCCESSFULLY
+
+Comparison plot has been generated and saved.
+
+Chart Details:
+- Type: Comparison plot with two lines (Plotly)
+- X-axis: {x_axis_column}
+- Y-axis Line 1: {y_axis_column_1} (dashed teal)
+- Y-axis Line 2: {y_axis_column_2} (solid green)
+- Title: {plot_title}{rul_info}
+- Output File: {output_filepath}
+- File URL: {file_url}
+
+✅ CHART GENERATION COMPLETE - NO FURTHER ACTION NEEDED"""
             
         except FileNotFoundError as e:
             error_msg = f"Required data file ('{data_json_path}') not found for comparison plot: {e}"
@@ -340,7 +350,7 @@ async def plot_comparison_tool(
             return error_msg
 
     prompt = """
-    Generate interactive comparison plot between two columns from JSON data.
+    Generate interactive comparison plot between two columns from JSON data using Plotly.
     
     Input:
     - data_json_path: Path to the JSON file containing the data
