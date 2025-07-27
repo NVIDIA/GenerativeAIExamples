@@ -4,10 +4,10 @@ services:
   ingestor-server:
     container_name: ingestor-server
     image: nvcr.io/nvidia/blueprint/ingestor-server:${TAG:-2.1.0}
-    build:
-      # Set context to repo's root directory
-      context: ../../
-      dockerfile: src/ingestor_server/Dockerfile
+    # build:
+    #   # Set context to repo's root directory
+    #   context: ../../
+    #   dockerfile: src/ingestor_server/Dockerfile
     # start the server on port 8082 with 4 workers for improved latency on concurrent requests.
     command: --port 8082 --host 0.0.0.0 --workers 1
 
