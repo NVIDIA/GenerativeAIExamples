@@ -75,7 +75,7 @@ At this point, the VM setup is complete. The installation guide for Ubuntu can b
 
 1. Clone the repository onto your IDE's terminal:
    ```bash
-   git clone https://github.com/NVIDIA-AI-Blueprints/rag
+   git clone https://github.com/anpandacoding/vws-sizing
    cd rag
    ```
 
