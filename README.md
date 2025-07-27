@@ -3,7 +3,7 @@
 
 ## Introduction
 
-AI vWS Sizing Advisor is designed explicitly for setting up the right Virtual Environment for diverse AI use cases. By leveraging a RAG architecture, the Advisor is able to take inputs on your AI workload and translate them into the exact tested vGPU configuration.
+AI vWS Sizing Advisor is designed explicitly for setting up the right Virtual Environment for diverse AI use cases - such as sizing NIMs, different LLMs, setting up environments for workloads such as inferencing, RAG, and fine-tuning. By leveraging a RAG architecture, the Advisor is able to take inputs on your AI workload and translate them into the exact tested vGPU configuration.
 
 Please refer to this guide to verify that all required software and development tools are properly installed and configured prior to initiating the deployment process.
 
