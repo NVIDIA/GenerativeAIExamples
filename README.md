@@ -76,7 +76,7 @@ At this point, the VM setup is complete. The installation guide for Ubuntu can b
 1. Clone the repository onto your IDE's terminal:
    ```bash
    git clone https://github.com/anpandacoding/vws-sizing
-   cd rag
+   cd vws-sizing
    ```
 
 2. Within the shell, run the following commands (make sure you are in the workspace top root):
