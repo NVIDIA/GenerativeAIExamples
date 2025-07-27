@@ -1,25 +1,149 @@
 
 <h1><img align="center" src="https://github.com/user-attachments/assets/cbe0d62f-c856-4e0b-b3ee-6184b7c4d96f">AI vWS Sizing Advisor</h1>
 
-Use the following documentation to learn about the AI vWS Sizing Advisor.
+## Introduction
 
+AI vWS Sizing Advisor is designed explicitly for setting up the right Virtual Environment for diverse AI use cases. By leveraging a RAG architecture, the Advisor is able to take inputs on your AI workload and translate them into the exact tested vGPU configuration.
+
+Please refer to this guide to verify that all required software and development tools are properly installed and configured prior to initiating the deployment process.
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Prerequisites](#prerequisites)
+  - [Required Software](#required-software)
+  - [Required Hardware](#required-hardware)
+- [Deployment Guide](#deployment-guide)
+  - [Virtual Machine Configuration](#virtual-machine-vm-configuration)
+  - [Repository Setup](#repository-setup)
+  - [NVIDIA Developer Program Setup](#nvidia-developer-program-setup)
+  - [Deployment Steps](#deployment-steps)
+  - [HuggingFace API Setup](#huggingface-api-setup)
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Target Audience](#target-audience)
 - [Software Components](#software-components)
 - [Technical Diagram](#technical-diagram)
-- [Minimum System Requirements](#minimum-system-requirements)
-  - [OS Requirements](#os-requirements)
-  - [Deployment Options](#deployment-options)
-  - [Driver versions](#driver-versions)
-  - [Hardware Requirements](#hardware-requirements)
-  - [Hardware requirements for self hosting all NVIDIA NIM microservices](#hardware-requirements-for-self-hosting-all-nvidia-nim-microservices)
-- [Next Steps](#next-steps)
 - [Available Customizations](#available-customizations)
 - [Inviting the community to contribute](#inviting-the-community-to-contribute)
 - [License](#license)
 - [Terms of Use](#terms-of-use)
 
+## Prerequisites
+
+### Required Software
+
+Running this toolkit on Linux-based virtual workstations:
+
+- **NVIDIA vGPU Software**: vGPU version 17.4 or later
+- **Hypervisor**: vGPU supported hypervisors
+- **VM Operating System**: Ubuntu 24.04 or Ubuntu 22.04
+- **Minimum system requirements**: 16 vCPU, 24 GB system memory, 96 GB storage 
+- **Recommended vGPU profile**: 24Q
+- [Download Docker for Ubuntu here](https://docs.docker.com/engine/install/ubuntu/) (v20.10+)
+- [Download Docker Compose Plugin here](https://docs.docker.com/compose/install/)
+- [Activate, download, and install your RTX Virtual Workstation licenses](https://docs.nvidia.com/grid/latest/grid-licensing-user-guide/)
+- [Join the NVIDIA Developer Program](https://developer.nvidia.com/developer-program) to access NVIDIA NIM for Developers
+
+> **Important**: Don't have an NVIDIA vGPU license yet? [Request a free 90-day evaluation license](https://www.nvidia.com/en-us/data-center/products/vgpu/vgpu-software-trial/)
+
+### Required Hardware
+
+NVIDIA Certified systems with any supported GPU with a 24Q profile
+
+## Deployment Guide
+
+> **Note**: Although this guide uses vCenter, NVIDIA AI vWS can be deployed on any NVIDIA vGPU-supported hypervisor. It's assumed that all vWS requirements, including licensing, are already configured.
+
+### Virtual Machine (VM) Configuration
+
+**Advisor Download**: Set up a Linux VM for creating the Advisor with the following configuration:
+- vCPU - 16 CPU
+- Memory - 96 GB
+- vGPU Profile - 24Q
+
+**Verification Step**: Set up a Linux VM based on the Advisor's Recommendation. To validate that this VM is properly configured run the following command:
+```bash
+nvidia-smi
+```
+
+At this point, the VM setup is complete. The installation guide for Ubuntu can be found [here](https://ubuntu.com/server/docs/install/step-by-step).
+
+### Repository Setup
+
+**GitHub Repository**: https://github.com/NVIDIA-AI-Blueprints/rag
+
+1. Clone the repository onto your IDE's terminal:
+   ```bash
+   git clone https://github.com/NVIDIA-AI-Blueprints/rag
+   cd rag
+   ```
+
+2. Within the shell, run the following commands (make sure you are in the workspace top root):
+   ```bash
+   export NGC_API_KEY="nvapi-your-key-here"
+
+   # Authenticate to NVIDIA NGC Registry
+   echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
+
+   source deploy/compose/.env
+
+   # Start core service
+   ./scripts/start_vgpu_rag.sh --skip-nims
+   ```
+
+### NVIDIA Developer Program Setup
+
+To Obtain NVIDIA Developer Program Membership and a Personal API Key:
+
+1. Visit the [NVIDIA Developer Program page](https://developer.nvidia.com/developer-program), click on Join and sign up for an NVIDIA account.
+2. Use the NVIDIA Developer Program credential to log into [NVIDIA NGC Catalog](https://catalog.ngc.nvidia.com/)
+3. Click the account name at the top right. In the drop-down menu, select Setup.
+4. Click on "Generate API Key" then click on "+ Generate Personal Key"
+5. Enter the key name and expiration. Under Services Included, make sure NGC Catalog is selected.
+6. Once your personal API key is generated, save the key that is required for accessing NVIDIA NIMs during the subsequent deployment phase.
+
+### Deployment Steps
+
+#### Launch the Local Server
+
+1. Start the local web server:
+   ```bash
+   docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d
+   ```
+
+2. Open your browser to http://localhost:3000
+
+#### Configure Your Workload
+
+1. In the UI, select the AI workload type (Inference, RAG, etc.)
+2. Fill in model details and any other parameters needed
+3. Once the build is completed, click on the Citations tab (bottom left). Expand any entry with "Click to view details" to see the exact docs or benchmarks the AI used for its recommendation.
+
+#### What's in the Recommendation?
+
+- **vGPU Profile**: Suggested vGPU (e.g., 48Q on L40S) based on model memory and concurrency
+- **GPU Memory**: Required memory (including model, KV cache, overhead)
+- **System RAM**: Calculated based on inference load and user count (rule of thumb: Model Memory × 2.5 + overhead)
+- **vCPUs**: Computed from system RAM (e.g., 1 vCPU per 4 GB)
+- **Expected TTFT**: Estimated Time to First Token
+- **Latency**: Predicted performance metrics under your config
+
+### HuggingFace API Setup
+
+To Obtain HuggingFace API Key + Access Permissions:
+
+1. You must select the first two options in the User Permissions Section: 
+   - 'public gated repositories'
+   - 'repos under your personal namespace'
+
+2. In the 'Apply Configuration', locate the input field
+3. Paste or enter your credentials
+4. The VM IP Address must source a VM that must fit the recommendation
+5. Start the Environment Container
+6. Apply Configuration
+
+This spins up the sandbox that runs your model microservice on the VM. Once the service container is started, you will receive a detailed log.
 
 ## Overview
 
@@ -68,7 +192,7 @@ The following are the default components included in this blueprint:
 
 * NVIDIA NIM Microservices
    * Response Generation (Inference)
-      * [nvcr.io/nim/meta/llama-3.1-8b-instruct:1.8.6](https://catalog.ngc.nvidia.com/orgs/nim/teams/meta/containers/llama-3.1-8b-instruct/tags)
+      * [nvcr.io/nim/meta/llama-3.1-8b-instruct:1.8.6](https://catalog.ngc.nvidia.com/orgs/nim/teams/meta/containers/llama-3.1-8b-instruct/tags) - The primary NIM microservice used for AI vWS Sizing Advisor
     * Retriever Models
       * [NIM of nvidia/llama-3_2-nv-embedqa-1b-v2]( https://build.nvidia.com/nvidia/llama-3_2-nv-embedqa-1b-v2)
       * [NIM of nvidia/llama-3_2-nv-rerankqa-1b-v2](https://build.nvidia.com/nvidia/llama-3_2-nv-rerankqa-1b-v2)
@@ -189,16 +313,16 @@ See [Using self-hosted NVIDIA NIM microservices](./docs/quickstart.md#deploy-wit
 
 ## Next Steps
 
-- Do the procedures in [Get Started](./docs/quickstart.md) to deploy this blueprint
+- Follow the [Deployment Guide](#deployment-guide) to set up the AI vWS Sizing Advisor
 - See the [OpenAPI Specifications](./docs/api_reference)
 - Explore notebooks that demonstrate how to use the APIs [here](./notebooks/)
 - Explore [observability support](./docs/observability.md)
 - Explore [best practices for enhancing accuracy or latency](./docs/accuracy_perf.md)
-- Explore [migration guide](./docs/migration_guide.md) if you are migrating from rag v1.0.0 to this version.
+- For detailed deployment options, see [Get Started](./docs/quickstart.md)
 
 ## Available Customizations
 
-The following are some of the customizations that you can make after you complete the steps in [Get Started](/docs/quickstart.md).
+The following are some of the customizations that you can make after you complete the deployment:
 
 - [Change the Inference or Embedding Model](docs/change-model.md)
 - [Customize Prompts](docs/prompt-customization.md)
@@ -212,6 +336,20 @@ The following are some of the customizations that you can make after you complet
 - [Enable text-only ingestion of files](docs/text_only_ingest.md)
 - [Customize vGPU Advisor Settings](docs/VGPU_SIMPLIFIED_SETUP.md)
 
+
+## NVIDIA NIM
+
+NVIDIA NIM provides containers to self-host GPU-accelerated inferencing microservices for pretrained and customized AI models across clouds and data centers. NIM microservices expose industry-standard APIs for simple integration into AI applications, development frameworks, and workflows. Built on pre-optimized inference engines from NVIDIA and the community, including NVIDIA® TensorRT™ and TensorRT-LLM, NIM microservices optimize response latency and throughput for each combination of foundation model and GPU. NVIDIA NIM for Developer is the edition used in this toolkit.
+
+The NIM microservices used in this toolkit:
+- **Llama 3.1 8B Instruct** - Primary model for generating vGPU sizing recommendations
+
+## Appendix
+
+### Reference Documentation
+- [NVIDIA vGPU Deployment Guides](https://docs.nvidia.com/grid/latest/)
+- [NVIDIA vGPU Licensing Guide](https://docs.nvidia.com/grid/latest/grid-licensing-user-guide/)
+- [AI Workbench Installation Guide](https://docs.nvidia.com/ai-workbench/)
 
 ## Inviting the community to contribute
 
