@@ -146,6 +146,131 @@ const ParameterIcon = ({ type, className = "w-4 h-4" }: { type: string; classNam
   }
 };
 
+// Circular Progress Chart Component
+const VRAMUsageChart = ({ 
+  usedVRAM, 
+  totalVRAM,
+  numGPUs 
+}: { 
+  usedVRAM: number; 
+  totalVRAM: number;
+  numGPUs: number;
+}) => {
+  const percentage = Math.min((usedVRAM / totalVRAM) * 100, 100);
+  const radius = 80;
+  const strokeWidth = 12;
+  const normalizedRadius = radius - strokeWidth * 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  
+  // Determine fit category and color
+  const getFitCategory = (pct: number): { label: string; color: string; bgColor: string; textColor: string } => {
+    if (pct >= 90) {
+      return { 
+        label: "TIGHT", 
+        color: "#ef4444", // red-500
+        bgColor: "rgba(239, 68, 68, 0.1)", // red with opacity
+        textColor: "#fca5a5" // red-300
+      };
+    } else if (pct >= 60) {
+      return { 
+        label: "MODERATE", 
+        color: "#76b900", // NVIDIA green
+        bgColor: "rgba(118, 185, 0, 0.1)", // green with opacity
+        textColor: "#a3e635" // lime-400
+      };
+    } else {
+      return { 
+        label: "COMFORTABLE", 
+        color: "#10b981", // emerald-500
+        bgColor: "rgba(16, 185, 129, 0.1)", // emerald with opacity
+        textColor: "#6ee7b7" // emerald-300
+      };
+    }
+  };
+  
+  const fitCategory = getFitCategory(percentage);
+  
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative">
+        <svg
+          height={radius * 2}
+          width={radius * 2}
+          className="transform -rotate-90"
+        >
+          {/* Outer shadow circle */}
+          <circle
+            stroke="rgba(0, 0, 0, 0.3)"
+            fill="transparent"
+            strokeWidth={strokeWidth + 4}
+            r={normalizedRadius}
+            cx={radius}
+            cy={radius}
+          />
+          {/* Background circle */}
+          <circle
+            stroke="#1f2937"
+            fill="transparent"
+            strokeWidth={strokeWidth}
+            r={normalizedRadius}
+            cx={radius}
+            cy={radius}
+          />
+          {/* Progress circle */}
+          <circle
+            stroke={fitCategory.color}
+            fill="transparent"
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference + ' ' + circumference}
+            style={{ strokeDashoffset }}
+            strokeLinecap="round"
+            r={normalizedRadius}
+            cx={radius}
+            cy={radius}
+            className="transition-all duration-700 ease-out filter drop-shadow-lg"
+          />
+        </svg>
+        {/* Center text */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="text-2xl font-bold text-gray-200">
+            {percentage.toFixed(1)}%
+          </div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">VRAM</div>
+        </div>
+      </div>
+      
+      {/* Fit category badge */}
+      <div 
+        className="mt-5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300"
+        style={{ 
+          backgroundColor: fitCategory.bgColor,
+          color: fitCategory.color,
+          border: `2px solid ${fitCategory.color}`,
+          boxShadow: `0 0 25px ${fitCategory.bgColor}`
+        }}
+      >
+        {fitCategory.label}
+      </div>
+      
+      {/* Usage details */}
+      <div className="mt-4 text-center">
+        <div className="text-lg font-semibold text-gray-100">
+          {usedVRAM.toFixed(1)} GB
+        </div>
+        <div className="text-sm text-gray-500">
+          of {totalVRAM.toFixed(0)} GB VRAM
+        </div>
+        {numGPUs > 1 && (
+          <div className="mt-1 text-xs text-[#76b900] font-medium">
+            ({numGPUs} GPUs × {(totalVRAM / numGPUs).toFixed(0)} GB each)
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const getIconType = (key: string): string => {
   switch (key) {
     case 'vgpu_profile':
@@ -297,6 +422,31 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
     !excludedFields.includes(key)
   );
 
+  // Get VRAM usage data with multi-GPU calculation
+  const getVRAMUsageData = () => {
+    const profile = config.parameters.vgpu_profile || config.parameters.vGPU_profile;
+    const estimatedVRAM = config.parameters.gpu_memory_size;
+    
+    if (!profile || !estimatedVRAM) return null;
+    
+    const singleGPUCapacity = getGPUCapacityFromProfile(profile);
+    if (!singleGPUCapacity) return null;
+    
+    // Calculate number of GPUs needed (ceiling)
+    const numGPUs = Math.ceil(estimatedVRAM / singleGPUCapacity);
+    // Calculate total capacity across all GPUs
+    const totalCapacity = numGPUs * singleGPUCapacity;
+    
+    return {
+      used: estimatedVRAM,
+      total: totalCapacity,
+      numGPUs: numGPUs,
+      singleGPUCapacity: singleGPUCapacity
+    };
+  };
+
+  const vramUsage = getVRAMUsageData();
+
   return (
     <div className="bg-neutral-900 border border-neutral-700 rounded-lg overflow-hidden shadow-lg">
       {/* Header with NVIDIA green gradient */}
@@ -307,13 +457,13 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
               <h3 className="text-lg font-semibold">vGPU Configuration Recommendation</h3>
               <p className="text-sm text-green-100 mt-0.5 opacity-90">Optimized for your AI workload requirements</p>
             </div>
-            {isMultiGPU() && (
+            {vramUsage && vramUsage.numGPUs > 1 && (
               <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
                 <span className="text-sm font-medium flex items-center gap-1.5">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                   </svg>
-                  Multi-GPU
+                  {vramUsage.numGPUs} GPUs
                 </span>
               </div>
             )}
@@ -430,6 +580,67 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
           ) : (
             /* Structured Configuration View */
             <div className="space-y-6">
+              {/* VRAM Usage Chart - Moved to top before Key Parameters */}
+              {vramUsage && (
+                <div className="bg-gradient-to-br from-neutral-850/50 to-neutral-900/50 rounded-lg p-8 border border-neutral-700/60 shadow-inner">
+                  <div className="grid md:grid-cols-2 gap-10 items-center">
+                    <div>
+                      <h4 className="text-white font-semibold text-base mb-8 uppercase tracking-wider flex items-center gap-2">
+                        <svg className="w-5 h-5 text-[#76b900]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        VRAM Utilization Analysis
+                      </h4>
+                      <VRAMUsageChart 
+                        usedVRAM={vramUsage.used} 
+                        totalVRAM={vramUsage.total}
+                        numGPUs={vramUsage.numGPUs}
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <div className="bg-black/20 rounded-lg p-5 border border-neutral-700/40">
+                        <h5 className="text-sm font-medium text-gray-300 mb-3">Configuration Summary</h5>
+                        <div className="space-y-2.5 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Required VRAM:</span>
+                            <span className="text-gray-200 font-medium">{vramUsage.used.toFixed(1)} GB</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">GPU Profile:</span>
+                            <span className="text-gray-200 font-medium">{config.parameters.vgpu_profile || config.parameters.vGPU_profile}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">GPUs Required:</span>
+                            <span className="text-gray-200 font-medium">{vramUsage.numGPUs}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Total Capacity:</span>
+                            <span className="text-[#76b900] font-medium">{vramUsage.total.toFixed(0)} GB</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-400 space-y-2">
+                        <p className="text-xs uppercase tracking-wider font-medium text-gray-500 mb-2">Utilization Guidelines</p>
+                        <ul className="space-y-1.5 text-xs">
+                          <li className="flex items-start gap-2">
+                            <span className="text-emerald-500 mt-0.5 text-lg">●</span>
+                            <span><strong className="text-emerald-400">Comfortable (0-60%):</strong> Ideal for production with room for growth</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-[#76b900] mt-0.5 text-lg">●</span>
+                            <span><strong className="text-[#a3e635]">Moderate (60-90%):</strong> Efficient utilization with performance buffer</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-red-500 mt-0.5 text-lg">●</span>
+                            <span><strong className="text-red-400">Tight (90-100%):</strong> Consider larger GPU profile or additional units</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Key Parameters Section */}
               {keyParams.length > 0 && (
                 <div>
