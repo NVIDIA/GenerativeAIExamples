@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import math
 import re
 import paramiko
 from typing import Dict, List, AsyncGenerator, Optional, Any
@@ -1346,24 +1347,29 @@ class VGPUConfigurationApplier:
                 PORT         = 8000
 
                 # Retry settings
-                INITIAL_UTIL = 0.5               # starting --gpu-memory-utilization (increased from 0.4)
+                # take the estimated VRAM from the vGPU profile
+                profile = request.configuration.get("vgpu_profile", "N/A")
+                prof_val = re.search(r'-([0-9]{1,3})Q', profile)
+                value = int(prof_val.group(1)) if prof_val else None
+
+                estimated_vram = request.configuration.get("gpu_memory_size", None)
+                
+                if estimated_vram is not None and value is not None:
+                    num_gpus = math.ceil(estimated_vram / value)
+                    total_value = num_gpus * value
+                    ratio = estimated_vram / total_value
+                    # round ratio to nearest tenth of a decimal (0.1-1.0)
+                    ratio = round(ratio, 1)
+                    logger.info(f"Estimated VRAM: {estimated_vram}MB, vGPU profile value: {value}MB, ratio: {ratio}")
+                    INITIAL_UTIL = ratio
+                    
+                else:
+                    INITIAL_UTIL = 0.5               # starting default
+
                 DELTA_UTIL   = 0.1               # increment on each retry
                 MAX_ATTEMPTS = 4                 # number of attempts to find optimal memory
                 MODEL_REF = model_name
 
-                try:
-                    gpu_amount = gpu_info.split('-')[1][:2]
-                    logger.info(f'gpu size detected: {gpu_amount}')
-                    if 48 <= int(gpu_info.split('-')[1][:2]):
-                        INITIAL_UTIL = 0.3
-                except:
-                    pass
-            
-                # Validate model reference
-                if not MODEL_REF or MODEL_REF == "None":
-                    MODEL_REF = "mistralai/Mistral-7B-Instruct-v0.3"
-                    logger.warning(f"No valid model specified, using default: {MODEL_REF}")
-                
                 logger.info(f"Final MODEL_REF to be used: {MODEL_REF}")
                 
                 gpu_util = INITIAL_UTIL
@@ -1485,34 +1491,56 @@ class VGPUConfigurationApplier:
                 if successful_gpu_mem:
                     status_line = f"• Status: vLLM started and allocated {successful_gpu_mem}\n"
                     if not vllm_running:
-                        status_line += "  ⚠️ Note: API endpoint may still be initializing\n"
+                        status_line += "  ⚠️  API endpoint is still initializing\n"
                 else:
                     status_line = "• Status: Configuration attempted\n"
                 
                 summary_message = (
                     "✅ vLLM server configuration completed!\n\n"
-                    "📊 Configuration Details:\n"
+                    "Configuration Details:\n"
                     f"• Model: {model_name}\n" +
                     status_line +
                     f"• GPU Memory Utilization: {gpu_util:.0%}\n"
                     f"• KV Cache: {kv_cache if kv_cache else 'N/A'} tokens\n\n"
-                    "🖥️ System Configuration:\n"
+                    "Advisor System Configuration:\n"
                     f"• vGPU Profile: {request.configuration.get('vGPU_profile', 'N/A')}\n"
                     f"• vCPUs: {request.configuration.get('vCPU_count', 'N/A')}\n"
                     f"• RAM: {request.configuration.get('system_RAM', 'N/A')}GB\n"
                 )
-
                 try:
                     from src.utils import get_llm
                     llm = get_llm(**kwargs)
-                    test_response = llm.invoke("Based on this information " + summary_message + " give the user (an IT professional) a log on what the report details.")
-                    logger.info(f"LLM Test: {test_response}")
+
+                    prompt = (
+                        "You are an AI assistant generating ticket-style diagnostic reports for IT professionals. "
+                        "Based on the provided deployment summary created a report that an IT engineer "
+                        "can forward to their development or platform team. The log must be written in **markdown** "
+                        "and should resemble a professional internal ticket (e.g., for Jira, ServiceNow).\n\n"
+                        "Your output must include the following clearly labeled sections:\n\n"
+                        "1. **Title** — a short, informative title that includes model name or vGPU profile if available "
+                        f"(e.g., 'vLLM Server Starting {gpu_info}')\n"
+                        "2. **Issue Summary** — a concise paragraph summarizing the issue and its root cause if known\n"
+                        "3. **Environment** — bullet list of configuration info: model, GPU, vGPU profile, RAM, vCPUs, GPU memory usage, KV cache tokens\n"
+                        "4. **Deployment Steps Completed** — bullet list of successful setup steps\n"
+                        "5. **Observed Behavior** — describe what went wrong, clearly stating if the vLLM process exited or if the API failed health check\n"
+                        "6. **Recommended Actions** — numbered list of concrete follow-up steps for DevOps or developers (e.g., check logs, reduce memory usage, restart service)\n"
+                        "7. **Optional Tags** — provide machine-parsable tags like `component:vllm`, `gpu_utilization:80%`, `status:api_unavailable`\n\n"
+                        "If any information is missing from the deployment summary, make reasonable assumptions or use placeholder values.\n\n"
+                        "Here is the system summary to work from:\n\n"
+                        f"{summary_message}\n\n"
+                        "Now generate the full log below in markdown:"
+                    )
+
+
+                    test_response = llm.invoke(prompt)
+                    logger.info(f"LLM Test: content={test_response.content} additional_kwargs={test_response.additional_kwargs} response_metadata={test_response.response_metadata}")
                 except Exception as e:
-                    logger.info(f"LLM test failed {e}")
+                    logger.warning(f"⚠️ Failed to get response from LLM: {e}")
+
                 # Final summary
                 async for msg in yield_progress(ConfigurationProgress(
                     status="completed",
-                    message=f"Configuration completed successfully!\n{summary_message}",
+                    message=f"Configuration completed successfully!\n{test_response.content if test_response else summary_message}",
                     current_step=5,
                     total_steps=5
                 )):
