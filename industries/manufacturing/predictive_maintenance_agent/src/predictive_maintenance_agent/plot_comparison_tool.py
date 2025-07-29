@@ -44,78 +44,6 @@ def verify_json_path(file_path: str) -> str:
         
     return file_path
 
-def knee_RUL(cycle_list, max_cycle, MAXLIFE):
-    '''
-    Piecewise linear function with zero gradient and unit gradient
-            ^
-            |
-    MAXLIFE |-----------
-            |            \
-            |             \
-            |              \
-            |               \
-            |                \
-            |----------------------->
-    '''
-    knee_RUL_values = []
-    if max_cycle >= MAXLIFE:
-        knee_point = max_cycle - MAXLIFE
-        
-        for i in range(0, len(cycle_list)):
-            if i < knee_point:
-                knee_RUL_values.append(MAXLIFE)
-            else:
-                tmp = knee_RUL_values[i - 1] - (MAXLIFE / (max_cycle - knee_point))
-                knee_RUL_values.append(tmp)
-    else:
-        knee_point = MAXLIFE
-        print("=========== knee_point < MAXLIFE ===========")
-        for i in range(0, len(cycle_list)):
-            knee_point -= 1
-            knee_RUL_values.append(knee_point)
-            
-    return knee_RUL_values
-
-def apply_piecewise_rul_to_data(df, cycle_col='time_in_cycles', max_life=125):
-    """
-    Apply piecewise RUL transformation to single-engine data.
-    Uses original RUL values to determine proper failure point.
-    
-    Args:
-        df (pd.DataFrame): Input dataframe (single engine)
-        cycle_col (str): Column name for cycle/time
-        max_life (int): Maximum life parameter for knee_RUL function
-        
-    Returns:
-        pd.DataFrame: DataFrame with transformed RUL column
-    """
-    df_copy = df.copy()
-    
-    # Check if cycle column exists
-    if cycle_col not in df_copy.columns:
-        logger.warning(f"Cycle column '{cycle_col}' not found. Using row index as cycle.")
-        df_copy[cycle_col] = range(1, len(df_copy) + 1)
-    
-    # Get cycle list for single engine
-    cycle_list = df_copy[cycle_col].tolist()
-    max_cycle_in_data = max(cycle_list)
-    
-    # Use original RUL values to determine true failure point
-    # Following the original GitHub pattern: max_cycle = max(cycle_list) + final_rul
-    # Get the final RUL value (RUL at the last cycle in our data)
-    final_rul = df_copy.loc[df_copy[cycle_col] == max_cycle_in_data, 'actual_RUL'].iloc[0]
-    # True failure point = last cycle in data + remaining RUL
-    true_max_cycle = max_cycle_in_data + final_rul
-    logger.info(f"Using original RUL data: final_rul={final_rul}, true_failure_cycle={true_max_cycle}")
-    
-    # Apply knee_RUL function with the true failure point
-    rul_values = knee_RUL(cycle_list, true_max_cycle, max_life)
-    
-    # Replace actual_RUL column with piecewise values
-    df_copy['actual_RUL'] = rul_values
-    
-    return df_copy
-
 class PlotComparisonToolConfig(FunctionBaseConfig, name="plot_comparison_tool"):
     """
     AIQ Toolkit function to plot comparison of two y-axis columns against an x-axis column.
@@ -178,14 +106,6 @@ async def plot_comparison_tool(
         if missing_columns:
             raise KeyError(f"Data from {data_json_path} must contain columns: {required_columns}. Missing: {missing_columns}")
 
-        # Apply piecewise RUL transformation if any column is "actual_RUL"
-        rul_transformation_applied = False
-        if y_col_1 == "actual_RUL" or y_col_2 == "actual_RUL":
-            logger.info("Applying piecewise RUL transformation...")
-            df = apply_piecewise_rul_to_data(df, x_col)
-            rul_transformation_applied = True
-            logger.info("Piecewise RUL transformation completed")
-
         # Sort by x-axis column for proper line plotting
         df_sorted = df.sort_values(x_col)
         
@@ -193,7 +113,7 @@ async def plot_comparison_tool(
         fig = go.Figure()
         
         # Add first line (dashed)
-        label_1 = y_col_1 + (" (Piecewise)" if y_col_1 == "actual_RUL" and rul_transformation_applied else "")
+        label_1 = y_col_1
         fig.add_trace(go.Scatter(
             x=df_sorted[x_col],
             y=df_sorted[y_col_1],
@@ -311,11 +231,6 @@ async def plot_comparison_tool(
             # Convert absolute path to file:// URL for proper browser handling
             file_url = f"file://{output_filepath}"
             
-            # Add info about RUL transformation if applied
-            rul_info = ""
-            if y_axis_column_1 == "actual_RUL" or y_axis_column_2 == "actual_RUL":
-                rul_info = f"\n- Piecewise RUL transformation applied (max_life=125)"
-            
             # Return a clear completion message that the LLM will understand
             return f"""TASK COMPLETED SUCCESSFULLY
 
@@ -326,7 +241,7 @@ Chart Details:
 - X-axis: {x_axis_column}
 - Y-axis Line 1: {y_axis_column_1} (dashed teal)
 - Y-axis Line 2: {y_axis_column_2} (solid green)
-- Title: {plot_title}{rul_info}
+- Title: {plot_title}
 - Output File: {output_filepath}
 - File URL: {file_url}
 

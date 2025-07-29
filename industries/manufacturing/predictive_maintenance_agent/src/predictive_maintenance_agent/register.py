@@ -7,6 +7,7 @@ from . import predict_rul_tool
 from . import plot_distribution_tool
 from . import plot_comparison_tool
 from . import plot_line_chart_tool
+from . import code_generation_assistant
 # from . import plot_sensor_over_RUL_tool
 # from . import load_models_and_predict_RUL_tool
 # from . import plot_anomaly_tool

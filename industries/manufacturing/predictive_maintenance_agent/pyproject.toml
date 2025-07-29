@@ -6,8 +6,11 @@ requires = ["setuptools >= 64"]
 name = "predictive_maintenance_agent"
 version = "0.1.0"
 dependencies = [
-  "aiqtoolkit[profiling, langchain, telemetry]",
-  "pydantic ~= 2.10.0, <2.11.0"
+  "aiqtoolkit[profiling, langchain, telemetry]>=1.2.0rc3",
+  "pydantic ~= 2.10.0, <2.11.0",
+  "vanna",
+  "chromadb",
+  "xgboost"
 ]
 requires-python = ">=3.11,<3.13"
 description = "Predictive maintenance workflow using AIQ"
@@ -17,6 +20,14 @@ maintainers = [{ name = "NVIDIA Corporation" }]
 
 [project.entry-points.'aiq.components']
 predictive_maintenance_agent = "predictive_maintenance_agent.register"
+
+[tool.uv.sources]
+aiqtoolkit = { path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit", editable = true }
+aiqtoolkit-langchain = { path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit/packages/aiqtoolkit_langchain", editable = true }
+aiqtoolkit-opentelemetry = { path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit/packages/aiqtoolkit_opentelemetry", editable = true }
+aiqtoolkit-phoenix = { path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit/packages/aiqtoolkit_phoenix", editable = true }
+aiqtoolkit-weave = { path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit/packages/aiqtoolkit_weave", editable = true }
+aiqtoolkit-ragaai = { path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit/packages/aiqtoolkit_ragaai", editable = true }
 
 [tool.pytest.ini_options]
 markers = [

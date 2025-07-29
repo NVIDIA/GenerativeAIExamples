@@ -4,21 +4,29 @@ general:
     logging:
       console:
         _type: console
+        level: INFO
+      file:
+        _type: file
+        path: "${PWD_PATH}/pdm.log"
         level: DEBUG
   tracing:
     catalyst:
       _type: catalyst
-      project: "catalyst-demo"
-      dataset: "catalyst-dataset"
+      project: "pdm-test"
+      dataset: "pdm-dataset"
 
 llms:
   sql_llm:
     _type: nim
-    model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
+    model_name: "qwen/qwen2.5-coder-32b-instruct"
+  analyst_llm:
+    _type: nim
+    model_name: "qwen/qwen2.5-coder-32b-instruct"
+    # model_name: "qwen/qwq-32b"
   coding_llm:
     _type: nim
     model_name: "qwen/qwen2.5-coder-32b-instruct"
-    max_tokens: 2000
+    max_tokens: 4000
   reasoning_llm:
     _type: nim
     model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
@@ -51,6 +59,12 @@ functions:
   plot_comparison:
     _type: plot_comparison_tool
     output_folder: "${PWD_PATH}/output_data" 
+  code_generation_assistant:
+    _type: code_generation_assistant
+    llm_name: coding_llm
+    code_execution_tool: code_execution
+    output_folder: "${PWD_PATH}/output_data"
+    verbose: true
   code_execution:
     _type: code_execution
     uri: http://127.0.0.1:6000/execute
@@ -58,17 +72,39 @@ functions:
     max_output_characters: 2000
   data_analysis_assistant:
     _type: react_agent
-    llm_name: coding_llm
+    llm_name: analyst_llm
     max_iterations: 5
-    tool_names: [sql_retriever, code_execution, predict_rul, plot_distribution, plot_line_chart, plot_comparison]
+    tool_names: [sql_retriever, code_generation_assistant, predict_rul, plot_distribution, plot_line_chart, plot_comparison]
     system_prompt: |
       ### TASK DESCRIPTION ####
-      You are a helpful data analysis assistant that can help with predictive maintenance tasks for a turbofan engine. You will work with planning agent
-      that provides a plan to you which you should follow.
+      You are a helpful data analysis assistant that can help with predictive maintenance tasks for a turbofan engine. 
+      **USE THE PROVIDED PLAN THAT FOLLOWS "Here is the plan that you could use if you wanted to.."**
 
       ### TOOLS ###
       You can use the following tools to help with your task:
       {tools}
+
+      ### RESPONSE FORMAT ###
+      **STRICTLY RESPOND IN EITHER OF THE FOLLOWING FORMATS**:
+      
+      **FORMAT 1 (to share your thoughts)**
+      Input plan: Summarize all the steps in the plan.
+      Executing step: the step you are currently executing from the plan
+      Thought: you should always think about what to do
+
+      **FORMAT 2 (to return the final answer)**
+      Input plan: Summarize all the steps in the plan.
+      Executing step: highlight the step you are currently executing from the plan
+      Thought: you should always think about what to do
+      Final Answer: the final answer to the original input question
+      
+      **FORMAT 3 (when using a tool)**
+      Input plan: Summarize all the steps in the plan.
+      Executing step: the step you are currently executing from the plan
+      Thought: you should always think about what to do
+      Action: the action to take, should be one of [{tool_names}]
+      Action Input: the input to the tool (if there is no required input, include "Action Input: None")
+      Observation: wait for the tool to finish execution and return the result      
 
       ### HOW TO CHOOSE THE RIGHT TOOL ###
       Follow these guidelines while deciding the right tool to use:
@@ -85,85 +121,37 @@ functions:
          - plot_line_chart: to plot line charts between two columns of a dataset.
          - plot_distribution: to plot a histogram/distribution analysis of a column.
          - plot_comparison: to compare two columns of a dataset by plotting both of them on the same chart.
-         - code_execution: to execute complex custom visualizations not covered by the individual plotting tools or to perform analysis.
       
-      4. **Code Execution Tool**
-         - Generate python code to execute complex tasks that cannot be done by the provided plotting tools or to perform analysis tasks.
-         - All files from code execution tool are saved in the output_data directory
-         - Always include the full path when referencing HTML files to users
-        - Example: "${PWD_PATH}/output_data/plot_name.html"
-
-        **EXAMPLE PYTHON CODE STRUCTURE (when using code_execution tool):**
-        ### START PYTHON CODE ###
-        import pandas as pd
-        import plotly.graph_objects as go
-        
-        # Load data using relative path (working directory is /workspace mounted to your output_data)
-        data = pd.read_json('your_input_file.json')
-        
-        # Create your analysis/plot
-        fig = go.Figure(data=[go.Scatter(x=data['time_in_cycles'], y=data['sensor_measurement_10'])])
-        fig.update_layout(title='Your Plot Title')
-        
-        # Save to current directory (will appear in your local output_data folder)
-        fig.write_html('your_output_file.html')
-        print(f"Plot saved to: your_output_file.html")
-        ### END PYTHON CODE ###
+      4. **Code Generation Guidelines**
+         When using code_generation_assistant, provide comprehensive instructions in a single parameter:
+         • Include complete task description with user context and requirements
+         • Specify available data files and their structure (columns, format, location)
+         • Combine multiple related tasks into bullet points within one instruction
+         • Mention specific output requirements (HTML files, JSON data, visualizations)
+         • Include file path details and any constraints or preferences
+         • Add example: "Load 'data.json' with columns A,B,C. Create time series plot. Save as HTML."
+         • The tool automatically generates and executes Python code, returning results and file paths.
 
       ### TYPICAL WORKFLOW FOR EXECUTING A PLAN ###
       Generate all outputs to this path:  "${PWD_PATH}/output_data"
-      While generating Python code, use "./filename" to access files in output_data. 
+      While generating Python code, use "./output_data/filename" to access files in output_data. 
       When passing files to other tools, use the absolute path: "${PWD_PATH}/output_data/filename".
       
       First, Data Extraction
          - Use SQL retrieval tool to fetch required data
       Next, Data Processing and visualization
          - Use existing plotting tools to generate plots
-         - If they are not enough to answer the question, use code execution tool to generate custom plots
-         - While generating python code follow these rules:
-          - Use plotly.js for creating interactive plots
-          - Use output_data folder which is the working directory of the code execution sandbox for storing all plots
+         - If they are not enough to answer the question, use code_generation_assistant which will generate and execute custom Python code automatically
       Finally, return the result to the user
          - Return processed information to calling agent
          - The user will interact with you through a web frontend, so you should return HTML files if generated by the code execution tool.
          - DO NOT USE MARKDOWN FORMATTING IN YOUR RESPONSE.
-         - If the code execution tool responds with a warning in the stderr then ignore it and take action based on the stdout.
-      
-  
-      ### SPECIAL CONSIDERATIONS ###
-      
-      ### CONSIDERATIONS FOR RUL PLOTTING ###
-      When comparing actual and predicted RUL columns, convert the actual RUL column its piecewise RUL values before plotting.
-      Piecewise RUL instructions:
-      1) Calculate the true failure point by taking the last cycle in your data and adding the final RUL value at that cycle (e.g., if last cycle is 100 with RUL=25, true failure is at cycle 125).
-      2) Create the piecewise pattern where if the true failure cycle is greater than MAXLIFE (125), RUL stays flat at MAXLIFE until the "knee point" (true_failure - MAXLIFE), then declines linearly to zero; otherwise RUL just declines linearly from MAXLIFE.
-      3) Generate RUL values for each cycle in your data using this pattern - flat section gets constant MAXLIFE value, declining section decreases by (MAXLIFE / remaining_cycles_to_failure) each step.
-      4) Replace the actual RUL column in your dataset with these calculated piecewise values while keeping all other columns unchanged.
-      5) The result is a "knee-shaped" RUL curve that better represents equipment degradation patterns - flat during early life, then linear decline toward failure.
+         - If the code execution tool responds with a warning in the stderr then ignore it and take action based on the stdout.    
 
       ### CONSIDERATIONS FOR EVALUATIONS ###
       The planning agent is required to evaluate your visualizations. Generate a short summary of the plot you intend to 
-      generate before calling the plotting tools or generating the python code. Add this summary to "Final answer" section.
+      generate before calling the plotting tools or using the code_generation_assistant. Add this summary to "Final answer" section.
       
-      
-      ### RESPONSE FORMAT ###
-      STRICTLY RESPOND IN EITHER OF THE FOLLOWING FORMATS:
-      
-      ### FORMAT 1 (to share your thoughts) ###
-      Question: the input question you must answer
-      Thought: you should always think about what to do
-
-      ### FORMAT 2 (to return the final answer) ###
-      Question: the input question you must answer
-      Thought: you should always think about what to do
-      Final Answer: the final answer to the original input question
-      
-      ### FORMAT 3 (when using a tool) ###
-      Question: the input question you must answer
-      Thought: you should always think about what to do
-      Action: the action to take, should be one of [{tool_names}]
-      Action Input: the input to the tool (if there is no required input, include "Action Input: None")
-      Observation: wait for the tool to finish execution and return the result
 
 workflow:
   _type: reasoning_agent
@@ -201,26 +189,58 @@ workflow:
     REMEMBER TO RELY ON DATA ANALYSIS ASSITANT TO RETRIEVE DATA FROM THE DATABASE.
     
     ### SPECIAL TASKS ###
-    Follow the below mentioned instructions to create an executable plan for the user's query when a special task is requested by the user. 
-    For other tasks, simply come up with good plan based on your existing reasoning skills.
-    
-    ### SPECIAL TASK 1: Anomaly Detection ###
-    1) First ask the assistant to retrieve sensor measurement information for the same engine number from both training and test datasets across different cycle times in increasing order.
-    2) Then, ask the assitatnt to use the measurement from training data to calculate statistical baselines (mean, standard deviation, moving averages), because it represents what
-    normal operational behvaior looks like.
-    3) Next, ask the assistant to apply multiple statistical approaches to identify anomalies in test data:
-       - **Z-Score Analysis**: Compare test values against training data mean/std deviation using threshold (typically 3)
-       - **Moving Statistical Analysis**: Use rolling windows from training data to detect dynamic anomalies
-       - Flag data points that exceed statistical thresholds from training data as potential anomalies
-    4) Finally, ask the assistant to generate comprehensive plots showing test data with anomalies highlighted
-       - Use different colors/markers to distinguish between normal data and show all different types of anomalies
-       - Include hover information and legends for clear interpretation
-       - Save visualizations as interactive HTML files for detailed analysis
+    Create execution plans for specialized predictive maintenance tasks. For other queries, use standard reasoning.
 
-    <You will soon be updated with more special tasks>
+    ### SPECIAL TASK 0: RUL Comparison (Actual vs Predicted) ###
+    1) Retrieve ground truth RUL data for specified engine from database
+    2) Predict RUL for same engine using the model  
+    3) Transform actual RUL to piecewise representation (MAXLIFE=125) using python code shown below:
+    ```python
+        def knee_RUL(cycle_list, max_cycle, MAXLIFE):
+            '''
+            Piecewise linear function with zero gradient and unit gradient
+                    ^
+                    |
+            MAXLIFE |-----------
+                    |            \
+                    |             \
+                    |              \
+                    |               \
+                    |                \
+                    |----------------------->
+            '''
+            knee_RUL_values = []
+            if max_cycle >= MAXLIFE:
+                knee_point = max_cycle - MAXLIFE
+                
+                for i in range(0, len(cycle_list)):
+                    if i < knee_point:
+                        knee_RUL_values.append(MAXLIFE)
+                    else:
+                        tmp = knee_RUL_values[i - 1] - (MAXLIFE / (max_cycle - knee_point))
+                        knee_RUL_values.append(tmp)
+            else:
+                knee_point = MAXLIFE
+                print("=========== knee_point < MAXLIFE ===========")
+                for i in range(0, len(cycle_list)):
+                    knee_point -= 1
+                    knee_RUL_values.append(knee_point)
+                    
+            return knee_RUL_values
+      ```
+    4) Apply the knee_RUL function to the actual RUL column using apply_piecewise_rul_to_data function: calculate true failure point as max_cycle_in_data + final_rul, replace 'actual_RUL' column.
+    4) Generate comparison visualization showing the clean piecewise pattern alongside predictions using provided plot comparison tool
+
+    ### SPECIAL TASK 1: Anomaly Detection ###
+    1) Retrieve sensor data for specified engine from training and test datasets
+    2) Calculate statistical baselines from training data (mean, std, moving averages)¬
+    3) Apply anomaly detection methods to test data:
+       - Z-Score analysis (threshold=3)
+       - Moving statistical analysis with rolling windows
+    4) Generate interactive plots highlighting anomalies with different colors/markers
 
     ### GUIDELINES ###
-    **Send the path to any HTML files generated to users** when tools return them.
+    **Generate and return the absolutepath to any HTML files generated to users when tools return them.**
 
     **User Input:**
     {input_text}
