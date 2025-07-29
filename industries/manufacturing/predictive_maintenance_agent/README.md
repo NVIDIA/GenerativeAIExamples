@@ -89,9 +89,11 @@ uv pip install -e .
 ```
 
 ### 4. Environment Setup
+Export all the required environment variables form dot.env file. Update the file with your API key and secrets
+before running.
 
 ```bash
-export NVIDIA_API_KEY=your_nvidia_api_key_here
+source dot.env
 ```
 
 ### 5. Database Setup
@@ -128,12 +130,10 @@ When using the provided config file, you need to set the PWD_PATH environment va
 Here's how to do it: 
 
 ```bash
-export PWD_PATH=$(pwd)
 aiq serve --config_file=configs/config.yml "$@"
 ```
 (or)
 ```bash
-export PWD_PATH=$(pwd)
 aiq serve --config_file=configs/config-reasoning.yml "$@"
 ```
 Server runs on `http://localhost:8000`

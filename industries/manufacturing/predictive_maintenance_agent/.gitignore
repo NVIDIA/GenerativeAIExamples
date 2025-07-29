@@ -41,3 +41,6 @@ logs/
 *.temp
 .pytest_cache/
 __pycache__/ 
+
+# dot env
+mydot.env
