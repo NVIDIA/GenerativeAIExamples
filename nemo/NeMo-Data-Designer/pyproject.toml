@@ -1,0 +1,21 @@
+[project]
+name = "nemo-data-designer"
+version = "0.0.1"
+description = "NeMo Data Designer tutorial notebooks"
+readme = "README.md"
+requires-python = ">=3.11"
+
+dependencies = [
+    "datasets",
+    "huggingface-hub",
+    "jupyter",
+    "nemo-microservices[data-designer]==1.1.0rc7",
+]
+
+[[tool.uv.index]]
+name = "nv-shared-pypi"
+url = "https://urm.nvidia.com/artifactory/api/pypi/nv-shared-pypi/simple"
+default = true
+
+[tool.uv.sources]
+nemo-microservices = { index = "nv-shared-pypi" }
