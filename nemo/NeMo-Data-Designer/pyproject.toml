@@ -8,5 +8,6 @@ requires-python = ">=3.9"
 dependencies = [
     "datasets",
     "jupyter",
+    "pydantic",
     "nemo-microservices[data-designer]",
 ]
