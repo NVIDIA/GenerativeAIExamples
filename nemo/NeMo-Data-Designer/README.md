@@ -4,7 +4,7 @@ This directory contains the tutorial notebooks for getting started with NeMo Dat
 
 ## 🐳 Deploy the NeMo Data Designer microservice locally
 
-In order to run these notebooks, you must have the NeMo Data Designer microservice deployed locally via docker compose. See the [deployment guide](https://aire.gitlab-master-pages.nvidia.com/microservices/nmp/latest/nemo-microservices/latest/set-up/deploy-as-microservices/data-designer/docker-compose.html) for more details.
+In order to run these notebooks, you must have the NeMo Data Designer microservice deployed locally via docker compose. See the [deployment guide](hhttp://docs.nvidia.com/nemo/microservices/latest/set-up/deploy-as-microservices/data-designer/docker-compose.html) for more details.
 
 ## 📦 Set up the environment
 
