@@ -232,8 +232,10 @@ Access dashboard at `http://localhost:6006` to monitor traces, performance, and 
 
 ### Evaluate with AIQ 
 
-[TBD]
-
+Use this command to run the evalutions
+```bash
+aiq eval --config_file configs/config-reasoning.yml
+```
 ### Evaluate With Catalyst:
 
 Follow instructions [here](https://github.com/NVIDIA/NeMo-Agent-Toolkit/blob/develop/docs/source/workflows/observe/observe-workflow-with-catalyst.md) to setup RAGA AI profile
