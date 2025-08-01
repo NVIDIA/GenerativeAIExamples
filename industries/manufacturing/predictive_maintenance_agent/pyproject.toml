@@ -6,7 +6,7 @@ requires = ["setuptools >= 64"]
 name = "predictive_maintenance_agent"
 version = "0.1.0"
 dependencies = [
-  "aiqtoolkit[profiling, langchain, telemetry]",
+  "aiqtoolkit[profiling, langchain, telemetry, ragaai]",
   "pydantic ~= 2.10.0, <2.11.0",
   "vanna",
   "chromadb",

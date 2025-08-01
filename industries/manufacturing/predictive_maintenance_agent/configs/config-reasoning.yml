@@ -2,18 +2,22 @@ general:
   use_uvloop: true
   telemetry:
     logging:
-      console:
-        _type: console
-        level: INFO
+      # console:
+      #   _type: console
+      #   level: INFO
       file:
         _type: file
         path: "${PWD_PATH}/pdm.log"
         level: DEBUG
-  tracing:
-    catalyst:
-      _type: catalyst
-      project: "pdm-test"
-      dataset: "pdm-dataset"
+    tracing:
+      catalyst:
+        _type: catalyst
+        project: "pdm-test"
+        dataset: "pdm-dataset"
+      # phoenix:
+      #   _type: phoenix
+      #   endpoint: http://localhost:6006/v1/traces
+      #   project: pdm-test
 
 llms:
   sql_llm:
@@ -30,6 +34,9 @@ llms:
   reasoning_llm:
     _type: nim
     model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
+  judging_llm:
+    _type: nim
+    model_name: meta/llama-3.1-70b-instruct
 
 embedders:
   vanna_embedder:
@@ -241,6 +248,7 @@ workflow:
 
     ### GUIDELINES ###
     **Generate and return the absolutepath to any HTML files generated to users when tools return them.**
+    **ONLY USE PREDICT_RUL TOOL FOR RUL DATA IF USER SAYS "PREDICT" OR SIMILAR; OTHERWISE, FETCH GROUND TRUTH RUL FROM DATABASE.**
 
     **User Input:**
     {input_text}
@@ -250,44 +258,42 @@ workflow:
 eval:
   general:
     output:
-      dir: "${PWD_PATH}/output_data"
+      dir: "${PWD_PATH}/eval_output"
       cleanup: true
     dataset:
       _type: json
-      file_path: "${PWD_PATH}/eval_data.json"
+      file_path: "${PWD_PATH}/eval_data/eval_set_retrieval_only.json"
     # Add delays to prevent rate limiting
     query_delay: 2  # seconds between queries
     max_concurrent: 1  # process queries sequentially
-    profiler:
-      # Compute inter query token uniqueness
-      token_uniqueness_forecast: true
-      # Compute expected workflow runtime
-      workflow_runtime_forecast: true
-      # Compute inference optimization metrics
-      compute_llm_metrics: true
-      # Avoid dumping large text into the output CSV (helpful to not break structure)
-      csv_exclude_io_text: true
-      # Idenitfy common prompt prefixes
-      prompt_caching_prefixes:
-        enable: true
-        min_frequency: 0.1
-      bottleneck_analysis:
-        # Can also be simple_stack
-        enable_nested_stack: true
-      concurrency_spike_analysis:
-        enable: true
-        spike_threshold: 7
-
   evaluators:
-    rag_accuracy:
-      _type: ragas
-      metric: AnswerAccuracy
-      llm_name: reasoning_llm
-    rag_groundedness:
-      _type: ragas
-      metric: ResponseGroundedness
-      llm_name: reasoning_llm
-    rag_relevance:
-      _type: ragas
-      metric: ContextRelevance
-      llm_name: reasoning_llm
+    final_answer_eval:
+      _type: llm_judge
+      llm_name: judging_llm
+      judge_prompt: |
+        You are an expert evaluator for agentic workflow systems. Your task is to evaluate how well a generated answer matches the reference answer for a given question.
+
+        Question: {question}
+
+        Reference Answer: {reference_answer}
+
+        Generated Answer: {generated_answer}
+
+        Please evaluate the generated answer against the reference answer considering:
+        1. Factual accuracy and correctness of technical information
+        2. Completeness of the response (does it answer all parts of the question?)
+        3. Technical accuracy for predictive maintenance context (RUL predictions, sensor data analysis, etc.)
+        4. Relevance to the question asked
+        5. Quality of data analysis and insights provided
+        6. Appropriate use of predictive maintenance terminology and concepts
+
+        Provide your evaluation as a JSON object with the following format:
+        {{
+            "score": <float between 0.0 and 1.0>,
+            "reasoning": "<detailed explanation of your scoring, highlighting strengths and weaknesses>"
+        }}
+
+        The score should be:
+        - 1.0: Perfect match, completely accurate and complete response
+        - 0.5: Fair, partially correct but with significant issues or missing information
+        - 0.0: Poor, mostly incorrect but some relevant information
