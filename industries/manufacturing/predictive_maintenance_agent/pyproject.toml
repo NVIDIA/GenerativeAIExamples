@@ -10,9 +10,10 @@ dependencies = [
   "pydantic ~= 2.10.0, <2.11.0",
   "vanna==0.7.9",
   "chromadb==1.0.15",
-  "xgboost==3.0.2"
+  "xgboost==3.0.2",
+  "arize-phoenix==6.1.0"
 ]
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.12,<3.13"
 description = "Predictive maintenance workflow using AIQ"
 classifiers = ["Programming Language :: Python"]
 authors = [{ name = "Vineeth Kalluru" }]
