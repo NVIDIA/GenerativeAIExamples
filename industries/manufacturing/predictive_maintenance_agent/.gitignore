@@ -15,10 +15,8 @@ database/
 # Output and generated files
 output_data/
 *.html
-*.json
 *.csv
 *.npy
-*.txt
 
 # Python package metadata
 src/**/*.egg-info/

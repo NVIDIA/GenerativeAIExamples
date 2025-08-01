@@ -2,22 +2,23 @@ general:
   use_uvloop: true
   telemetry:
     logging:
-      # console:
-      #   _type: console
-      #   level: INFO
+      console:
+        _type: console
+        level: INFO
       file:
         _type: file
         path: "${PWD_PATH}/pdm.log"
         level: DEBUG
-    tracing:
-      catalyst:
-        _type: catalyst
-        project: "pdm-test"
-        dataset: "pdm-dataset"
-      # phoenix:
-      #   _type: phoenix
-      #   endpoint: http://localhost:6006/v1/traces
-      #   project: pdm-test
+    # Uncomment this to enable tracing
+    # tracing:
+    #   catalyst:
+    #     _type: catalyst
+    #     project: "pdm-test"
+    #     dataset: "pdm-dataset"
+    #   phoenix:
+    #     _type: phoenix
+    #     endpoint: http://localhost:6006/v1/traces
+    #     project: pdm-test
 
 llms:
   sql_llm:
@@ -248,7 +249,7 @@ workflow:
 
     ### GUIDELINES ###
     **Generate and return the absolutepath to any HTML files generated to users when tools return them.**
-    **ONLY USE PREDICT_RUL TOOL FOR RUL DATA IF USER SAYS "PREDICT" OR SIMILAR; OTHERWISE, FETCH GROUND TRUTH RUL FROM DATABASE.**
+    **DO NOT use predict_rul tool to fetch RUL data unless the user explicitly uses the word "predict" or somthing similar, this is because there is also ground truth RUL data in the database which the user might request sometimes.**
 
     **User Input:**
     {input_text}
