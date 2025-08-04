@@ -59,127 +59,7 @@ async def plot_line_chart_tool(
         y_axis_column: str = Field(description="The column name for y-axis data", default="RUL")
         plot_title: str = Field(description="The title for the plot", default="Line Chart")
 
-    def load_data_from_json(json_path: str):
-        """Load data from JSON file into a pandas DataFrame."""
-        import pandas as pd
-        try:
-            with open(json_path, 'r') as f:
-                data = json.load(f)
-            return pd.DataFrame(data)
-        except FileNotFoundError:
-            logger.error(f"JSON file not found at {json_path}")
-            return None
-        except json.JSONDecodeError:
-            logger.error(f"Could not decode JSON from {json_path}")
-            return None
-        except Exception as e:
-            logger.error(f"Error loading data from '{json_path}': {e}")
-            return None
-
-    def create_line_chart_plot_html(output_dir: str, data_json_path: str, x_col: str, y_col: str, title: str):
-        """
-        Generate and save line chart as HTML file using Plotly.
-        
-        Args:
-            output_dir (str): Directory to save the plot file.
-            data_json_path (str): Path to the input JSON data file.
-            x_col (str): Column name for x-axis.
-            y_col (str): Column name for y-axis.
-            title (str): Plot title.
-            
-        Returns:
-            str: Path to the saved HTML file.
-        """
-        import plotly.graph_objects as go
-        import plotly.offline as pyo
-        import pandas as pd
-        
-        df = load_data_from_json(data_json_path)
-        if df is None or df.empty:
-            raise ValueError(f"Could not load data or data is empty from {data_json_path}")
-
-        # Check required columns
-        required_columns = [x_col, y_col]
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            raise KeyError(f"Data from {data_json_path} must contain columns: {required_columns}. Missing: {missing_columns}")
-
-        # Sort by x-axis column for proper line plotting
-        df_sorted = df.sort_values(x_col)
-        
-        # Create the line chart with markers
-        fig = go.Figure()
-        
-        # Add line trace
-        fig.add_trace(go.Scatter(
-            x=df_sorted[x_col],
-            y=df_sorted[y_col],
-            mode='lines+markers',
-            name=y_col,
-            line=dict(color='#1f77b4', width=3),
-            marker=dict(size=6, color='#1f77b4'),
-            hovertemplate=f'<b>{x_col}</b>: %{{x}}<br>' +
-                         f'<b>{y_col}</b>: %{{y:.2f}}<br>' +
-                         '<extra></extra>'
-        ))
-        
-        # Update layout with styling
-        fig.update_layout(
-            title=dict(
-                text=title,
-                x=0.5,
-                font=dict(size=16)
-            ),
-            xaxis=dict(
-                title=dict(text=x_col, font=dict(size=14)),
-                gridcolor='lightgray',
-                gridwidth=0.5
-            ),
-            yaxis=dict(
-                title=dict(text=y_col, font=dict(size=14)),
-                gridcolor='lightgray',
-                gridwidth=0.5
-            ),
-            width=650,
-            height=450,
-            plot_bgcolor='white',
-            showlegend=False,
-            hovermode='closest'
-        )
-        
-        # Set y-axis range for better visualization
-        y_min = df_sorted[y_col].min()
-        y_max = df_sorted[y_col].max()
-        y_range = y_max - y_min
-        if y_range > 0:
-            fig.update_yaxes(range=[y_min - y_range * 0.05, y_max + y_range * 0.05])
-        
-        # Save the HTML file
-        os.makedirs(output_dir, exist_ok=True)
-        output_filepath = os.path.join(output_dir, f"line_chart_{x_col}_vs_{y_col}.html")
-        
-        # Generate standalone HTML file
-        html_content = pyo.plot(fig, output_type='div', include_plotlyjs=True)
-        
-        # Create complete HTML page
-        full_html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>{title}</title>
-            <meta charset="utf-8">
-        </head>
-        <body>
-            {html_content}
-        </body>
-        </html>
-        """
-        
-        with open(output_filepath, 'w', encoding='utf-8') as f:
-            f.write(full_html)
-        logger.info(f"Line chart saved to {output_filepath}")
-        
-        return output_filepath
+    from .plot_utils import create_line_chart, load_data_from_json
 
     async def _response_fn(data_json_path: str, x_axis_column: str, y_axis_column: str, plot_title: str) -> str:
         """
@@ -199,7 +79,8 @@ async def plot_line_chart_tool(
             if missing_columns:
                 return f"Data from {data_json_path} must contain columns: {required_columns}. Missing: {missing_columns}"
             
-            output_filepath = create_line_chart_plot_html(
+            # Use utility function to create plot
+            html_filepath, png_filepath = create_line_chart(
                 output_dir=config.output_folder,
                 data_json_path=data_json_path,
                 x_col=x_axis_column,
@@ -208,10 +89,26 @@ async def plot_line_chart_tool(
             )
             
             # Convert absolute path to file:// URL for proper browser handling
-            file_url = f"file://{output_filepath}"
+            html_file_url = f"file://{html_filepath}"
+            
+            # Build file information for response
+            file_info = f"- HTML File: {html_filepath}\n- HTML URL: {html_file_url}"
+            if png_filepath:
+                file_info += f"\n- PNG File: {png_filepath}"
             
             # Return a clear completion message that the LLM will understand
-            return f"TASK COMPLETED SUCCESSFULLY\n\nLine chart has been generated and saved.\n\nChart Details:\n- Type: Line chart with markers (Plotly)\n- X-axis: {x_axis_column}\n- Y-axis: {y_axis_column}\n- Title: {plot_title}\n- Output File: {output_filepath}\n- File URL: {file_url}\n\n✅ CHART GENERATION COMPLETE - NO FURTHER ACTION NEEDED"
+            return f"""TASK COMPLETED SUCCESSFULLY
+
+Line chart has been generated and saved in multiple formats.
+
+Chart Details:
+- Type: Line chart with markers (Plotly)
+- X-axis: {x_axis_column}
+- Y-axis: {y_axis_column}
+- Title: {plot_title}
+{file_info}
+
+✅ CHART GENERATION COMPLETE - NO FURTHER ACTION NEEDED"""
             
         except FileNotFoundError as e:
             error_msg = f"Required data file ('{data_json_path}') not found for line chart: {e}"
@@ -240,7 +137,8 @@ async def plot_line_chart_tool(
     - plot_title: Title for the plot
     
     Output:
-    - HTML file containing the line chart
+    - HTML file containing the interactive line chart
+    - PNG file containing the static line chart
     """
     yield FunctionInfo.from_fn(_response_fn, 
                                input_schema=PlotLineChartInputSchema,

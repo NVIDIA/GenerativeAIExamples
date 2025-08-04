@@ -163,4 +163,4 @@ class LLMJudgeEvaluator(BaseEvaluator):
         
         # Default to 0.0 if no score found
         logger.warning("Could not extract score from text: %s", text)
-        return 0.0 
+        return 0.0
