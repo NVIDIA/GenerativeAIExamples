@@ -9,9 +9,12 @@ dependencies = [
   "aiqtoolkit[profiling, langchain, telemetry, ragaai]",
   "pydantic ~= 2.10.0, <2.11.0",
   "vanna==0.7.9",
-  "chromadb==1.0.15",
-  "xgboost==3.0.2",
-  "arize-phoenix==6.1.0"
+  "chromadb",
+  "xgboost",
+  "arize-phoenix",
+  "ragaai-catalyst",
+  "pytest",
+  "pytest-asyncio"
 ]
 requires-python = ">=3.12,<3.13"
 description = "Predictive maintenance workflow using AIQ"
@@ -31,6 +34,7 @@ aiqtoolkit-weave = { path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit/packa
 aiqtoolkit-ragaai = { path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit/packages/aiqtoolkit_ragaai", editable = true }
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 markers = [
     "e2e: end-to-end tests that run full workflows",
 ]

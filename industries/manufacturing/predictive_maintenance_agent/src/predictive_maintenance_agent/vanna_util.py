@@ -109,6 +109,15 @@ class CustomEmbeddingFunction:
         
         return embeddings[0] if len(embeddings) == 1 and isinstance(input, str) else embeddings
     
+    def name(self):
+        """
+        Returns a custom name for the embedding function.
+
+        Returns:
+            str: The name of the embedding function.
+        """
+        return "NVIDIA Embedding Function"
+    
 def initVannaBackup(vn):
     """
     Backup initialization function for Vanna with hardcoded NASA Turbofan Engine training data.
