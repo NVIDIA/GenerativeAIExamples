@@ -9,3 +9,4 @@ from . import plot_comparison_tool
 from . import plot_line_chart_tool
 from . import code_generation_assistant
 from . import llm_judge_evaluator_register
+from . import multimodal_llm_judge_evaluator_register

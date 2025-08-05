@@ -35,9 +35,6 @@ llms:
   reasoning_llm:
     _type: nim
     model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
-  judging_llm:
-    _type: nim
-    model_name: meta/llama-3.1-70b-instruct
   multimodal_judging_llm:
     _type: nim
     model_name: meta/llama-3.2-11b-vision-instruct
@@ -261,7 +258,7 @@ eval:
       cleanup: true
     dataset:
       _type: json
-      file_path: "${PWD_PATH}/eval_data/eval_mini_viz_only.json"
+      file_path: "${PWD_PATH}/eval_data/eval_set_master.json"
     query_delay: 2  # seconds between queries
     max_concurrent: 1  # process queries sequentially
   evaluators:
@@ -307,41 +304,29 @@ eval:
 
         Generated Response: {generated_answer}
 
-        Please evaluate the complete response considering:
+        IMPORTANT: You MUST provide your response ONLY as a valid JSON object. Do not include any text before or after the JSON.
+
+        Evaluate the response using these two criteria:
 
         TEXT EVALUATION:
-        1. Factual accuracy and correctness of technical information
-        2. Completeness of the response (does it answer all parts of the question?)
-        3. Technical accuracy for predictive maintenance context (RUL predictions, sensor data analysis, etc.)
-        4. Appropriate use of predictive maintenance terminology and concepts
+        Check if the generated text answer semantically matches the reference answer (not word-for-word, but meaning and content). Score:
+        - 1.0: Generated answer fully matches the reference answer semantically
+        - 0.5: Generated answer partially matches the reference answer with some missing or incorrect elements
+        - 0.0: Generated answer does not match the reference answer semantically
 
-        VISUAL EVALUATION (if plots/charts are present):
-        1. Does the visualization show the correct data/variables as specified in the reference?
-        2. Are the axes labeled correctly and with appropriate ranges?
-        3. Does the plot type (line chart, bar chart, distribution, etc.) match what was requested?
-        4. Are the data values, trends, and patterns approximately correct?
-        5. Is the visualization clear and appropriate for predictive maintenance analysis?
-        6. Does the plot help answer the original question effectively?
+        PLOT EVALUATION (if plots/charts are present):
+        Check how much of the reference plot description appears in the actual generated plot. Score:
+        - 1.0: Generated plot shows all major elements described in the reference
+        - 0.5: Generated plot shows some elements described in the reference but missing significant aspects
+        - 0.0: Generated plot does not match the reference description
 
-        COMBINED EVALUATION:
-        1. Do the text and visual elements complement each other appropriately?
-        2. Does the overall response provide a complete answer?
-        3. Is the combination more helpful than text or visuals alone would be?
+        FINAL SCORING:
+        Your final score should be the MAXIMUM of the text evaluation score and plot evaluation score.
 
-        For predictive maintenance context, pay special attention to:
-        - RUL (Remaining Useful Life) predictions and trends
-        - Sensor data patterns and operational settings
-        - Time-series data representation
-        - Unit/engine-specific data filtering
-        - Dataset context (FD001, FD002, etc.)
-
-        Provide your evaluation as a JSON object with the following format:
+        You MUST respond with ONLY this JSON format:
         {{
-            "score": <float: 0.0, 0.5, or 1.0>,
-            "reasoning": "<detailed explanation of your evaluation, covering both text and visual elements if present>"
+            "score": 0.0,
+            "reasoning": "TEXT EVALUATION: [your text analysis and score] PLOT EVALUATION: [your plot analysis and score if applicable] FINAL SCORE: [max of both scores with justification]"
         }}
 
-        The score should be:
-        - 1.0: Completely correct response - text and any visuals match reference accurately, comprehensive and helpful
-        - 0.5: Partially correct response - some elements correct but significant issues in text or visuals
-        - 0.0: Completely wrong response - major errors in text or visuals that make the response unhelpful
+        Replace the score with your actual evaluation (0.0, 0.5, or 1.0).

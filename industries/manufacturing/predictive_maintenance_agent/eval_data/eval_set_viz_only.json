@@ -1,0 +1,82 @@
+[ 
+    {
+      "id": "1",
+      "question": "In dataset train_FD004, plot sensor_measurement1 vs time_in_cycles for unit_number 107",
+      "answer": "Line chart showing sensor_measurement1 values on y-axis ranging from 445.00 to 518.67 plotted against time_in_cycles in x-axisfor unit 107 in dataset FD004.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "easy",
+      "original_id": "1",
+      "source": "eval_set"
+    },
+    {
+      "id": "2",
+      "question": "In dataset train_FD004, plot the variation of sensor_measurement1 over time for unit_number 107",
+      "answer": "Line chart displaying the variation of sensor_measurement1 values on y-axis over time cycles in x-axis for unit 107 in dataset FD004. The plot should illustrate how sensor_measurement1 changes across different time cycles, demonstrating the temporal variation pattern of this sensor reading.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "easy",
+      "original_id": "2",
+      "source": "eval_set"
+    },
+    {
+      "id": "3",
+      "question": "In dataset train_FD002, plot operational_setting_3 vs time_in_cycles for unit_number 200",
+      "answer": "Line chart showing operational_setting_3 values on y-axis ranging against time_in_cycles in x-axis for unit 200 in dataset FD002. Only two values 100 and 60 should be visible on the plot.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "easy",
+      "original_id": "3",
+      "source": "eval_set"
+    },
+    {
+      "id": "4",
+      "question": "Plot a histogram showing distribution of values of operational_setting_3 over time for unit_number 200 in dataset train_FD002",
+      "answer": "Two bars for 100 and 60 with higher bar for 100",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "medium",
+      "original_id": "4",
+      "source": "eval_set"
+    },
+    {
+      "id": "5",
+      "question": "In dataset test_FD001 plot a histogram showing the distribution of operational_setting_3 across all units",
+      "answer": "Constant value 100, so just one high bar for 100",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "medium",
+      "original_id": "5",
+      "source": "eval_set"
+    },
+    {
+      "id": "6",
+      "question": "In dataset test_FD001 plot operational_setting_3 as a function of time_in_cycles for units 10, 20, 30, 40",
+      "answer": "Four constant lines at 100",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "medium",
+      "original_id": "6",
+      "source": "eval_set"
+    },
+    {
+      "id": "7",
+      "question": "Retrieve RUL of all units from the FD001 and plot their distribution using a histogram",
+      "answer": "Histogram showing distribution of RUL values for all units in FD001 dataset. Should contain 100 data points representing different RUL values ranging from 7 to 145 cycles. The distribution should show 71 unique RUL values with varying frequencies. The plot should display the spread and frequency of remaining useful life values across all engine units in the dataset.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "medium",
+      "original_id": "7",
+      "source": "eval_set"
+    },
+    {
+        "id": "8",
+        "question": "Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.",
+        "answer": "A Plot showing both actual RUL values and predicted RUL values trend (in y-axis) plotted against time in cycles (in x-axis) for engine unit 24",
+        "type": "text_plus_plot",
+        "category": "visualization",
+        "subcategory": "hard",
+        "original_id": "8",
+        "source": "eval_set"
+    }
+]

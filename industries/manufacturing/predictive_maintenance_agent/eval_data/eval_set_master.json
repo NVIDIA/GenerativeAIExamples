@@ -192,7 +192,7 @@
     {
       "id": "20",
       "question": "Plot a histogram showing distribution of values of operational_setting_3 over time for unit_number 200 in dataset train_FD002",
-      "answer": "Two bars for 100 and 60 with higher bar for 100",
+      "answer": "Histogram Two bars for 100 and 60 with higher bar for 100",
       "type": "text_plus_plot",
       "category": "visualization",
       "subcategory": "medium",

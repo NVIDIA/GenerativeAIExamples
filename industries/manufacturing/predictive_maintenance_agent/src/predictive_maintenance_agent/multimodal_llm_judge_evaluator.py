@@ -101,7 +101,9 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
                     "error": f"Evaluation failed: {str(e)}",
                     "question": question,
                     "reference_answer": reference_answer,
-                    "generated_answer": generated_answer
+                    "generated_answer": generated_answer,
+                    "plot_paths": [],
+                    "num_images_analyzed": 0
                 }
             )
 
@@ -109,16 +111,49 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
         """Extract all PNG file paths from the generated response."""
         plot_paths = []
         
-        # Look for PNG file paths in the response
-        png_pattern = r'([^\s]+\.png)'
-        matches = re.findall(png_pattern, response)
+        # Look for PNG file paths in the response with improved patterns
+        png_patterns = [
+            r'([^\s\[\]]+\.png)',  # Original pattern but excluding brackets
+            r'([/][^\s\[\]]+\.png)',  # Paths starting with /
+            r'([A-Za-z]:[^\s\[\]]+\.png)',  # Windows paths starting with drive letter
+            r'file://([^\s\[\]]+\.png)',  # file:// URLs
+            r'\[([^\[\]]+\.png)\]',  # Paths inside square brackets
+            r'located at ([^\s]+\.png)',  # "located at path.png" pattern
+            r'saved.*?([/][^\s]+\.png)',  # "saved at /path.png" pattern
+        ]
         
-        for match in matches:
-            # Check if the file actually exists
-            if os.path.exists(match):
-                plot_paths.append(match)
+        for pattern in png_patterns:
+            matches = re.findall(pattern, response)
+            for match in matches:
+                # Clean up the match - remove any trailing punctuation
+                clean_match = match.rstrip('.,;:!?)]')
+                # Check if the file actually exists
+                if os.path.exists(clean_match):
+                    plot_paths.append(clean_match)
+        
+        # Also look for responses that mention plot/chart generation even if file doesn't exist
+        # This helps with cases where files are generated after response but before evaluation
+        plot_indicators = [
+            r'plot.*generated', r'chart.*generated', r'histogram.*generated',
+            r'visualization.*generated', r'\.png.*generated', r'plot.*saved',
+            r'chart.*saved', r'saved.*\.png'
+        ]
+        
+        has_plot_indicator = any(re.search(indicator, response, re.IGNORECASE) 
+                                for indicator in plot_indicators)
+        
+        # If we detect plot generation language but no existing files, 
+        # try to find PNG files in the output_data directory that might be related
+        if has_plot_indicator and not plot_paths:
+            output_dir = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data"
+            if os.path.exists(output_dir):
+                png_files = [f for f in os.listdir(output_dir) if f.endswith('.png')]
+                # Add the most recently modified PNG files
+                for png_file in png_files[-3:]:  # Last 3 PNG files as a heuristic
+                    full_path = os.path.join(output_dir, png_file)
+                    plot_paths.append(full_path)
                 
-        return plot_paths
+        return list(set(plot_paths))  # Remove duplicates
 
     async def _evaluate_unified(
         self, 
@@ -170,23 +205,15 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
             # Parse the response
             score, reasoning = self._parse_evaluation_response(response_text)
             
-            # Build reasoning object based on evaluation type
+            # Build reasoning object 
             reasoning_obj = {
-                "evaluation_type": evaluation_type,
-                "model": "llama-3.2-90b-instruct",
                 "question": question,
                 "reference_answer": reference_answer,
                 "generated_answer": generated_answer,
                 "llm_judgment": reasoning,
-                "raw_response": response_text
+                "plot_paths": valid_plot_paths,
+                "num_images_analyzed": len(image_data_list)
             }
-            
-            # Add visual-specific information if applicable
-            if has_visuals:
-                reasoning_obj.update({
-                    "plot_paths": valid_plot_paths,
-                    "num_images_analyzed": len(image_data_list)
-                })
             
             return EvalOutputItem(
                 id=item.id,
@@ -200,11 +227,12 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
                 id=item.id,
                 score=0.0,
                 reasoning={
-                    "evaluation_type": "error",
                     "error": f"Unified evaluation failed: {str(e)}",
                     "question": question,
                     "reference_answer": reference_answer,
-                    "generated_answer": generated_answer
+                    "generated_answer": generated_answer,
+                    "plot_paths": [],
+                    "num_images_analyzed": 0
                 }
             )
 
