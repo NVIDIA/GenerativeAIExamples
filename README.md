@@ -39,9 +39,10 @@ This repository is a starting point for developers looking to integrate with the
 
 ### Data Flywheel
 
-This tutorial demonstrates an end-to-end Data Flywheel implementation that uses NVIDIA NeMo Microservices. It features a tool-calling workflow with the NVIDIA NeMo Datastore, NeMo Entity Store, NeMo Customizer, NeMo Evaluator, NeMo Guardrails microservices, and NVIDIA NIMs.
+These tutorials demonstrate Data Flywheel workflows that use NVIDIA NeMo Microservices. They include components such as NVIDIA NeMo Datastore, NeMo Entity Store, NeMo Customizer, NeMo Evaluator, NeMo Guardrails microservices, and NVIDIA NIMs.
 
-- [Tool Calling Fine-tuning, Inference, and Evaluation with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/tool-calling)
+- [Tool Calling Fine-tuning, Inference, Evaluation, and Guardrailing with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/tool-calling)
+- [Embedding Fine-tuning, Inference, and Evaluation with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/embedding-finetuning/)
 
 ### Safer Agentic AI
 
