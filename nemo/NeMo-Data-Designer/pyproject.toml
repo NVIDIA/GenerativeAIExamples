@@ -1,0 +1,13 @@
+[project]
+name = "nemo-data-designer"
+version = "0.0.1"
+description = "NeMo Data Designer tutorial notebooks"
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+    "datasets",
+    "jupyter",
+    "pydantic",
+    "nemo-microservices[data-designer]",
+]
