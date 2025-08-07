@@ -51,15 +51,25 @@ def save_plotly_as_png(fig, filepath: str, width: int = 650, height: int = 450) 
                     if hasattr(trace.line, 'color') and trace.line.color:
                         color = trace.line.color
                 
+                # Extract marker color (takes precedence for better Plotly color preservation)
+                if hasattr(trace, 'marker') and trace.marker and hasattr(trace.marker, 'color') and trace.marker.color:
+                    color = trace.marker.color
+                
                 # Extract name safely
                 name = trace.name if hasattr(trace, 'name') and trace.name else f'Trace {i+1}'
                 
                 # Plot based on mode
                 mode = getattr(trace, 'mode', 'lines')
                 if 'markers' in mode:
-                    ax.plot(trace.x, trace.y, 'o-', 
-                           linestyle=line_style, color=color, 
-                           label=name, linewidth=2, markersize=4)
+                    if mode == 'markers':
+                        # Only markers, no lines
+                        ax.plot(trace.x, trace.y, 'o', 
+                               color=color, label=name, markersize=6)
+                    else:
+                        # Both markers and lines
+                        ax.plot(trace.x, trace.y, 'o-', 
+                               linestyle=line_style, color=color, 
+                               label=name, linewidth=2, markersize=4)
                 else:
                     ax.plot(trace.x, trace.y, linestyle=line_style, 
                            color=color, label=name, linewidth=2)
@@ -519,14 +529,8 @@ def create_anomaly_plot_from_data(data_df: pd.DataFrame, sensor_name: str, engin
                 )
             )
         
-        # Set title
-        if plot_title is None:
-            title = f'Anomaly Detection - {sensor_name} (Engine {engine_unit})'
-        else:
-            title = plot_title
-        
         fig.update_layout(
-            title=title,
+            title=f'Anomaly Detection - {sensor_name} (Engine {engine_unit})',
             xaxis_title=x_title,
             yaxis_title=f"{sensor_name}",
             height=500,

@@ -103,7 +103,8 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
                     "reference_answer": reference_answer,
                     "generated_answer": generated_answer,
                     "plot_paths": [],
-                    "num_images_analyzed": 0
+                    "num_images_analyzed": 0,
+                    "evaluation_type": "ERROR"
                 }
             )
 
@@ -183,12 +184,22 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
             has_visuals = len(image_data_list) > 0
             evaluation_type = "multimodal" if has_visuals else "text_only"
             
-            # Use the configured judge_prompt (works for both text and multimodal)
+            logger.info(f"Evaluation for item {item.id}: has_visuals={has_visuals}, plot_paths={plot_paths}, valid_plot_paths={valid_plot_paths}, image_data_count={len(image_data_list)}")
+            
+            # Use the configured judge_prompt and add explicit evaluation mode instruction
             prompt_text = self.judge_prompt.format(
                 question=question,
                 reference_answer=reference_answer,
                 generated_answer=generated_answer
             )
+            
+            # Add explicit instruction based on whether we have visuals
+            if has_visuals:
+                prompt_text += f"\n\n🚨 CRITICAL OVERRIDE 🚨\nYou can see {len(image_data_list)} plot image(s) attached to this message.\nYou MUST respond with 'EVALUATION TYPE: PLOT' and evaluate the attached images against the reference description.\nIGNORE any text analysis - focus ONLY on the visual plot content."
+                logger.info(f"Using PLOT evaluation mode for item {item.id} with {len(image_data_list)} images")
+            else:
+                prompt_text += "\n\n🚨 CRITICAL OVERRIDE 🚨\nNo images are attached to this message.\nYou MUST respond with 'EVALUATION TYPE: TEXT' and evaluate only the text content.\nDo NOT attempt plot evaluation."
+                logger.info(f"Using TEXT evaluation mode for item {item.id}")
             
             # Call LLM using LangChain
             if has_visuals:
@@ -203,6 +214,7 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
                 )
             
             # Parse the response
+            logger.info(f"LLM response for item {item.id}: {response_text[:200]}...")
             score, reasoning = self._parse_evaluation_response(response_text)
             
             # Build reasoning object 
@@ -212,7 +224,8 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
                 "generated_answer": generated_answer,
                 "llm_judgment": reasoning,
                 "plot_paths": valid_plot_paths,
-                "num_images_analyzed": len(image_data_list)
+                "num_images_analyzed": len(image_data_list),
+                "evaluation_type": "PLOT" if has_visuals else "TEXT"
             }
             
             return EvalOutputItem(
@@ -232,7 +245,8 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
                     "reference_answer": reference_answer,
                     "generated_answer": generated_answer,
                     "plot_paths": [],
-                    "num_images_analyzed": 0
+                    "num_images_analyzed": 0,
+                    "evaluation_type": "ERROR"
                 }
             )
 

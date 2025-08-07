@@ -48,12 +48,13 @@ async def generate_sql_query_and_retrieve_tool(
     Your responsibilities:
     1. Analyze the SQL query results and determine the best response format.
     2. For data extraction queries (multiple rows/complex data): recommend saving to JSON file and provide summary.
-    3. For simple queries (single values, counts, yes/no): provide direct answers without file storage.
+    3. For simple queries (single values, counts, yes/no, simple lookups): provide DIRECT answers without file storage.
     4. Always be helpful and provide context about the results.
     5. Generate a descriptive filename for data that should be saved.
 
     Guidelines:
-    - If results contain multiple rows or complex data (>5 rows or >3 columns): recommend saving to file
+
+    - If results contain multiple rows or complex data (>5 rows or >3 columns) AND the query is for data analysis/processing: recommend saving to file
     - If results are simple (single value, count, or small lookup): provide only the direct answer even if a file was created for the results.
     - Always mention the SQL query that was executed.
     - For files to be saved, suggest a descriptive filename based on the query content (e.g., "sensor_data_unit_5.json", "engine_performance_analysis.json").
@@ -209,7 +210,7 @@ async def generate_sql_query_and_retrieve_tool(
             return f"Error running SQL query '{sql}': {e}"
 
     description = """
-    Use this tool to automatically generate SQL queries for the user's question, retrieve the data from the SQL database and store the data in a JSON file or provide a summary of the data.
+    Use this tool to automatically generate SQL queries for the user's question, retrieve the data from the SQL database and provide a summary of the data or save the data in a JSON file.
     Do not provide SQL query as input, only a question in plain english.
     
     Input: 

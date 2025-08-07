@@ -3,7 +3,7 @@ import logging
 import os
 import pandas as pd
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from pydantic import Field, BaseModel
 
 from aiq.builder.builder import Builder
@@ -15,10 +15,58 @@ from aiq.data_models.function import FunctionBaseConfig
 
 logger = logging.getLogger(__name__)
 
+# Global model instance - initialized once when module is loaded
+_MOMENT_MODEL: Optional[object] = None
+_MODEL_DEVICE: Optional[str] = None
+
+def _initialize_moment_model():
+    """Initialize MOMENT model once and cache it globally."""
+    global _MOMENT_MODEL, _MODEL_DEVICE
+    
+    if _MOMENT_MODEL is not None:
+        logger.info("MOMENT model already initialized, reusing cached instance")
+        return _MOMENT_MODEL, _MODEL_DEVICE
+    
+    try:
+        logger.info("Initializing MOMENT-1-small model (one-time setup)...")
+        import time
+        start_time = time.time()
+        
+        from momentfm import MOMENTPipeline
+        import torch
+        
+        # Initialize MOMENT pipeline for anomaly detection
+        model_name = "MOMENT-1-small"
+        _MOMENT_MODEL = MOMENTPipeline.from_pretrained(
+            f"AutonLab/{model_name}",
+            model_kwargs={"task_name": "reconstruction"}
+        )
+        _MOMENT_MODEL.init()
+        
+        # Move model to device
+        _MODEL_DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        _MOMENT_MODEL = _MOMENT_MODEL.to(_MODEL_DEVICE).float()
+        
+        logger.info(f"MOMENT model initialized and cached in {time.time() - start_time:.2f} seconds on {_MODEL_DEVICE}")
+        return _MOMENT_MODEL, _MODEL_DEVICE
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize MOMENT model: {e}")
+        raise RuntimeError(f"MOMENT model initialization failed: {e}")
+
+# Pre-initialize the model when module is imported (optional - can be lazy loaded)
+try:
+    _initialize_moment_model()
+    logger.info("MOMENT model pre-loaded successfully")
+except Exception as e:
+    logger.warning(f"MOMENT model pre-loading failed, will initialize on first use: {e}")
+    _MOMENT_MODEL = None
+    _MODEL_DEVICE = None
+
 
 class TimeSeriesAnomalyDetectionToolConfig(FunctionBaseConfig, name="moment_anomaly_detection_tool"):
     """
-    AIQ Toolkit function to perform anomaly detection using MOMENT-1-Large foundation model.
+    AIQ Toolkit function to perform anomaly detection using MOMENT-1-small foundation model.
     """
     output_folder: str = Field(description="The path to the output folder to save results.", default="./output_data")
 
@@ -106,7 +154,7 @@ async def moment_anomaly_detection_tool(
         return TensorDataset(data, masks, labels)
 
     def detect_anomalies_with_moment(sequences: List[np.ndarray], threshold_percentile: float) -> Tuple[np.ndarray, np.ndarray]:
-        """Detect anomalies using MOMENT-1-large foundation model following the official tutorial.
+        """Detect anomalies using MOMENT-1-small foundation model following the official tutorial.
         
         Args:
             sequences: List of sequences with shape (1, 1, seq_len)
@@ -116,21 +164,16 @@ async def moment_anomaly_detection_tool(
             anomalies: Boolean array indicating anomalies
             anomaly_scores: Array of reconstruction error scores (per timestep)
         """
-        logger.info("Starting MOMENT-based anomaly detection following official tutorial...")
+        logger.info("Starting MOMENT-based anomaly detection...")
         
-        from momentfm import MOMENTPipeline
         from torch.utils.data import DataLoader
         from tqdm import tqdm
         import torch
         
-        # Initialize MOMENT pipeline for anomaly detection (using reconstruction task)
-        model = MOMENTPipeline.from_pretrained(
-            "AutonLab/MOMENT-1-large",
-            model_kwargs={"task_name": "reconstruction"}
-        )
-        model.init()
-            
-        logger.info(f"MOMENT-1-large loaded for anomaly detection")
+        # Use pre-initialized global model or initialize if needed
+        model, device = _initialize_moment_model()
+        
+        logger.info(f"Using cached MOMENT-1-small model for anomaly detection")
         logger.info(f"Number of sequences to process: {len(sequences)}")
         if sequences:
             logger.info(f"Each sequence shape: {sequences[0].shape}")
@@ -138,10 +181,6 @@ async def moment_anomaly_detection_tool(
         # Create dataset and dataloader following the tutorial
         dataset = create_moment_dataset(sequences)
         dataloader = DataLoader(dataset, batch_size=32, shuffle=False, drop_last=False)
-        
-        # Move model to device
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = model.to(device).float()
         logger.info(f"Using device: {device}")
         
         # Process batches following the tutorial pattern

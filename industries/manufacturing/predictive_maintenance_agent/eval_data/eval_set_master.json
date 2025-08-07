@@ -238,5 +238,15 @@
         "subcategory": "hard",
         "original_id": "8",
         "source": "eval_set"
+    },
+    {
+      "id": "25",
+      "question": "Retrieve and detect anomalies in sensor 4 measurements for engine number 78.",
+      "answer": "A Plot showing observed values and anomalies in sensor 4 measurements for engine number 78",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "hard",
+      "original_id": "9",
+      "source": "eval_set"
     }
 ]
