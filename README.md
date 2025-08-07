@@ -14,7 +14,7 @@ This repository is a starting point for developers looking to integrate with the
 
 * [What's New?](#whats-new)
   * [Data Flywheel](#data-flywheel)
-  * [Safer Agentic A](#safer-agentic-ai)
+  * [Safer Agentic AI](#safer-agentic-ai)
   * [Knowledge Graph RAG](#knowledge-graph-rag)
   * [Agentic Workflows with Llama 3.1](#agentic-workflows-with-llama-31)
   * [RAG with Local NIM Deployment and LangChain](#rag-with-local-nim-deployment-and-langchain)
