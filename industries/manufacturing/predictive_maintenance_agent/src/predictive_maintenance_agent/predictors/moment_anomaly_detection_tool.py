@@ -1,0 +1,352 @@
+import json
+import logging
+import os
+import pandas as pd
+import numpy as np
+from typing import List, Tuple
+from pydantic import Field, BaseModel
+
+from aiq.builder.builder import Builder
+from aiq.builder.function_info import FunctionInfo
+from aiq.cli.register_workflow import register_function
+from aiq.data_models.function import FunctionBaseConfig
+
+# Note: Visualization is now handled by the separate plot_anomaly_tool
+
+logger = logging.getLogger(__name__)
+
+
+class TimeSeriesAnomalyDetectionToolConfig(FunctionBaseConfig, name="moment_anomaly_detection_tool"):
+    """
+    AIQ Toolkit function to perform anomaly detection using MOMENT-1-Large foundation model.
+    """
+    output_folder: str = Field(description="The path to the output folder to save results.", default="./output_data")
+
+@register_function(config_type=TimeSeriesAnomalyDetectionToolConfig)
+async def moment_anomaly_detection_tool(
+    config: TimeSeriesAnomalyDetectionToolConfig, builder: Builder
+):
+    class MomentAnomalyDetectionInputSchema(BaseModel):
+        sensor_data_json_path: str = Field(description="Path to JSON file containing sensor data (from sql_retriever tool)")
+        engine_unit: int = Field(description="Engine unit number to analyze", default=5)
+        sensor_name: str = Field(description="Name of the sensor to analyze and plot (e.g., 'sensor_measurement_1', 'sensor_measurement_4')", default="sensor_measurement_1")
+
+    def prepare_time_series_data_for_moment(df: pd.DataFrame, sensor_name: str, max_seq_len: int = 512) -> Tuple[List[np.ndarray], object]:
+        """Prepare time series data for MOMENT model input.
+        
+        MOMENT expects input shape: (batch_size, num_channels, seq_len)
+        For single sensor analysis: (1, 1, seq_len) where seq_len <= 512
+        
+        Args:
+            df: DataFrame with sensor data
+            sensor_name: Name of the sensor column to process
+            max_seq_len: Maximum sequence length (512 for MOMENT-1-large)
+        
+        Returns:
+            List of sequences with shape (1, 1, seq_len)
+        """
+        try:
+            # Select single sensor column
+            sensor_data = df[sensor_name].values
+            logger.info(f"Original sensor data shape: {sensor_data.shape}")
+            
+            # Normalize the data
+            from sklearn.preprocessing import StandardScaler
+            scaler = StandardScaler()
+            normalized_data = scaler.fit_transform(sensor_data.reshape(-1, 1)).flatten()
+            logger.info(f"Normalized sensor data shape: {normalized_data.shape}")
+            
+            # Split data into chunks of max_seq_len (512)
+            sequences = []
+            total_length = len(normalized_data)
+            
+            i = 0
+            while i < total_length:
+                chunk = normalized_data[i:i + max_seq_len]
+                sequence = chunk.reshape(1, 1, -1)
+                sequences.append(sequence)
+                i += max_seq_len
+                
+            logger.info(f"Created {len(sequences)} sequences, shapes: {[seq.shape for seq in sequences]}")
+            
+            return sequences
+            
+        except Exception as e:
+            logger.error(f"Error preparing time series data for MOMENT: {e}")
+            return None
+
+    def create_moment_dataset(sequences: List[np.ndarray]):
+        """Create a dataset compatible with MOMENT from sequences."""
+        import torch
+        from torch.utils.data import TensorDataset
+        
+        # Combine all sequences into a single tensor
+        # Each sequence has shape (1, 1, seq_len), we want (num_sequences, 1, seq_len)
+        data_tensors = []
+        masks = []
+        labels = []  # We'll use dummy labels since this is unsupervised
+        
+        for seq in sequences:
+            # seq shape: (1, 1, seq_len) -> squeeze to (1, seq_len)
+            seq_squeezed = seq.squeeze(0)  # Remove first dimension: (1, seq_len)
+            data_tensors.append(torch.FloatTensor(seq_squeezed))
+            
+            # Create mask (all True since we don't have missing values)
+            mask = torch.ones(seq_squeezed.shape[1], dtype=torch.bool)  # seq_len
+            masks.append(mask)
+            
+            # Dummy label (0 for normal, we'll determine anomalies from reconstruction error)
+            labels.append(torch.tensor(0))
+        
+        # Stack all tensors
+        data = torch.stack(data_tensors)  # (num_sequences, 1, seq_len)
+        masks = torch.stack(masks)       # (num_sequences, seq_len)
+        labels = torch.stack(labels)     # (num_sequences,)
+        
+        return TensorDataset(data, masks, labels)
+
+    def detect_anomalies_with_moment(sequences: List[np.ndarray], threshold_percentile: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Detect anomalies using MOMENT-1-large foundation model following the official tutorial.
+        
+        Args:
+            sequences: List of sequences with shape (1, 1, seq_len)
+            threshold_percentile: Percentile for anomaly threshold
+        
+        Returns:
+            anomalies: Boolean array indicating anomalies
+            anomaly_scores: Array of reconstruction error scores (per timestep)
+        """
+        logger.info("Starting MOMENT-based anomaly detection following official tutorial...")
+        
+        from momentfm import MOMENTPipeline
+        from torch.utils.data import DataLoader
+        from tqdm import tqdm
+        import torch
+        
+        # Initialize MOMENT pipeline for anomaly detection (using reconstruction task)
+        model = MOMENTPipeline.from_pretrained(
+            "AutonLab/MOMENT-1-large",
+            model_kwargs={"task_name": "reconstruction"}
+        )
+        model.init()
+            
+        logger.info(f"MOMENT-1-large loaded for anomaly detection")
+        logger.info(f"Number of sequences to process: {len(sequences)}")
+        if sequences:
+            logger.info(f"Each sequence shape: {sequences[0].shape}")
+        
+        # Create dataset and dataloader following the tutorial
+        dataset = create_moment_dataset(sequences)
+        dataloader = DataLoader(dataset, batch_size=32, shuffle=False, drop_last=False)
+        
+        # Move model to device
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device).float()
+        logger.info(f"Using device: {device}")
+        
+        # Process batches following the tutorial pattern
+        trues, preds, labels = [], [], []
+        with torch.no_grad():
+            for batch_x, batch_masks, batch_labels in tqdm(dataloader, total=len(dataloader), desc="Processing batches"):
+                batch_x = batch_x.to(device).float()
+                batch_masks = batch_masks.to(device)
+                
+                # MOMENT forward pass
+                output = model(x_enc=batch_x, input_mask=batch_masks)
+                
+                # Collect results
+                trues.append(batch_x.detach().squeeze().cpu().numpy())
+                preds.append(output.reconstruction.detach().squeeze().cpu().numpy())
+                labels.append(batch_labels.detach().cpu().numpy())
+        
+        # Concatenate all results following the tutorial
+        trues = np.concatenate(trues, axis=0)
+        preds = np.concatenate(preds, axis=0)
+        labels = np.concatenate(labels, axis=0)
+        
+        # Handle sequence length differences between input and MOMENT output
+        original_length = sequences[0].shape[2] if sequences else 0  # Get original input length
+        logger.info(f"Original sequence length: {original_length}, MOMENT output length: {trues.shape[0]}")
+        
+        # Handle overlapping windows if we have multiple sequences (following tutorial logic)
+        if len(sequences) > 1:
+            total_length = sum(seq.shape[2] for seq in sequences)  # seq.shape = (1, 1, seq_len)
+            logger.info(f"Total original length: {total_length}, reconstructed length: {trues.shape[0]}")
+            
+            # If we have overlapping predictions, handle them
+            if trues.shape[0] > total_length:
+                # Keep first part and unique end part
+                n_unique_timesteps = 512 - trues.shape[0] + total_length
+                trues = np.concatenate([trues[:512*(total_length//512)], trues[-n_unique_timesteps:]])
+                preds = np.concatenate([preds[:512*(total_length//512)], preds[-n_unique_timesteps:]])
+        else:
+            # Single sequence case - flatten if needed
+            if len(trues.shape) > 1:
+                trues = trues.flatten()
+                preds = preds.flatten()
+        
+        logger.info(f"Final shapes - trues: {trues.shape}, preds: {preds.shape}")
+        
+        # Ensure shapes match for calculation
+        min_length = min(len(trues), len(preds))
+        if len(trues) != len(preds):
+            logger.warning(f"Shape mismatch: trues={len(trues)}, preds={len(preds)}. Trimming to {min_length}")
+            trues = trues[:min_length]
+            preds = preds[:min_length]
+        
+        # Calculate anomaly scores using MSE (following tutorial)
+        anomaly_scores = (trues - preds) ** 2
+        
+        # Determine anomaly threshold
+        threshold = np.percentile(anomaly_scores, threshold_percentile)
+        anomalies = anomaly_scores > threshold
+        
+        logger.info(f"MOMENT Anomaly Detection: {np.sum(anomalies)} anomalies detected out of {len(anomalies)} timesteps")
+        logger.info(f"Anomaly threshold ({threshold_percentile}th percentile): {threshold:.6f}")
+        logger.info(f"Anomaly scores range: {np.min(anomaly_scores):.6f} - {np.max(anomaly_scores):.6f}")
+        
+        return anomalies
+            
+
+
+    async def _response_fn(
+        sensor_data_json_path: str,
+        engine_unit: int = 5,
+        sensor_name: str = "sensor_measurement_1"
+    ) -> str:
+        """
+        Perform anomaly detection using MOMENT-1-large foundation model on JSON data from sql_retriever.
+        """
+        # Set default parameters (not exposed to LLM)ensor
+        threshold_percentile = 95.0
+        
+        try:
+            if not sensor_data_json_path.lower().endswith('.json'):
+                return "sensor_data_json_path must be a path to a JSON file (ending with .json)"
+                
+            if not os.path.exists(sensor_data_json_path):
+                return f"JSON file not found at path: {sensor_data_json_path}"
+            
+            # Load data from JSON file (output from sql_retriever)
+            from ..plotting.plot_utils import load_data_from_json
+            combined_df = load_data_from_json(sensor_data_json_path)
+            
+            if combined_df is None or combined_df.empty:
+                return f"Could not load data or data is empty from JSON file: {sensor_data_json_path}"
+            
+            # Filter for specific engine unit if specified
+            if 'unit_number' in combined_df.columns:
+                engine_data = combined_df[combined_df['unit_number'] == engine_unit]
+                if engine_data.empty:
+                    return f"No data found for engine unit {engine_unit} in the provided JSON file. Available units: {sorted(combined_df['unit_number'].unique())}"
+                
+            # Sort by cycle for proper time series analysis
+            if 'time_in_cycles' in engine_data.columns:
+                engine_data = engine_data.sort_values('time_in_cycles').reset_index(drop=True)
+            
+            logger.info(f"Engine data shape: {engine_data.shape}")
+            logger.info(f"Analyzing sensor: {sensor_name}")
+            logger.info(f"MOMENT sequence length: 512")
+            
+            # Prepare time series data for MOMENT (single sensor)
+            sequences = prepare_time_series_data_for_moment(engine_data, sensor_name, max_seq_len=512)
+            
+            if sequences is None:
+                return "Failed to prepare time series data for MOMENT analysis"
+            
+            logger.info("Starting MOMENT-based anomaly detection...")
+            anomaly_indices = detect_anomalies_with_moment(sequences, threshold_percentile)
+            
+            # Add is_anomaly column to the original dataframe
+            # Handle case where MOMENT output length differs from input length
+            if len(anomaly_indices) == len(engine_data):
+                engine_data['is_anomaly'] = anomaly_indices
+            elif len(anomaly_indices) < len(engine_data):
+                # MOMENT output is shorter - pad with False for remaining timesteps
+                padded_anomalies = np.zeros(len(engine_data), dtype=bool)
+                padded_anomalies[:len(anomaly_indices)] = anomaly_indices
+                engine_data['is_anomaly'] = padded_anomalies
+                logger.warning(f"MOMENT output length ({len(anomaly_indices)}) < input length ({len(engine_data)}). Padded with False.")
+            else:
+                # MOMENT output is longer - trim to match input length
+                engine_data['is_anomaly'] = anomaly_indices[:len(engine_data)]
+                logger.warning(f"MOMENT output length ({len(anomaly_indices)}) > input length ({len(engine_data)}). Trimmed to match.")
+            
+            # Calculate summary statistics using the final anomaly column
+            final_anomalies = engine_data['is_anomaly']
+            total_anomalies = np.sum(final_anomalies)
+            anomaly_rate = total_anomalies / len(final_anomalies) * 100
+            
+            # Save results
+            os.makedirs(config.output_folder, exist_ok=True)
+            
+            # Save the original data with is_anomaly column added
+            results_filename = f"moment_anomaly_results_engine{engine_unit}.json"
+            results_filepath = os.path.join(config.output_folder, results_filename)
+            engine_data.to_json(results_filepath, orient='records', indent=2)
+            
+            # Build comprehensive response
+            response_parts = [
+                "MOMENT-1-LARGE FOUNDATION MODEL ANOMALY DETECTION COMPLETED SUCCESSFULLY",
+                "",
+                f"Analysis Details:",
+                f"   • Engine Unit: {engine_unit}",
+                f"   • Source Data: {os.path.basename(sensor_data_json_path)}",
+                f"   • Sensor Analyzed: {sensor_name}",
+                f"   • Model: MOMENT-1-Large Foundation Model",
+                f"   • Max Sequence Length: 512",
+                f"   • Threshold Percentile: {threshold_percentile}%",
+                "",
+                f"Anomaly Detection Results:",
+                f"   • Total Timesteps Analyzed: {len(final_anomalies)}",
+                f"   • Anomalous Timesteps Detected: {total_anomalies}",
+                f"   • Anomaly Rate: {anomaly_rate:.2f}%",
+                "",
+                f"Output Files Generated:",
+                f"   • Enhanced Data with is_anomaly Column: {results_filepath}"
+            ]
+            
+            response_parts.extend([
+                "",
+                f"Key Insights:",
+                f"   • MOMENT-1-Large foundation model provides state-of-the-art time series anomaly detection",
+                f"   • Pre-trained on diverse time series data for superior pattern recognition without additional training",
+                f"   • {total_anomalies} anomalous time periods identified out of {len(final_anomalies)} analyzed sequences",
+                "",
+                f"Output Format:",
+                f"   • Original sensor data with added 'is_anomaly' boolean column",
+                f"   • Use the enhanced JSON file with plot_anomaly_tool for visualization",
+                "",
+                "MOMENT-1-LARGE ANOMALY DETECTION COMPLETE"
+            ])
+            
+            return "\n".join(response_parts)
+            
+        except Exception as e:
+            error_msg = f"Error performing MOMENT-based anomaly detection: {e}"
+            logger.error(error_msg)
+            return error_msg
+
+    description = """
+    Perform state-of-the-art anomaly detection using MOMENT-1-Large foundation model on sensor data from JSON files.
+    Outputs detailed anomaly detection results. Use plot_anomaly_tool afterward for visualization.
+    
+    Input:
+      - sensor_data_json_path: File path to a JSON containing sensor data. The file must include timestamp and engine unit number columns along with sensor data columns.
+      - engine_unit: Engine unit number to analyze (default: 5)
+      - sensor_name: Name of the specific sensor to analyze and plot (e.g., 'sensor_measurement_1', 'sensor_measurement_4', 'sensor_measurement_7', 'sensor_measurement_11') (default: 'sensor_measurement_1')
+    
+    Output:
+    - JSON file containing original sensor data with added 'is_anomaly' boolean column 
+    - Comprehensive analysis summary with key insights
+    """
+    
+    yield FunctionInfo.from_fn(_response_fn, 
+                               input_schema=MomentAnomalyDetectionInputSchema,
+                               description=description)
+    try:
+        pass
+    except GeneratorExit:
+        logger.info("moment based anomaly detection function exited early!")
+    finally:
+        logger.info("Cleaning up moment based anomaly detection workflow.")

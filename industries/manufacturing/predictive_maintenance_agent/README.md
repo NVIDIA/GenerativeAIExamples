@@ -78,6 +78,10 @@ conda activate pdm
    uv sync --all-groups --all-extras
    ```
 
+5. Install telemetry plugins
+   ```bash
+   uv pip install -e '.[telemetry]
+   ```
 
 ### 3. Install Predictive Maintenance Agent
 
@@ -210,8 +214,11 @@ Retrieve real RUL of each unit in the FD001 test dataset. Then plot a distributi
 ```
 Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.
 ```
-
 ![Prediction Example](imgs/test_prompt_3.png)
+
+**Anomaly Detection**
+1) Retrieve and detect anomalies in sensor 4 measurements for engine number 78.
+2) Retrieve and detect anomalies in sensor 4 for unit 17.
 
 ## Observability (Optional)
 

@@ -345,3 +345,216 @@ def create_distribution_plot(output_dir: str, data_json_path: str, column_name: 
     png_success = save_plotly_as_png(fig, png_filepath, width=650, height=450)
     
     return html_filepath, png_filepath if png_success else None
+
+
+def create_moment_anomaly_visualization(df: pd.DataFrame, anomaly_indices, 
+                                      anomaly_scores, sensor_name: str,
+                                      output_dir: str, engine_unit: int, dataset_name: str) -> Tuple[str, str]:
+    """Create interactive plot for MOMENT-based anomaly detection results for a single sensor."""
+    try:
+        import plotly.graph_objects as go
+        import numpy as np
+        
+        if sensor_name not in df.columns:
+            raise ValueError(f"Sensor '{sensor_name}' not found in data. Available sensors: {df.columns.tolist()}")
+        
+        # Create a simple single plot
+        fig = go.Figure()
+        
+        # Create x-axis (check for various time column names)
+        time_columns = ['time_in_cycles', 'cycle', 'time', 'timestamp']
+        x_axis = None
+        x_title = "Index"
+        
+        for col in time_columns:
+            if col in df.columns:
+                x_axis = df[col]
+                x_title = col.replace('_', ' ').title()
+                break
+        
+        if x_axis is None:
+            x_axis = df.index
+            x_title = "Index"
+        
+        # Plot all sensor readings as blue line (Observed)
+        fig.add_trace(
+            go.Scatter(
+                x=x_axis,
+                y=df[sensor_name],
+                mode='lines',
+                name='Observed',
+                line=dict(color='blue', width=2),
+                opacity=0.8
+            )
+        )
+        
+        # Plot anomalous points as red markers
+        if len(anomaly_indices) > 0 and np.any(anomaly_indices):
+            # Find where anomalies are True
+            anomaly_positions = np.where(anomaly_indices)[0]
+            
+            # Make sure we don't go beyond the dataframe length
+            valid_positions = anomaly_positions[anomaly_positions < len(df)]
+            
+            if len(valid_positions) > 0:
+                anomaly_x = x_axis.iloc[valid_positions]
+                anomaly_y = df[sensor_name].iloc[valid_positions]
+                
+                fig.add_trace(
+                    go.Scatter(
+                        x=anomaly_x,
+                        y=anomaly_y,
+                        mode='markers',
+                        name='Anomaly',
+                        marker=dict(color='red', size=6, symbol='circle'),
+                        opacity=0.9
+                    )
+                )
+        
+        fig.update_layout(
+            title=f'MOMENT Anomaly Detection - {sensor_name} (Engine {engine_unit})',
+            xaxis_title=x_title,
+            yaxis_title=f"{sensor_name}",
+            height=400,
+            showlegend=True,
+            font=dict(size=12),
+            template="plotly_white"
+        )
+        
+        # Save as HTML
+        os.makedirs(output_dir, exist_ok=True)
+        html_filename = f"moment_anomaly_detection_{sensor_name}_engine{engine_unit}.html"
+        html_filepath = os.path.join(output_dir, html_filename)
+        fig.write_html(html_filepath)
+        
+        # Save as PNG using the safe function from plot_utils
+        png_filename = f"moment_anomaly_detection_{sensor_name}_engine{engine_unit}.png"
+        png_filepath = os.path.join(output_dir, png_filename)
+        png_success = save_plotly_as_png(fig, png_filepath, width=1200, height=400)
+        
+        logger.info(f"MOMENT anomaly visualization saved: HTML={html_filepath}, PNG={'Success' if png_success else 'Failed'}")
+        
+        return html_filepath, png_filepath if png_success else None
+        
+    except ImportError:
+        logger.error("Plotly not available for visualization")
+        return None, None
+    except Exception as e:
+        logger.error(f"Error creating MOMENT anomaly visualization: {e}")
+        return None, None
+
+
+def create_anomaly_plot_from_data(data_df: pd.DataFrame, sensor_name: str, engine_unit: int, 
+                                 output_dir: str, plot_title: str = None) -> Tuple[str, str]:
+    """
+    Create anomaly detection visualization plot from sensor data with is_anomaly column.
+    
+    Args:
+        data_df: DataFrame containing sensor data with 'is_anomaly' boolean column
+        sensor_name: Name of the sensor column to plot
+        engine_unit: Engine unit number for labeling
+        output_dir: Directory to save plot files
+        plot_title: Custom title for the plot (optional)
+    
+    Returns:
+        Tuple of (html_filepath, png_filepath)
+    """
+    try:
+        import plotly.graph_objects as go
+        import numpy as np
+        
+        if sensor_name not in data_df.columns:
+            raise ValueError(f"Sensor '{sensor_name}' not found in data. Available sensors: {data_df.columns.tolist()}")
+        
+        if 'is_anomaly' not in data_df.columns:
+            raise ValueError("'is_anomaly' column not found in data. Make sure to use output from MOMENT anomaly detection tool.")
+        
+        # Create figure
+        fig = go.Figure()
+        
+        # Determine time axis (check for various time column names)
+        time_columns = ['time_in_cycles', 'cycle', 'time', 'timestamp']
+        x_axis = None
+        x_title = "Index"
+        
+        for col in time_columns:
+            if col in data_df.columns:
+                x_axis = data_df[col]
+                x_title = col.replace('_', ' ').title()
+                break
+        
+        if x_axis is None:
+            x_axis = data_df.index
+            x_title = "Index"
+        
+        # Plot all sensor readings as blue line (Observed)
+        fig.add_trace(
+            go.Scatter(
+                x=x_axis,
+                y=data_df[sensor_name],
+                mode='lines',
+                name='Observed',
+                line=dict(color='blue', width=2),
+                opacity=0.8
+            )
+        )
+        
+        # Extract anomaly points directly from the is_anomaly column
+        anomaly_mask = data_df['is_anomaly'] == True
+        anomaly_indices = data_df[anomaly_mask].index.values
+        
+        # Plot anomalous points as red markers
+        if len(anomaly_indices) > 0:
+            anomaly_x = x_axis.iloc[anomaly_indices]
+            anomaly_y = data_df[sensor_name].iloc[anomaly_indices]
+            
+            fig.add_trace(
+                go.Scatter(
+                    x=anomaly_x,
+                    y=anomaly_y,
+                    mode='markers',
+                    name='Anomaly',
+                    marker=dict(color='red', size=8, symbol='circle'),
+                    opacity=0.9
+                )
+            )
+        
+        # Set title
+        if plot_title is None:
+            title = f'Anomaly Detection - {sensor_name} (Engine {engine_unit})'
+        else:
+            title = plot_title
+        
+        fig.update_layout(
+            title=title,
+            xaxis_title=x_title,
+            yaxis_title=f"{sensor_name}",
+            height=500,
+            showlegend=True,
+            font=dict(size=12),
+            template="plotly_white"
+        )
+        
+        # Save files
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # HTML file
+        html_filename = f"anomaly_plot_{sensor_name}_engine{engine_unit}.html"
+        html_filepath = os.path.join(output_dir, html_filename)
+        fig.write_html(html_filepath)
+        
+        # PNG file using thread-safe function
+        png_filename = f"anomaly_plot_{sensor_name}_engine{engine_unit}.png"
+        png_filepath = os.path.join(output_dir, png_filename)
+        png_success = save_plotly_as_png(fig, png_filepath, width=1200, height=500)
+        
+        logger.info(f"Anomaly plot saved: HTML={html_filepath}, PNG={'Success' if png_success else 'Failed'}")
+        
+        return html_filepath, png_filepath if png_success else None
+        
+    except ImportError:
+        logger.error("Plotly not available for visualization")
+        return None, None
+    except Exception as e:
+        logger.error(f"Error creating anomaly plot: {e}")
+        return None, None
