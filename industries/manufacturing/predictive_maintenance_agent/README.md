@@ -2,7 +2,7 @@
 
 A comprehensive AI-powered predictive maintenance system built with NVIDIA AIQ Toolkit for turbofan engine health monitoring and failure prediction.
 
-Work done by: Vineeth Kalluru, Janaki Vamaraju, Sugandha Sharma, Ze Yang and Viraj Modak
+Work done by: Vineeth Kalluru, Janaki Vamaraju, Sugandha Sharma, Ze Yang, and Viraj Modak
 
 ## Overview
 
@@ -26,14 +26,12 @@ Uses the **NASA Turbofan Engine Degradation Simulation Dataset (C-MAPSS)** with:
 ## Architecture
 
 Multi-agent architecture with:
-- **React Agent Workflow**: Main orchestration using ReAct pattern
+- **ReAct Agent Workflow**: Main orchestration using ReAct pattern
 - **SQL Retriever Tool**: Generates SQL queries using NIM LLM
 - **RUL Prediction Tool**: XGBoost model for remaining useful life prediction
-- **Plotting Agent**: Multi-tool agent for data visualization
-- **Vector Database**: ChromaDB for schema information storage
-
-#### Agentic workflow architecture diagram
-![Agentic workflow](imgs/pred_maint_arch_diagram_img1.png)
+- **Anomaly Detection Tool**: Detects anomalies in sensor data using time series foundational model
+- **Plotting Agents**: Multi-tool agent for data visualization
+- **Vector Database**: ChromaDB for storing table schema, Vanna training queries, and documentation
 
 #### Agentic workflow architecture diagram w/ reasoning
 ![Agentic workflow w/ reasoning](imgs/pred_maint_arch_diagram_img2.png)
@@ -53,128 +51,229 @@ conda create -n pdm python=3.11
 conda activate pdm
 ```
 
-### 2. Install NVIDIA Nemo Agent Toolkit
+### 2. Install NVIDIA NeMo Agent Toolkit
 
-1. Clone the NeMo Agent toolkit repository to your local machine.
+1. Clone the NeMo Agent Toolkit repository to your local machine:
    ```bash
    git clone git@github.com:NVIDIA/NeMo-Agent-Toolkit.git aiqtoolkit
    cd aiqtoolkit
    ```
 
-2. Initialize, fetch, and update submodules in the Git repository.
+2. Initialize, fetch, and update submodules in the Git repository:
    ```bash
    git submodule update --init --recursive
    ```
 
-3. Fetch the data sets by downloading the LFS files.
+3. Fetch the datasets by downloading the LFS files:
    ```bash
    git lfs install
    git lfs fetch
    git lfs pull
    ```
-4. Install the NeMo Agent toolkit library.
-   To install the NeMo Agent toolkit library along with all of the optional dependencies. Including developer tools (`--all-groups`) and all of the dependencies needed for profiling and plugins (`--all-extras`) in the source repository, run the following:
+4. Install the NeMo Agent Toolkit library:
+   To install the NeMo Agent Toolkit library along with all optional dependencies, including developer tools (`--all-groups`) and all dependencies needed for profiling and plugins (`--all-extras`) in the source repository, run the following:
    ```bash
    uv sync --all-groups --all-extras
    ```
 
-5. Install telemetry plugins
+5. Install telemetry plugins:
    ```bash
-   uv pip install -e '.[telemetry]
+   uv pip install -e '.[telemetry]'
    ```
 
 ### 3. Install Predictive Maintenance Agent
 
+First, clone the GenerativeAIExamples repository inside the parent folder of NeMo-Agent-Toolkit and navigate to the Predictive Maintenance Agent folder:
+
 ```bash
-cd ..
 git clone https://github.com/NVIDIA/GenerativeAIExamples.git
 cd GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent
+```
+
+Clone the MOMENT library from GitHub inside this predictive maintenance agent folder. 
+This library is required to perform inference with MOMENT-1 time series foundational models for anomaly detection tasks. More about it [here](https://huggingface.co/AutonLab/MOMENT-1-small).
+
+```bash
+git clone https://github.com/moment-timeseries-foundation-model/moment.git
+```
+
+Change the pyproject.toml file inside the cloned library: 
+
+```bash
+cd moment
+vi pyproject.toml
+```
+
+Change the NumPy dependency from 1.25.2 to 1.26.2:
+
+```bash
+...
+dependencies = [
+  "huggingface-hub==0.24.0",
+  "numpy==1.25.2", # -->  "numpy==1.26.2"
+  "torch~=2.0",              # package was tested on 2.0.1
+  "transformers==4.33.3",
+]
+...
+```
+
+Go back to the predictive maintenance agent folder:
+
+```bash
+cd ..
+```
+
+Change the path to the cloned MOMENT library in `/path/to/predictive_maintenance_agent/pyproject.toml` if necessary.
+
+Change it from:
+```bash
+[tool.uv.sources]
+momentfm = { path = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/moment", editable = true }
+```
+to:
+```bash
+[tool.uv.sources]
+momentfm = { path = "/your/path/to/predictive_maintenance_agent/moment", editable = true }
+```
+
+This ensures that the MOMENT library will be installed from our cloned version instead of the PyPI release. 
+Now install the PDM workflow:
+
+```bash
 uv pip install -e .
 ```
 
-### 4. Environment Setup
-Export all the required environment variables form dot.env file. Update the file with your API key and secrets
-before running.
+### [Optional] Verify if all prerequisite packages are installed
+```bash
+uv pip list | grep -E "aiqtoolkit|aiqtoolkit-ragaai|aiqtoolkit-phoenix|vanna|chromadb|xgboost|pytest|torch|matplotlib"
+```
+
+### 4. Database Setup
+
+1. Download the [NASA Turbofan Dataset](https://ti.arc.nasa.gov/tech/dash/groups/pcoe/prognostic-data-repository/)
+2. Extract files to the `data/` directory
+3. Run the setup script:
+```bash
+python setup_database.py
+```
+
+### 5. Configure Paths
+
+Update `configs/config-reasoning.yml` with your local paths for database, models, and output directories.
+The `db_path` must point to the database inside your data directory.
+
+We will export the `PWD_PATH` variable in the next step and inject it into this file before running, so feel free
+to use the `PWD_PATH` environment variable wherever necessary within the config file.
+
+```bash
+db_path: "${PWD_PATH}/data/nasa_turbo.db"  # ← set it to something like this
+```
+Create an empty folder for the output data and point the output folder to that path:
+```bash
+output_folder: "${PWD_PATH}/output_data" # ← set it to something like this
+```
+
+### 6. Train Vanna SQL Agent (Important)
+
+Before starting the workflow server, you need to train the Vanna SQL agent with domain-specific knowledge. The `vanna_training_data.yaml` file contains:
+
+- **Synthetic DDL statements**: Table schemas for all NASA turbofan datasets
+- **Domain documentation**: Detailed explanations of database structure and query patterns
+- **Example queries**: Common SQL patterns for turbofan data analysis
+- **Question-SQL pairs**: Natural language to SQL mappings
+
+This training data helps the SQL agent understand:
+- How to distinguish between training, test, and RUL tables
+- Proper handling of remaining useful life calculations
+- Domain-specific terminology and query patterns
+- Table relationships and data structure
+
+The training happens automatically when you start the workflow server, using the path specified in `configs/config-reasoning.yml`:
+```yaml
+vanna_training_data_path: "${PWD_PATH}/vanna_training_data.yaml"
+```
+
+**Note**: If you modify your database structure or add new query patterns, update the `vanna_training_data.yaml` file accordingly to maintain optimal SQL generation performance.
+
+### 7. Export Environment Variables
+
+Export all required environment variables from the `dot.env` file. Update the file with your API key and secrets before running.
+
+Note: Exporting RAGA AI Catalyst related keys is necessary only if you are planning to use Catalyst to export your traces. More about this in the following sections.
 
 ```bash
 source dot.env
 ```
 
-### 5. Database Setup
+Verify that the two main keys are exported:
 
-1. Download [NASA Turbofan Dataset](https://ti.arc.nasa.gov/tech/dash/groups/pcoe/prognostic-data-repository/)
-2. Extract files to `data/` directory
-3. Run setup script:
 ```bash
-python setup_database.py
+echo $NVIDIA_API_KEY
 ```
 
-### 6. Configure Paths
-
-Update `configs/config.yml`and '`configs/config-reasoning.yml` with your local paths for database, models, and output directories.
-
-### configs/config.yml or configs/config-reasoning.yml
-  The db_path must point to the database inside your data directory.
 ```bash
-db_path: "${PWD_PATH}/data/nasa_turbo.db"  # ← set it to something like this
+echo $PWD_PATH
 ```
-Create an empty folder for the output data and point the output folder to that path 
-```bash
-output_folder: "${PWD_PATH}/output_data" # ← set it to something like this
-```
-
-
 
 ## Launch Server and UI
 
-### Start AIQ Server
+### Start FastAPI Server
 
-When using the provided config file, you need to set the PWD_PATH environment variable before starting the AIQ server. This ensures the server can locate all required paths correctly.
+With other frameworks like LangGraph or CrewAI, users are expected to develop a FastAPI server to interact with their agentic workflow. Fortunately, NeMo Agent Toolkit offers this out of the box with the simple `aiq serve --config_file <path-to-file>` command.
 
-Here's how to do it: 
+Before starting the server, check if you have set the `PWD_PATH` environment variable. This ensures that the config file is correctly populated with all paths.
 
-```bash
-aiq serve --config_file=configs/config.yml "$@"
-```
-(or)
+Start the server now:
+
 ```bash
 aiq serve --config_file=configs/config-reasoning.yml "$@"
 ```
-Server runs on `http://localhost:8000`
 
-### Spin up code execution sandbox for Reasoning workflow
+You should see something like this, which indicates that the server started successfully:
 
-If you plan to use the reasoning config, then it requires you to spin up a code execution sandbox server in a separate terminal.
+```bash
+...
+...
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
+```
 
-Note: You will need a system that can run docker. If you are running this on a MacOS laptop with no Docker Desktop then try [Colima](https://github.com/abiosoft/colima)
+During startup, you'll also see Vanna training logs as the SQL agent learns from the `vanna_training_data.yaml` file.
 
-Go to folder
+### Start Code Execution Sandbox
+
+The code generation assistant requires a standalone Python sandbox that can execute the generated code. This step starts that sandbox.
+
+Note: You will need a system that can run Docker. If you are running this on a macOS laptop without Docker Desktop, try [Colima](https://github.com/abiosoft/colima).
+
+Go back to the NeMo-Agent-Toolkit folder cloned in Step 2:
 
 ```bash
 cd /path-to/NeMo-Agent-Toolkit/src/aiq/tool/code_execution
 ```
 
-Run server by mounting your workflow's output folder as an internal volume
+Run the server by mounting your workflow's output folder as an internal volume:
 
 ```bash
 ./local_sandbox/start_local_sandbox.sh local-sandbox \\
 /path-to-output-folder-as-specified-in-config-yml/
 ```
 
-(eg)
+For example:
 
 ```bash
 ./local_sandbox/start_local_sandbox.sh local-sandbox \\
 /path-to/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data
 ```
 
-[Optional] Create a new terminal to test your sandbox by running the python script.
+[Optional] Create a new terminal to test your sandbox by running the Python script:
 
 ```bash
+cd /path-to/NeMo-Agent-Toolkit/src/aiq/tool/code_execution
 ./test_code_execution_sandbox.py
 ```
 
-Close the new terminal for testing, you don't need it anymore.
+Close the new terminal when done - you don't need it anymore.
 
 ### Setup Web Interface
 
@@ -184,13 +283,13 @@ cd AIQToolkit-UI
 npm ci
 npm run dev
 ```
-UI available at `http://localhost:3000`
+The UI is available at `http://localhost:3000`
 
 **Configure UI Settings:**
-- Click Settings icon (bottom left)
+- Click the Settings icon (bottom left)
 - Set HTTP URL to `/chat/stream` (recommended)
 - Configure theme and WebSocket URL as needed
-- Check "Enable intermediate results" and "Enable intermediate results by default" if you prefer to see all the agent calls while the workflow runs.
+- Check "Enable intermediate results" and "Enable intermediate results by default" if you prefer to see all agent calls while the workflow runs
 
 ## Example Prompts
 
@@ -217,12 +316,30 @@ Retrieve time in cycles, all sensor measurements and RUL value for engine unit 2
 ![Prediction Example](imgs/test_prompt_3.png)
 
 **Anomaly Detection**
-1) Retrieve and detect anomalies in sensor 4 measurements for engine number 78.
-2) Retrieve and detect anomalies in sensor 4 for unit 17.
+```bash
+Retrieve and detect anomalies in sensor 4 measurements for engine number 78.
+```
+
+![Anomaly Detection Example](imgs/test_prompt_4.png)
 
 ## Observability (Optional)
 
-### Monitor your system with Phoenix:
+### Monitor Your System with Phoenix
+
+Ensure that Phoenix tracing-related information is present in the config file.
+
+Uncomment this portion of `prediction_maintenance_agent/configs/config-reasoning.yml` file:
+
+```yaml
+...
+    # Uncomment this to enable tracing
+    # tracing:
+    #   phoenix:
+    #     _type: phoenix
+    #     endpoint: http://localhost:6006/v1/traces
+    #     project: pdm-test # You can replace this with your preferred project name
+...
+```
 
 ```bash
 # Docker (recommended)
@@ -232,23 +349,66 @@ docker run -p 6006:6006 -p 4317:4317 arizephoenix/phoenix:latest
 uv pip install arize-phoenix
 phoenix serve
 ```
-Access dashboard at `http://localhost:6006` to monitor traces, performance, and costs.
+Access the dashboard at `http://localhost:6006` to monitor traces, performance, and costs.
 
+### Monitor Your System with Catalyst
+
+Follow the instructions [here](https://github.com/NVIDIA/NeMo-Agent-Toolkit/blob/develop/docs/source/workflows/observe/observe-workflow-with-catalyst.md) to set up your RAGA AI profile.
+
+Ensure you update the CATALYST-related environment variables in the `dot.env` file and source that file again:
+
+```bash
+CATALYST_ACCESS_KEY="xxxxxxxxxxxxxxxx" # Change this to your RAGA AI Access key
+CATALYST_SECRET_KEY="xxxxxxxxxxxxxxxxxxxxxxxx" # Change this to your RAGA AI Secret key
+CATALYST_ENDPOINT=https://catalyst.raga.ai/api # Don't change this
+```
+
+Uncomment this portion of `prediction_maintenance_agent/configs/config-reasoning.yml` file to enable Catalyst tracing:
+
+```yaml
+...
+    # Uncomment this to enable tracing
+    # tracing:
+    #   catalyst:
+    #     _type: catalyst
+    #     project: "pdm-test" # You can replace this with your preferred project name
+    #     dataset: "pdm-dataset" # You can replace this with your preferred dataset name
+...
+```
+
+You should see Catalyst initialization-related information in the terminal when you launch the workflow server.
 
 ## Evaluation
 
+This example comes with 25 curated queries and reference answers that form our evaluation dataset. You can access this in the `eval_data/eval_set_master.json` file.
+
+We have created a smaller version of this dataset in `eval_data/eval_set_test.json` to help with quick checks before running the larger evaluation workflow.
+
 ### Evaluate with AIQ 
 
-Use this command to run the evalutions
+Update the config file with the path to the evaluation set.
+
+In `predictive_maintenance_agent/configs/config-reasoning.yml`:
+```yaml
+eval:
+  general:
+    output:
+      dir: "${PWD_PATH}/eval_output"
+      cleanup: true
+    dataset:
+      _type: json
+      file_path: "${PWD_PATH}/eval_data/eval_set_master.json" # Path to eval dataset
+    query_delay: 10  # Change this to increase delay between running queries, useful if your underlying API (like build.nvidia.com) has requests/second or rate limits
+    max_concurrent: 1  # Change this to the number of eval set entries that should be processed concurrently. Keep it at 1 to ensure smooth execution
+```
+
+Now, run this command:
+
 ```bash
 aiq eval --config_file configs/config-reasoning.yml
 ```
-### Evaluate With Catalyst:
 
-Follow instructions [here](https://github.com/NVIDIA/NeMo-Agent-Toolkit/blob/develop/docs/source/workflows/observe/observe-workflow-with-catalyst.md) to setup RAGA AI profile
-and setup secrets.
-
-[TBD]
+You should see an `eval_output` folder generated in your working directory with `multimodal_eval_output.json`. We have provided you with an example output in `eval_output/example_multimodal_eval_output.json`.
 
 ## Next Steps
 
@@ -257,9 +417,9 @@ The agent provides a foundation for industrial AI applications. Planned enhancem
 - Parallel tool execution for faster responses
 - Action recommendation agent
 - Real-time fault detection agent
-- Integration with NVIDIA's NV-Tesseract foundation models for improved accuracy.
-- Integration with Nemo Retriever for data source context.
-- Expansion of eval dataset with complex queries that involve creating Advanced SQL queries like CTEs etc.
+- Integration with NVIDIA's NV-Tesseract foundation models for improved accuracy
+- Integration with NeMo Retriever for data source context
+- Expansion of evaluation dataset with complex queries that involve creating advanced SQL queries like CTEs, etc.
 ---
 
 **Resources:**

@@ -237,36 +237,6 @@ eval:
     query_delay: 10  # seconds between queries
     max_concurrent: 1  # process queries sequentially
   evaluators:
-    # final_answer_eval:
-    #   _type: llm_judge
-    #   llm_name: judging_llm
-    #   judge_prompt: |
-    #     You are an expert evaluator for agentic workflow systems. Your task is to evaluate how well a generated answer matches the reference answer for a given question.
-
-    #     Question: {question}
-
-    #     Reference Answer: {reference_answer}
-
-    #     Generated Answer: {generated_answer}
-
-    #     Please evaluate the generated answer against the reference answer considering:
-    #     1. Factual accuracy and correctness of technical information
-    #     2. Completeness of the response (does it answer all parts of the question?)
-    #     3. Technical accuracy for predictive maintenance context (RUL predictions, sensor data analysis, etc.)
-    #     4. Relevance to the question asked
-    #     5. Quality of data analysis and insights provided
-    #     6. Appropriate use of predictive maintenance terminology and concepts
-
-    #     Provide your evaluation as a JSON object with the following format:
-    #     {{
-    #         "score": <float between 0.0 and 1.0>,
-    #         "reasoning": "<detailed explanation of your scoring, highlighting strengths and weaknesses>"
-    #     }}
-
-    #     The score should be:
-    #     - 1.0: Perfect match, completely accurate and complete response
-    #     - 0.5: Fair, partially correct but with significant issues or missing information
-    #     - 0.0: Poor, mostly incorrect but some relevant information
     multimodal_eval:
       _type: multimodal_llm_judge_evaluator
       llm_name: multimodal_judging_llm
