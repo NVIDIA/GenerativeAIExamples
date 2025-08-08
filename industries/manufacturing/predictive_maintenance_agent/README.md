@@ -34,7 +34,7 @@ Multi-agent architecture with:
 - **Vector Database**: ChromaDB for storing table schema, Vanna training queries, and documentation
 
 #### Agentic workflow architecture diagram w/ reasoning
-![Agentic workflow w/ reasoning](imgs/pred_maint_arch_diagram_img2.png)
+![Agentic workflow w/ reasoning](imgs/updated_pdm_arch.png)
 
 ## Setup and Installation
 
