@@ -1,0 +1,154 @@
+import json
+import logging
+import os
+import pandas as pd
+
+from pydantic import Field, BaseModel
+
+from aiq.builder.builder import Builder
+from aiq.builder.function_info import FunctionInfo
+from aiq.cli.register_workflow import register_function
+from aiq.data_models.function import FunctionBaseConfig
+
+logger = logging.getLogger(__name__)
+
+def verify_json_path(file_path: str) -> str:
+    """
+    Verify that the input is a valid path to a JSON file.
+    
+    Args:
+        file_path (str): Path to verify
+        
+    Returns:
+        str: Verified file path
+        
+    Raises:
+        ValueError: If input is not a string or not a JSON file
+        FileNotFoundError: If file does not exist
+        json.JSONDecodeError: If file contains invalid JSON
+    """
+    if not isinstance(file_path, str):
+        raise ValueError("Input must be a string path to a JSON file")
+    
+    if not file_path.lower().endswith('.json'):
+        raise ValueError("Input must be a path to a JSON file (ending with .json)")
+        
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"JSON file not found at path: {file_path}")
+        
+    try:
+        with open(file_path, 'r') as f:
+            json.load(f)  # Verify file contains valid JSON
+    except json.JSONDecodeError:
+        raise ValueError(f"File at {file_path} does not contain valid JSON data")
+        
+    return file_path
+
+class PlotComparisonToolConfig(FunctionBaseConfig, name="plot_comparison_tool"):
+    """
+    AIQ Toolkit function to plot comparison of two y-axis columns against an x-axis column.
+    """
+    output_folder: str = Field(description="The path to the output folder to save plots.", default="./output_data")
+
+@register_function(config_type=PlotComparisonToolConfig)
+async def plot_comparison_tool(
+    config: PlotComparisonToolConfig, builder: Builder
+):
+    class PlotComparisonInputSchema(BaseModel):
+        data_json_path: str = Field(description="The path to the JSON file containing the data")
+        x_axis_column: str = Field(description="The column name for x-axis data", default="time_in_cycles")
+        y_axis_column_1: str = Field(description="The first column name for y-axis data", default="actual_RUL")
+        y_axis_column_2: str = Field(description="The second column name for y-axis data", default="predicted_RUL")
+        plot_title: str = Field(description="The title for the plot", default="Comparison Plot")
+
+    from .plot_utils import create_comparison_plot, load_data_from_json
+
+    async def _response_fn(data_json_path: str, x_axis_column: str, y_axis_column_1: str, y_axis_column_2: str, plot_title: str) -> str:
+        """
+        Process the input message and generate comparison plot.
+        """
+        try:
+            # Load data to validate columns exist
+            df = load_data_from_json(data_json_path)
+            if df is None or df.empty:
+                return "Could not load data or data is empty from the provided JSON file"
+            
+            # Check required columns
+            required_columns = [x_axis_column, y_axis_column_1, y_axis_column_2]
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                return f"Data from {data_json_path} must contain columns: {required_columns}. Missing: {missing_columns}"
+            
+            # Use utility function to create plot
+            html_filepath, png_filepath = create_comparison_plot(
+                output_dir=config.output_folder,
+                data_json_path=data_json_path,
+                x_col=x_axis_column,
+                y_col_1=y_axis_column_1,
+                y_col_2=y_axis_column_2,
+                title=plot_title
+            )
+            
+            # Convert absolute path to file:// URL for proper browser handling
+            html_file_url = f"file://{html_filepath}"
+            
+            # Build file information for response
+            file_info = f"- HTML File: {html_filepath}\n- HTML URL: {html_file_url}"
+            if png_filepath:
+                file_info += f"\n- PNG File: {png_filepath}"
+            
+            # Return a clear completion message that the LLM will understand
+            return f"""TASK COMPLETED SUCCESSFULLY
+
+Comparison plot has been generated and saved in multiple formats.
+
+Chart Details:
+- Type: Comparison plot with two lines (Plotly)
+- X-axis: {x_axis_column}
+- Y-axis Line 1: {y_axis_column_1} (dashed teal)
+- Y-axis Line 2: {y_axis_column_2} (solid green)
+- Title: {plot_title}
+{file_info}
+
+✅ CHART GENERATION COMPLETE - NO FURTHER ACTION NEEDED"""
+            
+        except FileNotFoundError as e:
+            error_msg = f"Required data file ('{data_json_path}') not found for comparison plot: {e}"
+            logger.error(error_msg)
+            return error_msg
+        except KeyError as ke:
+            error_msg = f"Missing required columns in '{data_json_path}' for comparison plot: {ke}"
+            logger.error(error_msg)
+            return error_msg
+        except ValueError as ve:
+            error_msg = f"Data validation error for comparison plot: {ve}"
+            logger.error(error_msg)
+            return error_msg
+        except Exception as e:
+            error_msg = f"Error generating comparison plot: {e}"
+            logger.error(error_msg)
+            return error_msg
+
+    prompt = """
+    Generate interactive comparison plot between two columns from JSON data using Plotly.
+    
+    Input:
+    - data_json_path: Path to the JSON file containing the data
+    - x_axis_column: Column name for x-axis data
+    - y_axis_column_1: Column name for first y-axis data
+    - y_axis_column_2: Column name for second y-axis data
+    - plot_title: Title for the plot
+    
+    Output:
+    - HTML file containing the interactive comparison plot
+    - PNG file containing the static comparison plot
+    """
+    yield FunctionInfo.from_fn(_response_fn, 
+                               input_schema=PlotComparisonInputSchema,
+                               description=prompt)
+    try:
+        pass
+    except GeneratorExit:
+        logger.info("Plot comparison function exited early!")
+    finally:
+        logger.info("Cleaning up plot_comparison_tool workflow.")

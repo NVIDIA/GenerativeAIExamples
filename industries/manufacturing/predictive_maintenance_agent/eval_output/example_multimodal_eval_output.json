@@ -1,0 +1,348 @@
+{
+  "average_score": 0.84,
+  "eval_output_items": [
+    {
+      "id": 1,
+      "score": 1.0,
+      "reasoning": {
+        "question": "What is the ground truth remaining useful life (RUL) of unit_number 59 in dataset FD001",
+        "reference_answer": "114 ",
+        "generated_answer": "The ground truth Remaining Useful Life (RUL) for unit_number 59 in dataset FD001 is 114 cycles.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response fully matches the reference answer semantically, providing the exact ground truth Remaining Useful Life (RUL) for unit_number 59 in dataset FD001.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 2,
+      "score": 1.0,
+      "reasoning": {
+        "question": "What is the ground truth RUL of unit_number 20 in dataset FD001",
+        "reference_answer": "16 ",
+        "generated_answer": "The ground truth RUL for unit_number 20 in dataset FD001 is 16.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer, providing the exact ground truth RUL for unit_number 20 in dataset FD001.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 3,
+      "score": 1.0,
+      "reasoning": {
+        "question": "How many units have ground truth RUL of 100 or more in dataset FD003",
+        "reference_answer": "33 ",
+        "generated_answer": "There are 33 units in dataset FD003 with a ground truth RUL of 100 or more. The data has been saved to /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/count_units_in_fd003_where_gro_results.json for reference.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. It accurately states the number of units with a ground truth RUL of 100 or more in dataset FD003 and provides a file path for reference, matching the reference answer's content and meaning.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 4,
+      "score": 1.0,
+      "reasoning": {
+        "question": "How many units have ground truth RUL of 50 or less in dataset FD002",
+        "reference_answer": "88 ",
+        "generated_answer": "There are 88 units in FD002 with a ground truth RUL of 50 or less. The result has been saved to /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/count_units_in_fd002_where_gro_results.json.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. The generated text accurately states the number of units with a ground truth RUL of 50 or less in dataset FD002, and also mentions the location of the saved result, which is not present in the reference answer but does not affect the semantic match.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 5,
+      "score": 1.0,
+      "reasoning": {
+        "question": "Report the unit_number of the units that have ground truth RUL equal to 155 in FD002",
+        "reference_answer": "6, 141, 165 ",
+        "generated_answer": "The unit numbers from the FD002 dataset that have a ground truth RUL equal to 155 are 6, 141, and 165.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. The unit numbers mentioned in the generated response (6, 141, and 165) are identical to those in the reference answer, indicating a perfect match.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 6,
+      "score": 0.0,
+      "reasoning": {
+        "question": "In the dataset FD004, how many units have ground truth RUL equal to 10 and what are their unit numbers?",
+        "reference_answer": "4 units; unit numbers: 40, 82, 174, 184",
+        "generated_answer": "In the dataset FD004, there are 4 units with a ground truth RUL equal to 10. The unit numbers are 40, 82, 174, and another unit which is not shown in the sample data but is included in the full result set. The full list of unit numbers is saved in the file `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/in_fd004_count_units_where_gro_results.json`.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response partially matches the reference answer semantically. Although it correctly states the number of units with ground truth RUL equal to 10, it incorrectly mentions that the unit numbers are not shown in the sample data but are included in the full result set. The reference answer explicitly lists the unit numbers, which are not present in the generated response.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 7,
+      "score": 1.0,
+      "reasoning": {
+        "question": "In dataset train_FD004, what was the operational_setting_3 at time_in_cycles 20 for unit_number 107",
+        "reference_answer": "100 ",
+        "generated_answer": "The operational_setting_3 at time_in_cycles 20 for unit_number 107 in the dataset train_FD004 is **100.0**.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response fully matches the reference answer semantically, providing the exact value of 100.0 for the operational_setting_3 at time_in_cycles 20 for unit_number 107 in the dataset train_FD004.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 8,
+      "score": 1.0,
+      "reasoning": {
+        "question": "In dataset train_FD004, what was the 3rd operational setting at time 20 for unit_number 107",
+        "reference_answer": "100 ",
+        "generated_answer": "The 3rd operational setting (operational_setting_3) for unit number 107 at time in cycles 20 is 100.0.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response fully matches the reference answer semantically, providing the exact value of 100 for the 3rd operational setting at time 20 for unit number 107.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 9,
+      "score": 1.0,
+      "reasoning": {
+        "question": "In dataset test_FD002, what are the values of the three operational setting for unit_number 56 at time_in_cycles 10",
+        "reference_answer": "10.0026, 0.25, 100 ",
+        "generated_answer": "For unit_number 56 at time_in_cycles 10 in test_FD002, the operational settings are: operational_setting_1 = 10.0026, operational_setting_2 = 0.25, and operational_setting_3 = 100.0.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response fully matches the reference answer semantically, providing the exact values for the three operational settings for unit_number 56 at time_in_cycles 10 in test_FD002.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 10,
+      "score": 1.0,
+      "reasoning": {
+        "question": "In dataset test_FD003, what is the value of sensor_measurement_4 for unit_number 25 at time_in_cycles 20",
+        "reference_answer": "1409.26 ",
+        "generated_answer": "The value of `sensor_measurement_4` for `unit_number` 25 at `time_in_cycles` 20 in `test_FD003` is **1409.26**. The SQL query executed was: `SELECT sensor_measurement_4 FROM test_FD003 WHERE unit_number = 25 AND time_in_cycles = 20`. This query directly provided the sensor measurement you were looking for. The result is contained in the file: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/what_is_the_value_of_sensor_me_results.json which has 1 row with the column `sensor_measurement_4`.",
+        "llm_judgment": "{\n    \"score\": 1.0,\n    \"reasoning\": \"EVALUATION TYPE: TEXT - The generated response fully matches the reference answer semantically. It provides the exact value of sensor_measurement_4 for unit_number 25 at time_in_cycles 20 in test_FD003, which is 1409.26. The response also includes a detailed description of the SQL query executed and the location of the result in the output file, which further supports the accuracy of the answer.<|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|>",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 11,
+      "score": 1.0,
+      "reasoning": {
+        "question": "How many units have operational_setting_3 equal to 100 in dataset train_FD001 at time_in_cycles 40?",
+        "reference_answer": "100 ",
+        "generated_answer": "There are 100 units in the `train_FD001` dataset where `operational_setting_3` is equal to 100 and `time_in_cycles` is equal to 40.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated text answer fully matches the reference answer semantically, providing the exact number of units with the specified conditions.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 12,
+      "score": 1.0,
+      "reasoning": {
+        "question": "How many units have operational_setting_3 equal to 100 in dataset train_FD001?",
+        "reference_answer": "100 ",
+        "generated_answer": "There are 100 distinct units where `operational_setting_3` equals 100.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated text answer fully matches the reference answer semantically, providing the exact number of units where operational_setting_3 equals 100.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 13,
+      "score": 1.0,
+      "reasoning": {
+        "question": "In dataset train_FD003, what was sensor_measurement_20 and sensor_measurement_21 for unit 1 at time_in_cycles 10",
+        "reference_answer": "38.94, 23.4781 ",
+        "generated_answer": "The sensor measurements for unit 1 at the 10th cycle from the `train_FD003` table are:\n- **sensor_measurement_20**: 38.94\n- **sensor_measurement_21**: 23.4781",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated answer provides a clear and concise description of the sensor measurements, matching the reference answer semantically with no missing or incorrect elements, resulting in a perfect score.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 14,
+      "score": 1.0,
+      "reasoning": {
+        "question": "For dataset test_FD004, what is the ground truth remaining useful life of unit 60",
+        "reference_answer": "139 ",
+        "generated_answer": "The ground truth Remaining Useful Life (RUL) for unit 60 from the `test_FD004` dataset is **139**.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated answer is a direct quote of the reference answer, indicating a perfect match semantically.",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 15,
+      "score": 0.0,
+      "reasoning": {
+        "question": "Using the data in test_FD002, predict the remaining useful life of unit_number 10 at time_in_cycles 84",
+        "reference_answer": "79 ",
+        "generated_answer": "I seem to be having a problem.",
+        "llm_judgment": "{\n    \"score\": 0.0,\n    \"reasoning\": \"EVALUATION TYPE: TEXT - The generated answer does not match the reference answer semantically, it does not provide any information about the remaining useful life<|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|><|reserved_special_token_246|>",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "TEXT"
+      }
+    },
+    {
+      "id": 16,
+      "score": 0.0,
+      "reasoning": {
+        "question": "Given the data in test_FD003, predict the RUL of unit_number 30",
+        "reference_answer": "89 ",
+        "generated_answer": "The RUL predictions for unit_number 30 from test_FD003 have been generated and visualized. The average predicted RUL is 108.74 cycles, with a minimum of 79.36 cycles and a maximum of 123.95 cycles. The standard deviation of the predictions is 9.49 cycles. The line chart showing the predicted RUL over time is available in the following formats:\n- Interactive HTML file: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_predicted_RUL.html\n- Static PNG file: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_predicted_RUL.png\n\nThe plot displays the predicted RUL for unit 30 over the number of cycles, providing a clear visualization of the remaining useful life predictions.",
+        "llm_judgment": "**EVALUATION TYPE: PLOT**\n\nThe generated plot shows the predicted RUL for unit 30 over time, with a clear visualization of the remaining useful life predictions. The plot displays the predicted RUL for unit 30 over the number of cycles, providing a clear visualization of the remaining useful life predictions.\n\nUpon examining the plot, it appears that the predicted RUL values are generally higher than the reference answer of 89 cycles. The plot shows a range of predicted RUL values, with some values exceeding 100 cycles. However, the plot does not provide a clear indication of the exact RUL value for unit 30.\n\n**Score: 0.0**\n\nThe generated plot does not match the reference answer description, as it does not provide a clear indication of the exact RUL value for unit 30. The plot shows a range of predicted RUL values, but it does not provide a specific value that matches the reference answer of 89 cycles.",
+        "plot_paths": [
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_predicted_RUL.png"
+        ],
+        "num_images_analyzed": 1,
+        "evaluation_type": "PLOT"
+      }
+    },
+    {
+      "id": 17,
+      "score": 1.0,
+      "reasoning": {
+        "question": "In dataset train_FD004, plot sensor_measurement1 vs time_in_cycles for unit_number 107",
+        "reference_answer": "Line chart showing sensor_measurement1 values on y-axis ranging from 445.00 to 518.67 plotted against time_in_cycles in x-axisfor unit 107 in dataset FD004.",
+        "generated_answer": "The interactive line chart for sensor_measurement1 vs time_in_cycles for unit_number 107 from the train_FD004 dataset has been generated. The chart shows the variation of sensor measurement 1 over time in cycles for the specified unit. The HTML file can be viewed at the following URL: file:///Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.html, and the static PNG file is located at /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot shows all major elements described in the reference answer, including the line chart with sensor_measurement1 values on the y-axis ranging from 445.00 to 518.67 plotted against time_in_cycles in the x-axis for unit 107 in dataset FD004. The plot matches the reference answer description perfectly.",
+        "plot_paths": [
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png"
+        ],
+        "num_images_analyzed": 1,
+        "evaluation_type": "PLOT"
+      }
+    },
+    {
+      "id": 18,
+      "score": 1.0,
+      "reasoning": {
+        "question": "In dataset train_FD004, plot the variation of sensor_measurement1 over time for unit_number 107",
+        "reference_answer": "Line chart displaying the variation of sensor_measurement1 values on y-axis over time cycles in x-axis for unit 107 in dataset FD004. The plot should illustrate how sensor_measurement1 changes across different time cycles, demonstrating the temporal variation pattern of this sensor reading.",
+        "generated_answer": "The variation of sensor_measurement1 over time for unit_number 107 in the train_FD004 dataset has been plotted. The visualization is available in both interactive HTML and static PNG formats. You can view the interactive chart by opening the HTML file located at `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.html` or by clicking [here](file:///Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.html). The static PNG version of the chart is located at `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png`.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description perfectly, showing all major elements described, including the variation of sensor_measurement1 values over time cycles for unit 107 in dataset FD004.",
+        "plot_paths": [
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png"
+        ],
+        "num_images_analyzed": 1,
+        "evaluation_type": "PLOT"
+      }
+    },
+    {
+      "id": 19,
+      "score": 1.0,
+      "reasoning": {
+        "question": "In dataset train_FD002, plot operational_setting_3 vs time_in_cycles for unit_number 200",
+        "reference_answer": "Line chart showing operational_setting_3 values on y-axis ranging against time_in_cycles in x-axis for unit 200 in dataset FD002. Only two values 100 and 60 should be visible on the plot.",
+        "generated_answer": "The interactive line chart plotting operational_setting_3 vs time_in_cycles for unit_number 200 from the train_FD002 dataset has been generated. You can view the chart by opening the HTML file located at `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_operational_setting_3.html` or by viewing the static PNG file at `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_operational_setting_3.png`. The chart shows how operational_setting_3 changes over time_in_cycles for unit_number 200.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot shows all major elements described in the reference answer, including the line chart with operational_setting_3 values on the y-axis and time_in_cycles on the x-axis for unit 200 in dataset FD002. The plot only shows two values, 100 and 60, which matches the reference answer.",
+        "plot_paths": [
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_operational_setting_3.png"
+        ],
+        "num_images_analyzed": 1,
+        "evaluation_type": "PLOT"
+      }
+    },
+    {
+      "id": 20,
+      "score": 1.0,
+      "reasoning": {
+        "question": "Plot a histogram showing distribution of values of operational_setting_3 over time for unit_number 200 in dataset train_FD002",
+        "reference_answer": "Histogram Two bars for 100 and 60 with higher bar for 100",
+        "generated_answer": "The distribution histogram for `operational_setting_3` over time for unit_number 200 in the `train_FD002` dataset has been generated. The plot shows the distribution of `operational_setting_3` values. You can view the interactive HTML plot at the following URL: file:///Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_operational_setting_3.html, or open the static PNG file located at /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_operational_setting_3.png.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot shows two bars for 100 and 60, with the higher bar for 100, matching the reference answer description.",
+        "plot_paths": [
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_operational_setting_3.png"
+        ],
+        "num_images_analyzed": 1,
+        "evaluation_type": "PLOT"
+      }
+    },
+    {
+      "id": 21,
+      "score": 1.0,
+      "reasoning": {
+        "question": "In dataset test_FD001 plot a histogram showing the distribution of operational_setting_3 across all units",
+        "reference_answer": "Constant value 100, so just one high bar for 100",
+        "generated_answer": "Histogram for Operational Setting 3 in test_FD001 generated successfully. \nInteractive Version: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_operational_setting_3.html\nStatic Version: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_operational_setting_3.png\n\nThe histogram provides a visual representation of the distribution of operational_setting_3 values across all units in the test_FD001 dataset.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot shows a single high bar for 100, matching the reference answer description of a constant value 100.",
+        "plot_paths": [
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_operational_setting_3.png"
+        ],
+        "num_images_analyzed": 1,
+        "evaluation_type": "PLOT"
+      }
+    },
+    {
+      "id": 22,
+      "score": 0.0,
+      "reasoning": {
+        "error": "Unified evaluation failed: [400] Bad Request\nAt most 1 image(s) may be provided in one request.",
+        "question": "In dataset test_FD001 plot operational_setting_3 as a function of time_in_cycles for units 10, 20, 30, 40",
+        "reference_answer": "Four constant lines at 100",
+        "generated_answer": "The line charts for operational_setting_3 as a function of time_in_cycles for units 10, 20, 30, and 40 have been generated. The HTML files are located in the specified output directory:\n\n- Unit 10: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/unit_10_operational_setting_3.html\n- Unit 20: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/unit_20_operational_setting_3.html\n- Unit 30: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/unit_30_operational_setting_3.html\n- Unit 40: /Users/vik0: /Users/vik",
+        "plot_paths": [],
+        "num_images_analyzed": 0,
+        "evaluation_type": "ERROR"
+      }
+    },
+    {
+      "id": 23,
+      "score": 1.0,
+      "reasoning": {
+        "question": "Retrieve RUL of all units from the FD001 and plot their distribution using a histogram",
+        "reference_answer": "Histogram showing distribution of RUL values for all units in FD001 dataset. Should contain 100 data points representing different RUL values ranging from 7 to 145 cycles. The distribution should show 71 unique RUL values with varying frequencies. The plot should display the spread and frequency of remaining useful life values across all engine units in the dataset.",
+        "generated_answer": "The distribution histogram of the RUL for all units in the FD001 dataset has been generated. The plot shows the distribution of Remaining Useful Life values across the 100 engine units. The histogram is available in both HTML and PNG formats at the following paths:\n- HTML File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_RUL.html\n- PNG File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_RUL.png\n\nYou can view the interactive HTML plot by opening the HTML file in a web browser.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot shows all major elements described in the reference answer, including the distribution of RUL values for all units in FD001 dataset, 100 data points representing different RUL values ranging from 7 to 145 cycles, and 71 unique RUL values with varying frequencies. The plot displays the spread and frequency of remaining useful life values across all engine units in the dataset, matching the reference answer description.",
+        "plot_paths": [
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_RUL.png"
+        ],
+        "num_images_analyzed": 1,
+        "evaluation_type": "PLOT"
+      }
+    },
+    {
+      "id": 24,
+      "score": 1.0,
+      "reasoning": {
+        "question": "Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.",
+        "reference_answer": "A Plot showing both actual RUL values and predicted RUL values trend (in y-axis) plotted against time in cycles (in x-axis) for engine unit 24",
+        "generated_answer": "The comparison plot has been generated and saved in the following locations:\n- HTML File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/comparison_plot_actual_RUL_vs_predicted_RUL.html\n- PNG File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/comparison_plot_actual_RUL_vs_predicted_RUL.png\n\nThe plot compares the actual RUL (dashed teal line) with the predicted RUL (solid green line) across time in cycles for engine unit 24. This visualization helps in assessing the accuracy of the RUL predictions.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot shows both actual RUL values and predicted RUL values trend plotted against time in cycles for engine unit 24, matching the reference answer description.",
+        "plot_paths": [
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/comparison_plot_actual_RUL_vs_predicted_RUL.png"
+        ],
+        "num_images_analyzed": 1,
+        "evaluation_type": "PLOT"
+      }
+    },
+    {
+      "id": 25,
+      "score": 1.0,
+      "reasoning": {
+        "question": "Retrieve and detect anomalies in sensor 4 measurements for engine number 78.",
+        "reference_answer": "A Plot showing observed values and anomalies in sensor 4 measurements for engine number 78",
+        "generated_answer": "The anomaly detection for sensor 4 measurements in engine number 78 has been completed. The results show that out of 72 data points, 4 were identified as anomalies. The visualization is available in the following files:\n- Interactive HTML plot: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/anomaly_plot_sensor_measurement_4_engine78.html\n- PNG image: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/anomaly_plot_sensor_measurement_4_engine78.png\n\nThe plot displays the observed sensor readings with blue lines and highlights the detected anomalies with red markers. The interactive plot allows for zooming and hovering over data points for detailed inspection.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description perfectly, showing all major elements including observed values, anomalies, and interactive features.",
+        "plot_paths": [
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/anomaly_plot_sensor_measurement_4_engine78.png"
+        ],
+        "num_images_analyzed": 1,
+        "evaluation_type": "PLOT"
+      }
+    }
+  ]
+}
