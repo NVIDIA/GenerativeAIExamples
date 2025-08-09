@@ -27,18 +27,6 @@ from aiq.runtime.loader import load_workflow
 
 logger = logging.getLogger(__name__)
 
-def setup_environment():
-    """Setup required environment variables for the workflow."""
-    # Set PWD_PATH to current directory as mentioned in README
-    current_dir = Path(__file__).parent.absolute()
-    os.environ["PWD_PATH"] = str(current_dir)
-    
-    # Ensure NVIDIA_API_KEY is set (should be set externally
-    os.environ["NVIDIA_API_KEY"] = "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"
-    
-    logger.error(f"PWD_PATH set to: {os.environ['PWD_PATH']}")
-
-
 async def run_workflow_with_prompt(prompt: str):
     """
     Helper function to run the workflow with a given prompt.
@@ -49,12 +37,10 @@ async def run_workflow_with_prompt(prompt: str):
     Returns:
         str: The result from the workflow execution
     """
-    # Setup environment variables
-    setup_environment()
     
     # Use our own package for config file location
     package_name = inspect.getmodule(register).__package__
-    config_file: Path = importlib.resources.files(package_name).parent.parent.joinpath("configs", "config-reasoning.yml").absolute()
+    config_file: Path = Path(os.getcwd()).joinpath("configs", "config-reasoning.yml").absolute()
 
     async with load_workflow(config_file) as workflow:
         async with workflow.run(prompt) as runner:

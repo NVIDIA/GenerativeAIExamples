@@ -378,6 +378,24 @@ Uncomment this portion of `prediction_maintenance_agent/configs/config-reasoning
 
 You should see Catalyst initialization-related information in the terminal when you launch the workflow server.
 
+## [Optional] Testing the Workflow
+
+NeMo Agent Toolkit provides the flexibility to run workflows not just through terminal commands (`aiq serve`) but also programmatically in Python which helps in seamless CI/CD pipeline integration. 
+
+You can test the workflow by running the `test_pdm_workflow.py` file using pytest instead of starting the server, which provides a Pythonic way of building and running the workflow programmatically. This approach is particularly valuable for continuous integration and deployment systems, allowing automated validation of workflow components and streamlined deployment processes.
+
+Ensure that you export `$PWD_PATH` and `$NVIDIA_API_KEY` environment variables before running:
+
+```bash
+pytest test_pdm_workflow.py -m e2e -v
+```
+
+To run individual tests in the file:
+
+```bash
+pytest test_pdm_workflow.py -k "<test_name>" -v
+```
+
 ## Evaluation
 
 This example comes with 25 curated queries and reference answers that form our evaluation dataset. You can access this in the `eval_data/eval_set_master.json` file.
