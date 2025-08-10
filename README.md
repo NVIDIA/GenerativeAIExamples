@@ -14,6 +14,7 @@ This repository is a starting point for developers looking to integrate with the
 
 * [What's New?](#whats-new)
   * [Data Flywheel](#data-flywheel)
+  * [Safer Agentic AI](#safer-agentic-ai)
   * [Knowledge Graph RAG](#knowledge-graph-rag)
   * [Agentic Workflows with Llama 3.1](#agentic-workflows-with-llama-31)
   * [RAG with Local NIM Deployment and LangChain](#rag-with-local-nim-deployment-and-langchain)
@@ -38,9 +39,17 @@ This repository is a starting point for developers looking to integrate with the
 
 ### Data Flywheel
 
-This tutorial demonstrates an end-to-end Data Flywheel implementation that uses NVIDIA NeMo Microservices. It features a tool-calling workflow with the NVIDIA NeMo Datastore, NeMo Entity Store, NeMo Customizer, NeMo Evaluator, NeMo Guardrails microservices, and NVIDIA NIMs.
+These tutorials demonstrate Data Flywheel workflows that use NVIDIA NeMo Microservices. They include components such as NVIDIA NeMo Datastore, NeMo Entity Store, NeMo Customizer, NeMo Evaluator, NeMo Guardrails microservices, and NVIDIA NIMs.
 
-- [Tool Calling Fine-tuning, Inference, and Evaluation with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/tool-calling)
+- [Tool Calling Fine-tuning, Inference, Evaluation, and Guardrailing with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/tool-calling)
+- [Embedding Fine-tuning, Inference, and Evaluation with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/embedding-finetuning/)
+
+### Safer Agentic AI
+
+The following tutorials illustrate how to audit your large language models with NeMo Auditor to identify vulnerabilities to unsafe prompts, and how to run inference with multiple rails in parallel to reduce latency and improve throughput. 
+
+- [Audit your LLMs](./nemo/NeMo-Auditor/Getting_Started_With_NeMo_Auditor.ipynb)
+- [Inference with Parallel Rails](./nemo/NeMo-Guardrails/Parallel_Rails_Tutorial.ipynb)
 
 ### Knowledge Graph RAG
 
