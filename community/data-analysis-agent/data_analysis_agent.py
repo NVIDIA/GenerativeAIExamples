@@ -19,14 +19,17 @@ import streamlit as st
 from openai import OpenAI
 import matplotlib.pyplot as plt
 from typing import List, Dict, Any, Tuple
+from dotenv import load_dotenv
+load_dotenv()
 
 # === Configuration ===
 api_key = os.environ.get("NVIDIA_API_KEY")
-
 client = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
     api_key=api_key
 )
+
+
 
 # ------------------  QueryUnderstandingTool ---------------------------
 def QueryUnderstandingTool(query: str) -> bool:
@@ -39,6 +42,7 @@ def QueryUnderstandingTool(query: str) -> bool:
     
     response = client.chat.completions.create(
         model="nvidia/llama-3.1-nemotron-ultra-253b-v1",
+        #model="gpt-4o-mini",
         messages=messages,
         temperature=0.1,
         max_tokens=5  # We only need a short response
@@ -95,6 +99,7 @@ def CodeGenerationAgent(query: str, df: pd.DataFrame):
 
     response = client.chat.completions.create(
         model="nvidia/llama-3.1-nemotron-ultra-253b-v1",
+        #model="gpt-4o-mini",
         messages=messages,
         temperature=0.2,
         max_tokens=1024
@@ -160,6 +165,7 @@ def ReasoningAgent(query: str, result: Any):
     # Streaming LLM call
     response = client.chat.completions.create(
         model="nvidia/llama-3.1-nemotron-ultra-253b-v1",
+        #model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "detailed thinking on. You are an insightful data analyst."},
             {"role": "user", "content": prompt}
@@ -221,6 +227,7 @@ def DataInsightAgent(df: pd.DataFrame) -> str:
     try:
         response = client.chat.completions.create(
             model="nvidia/llama-3.1-nemotron-ultra-253b-v1",
+            #model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "detailed thinking off. You are a data analyst providing brief, focused insights."},
                 {"role": "user", "content": prompt}
@@ -257,10 +264,20 @@ def main():
     with left:
         st.header("Data Analysis Agent")
         st.markdown("<medium>Powered by <a href='https://build.nvidia.com/nvidia/llama-3_1-nemotron-ultra-253b-v1'>NVIDIA Llama-3.1-Nemotron-Ultra-253B-v1</a></medium>", unsafe_allow_html=True)
-        file = st.file_uploader("Choose CSV", type=["csv"])
+        #file = st.file_uploader("Choose CSV", type=["csv"])
+        file = st.file_uploader("Choose CSV or Excel", type=["csv", "xlsx"])
+
         if file:
             if ("df" not in st.session_state) or (st.session_state.get("current_file") != file.name):
-                st.session_state.df = pd.read_csv(file)
+                if file.name.endswith(".csv"):
+                    st.session_state.df = pd.read_csv(file)
+                elif file.name.endswith(".xlsx"):
+                    st.session_state.df = pd.read_excel(file)
+                else:
+                    st.error("Unsupported file format.")
+                    return
+                
+                
                 st.session_state.current_file = file.name
                 st.session_state.messages = []
                 with st.spinner("Generating dataset insights …"):
