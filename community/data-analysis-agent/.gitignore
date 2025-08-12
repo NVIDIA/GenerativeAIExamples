@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Streamlit
+.streamlit/
+
+# Model files
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.onnx
+*.pb
+
+# Data files
+*.csv
+
+# Logs
+*.log
+logs/
+
+# API keys and secrets
+.env
+.env.local
+.env.production
+secrets.json
+config.json
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~ 
