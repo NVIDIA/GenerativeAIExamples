@@ -26,7 +26,7 @@ To run the lab, ensure you have:
   - Kinetica database access (credentials in `.env` file).
 - **Dependencies**: Listed in `requirements.txt` in the respective directories.
 
-## Lab Setup
+## 5G Lab Setup
 
 The lab setup configures a fully functional 5G network simulation environment. To set up the lab, first you will need to run autonomous_5g_slicing_lab/Automatic_5G_Network_Lab_Setup.ipynb to configure your environment, and then you will need to run the Jupyter notebook located at `autonomous_5g_slicing_lab/llm-slicing-5g-lab/DLI_Lab_Setup.ipynb`. The notebook automates the following steps:
 
@@ -43,6 +43,12 @@ The lab setup configures a fully functional 5G network simulation environment. T
 In summary, to start your lab, you need to follow these steps:
 1. **Open 'autonomous_5g_slicing_lab/Automatic_5G_Network_Lab_Setup.ipynb' in the main directory and set up your environment keys
 2. **Open 'autonomous_5g_slicing_lab/llm-slicing-5g-lab/DLI_Lab_Setup.ipynb and set up your 5G Network Environment
+
+## Running Graphana Dashboard
+
+This lab uses Graphana for visualization. You need to install the Graphana environment with the following instructions 
+1. Open the `autonomous_5g_slicing_lab/agentic-llm/REAME_GRAPHANA.md' and follow the instructions.
+Ensure you verify the Graphana environment, and you save the GRAPHANA_DASHBOARD variable in the `autonomous_5g_slicing_lab/agentic-llm/confg.yaml file.
 
 ## Running the Agentic Workflow
 
@@ -84,6 +90,7 @@ After running the shutdown notebook, you can restart the lab by re-running `DLI_
   - `.env`: Environment variables (e.g., Kinetica credentials).
   - `logs/`: Directory for log files (created during execution).
 - `autonomous_5g_slicing_lab/agentic-llm/`:
+  - `README_GRAPHANA.md `: Markdown file to install and setup Graphana.
   - `agentic_pipeline-DLI.ipynb`: Notebook for running the LangGraph agent UI.
   - `requirements.txt`: Python dependencies for the agentic workflow.
 

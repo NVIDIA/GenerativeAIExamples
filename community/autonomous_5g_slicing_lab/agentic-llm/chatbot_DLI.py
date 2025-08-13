@@ -13,18 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#Streamlit User Interface for visualizing the 5G Network Agent
+#Streamlit User Interface for visualizing the 5G Network Agent with Grafana
 import streamlit as st
 import pandas as pd
 import time
 import re
-import matplotlib.pyplot as plt
 import numpy as np
 import time
 import streamlit as st
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from matplotlib.ticker import FuncFormatter
 import subprocess
 import os
 import signal
@@ -34,6 +32,7 @@ from dotenv import load_dotenv
 import json
 import logging
 import colorlog
+from influxdb_utils import InfluxDBMetricsClient
 
 
 # Configure colored logging.
@@ -57,6 +56,7 @@ logger.propagate = False
 # Configuration: Paths for both log files
 config_file =  yaml.safe_load(open('config.yaml', 'r'))
 AGENT_LOG_FILE = config_file['AGENT_LOG_FILE']
+GRAPHANA_DASHBOARD = config_file['GRAPHANA_DASHBOARD']
 os.makedirs(os.path.dirname(AGENT_LOG_FILE), exist_ok=True)
 
 # Create the file if it doesn't exist
@@ -92,6 +92,10 @@ def generate_sql_query(ue:str):
             ORDER BY
                 "timestamp" DESC
             """
+
+# Initialize InfluxDB client
+influx_client = InfluxDBMetricsClient()
+influx_client.connect()
 
 # Initialize session state for persistent data storage
 if "data_ue1" not in st.session_state:
@@ -143,33 +147,9 @@ def get_cutoff_time() -> str:
     current_time = pd.Timestamp.utcnow().tz_convert("UTC")
     return (current_time - pd.Timedelta(seconds=WINDOW_SIZE_SECONDS))
 
-def create_plot():
-    plt.close("all")
-    plt.style.use("dark_background")
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(4,4))
-    ax1.set_title("User Equipment 1", fontsize=8, color="white")
-    ax1.grid(True, linestyle="--", linewidth=0.5, color="gray")
-    ax1.set_ylim(0, 100)
-    ax1.tick_params(axis="y", colors="#FFD700", labelsize=5)
-    ax1.tick_params(axis="x", colors="#FFD700", labelsize=5)
-
-    ax1_twin = ax1.twinx()
-    ax1_twin.set_ylim(0, 60)
-    ax1_twin.tick_params(axis="y", colors="#FF8C00", labelsize=5)
-
-    ax2.set_title("User Equipment 2", fontsize=8, color="white")
-    ax2.grid(True, linestyle="--", linewidth=0.5, color="gray")
-    ax2.set_ylim(0, 100)
-    ax2.tick_params(axis="y", colors="#FFD700", labelsize=5)
-    ax2.tick_params(axis="x", colors="#FFD700", labelsize=5)
-
-    ax2_twin = ax2.twinx()
-    ax2_twin.set_ylim(0, 60)
-    ax2_twin.tick_params(axis="y", colors="#FF8C00", labelsize=5)
-    plt.tight_layout(pad=2.0)
-
-    return fig
-
+def get_grafana_dashboard_url():
+    """Get the Grafana dashboard URL for embedding (cloud version)"""
+    return f"https://9002-{GRAPHANA_DASHBOARD}.brevlab.com/d/5g-metrics/5g-network-metrics-dashboard?orgId=1&refresh=5s&theme=dark"
 
 st.set_page_config(page_title="Real-Time Packet Loss & Transfer Rate",  layout="wide")
 st.title("5G-Network Configuration Agent")
@@ -196,10 +176,33 @@ with col_logs:
     log_display.code('', height=600)
 
 with col_charts:
-    # Create placeholders for the charts
-    chart_placeholder = st.empty()
-    fig = create_plot()
-    chart_placeholder.pyplot(fig)
+    
+    # Check if Grafana is accessible
+    try:
+        import requests
+        # In the health check, use the configured dashboard URL
+        response = requests.get(f"https://9002-{GRAPHANA_DASHBOARD}.brevlab.com", timeout=5)
+        if response.status_code == 200:
+            
+            # Embed Grafana dashboard
+            dashboard_url = get_grafana_dashboard_url()
+            st.markdown(f"""
+            <iframe 
+                src="{dashboard_url}" 
+                width="100%" 
+                height="800" 
+                frameborder="0"
+                style="border: 1px solid #ddd; border-radius: 5px;">
+            </iframe>
+            """, unsafe_allow_html=True)
+            
+            # Add link to open in new tab
+            st.markdown(f"[🔗 Open Dashboard in New Tab]({dashboard_url})")
+        else:
+            st.error("❌ Grafana is not responding properly")
+    except Exception as e:
+        st.error(f"❌ Cannot connect to Grafana: {e}")
+        st.info("💡 Please start Grafana services using: `./start_grafana_services.sh` or `start_grafana_services.bat`")
 
 if start_monitoring:
     status_placeholder.text("Monitoring in Progress")
@@ -223,7 +226,7 @@ if start_monitoring:
         </script>
         """, unsafe_allow_html=True)
 
-        # Fetch new data for UE1 and UE2
+        # Fetch new data for UE1 and UE2 (restored to NVIDIA original)
         cutoff_time = get_cutoff_time()
 
         try:
@@ -238,13 +241,11 @@ if start_monitoring:
                     .query("timestamp > @cutoff_time")
                     .reset_index(drop=True)
                 )
-                # Compute the cutoff time for filtering
-    
         except Exception as error:
             logger.error(f"Error fetching UE1 data: {error}")
 
         try:
-            new_data_ue2 = kdbc.to_df(sql=generate_sql_query(ue="UE3"))
+            new_data_ue2 = kdbc.to_df(sql=generate_sql_query(ue="UE3"))  # Use UE3 as in the original
             new_data_ue2["timestamp"] = pd.to_datetime(new_data_ue2["timestamp"]).dt.tz_localize("UTC")
 
             if not new_data_ue2.empty:
@@ -258,60 +259,29 @@ if start_monitoring:
         except Exception as error:
             logger.error(f"Error fetching UE2 data: {error}")
 
-        # If both datasets have data, update the charts
-        if not st.session_state.data_ue1.empty and not st.session_state.data_ue2.empty:
-            plt.close("all")  # Close previous figures
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(4,4))  # Two side-by-side charts
-
-            # Generate x-axis as a rolling index for left-to-right movement
-            x_axis_ue1 = st.session_state.data_ue1["timestamp"]
-            x_axis_ue2 = st.session_state.data_ue2["timestamp"]
-
-            # **User Equipment 1 Chart**
-            ax1.set_title("User Equipment 1", fontsize=8, color="white")
-            ax1.grid(True, linestyle="--", linewidth=0.5, color="gray")
-            ax1.set_ylim(0, 100)  # Set y-axis range for packet loss
-
-            line1, = ax1.plot(x_axis_ue1, st.session_state.data_ue1["loss_percentage"], 
-                            color="#FFD700", linestyle="--", linewidth=1, label="Packet Loss (%)")
-
-            ax1.tick_params(axis="y", colors="#FFD700", labelsize=5)
-            ax1.tick_params(axis="x", colors="#FFD700", labelsize=5)
-
-            ax1_twin = ax1.twinx()
-            ax1_twin.set_ylim(0, 160)  # Set y-axis range for bitrate
-            line2, = ax1_twin.plot(x_axis_ue1, st.session_state.data_ue1["bitrate"], 
-                                color="#FF8C00", linestyle="-", linewidth=1, label="Transfer Rate (MBytes)")
-            ax1_twin.tick_params(axis="y", colors="#FF8C00", labelsize=5)
-
-            # **User Equipment 2 Chart**
-            ax2.set_title("User Equipment 2", fontsize=8, color="white")
-            ax2.grid(True, linestyle="--", linewidth=0.5, color="gray")
-            ax2.set_ylim(0, 100)  # Set y-axis range for packet loss
-
-            line3, = ax2.plot(x_axis_ue2, st.session_state.data_ue2["loss_percentage"], 
-                            color="#FFD700", linestyle="--", linewidth=1, label="Packet Loss (%)")
-
-            ax2.tick_params(axis="y", colors="#FFD700", labelsize=5)
-            ax2.tick_params(axis="x", colors="#FFD700", labelsize=5)
-
-            ax2_twin = ax2.twinx()
-            ax2_twin.set_ylim(0, 160)  # Set y-axis range for bitrate
-            line4, = ax2_twin.plot(x_axis_ue2, st.session_state.data_ue2["bitrate"], 
-                                color="#FF8C00", linestyle="-", linewidth=1, label="Transfer Rate (MBytes)")
-            ax2_twin.tick_params(axis="y", colors="#FF8C00", labelsize=5)
-
-            # Add legend
-            ax1.legend(handles=[line1, line2], loc="upper right", fontsize=6, facecolor="#333", edgecolor="white")
-            ax2.legend(handles=[line3, line4], loc="upper right", fontsize=6, facecolor="#333", edgecolor="white")
-
-            plt.tight_layout(pad=2.0)
-
-            # Update the Streamlit plot
-            chart_placeholder.pyplot(fig)
+        # Write new data to InfluxDB for real-time visualization
+        if not st.session_state.data_ue1.empty:
+            # Write latest UE1 data to InfluxDB
+            latest_ue1 = st.session_state.data_ue1.iloc[-1]
+            influx_client.write_metrics(
+                ue="UE1",
+                loss_percentage=latest_ue1["loss_percentage"],
+                bitrate=latest_ue1["bitrate"],
+                timestamp=latest_ue1["timestamp"]
+            )
+            
+        if not st.session_state.data_ue2.empty:
+            # Write latest UE2 data to InfluxDB
+            latest_ue2 = st.session_state.data_ue2.iloc[-1]
+            influx_client.write_metrics(
+                ue="UE3",  # match Kinetica/original logic
+                loss_percentage=latest_ue2["loss_percentage"],
+                bitrate=latest_ue2["bitrate"],
+                timestamp=latest_ue2["timestamp"]
+            )
 
 if stop_monitoring:
-    status_placeholder.text("Monitoring in Stopped")
-    fig = create_plot()
-    chart_placeholder.pyplot(fig)
+    status_placeholder.text("Monitoring Stopped")
+    # Close InfluxDB connection
+    influx_client.close()
     stop()
