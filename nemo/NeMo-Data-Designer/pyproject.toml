@@ -10,4 +10,7 @@ dependencies = [
     "jupyter",
     "pydantic",
     "nemo-microservices[data-designer]",
+    "langchain",
+    "smart_open",
+    "unstructured[pdf]",
 ]
