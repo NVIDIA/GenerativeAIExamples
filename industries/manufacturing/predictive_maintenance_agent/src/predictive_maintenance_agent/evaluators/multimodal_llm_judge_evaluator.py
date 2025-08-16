@@ -121,6 +121,7 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
             r'\[([^\[\]]+\.png)\]',  # Paths inside square brackets
             r'located at ([^\s]+\.png)',  # "located at path.png" pattern
             r'saved.*?([/][^\s]+\.png)',  # "saved at /path.png" pattern
+            r'`([^`]+\.png)`',  # Paths inside backticks
         ]
         
         for pattern in png_patterns:
