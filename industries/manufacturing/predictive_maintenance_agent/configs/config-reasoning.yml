@@ -36,7 +36,7 @@ llms:
     model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
   multimodal_judging_llm:
     _type: nim
-    model_name: meta/llama-3.2-11b-vision-instruct
+    model_name: nvidia/llama-3.1-nemotron-nano-vl-8b-v1
 
 embedders:
   vanna_embedder:
