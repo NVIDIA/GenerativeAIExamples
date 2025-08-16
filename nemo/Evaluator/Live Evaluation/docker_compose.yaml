@@ -104,12 +104,12 @@ services:
         condition: service_healthy
       evaluator-postgres-db-migration:
         condition: service_completed_successfully
-      otel-collector:
-        condition: service_started
+        # otel-collector:
+        #   condition: service_started
     networks:
       - nemo-ms
     healthcheck:
-      test: ["CMD", "curl", "http://localhost:7331/health"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7331/health')"]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -124,16 +124,16 @@ services:
       SERVICE_ACCOUNT: nemo-evaluator-test-workflow-executor
       EVAL_ENABLE_VALIDATION: False
       # OpenTelemetry environmental variables
-      OTEL_SERVICE_NAME: nemo-evaluator
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: none
-      OTEL_LOGS_EXPORTER: otlp
-      OTEL_PYTHON_EXCLUDED_URLS: "health"
-      OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"
-      CONSOLE_LOG_LEVEL: DEBUG
-      OTEL_LOG_LEVEL: DEBUG
-      LOG_LEVEL: DEBUG
+      # OTEL_SERVICE_NAME: nemo-evaluator
+      # OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      # OTEL_TRACES_EXPORTER: otlp
+      # OTEL_METRICS_EXPORTER: none
+      # OTEL_LOGS_EXPORTER: otlp
+      # OTEL_PYTHON_EXCLUDED_URLS: "health"
+      # OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"
+      # CONSOLE_LOG_LEVEL: DEBUG
+      # OTEL_LOG_LEVEL: DEBUG
+      # LOG_LEVEL: DEBUG
 
   evaluator-postgres-db-migration:
     image: ${EVALUATOR_IMAGE:-""}
@@ -288,16 +288,16 @@ services:
   #  adapted from https://jessitron.com/2021/08/11/run-an-opentelemetry-collector-locally-in-docker/
   #  and https://github.com/open-telemetry/opentelemetry-demo/blob/main/docker-compose.yml
   ###
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.91.0
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    volumes:
-      - ./config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    ports:
-      - "4317:4317" # OTLP over gRPC receiver
-      - "55679:55679" # UI
-    networks:
-      - nemo-ms
+  # otel-collector:
+  #   image: otel/opentelemetry-collector-contrib:0.91.0
+  #   command: ["--config=/etc/otel-collector-config.yaml"]
+  #   volumes:
+  #     - ./config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+  #   ports:
+  #     - "4317:4317" # OTLP over gRPC receiver
+  #     - "55679:55679" # UI
+  #   networks:
+  #     - nemo-ms
 
 networks:
   nemo-ms:
