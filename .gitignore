@@ -32,3 +32,9 @@ RAG/notebooks/langchain/data/save_embedding
 
 # IntelliJ's project specific settings file
 .idea
+
+# Environment variables
+.env
+
+# egg-info directories
+**/egg-info

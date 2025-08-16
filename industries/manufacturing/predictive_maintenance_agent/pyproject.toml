@@ -1,0 +1,42 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 64"]
+
+[project]
+name = "predictive_maintenance_agent"
+version = "0.1.0"
+dependencies = [
+  "aiqtoolkit[profiling, langchain, telemetry]",
+  "momentfm",
+  "pydantic ~= 2.10.0, <2.11.0",
+  "vanna==0.7.9",
+  "chromadb",
+  "xgboost",
+  "matplotlib",
+  "torch",
+  "pytest",
+  "pytest-asyncio"
+]
+requires-python = ">=3.11,<3.13"
+description = "Predictive maintenance workflow using AIQ"
+classifiers = ["Programming Language :: Python"]
+authors = [{ name = "Vineeth Kalluru" }]
+maintainers = [{ name = "NVIDIA Corporation" }]
+
+[project.entry-points.'aiq.components']
+predictive_maintenance_agent = "predictive_maintenance_agent.register"
+
+[tool.uv.sources]
+momentfm = { path = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/moment", editable = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "e2e: end-to-end tests that run full workflows",
+]
+testpaths = [
+    ".",
+]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
