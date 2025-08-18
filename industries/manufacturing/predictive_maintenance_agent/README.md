@@ -104,15 +104,15 @@ cd moment
 vi pyproject.toml
 ```
 
-Change the NumPy dependency from 1.25.2 to 1.26.2:
+Change the NumPy and Transformers dependencies:
 
 ```bash
 ...
 dependencies = [
   "huggingface-hub==0.24.0",
-  "numpy==1.25.2", # -->  "numpy==1.26.2"
-  "torch~=2.0",              # package was tested on 2.0.1
-  "transformers==4.33.3",
+  "numpy==1.25.2", # -->  to "numpy==1.26.2"
+  "torch~=2.0",
+  "transformers==4.33.3", # --> to "transformers>=4.33.3,<5.0.0"
 ]
 ...
 ```
@@ -159,18 +159,25 @@ python setup_database.py
 
 ### 5. Configure Paths
 
-Update `configs/config-reasoning.yml` with your local paths for database, models, and output directories.
-The `db_path` must point to the database inside your data directory.
+**Important**: You need to replace the absolute path `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/` with your preferred workspace path in the following files:
 
-We will export the `PWD_PATH` variable in the next step and inject it into this file before running, so feel free
-to use the `PWD_PATH` environment variable wherever necessary within the config file.
+1. **`configs/config-reasoning.yml`** - Update the `db_path` and `output_folder` paths
+2. **`pyproject.toml`** - Update the MOMENT library path (if you changed it in step 3)
 
-```bash
-db_path: "${PWD_PATH}/data/nasa_turbo.db"  # ← set it to something like this
+For example, if your workspace is at `/home/user/my_workspace/`, you would replace:
+- `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/` 
+- with `/home/user/my_workspace/`
+
+**Note**: All other paths in the config file can be provided as relative paths from your workspace directory. Only the MOMENT library path in `pyproject.toml` needs to be an absolute path.
+
+The `db_path` should point to the database inside your data directory:
+```yaml
+db_path: "data/nasa_turbo.db"
 ```
+
 Create an empty folder for the output data and point the output folder to that path:
-```bash
-output_folder: "${PWD_PATH}/output_data" # ← set it to something like this
+```yaml
+output_folder: "output_data"
 ```
 
 ### 6. Train Vanna SQL Agent (Important)
@@ -190,29 +197,34 @@ This training data helps the SQL agent understand:
 
 The training happens automatically when you start the workflow server, using the path specified in `configs/config-reasoning.yml`:
 ```yaml
-vanna_training_data_path: "${PWD_PATH}/vanna_training_data.yaml"
+vanna_training_data_path: "vanna_training_data.yaml"
 ```
 
 **Note**: If you modify your database structure or add new query patterns, update the `vanna_training_data.yaml` file accordingly to maintain optimal SQL generation performance.
 
-### 7. Export Environment Variables
+### 7. Set Environment Variables
 
-Export all required environment variables from the `dot.env` file. Update the file with your API key and secrets before running.
+Set the required environment variables for the workflow:
 
-Note: Exporting RAGA AI Catalyst related keys is necessary only if you are planning to use Catalyst to export your traces. More about this in the following sections.
+1. Update the `.env` file with your actual values:
+   ```bash
+   # Replace the placeholder values with your actual keys
+   NVIDIA_API_KEY="your-actual-nvidia-api-key"
+   CATALYST_ACCESS_KEY="your-actual-catalyst-access-key"  # Optional
+   CATALYST_SECRET_KEY="your-actual-catalyst-secret-key"  # Optional
+   ```
 
-```bash
-source dot.env
-```
+2. Source the file to export the variables:
+   ```bash
+   source .env
+   ```
 
-Verify that the two main keys are exported:
+**Note**: The `.env` file contains placeholder values. Replace them with your actual API keys before sourcing the file.
+
+Verify that the NVIDIA API key is set:
 
 ```bash
 echo $NVIDIA_API_KEY
-```
-
-```bash
-echo $PWD_PATH
 ```
 
 ## Launch Server and UI
@@ -221,12 +233,10 @@ echo $PWD_PATH
 
 With other frameworks like LangGraph or CrewAI, users are expected to develop a FastAPI server to interact with their agentic workflow. Fortunately, NeMo Agent Toolkit offers this out of the box with the simple `aiq serve --config_file <path-to-file>` command.
 
-Before starting the server, check if you have set the `PWD_PATH` environment variable. This ensures that the config file is correctly populated with all paths.
-
 Start the server now:
 
 ```bash
-aiq serve --config_file=configs/config-reasoning.yml "$@"
+aiq serve --config_file=configs/config-reasoning.yml
 ```
 
 You should see something like this, which indicates that the server started successfully:
@@ -355,7 +365,7 @@ Access the dashboard at `http://localhost:6006` to monitor traces, performance, 
 
 Follow the instructions [here](https://github.com/NVIDIA/NeMo-Agent-Toolkit/blob/develop/docs/source/workflows/observe/observe-workflow-with-catalyst.md) to set up your RAGA AI profile.
 
-Ensure you update the CATALYST-related environment variables in the `dot.env` file and source that file again:
+Ensure you update the CATALYST-related environment variables in the `.env` file and source that file again:
 
 ```bash
 CATALYST_ACCESS_KEY="xxxxxxxxxxxxxxxx" # Change this to your RAGA AI Access key
@@ -384,7 +394,7 @@ NeMo Agent Toolkit provides the flexibility to run workflows not just through te
 
 You can test the workflow by running the `test_pdm_workflow.py` file using pytest instead of starting the server, which provides a Pythonic way of building and running the workflow programmatically. This approach is particularly valuable for continuous integration and deployment systems, allowing automated validation of workflow components and streamlined deployment processes.
 
-Ensure that you export `$PWD_PATH` and `$NVIDIA_API_KEY` environment variables before running:
+Ensure that you have set the `$NVIDIA_API_KEY` environment variable before running:
 
 ```bash
 pytest test_pdm_workflow.py -m e2e -v
@@ -411,11 +421,11 @@ In `predictive_maintenance_agent/configs/config-reasoning.yml`:
 eval:
   general:
     output:
-      dir: "${PWD_PATH}/eval_output"
+      dir: "eval_output"
       cleanup: true
     dataset:
       _type: json
-      file_path: "${PWD_PATH}/eval_data/eval_set_master.json" # Path to eval dataset
+      file_path: "eval_data/eval_set_master.json" # Path to eval dataset
     query_delay: 10  # Change this to increase delay between running queries, useful if your underlying API (like build.nvidia.com) has requests/second or rate limits
     max_concurrent: 1  # Change this to the number of eval set entries that should be processed concurrently. Keep it at 1 to ensure smooth execution
 ```
