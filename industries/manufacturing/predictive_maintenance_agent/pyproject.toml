@@ -4,7 +4,7 @@ requires = ["setuptools >= 64"]
 
 [project]
 name = "predictive_maintenance_agent"
-version = "0.1.0"
+dynamic = ["version"]
 dependencies = [
   "aiqtoolkit[profiling, langchain, telemetry]",
   "momentfm",
@@ -28,6 +28,13 @@ predictive_maintenance_agent = "predictive_maintenance_agent.register"
 
 [tool.uv.sources]
 momentfm = { path = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/moment", editable = true }
+
+[tool.setuptools]
+packages = ["predictive_maintenance_agent"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+version = {attr = "predictive_maintenance_agent.__version__"}
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
