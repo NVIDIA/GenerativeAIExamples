@@ -14,6 +14,7 @@ This repository is a starting point for developers looking to integrate with the
 
 * [What's New?](#whats-new)
   * [Data Flywheel](#data-flywheel)
+  * [NeMo Data Designer](#nemo-data-designer)
   * [Safer Agentic AI](#safer-agentic-ai)
   * [Knowledge Graph RAG](#knowledge-graph-rag)
   * [Agentic Workflows with Llama 3.1](#agentic-workflows-with-llama-31)
@@ -43,6 +44,18 @@ These tutorials demonstrate Data Flywheel workflows that use NVIDIA NeMo Microse
 
 - [Tool Calling Fine-tuning, Inference, Evaluation, and Guardrailing with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/tool-calling)
 - [Embedding Fine-tuning, Inference, and Evaluation with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/embedding-finetuning/)
+
+### NeMo Data Designer
+
+NeMo Data Designer is purpose-built for AI developers to design high-quality, domain-specific synthetic data at scale—unlike one-size-fits-all LLMs that struggle to deliver consistent, reliable results. Start from scratch or just a few seed examples to accelerate AI development, saving time while improving model performance and accuracy. 
+
+Check out some of these tutorials to get started!
+
+- [The Basics: Generate Product Review Datasets](./nemo/NeMo-Data-Designer/intro-tutorials/1-the-basics.ipynb)
+- [Structured Outputs and Jinja Expressions](./nemo/NeMo-Data-Designer/intro-tutorials/2-structured-outputs-and-jinja-expressions.ipynb)
+- [Seeding with External Datasets](./nemo/NeMo-Data-Designer/intro-tutorials/3-seeding-with-a-dataset.ipynb)
+
+Once you're done with the basics, check out some Data Designer use cases [here](./nemo/NeMo-Data-Designer/community-contributions). 
 
 ### Safer Agentic AI
 
