@@ -49,7 +49,6 @@ from utils.ui import launch_demo_ui
 #################
 patient_id = '14867dba-fb11-4df3-9829-8e8e081b39e6' # test patient id from looking through https://launch.smarthealthit.org/
 save_graph_to_png = True
-llm_model = "meta/llama-3.1-70b-instruct"
 env_var_file = "vars.env"
 
 
@@ -62,14 +61,20 @@ print("Your TAVILY_API_KEY is set to: ", os.environ['TAVILY_API_KEY'])
 
 assert os.environ['NVIDIA_API_KEY'] is not None, "Make sure you have your NVIDIA_API_KEY exported as a environment variable!"
 assert os.environ['TAVILY_API_KEY'] is not None, "Make sure you have your TAVILY_API_KEY exported as a environment variable!"
-
 NVIDIA_API_KEY=os.getenv("NVIDIA_API_KEY", None)
 RIVA_API_URI = os.getenv("RIVA_API_URI", None)
+
 RIVA_ASR_FUNCTION_ID = os.getenv("RIVA_ASR_FUNCTION_ID", None)
 RIVA_TTS_FUNCTION_ID = os.getenv("RIVA_TTS_FUNCTION_ID", None)
 
+assert os.environ['LLM_MODEL'] is not None, "Make sure you have your LLM_MODEL exported as a environment variable!"
+llm_model = os.getenv("LLM_MODEL", None)
+
+assert os.environ['BASE_URL'] is not None, "Make sure you have your BASE_URL exported as a environment variable!"
+base_url = os.getenv("BASE_URL", None)
+
 ### define which llm to use
-assistant_llm = ChatNVIDIA(model=llm_model)#, base_url=base_url
+assistant_llm = ChatNVIDIA(model=llm_model, base_url=base_url)
 
 ########################
 ### Define the tools ###

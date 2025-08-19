@@ -49,8 +49,7 @@ from utils.ui import launch_demo_ui
 #################
 patient_id = '14867dba-fb11-4df3-9829-8e8e081b39e6' # test patient id from looking through https://launch.smarthealthit.org/
 save_graph_to_png = True
-main_llm_model = "meta/llama-3.1-70b-instruct"
-specialized_llm_model = "meta/llama-3.1-70b-instruct"
+
 env_var_file = "vars.env"
 
 local_file_constant = "sample_db/test_db.sqlite"
@@ -73,9 +72,19 @@ RIVA_API_URI = os.getenv("RIVA_API_URI", None)
 RIVA_ASR_FUNCTION_ID = os.getenv("RIVA_ASR_FUNCTION_ID", None)
 RIVA_TTS_FUNCTION_ID = os.getenv("RIVA_TTS_FUNCTION_ID", None)
 
+
+assert os.environ['LLM_MODEL'] is not None, "Make sure you have your LLM_MODEL exported as a environment variable!"
+main_llm_model = os.getenv("LLM_MODEL", None)
+
+assert os.environ['LLM_MODEL'] is not None, "Make sure you have your LLM_MODEL exported as a environment variable!"
+specialized_llm_model = os.getenv("LLM_MODEL", None)
+
+assert os.environ['BASE_URL'] is not None, "Make sure you have your BASE_URL exported as a environment variable!"
+base_url = os.getenv("BASE_URL", None)
+
 ### define which llm to use
-main_assistant_llm = ChatNVIDIA(model=main_llm_model)#, base_url=base_url 
-specialized_assistant_llm = ChatNVIDIA(model=specialized_llm_model)#, base_url=base_url
+main_assistant_llm = ChatNVIDIA(model=main_llm_model, base_url=base_url)
+specialized_assistant_llm = ChatNVIDIA(model=specialized_llm_model, base_url=base_url)
 
 def update_dialog_stack(left: list[str], right: Optional[str]) -> list[str]:
     """Push or pop the state."""
@@ -247,7 +256,7 @@ def print_gathered_patient_info(
     patient_dob: datetime.date,
     allergies_medication: List[str],
     current_symptoms: str,
-    current_symptoms_duration: datetime.timedelta,
+    current_symptoms_duration: str,
     pharmacy_location: str
 ):
     """This function prints out and transmits the gathered information for each patient intake field:
@@ -373,7 +382,7 @@ class ToPatientIntakeAssistant(BaseModel):
     patient_dob: datetime.date = Field(description="The patient's date of birth.")
     allergies_medication: List[str] = Field(description="A list of allergies in medication for the patient.")
     current_symptoms: str = Field(description="A description of the current symptoms for the patient.")
-    current_symptoms_duration: datetime.timedelta = Field(description="The time duration of current symptoms.")
+    current_symptoms_duration: str = Field(description="The time duration of current symptoms.")
     pharmacy_location: str = Field(description="The patient's pharmacy location.")
     request: str = Field(
         description="Any necessary information the patient intake assistant should clarify before proceeding."
