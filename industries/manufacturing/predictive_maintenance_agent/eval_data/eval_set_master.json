@@ -212,7 +212,7 @@
     {
       "id": "22",
       "question": "In dataset test_FD001 plot operational_setting_3 as a function of time_in_cycles for units 10, 20, 30, 40",
-      "answer": "Four constant lines at 100",
+      "answer": "Line chart showing operational_setting_3 values on y-axis ranging against time_in_cycles in x-axis with a constant line parallel to x-axis with value y-axis as 100",
       "type": "text_plus_plot",
       "category": "visualization",
       "subcategory": "medium",
@@ -248,5 +248,15 @@
       "subcategory": "hard",
       "original_id": "9",
       "source": "eval_set"
-    }
+    },
+    {
+      "id": "26",
+      "question ": "Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.",
+      "answer": "Two line charts with actual RUL in Knee pattern and predicted RUL values across time",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "hard",
+      "original_id": "10",
+      "source": "eval_set"
+    }    
 ]

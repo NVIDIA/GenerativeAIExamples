@@ -193,45 +193,51 @@ async def moment_anomaly_detection_tool(
                 # MOMENT forward pass
                 output = model(x_enc=batch_x, input_mask=batch_masks)
                 
-                # Collect results
-                trues.append(batch_x.detach().squeeze().cpu().numpy())
-                preds.append(output.reconstruction.detach().squeeze().cpu().numpy())
-                labels.append(batch_labels.detach().cpu().numpy())
+                # Log tensor shapes for debugging
+                logger.info(f"Input batch_x shape: {batch_x.shape}")
+                logger.info(f"Output reconstruction shape: {output.reconstruction.shape}")
+                
+                # Carefully handle tensor shapes to avoid dimension mismatch
+                batch_x_np = batch_x.detach().cpu().numpy()
+                reconstruction_np = output.reconstruction.detach().cpu().numpy()
+                
+                # Handle potential shape differences
+                # batch_x: (batch_size, num_channels, seq_len)
+                # output.reconstruction: (batch_size, num_channels, output_seq_len)
+                
+                if batch_x_np.shape != reconstruction_np.shape:
+                    logger.warning(f"Shape mismatch: input {batch_x_np.shape} vs reconstruction {reconstruction_np.shape}")
+                    # Align lengths by taking the minimum
+                    min_seq_len = min(batch_x_np.shape[-1], reconstruction_np.shape[-1])
+                    batch_x_np = batch_x_np[..., :min_seq_len]
+                    reconstruction_np = reconstruction_np[..., :min_seq_len]
+                    logger.info(f"Aligned shapes: input {batch_x_np.shape}, reconstruction {reconstruction_np.shape}")
+                
+                # Flatten to 1D for each sample in the batch
+                for i in range(batch_x_np.shape[0]):
+                    # Extract and flatten individual sequences
+                    true_seq = batch_x_np[i].flatten()  # Flatten all dimensions after batch
+                    pred_seq = reconstruction_np[i].flatten()  # Flatten all dimensions after batch
+                    
+                    trues.append(true_seq)
+                    preds.append(pred_seq)
+                    labels.append(batch_labels[i].detach().cpu().numpy())
         
-        # Concatenate all results following the tutorial
+        # Concatenate all results
         trues = np.concatenate(trues, axis=0)
         preds = np.concatenate(preds, axis=0)
         labels = np.concatenate(labels, axis=0)
         
-        # Handle sequence length differences between input and MOMENT output
-        original_length = sequences[0].shape[2] if sequences else 0  # Get original input length
-        logger.info(f"Original sequence length: {original_length}, MOMENT output length: {trues.shape[0]}")
+        logger.info(f"Final concatenated shapes - trues: {trues.shape}, preds: {preds.shape}")
         
-        # Handle overlapping windows if we have multiple sequences (following tutorial logic)
-        if len(sequences) > 1:
-            total_length = sum(seq.shape[2] for seq in sequences)  # seq.shape = (1, 1, seq_len)
-            logger.info(f"Total original length: {total_length}, reconstructed length: {trues.shape[0]}")
-            
-            # If we have overlapping predictions, handle them
-            if trues.shape[0] > total_length:
-                # Keep first part and unique end part
-                n_unique_timesteps = 512 - trues.shape[0] + total_length
-                trues = np.concatenate([trues[:512*(total_length//512)], trues[-n_unique_timesteps:]])
-                preds = np.concatenate([preds[:512*(total_length//512)], preds[-n_unique_timesteps:]])
-        else:
-            # Single sequence case - flatten if needed
-            if len(trues.shape) > 1:
-                trues = trues.flatten()
-                preds = preds.flatten()
-        
-        logger.info(f"Final shapes - trues: {trues.shape}, preds: {preds.shape}")
-        
-        # Ensure shapes match for calculation
-        min_length = min(len(trues), len(preds))
+        # Ensure shapes match for calculation (they should already match due to our alignment above)
         if len(trues) != len(preds):
-            logger.warning(f"Shape mismatch: trues={len(trues)}, preds={len(preds)}. Trimming to {min_length}")
+            min_length = min(len(trues), len(preds))
+            logger.warning(f"Final shape mismatch: trues={len(trues)}, preds={len(preds)}. Trimming to {min_length}")
             trues = trues[:min_length]
             preds = preds[:min_length]
+        else:
+            logger.info(f"Shapes are aligned: trues={len(trues)}, preds={len(preds)}")
         
         # Calculate anomaly scores using MSE (following tutorial)
         anomaly_scores = (trues - preds) ** 2

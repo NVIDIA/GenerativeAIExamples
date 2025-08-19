@@ -256,34 +256,141 @@ The code generation assistant requires a standalone Python sandbox that can exec
 
 Note: You will need a system that can run Docker. If you are running this on a macOS laptop without Docker Desktop, try [Colima](https://github.com/abiosoft/colima).
 
-Go back to the NeMo-Agent-Toolkit folder cloned in Step 2:
+Navigate to the NeMo Agent Toolkit code execution directory:
 
 ```bash
-cd /path-to/NeMo-Agent-Toolkit/src/nat/tool/code_execution
+cd /path-to/NeMo-Agent-Toolkit/src/nat/tool/code_execution/
 ```
 
-Run the server by mounting your workflow's output folder as an internal volume:
+Start the sandbox by running the script with your output folder path:
 
 ```bash
-./local_sandbox/start_local_sandbox.sh local-sandbox \\
-/path-to-output-folder-as-specified-in-config-yml/
+./local_sandbox/start_local_sandbox.sh local-sandbox /path-to-output-folder-as-specified-in-config-yml/
 ```
 
 For example:
 
 ```bash
-./local_sandbox/start_local_sandbox.sh local-sandbox \\
-/path-to/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data
+./local_sandbox/start_local_sandbox.sh local-sandbox /path-to/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/
 ```
 
-[Optional] Create a new terminal to test your sandbox by running the Python script:
+[Optional] Verify the sandbox is running correctly:
 
 ```bash
-cd /path-to/NeMo-Agent-Toolkit/src/nat/tool/code_execution
-./test_code_execution_sandbox.py
+# Check health status
+curl http://localhost:6000/health
+
+# Test code execution
+curl -X POST http://localhost:6000/execute \
+  -H 'Content-Type: application/json' \
+  -d '{"generated_code": "print(\"Hello from sandbox!\")", "timeout": 10, "language": "python"}'
 ```
 
-Close the new terminal when done - you don't need it anymore.
+To stop the sandbox when you're done, stop the Docker container:
+
+```bash
+docker stop local-sandbox
+```
+
+## Workspace Utilities
+
+The predictive maintenance agent includes a powerful **workspace utilities system** that provides pre-built, reliable functions for common data processing tasks. This eliminates the need for the code generation assistant to implement complex algorithms from scratch, resulting in more reliable and consistent results.
+
+### How Workspace Utilities Work
+
+**Location**: The utilities are located in `/workspace/utils/` (which maps to your `output_data/utils/` directory).
+
+**Philosophy**: Instead of asking the LLM to generate complex transformation code through multiple agent layers (which can lose context and introduce errors), the system provides pre-tested utility functions that can be invoked with simple instructions.
+
+**Architecture Benefits**:
+- **Reliability**: Pre-tested, robust implementations instead of generated code
+- **Consistency**: Same results every time, no variation in algorithm implementation
+- **Simplicity**: Reasoning agent just needs to specify "use RUL utility" instead of detailed pseudo-code
+- **Error Handling**: Comprehensive validation and user-friendly error messages
+- **In-Place Operations**: Files are modified directly, avoiding unnecessary copies
+
+### Available Utilities
+
+#### RUL Transformation Utilities
+
+**`apply_piecewise_rul_transformation(file_path, maxlife=125)`**
+- Transforms RUL data to create realistic "knee" patterns
+- **Input**: JSON file with engine time series data
+- **Output**: Same file modified in-place with transformed RUL values
+- **Pattern**: RUL stays constant at `MAXLIFE` until remaining cycles drop below threshold, then decreases linearly to 0
+- **Use case**: Creating realistic RUL patterns for comparison with predicted values
+
+**`transform_rul_data(file_path, maxlife=125)`**
+- Simplified interface for RUL transformation (same functionality as above)
+
+#### Data Validation Utilities
+
+**`load_and_validate_engine_data(file_path)`**
+- Loads and validates engine data from JSON files
+- Returns detailed information about data structure, ranges, and sample records
+- Useful for data quality checks before processing
+
+**`show_utilities()`**
+- Displays help information about all available utilities
+- Shows usage examples and function signatures
+
+### Usage in Workflows
+
+**For Users**: When interacting with the system, you can request complex data transformations knowing that reliable utilities will handle the implementation. For example:
+
+```
+"Transform the actual RUL data for engine 24 to piecewise representation with MAXLIFE=125"
+```
+
+**For Developers**: The code generation assistant automatically uses these utilities when available. The system prompts include instructions to:
+1. Check if a task can be accomplished using workspace utilities
+2. Import utilities with proper path setup
+3. Use utilities instead of custom implementations
+
+### Example Workflow
+
+1. **User Request**: "Compare actual vs predicted RUL for engine unit 24"
+2. **System Process**:
+   - Retrieves ground truth data from database
+   - Predicts RUL using the model
+   - **Uses utility**: `utils.apply_piecewise_rul_transformation(data_file, maxlife=125)`
+   - Generates comparison visualization
+3. **Result**: Clean, reliable transformation with consistent knee pattern
+
+### Adding Custom Utilities
+
+You can extend the utilities by adding new functions to `/output_data/utils/`:
+
+1. **Create your utility function** in `utils/` directory
+2. **Import it** in `utils/__init__.py`
+3. **Document it** in the help system
+4. **Update system prompts** if needed (optional)
+
+**Example utility structure**:
+```python
+def your_custom_utility(file_path: str, param: int = 100) -> str:
+    """
+    Your custom utility function.
+    
+    Args:
+        file_path: Path to input file
+        param: Your parameter
+        
+    Returns:
+        Success message with details
+    """
+    # Implementation with error handling
+    # ...
+    return "✅ Custom utility executed successfully!"
+```
+
+### Best Practices
+
+1. **Prefer Utilities**: Always check if existing utilities can handle your task
+2. **Error Handling**: Utilities include comprehensive validation - no need to duplicate
+3. **In-Place Operations**: Utilities modify files directly, avoiding data duplication
+4. **Consistent Interface**: All utilities return descriptive success messages
+5. **Documentation**: Use `utils.show_utilities()` to discover available functions
 
 ### Setup Web Interface
 
@@ -319,11 +426,20 @@ Retrieve real RUL of each unit in the FD001 test dataset. Then plot a distributi
 
 ![Visualization Example](imgs/test_prompt_2.png)
 
-**Prediction**
+**Prediction and Comparison (Uses Workspace Utilities)**
 ```
 Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.
 ```
 ![Prediction Example](imgs/test_prompt_3.png)
+
+*Note: This example automatically uses the workspace `apply_piecewise_rul_transformation` utility to create realistic knee-pattern RUL data for comparison, resulting in much cleaner and more meaningful visualizations.*
+
+**Workspace Utilities Demo**
+```
+Show me what workspace utilities are available, then apply piecewise RUL transformation to engine unit 10 data with MAXLIFE=100.
+```
+
+*This example demonstrates how to discover and use workspace utilities directly. The system will show available utilities and then apply the RUL transformation using the pre-built, reliable utility functions.*
 
 **Anomaly Detection**
 ```bash

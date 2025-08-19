@@ -20,7 +20,7 @@ class CodeGenerationAssistantConfig(FunctionBaseConfig, name="code_generation_as
     """
     llm_name: LLMRef = Field(description="The LLM to use for code generation")
     code_execution_tool: FunctionRef = Field(description="The code execution tool to run generated code")
-    output_folder: str = Field(description="The path to the output folder for generated files", default="./output_data")
+    output_folder: str = Field(description="The path to the output folder for generated files", default="/workspace")
     verbose: bool = Field(description="Enable verbose logging", default=True)
 
 
@@ -54,6 +54,20 @@ async def code_generation_assistant(
 OUTPUT ONLY THE CODE. NO COMMENTS. NO DOCSTRINGS. NO EXPLANATIONS.
 Generate only the code needed. Your response must contain ONLY executable Python code which will be DIRECTLY EXECUTED IN A SANDBOX.
 
+**WORKSPACE UTILITIES AVAILABLE:**
+A 'utils' folder contains pre-built functions for common tasks:
+- utils.apply_piecewise_rul_transformation(file_path, maxlife=125): Transform RUL data with knee pattern
+- utils.load_and_validate_engine_data(file_path): Validate engine data
+- utils.show_utilities(): Show all available utilities
+
+ALWAYS USE UTILITIES when available instead of writing custom implementations.
+To use utilities, start your code with:
+```python
+import sys
+sys.path.append('/workspace')
+import utils
+```
+
 **CODE REQUIREMENTS:**
 1. Generate COMPLETE, SYNTACTICALLY CORRECT Python code
 2. ALWAYS finish the complete code - never stop mid-statement
@@ -65,6 +79,11 @@ Generate only the code needed. Your response must contain ONLY executable Python
 8. For data analysis: use pandas and plotly
 9. For visualizations: save as HTML with fig.write_html()
 10. For data: save as JSON with to_json()
+
+**FILE MODIFICATION PREFERENCE:**
+- PREFER modifying existing files IN-PLACE when possible
+- Use utilities that modify files in-place (like RUL transformation)
+- Only create new files when explicitly required
 
 **MANDATORY COMPLETION:**
 Every script MUST end with file saving and print statement:
@@ -82,6 +101,12 @@ GENERATE CODE ONLY. NO COMMENTS. NO EXPLANATIONS."""
 - Input files mentioned in instructions should be accessed using ONLY the filename (e.g., "data.json")
 - All files are available in the current working directory
 - Use "./filename" pattern for all file operations
+
+**UTILITIES REMINDER:**
+- Check if task can be accomplished using workspace utilities
+- Add path setup: sys.path.append('/workspace'); import utils
+- For RUL transformations: use utils.apply_piecewise_rul_transformation(file_path)
+- Utilities handle error checking and provide detailed success messages
 
 Generate the Python code that fulfills these instructions."""
 

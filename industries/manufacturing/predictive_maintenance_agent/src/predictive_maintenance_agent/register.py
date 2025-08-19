@@ -4,6 +4,7 @@
 # Import any tools which need to be automatically registered here
 from .retrievers import generate_sql_query_and_retrieve_tool
 from .predictors import predict_rul_tool
+from .predictors import moment_predict_rul_tool
 from .plotting import plot_distribution_tool
 from .plotting import plot_comparison_tool
 from .plotting import plot_line_chart_tool

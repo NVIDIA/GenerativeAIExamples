@@ -49,7 +49,7 @@ def verify_json_path(file_path: str) -> str:
 
 class PredictRulToolConfig(FunctionBaseConfig, name="predict_rul_tool"):
     """
-    NeMo Agent Toolkit function to predict RUL (Remaining Useful Life) using trained models and provided data.
+    NeMo Agent Toolkit function to predict RUL (Remaining Useful Life) using trained XGBoost models and provided data.
     """
     # Runtime configuration parameters
     scaler_path: str = Field(description="Path to the trained StandardScaler model.", default="./models/scaler_model.pkl")
@@ -161,7 +161,7 @@ async def predict_rul_tool(
 
     async def _response_fn(json_file_path: str) -> str:
         """
-        Process the input message and generate RUL predictions using trained models.
+        Process the input message and generate RUL predictions using trained XGBoost models.
         """
         logger.info(f"Input message: {json_file_path}")
         data_json_path = verify_json_path(json_file_path)
@@ -182,6 +182,8 @@ async def predict_rul_tool(
             # Create response with prediction summary
             response = f"""RUL predictions generated successfully! 📊
 
+**Model Used:** XGBoost (Traditional Machine Learning)
+
 **Prediction Summary:**
 - **Total predictions:** {len(predictions)}
 - **Average RUL:** {avg_rul:.2f} cycles
@@ -192,7 +194,11 @@ async def predict_rul_tool(
 **Results saved to:** {output_filepath}
 
 The predictions have been added to the original dataset with column name 'predicted_RUL'. The original JSON file has been updated with the RUL predictions.
-All columns from the original dataset have been preserved, and the predicted RUL column has been renamed to 'predicted_RUL' and the actual RUL column has been renamed to 'actual_RUL'."""
+All columns from the original dataset have been preserved, and the predicted RUL column has been renamed to 'predicted_RUL' and the actual RUL column has been renamed to 'actual_RUL'.
+
+**Model Details:**
+- **XGBoost Model:** Gradient boosting with engineered features
+- **Feature Engineering:** 12 sensor measurements processed with StandardScaler"""
             
             return response
             
@@ -210,10 +216,10 @@ All columns from the original dataset have been preserved, and the predicted RUL
             return error_msg
 
     prompt = """
-    Predict RUL (Remaining Useful Life) for turbofan engines using trained machine learning models.
+    Predict RUL (Remaining Useful Life) for turbofan engines using trained XGBoost machine learning models.
 
     Input:
-    - Path to a JSON file containing sensor measurements.
+    - Path to a JSON file containing sensor measurements
         
     Required columns:
         * sensor_measurement_2
@@ -231,7 +237,7 @@ All columns from the original dataset have been preserved, and the predicted RUL
 
     Process:
     1. Load and preprocess data using StandardScaler
-    2. Generate predictions using XGBoost model
+    2. Generate predictions using trained XGBoost model
     3. Calculate summary statistics (mean, min, max, std dev)
     4. Save predictions to JSON file
 
