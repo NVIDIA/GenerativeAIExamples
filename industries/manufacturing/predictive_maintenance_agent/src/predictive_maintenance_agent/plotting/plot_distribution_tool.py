@@ -4,10 +4,10 @@ import os
 
 from pydantic import Field, BaseModel
 
-from aiq.builder.builder import Builder
-from aiq.builder.function_info import FunctionInfo
-from aiq.cli.register_workflow import register_function
-from aiq.data_models.function import FunctionBaseConfig
+from nat.builder.builder import Builder
+from nat.builder.function_info import FunctionInfo
+from nat.cli.register_workflow import register_function
+from nat.data_models.function import FunctionBaseConfig
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ def verify_json_path(file_path: str) -> str:
 
 class PlotDistributionToolConfig(FunctionBaseConfig, name="plot_distribution_tool"):
     """
-    AIQ Toolkit function to plot distribution histogram of a specified column.
+    NeMo Agent Toolkit function to plot distribution histogram of a specified column.
     """
     output_folder: str = Field(description="The path to the output folder to save plots.", default="./output_data")
 

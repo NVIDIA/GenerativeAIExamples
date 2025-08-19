@@ -1,9 +1,9 @@
 from pydantic import Field
 
-from aiq.builder.builder import EvalBuilder
-from aiq.builder.evaluator import EvaluatorInfo
-from aiq.cli.register_workflow import register_evaluator
-from aiq.data_models.evaluator import EvaluatorBaseConfig
+from nat.builder.builder import EvalBuilder
+from nat.builder.evaluator import EvaluatorInfo
+from nat.cli.register_workflow import register_evaluator
+from nat.data_models.evaluator import EvaluatorBaseConfig
 
 
 class MultimodalLLMJudgeEvaluatorConfig(EvaluatorBaseConfig, name="multimodal_llm_judge_evaluator"):
@@ -63,8 +63,8 @@ The score should be:
 
 @register_evaluator(config_type=MultimodalLLMJudgeEvaluatorConfig)
 async def register_multimodal_llm_judge_evaluator(config: MultimodalLLMJudgeEvaluatorConfig, builder: EvalBuilder):
-    """Register the Multimodal LLM Judge evaluator with AIQ Toolkit."""
-    from aiq.builder.framework_enum import LLMFrameworkEnum
+    """Register the Multimodal LLM Judge evaluator with NeMo Agent Toolkit."""
+    from nat.builder.framework_enum import LLMFrameworkEnum
     
     from .multimodal_llm_judge_evaluator import MultimodalLLMJudgeEvaluator
     

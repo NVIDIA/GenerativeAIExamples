@@ -1,6 +1,6 @@
 # Predictive Maintenance Agent
 
-A comprehensive AI-powered predictive maintenance system built with NVIDIA AIQ Toolkit for turbofan engine health monitoring and failure prediction.
+A comprehensive AI-powered predictive maintenance system built with NeMo Agent Toolkit for turbofan engine health monitoring and failure prediction.
 
 Work done by: Vineeth Kalluru, Janaki Vamaraju, Sugandha Sharma, Ze Yang, and Viraj Modak
 
@@ -55,8 +55,8 @@ conda activate pdm
 
 1. Clone the NeMo Agent Toolkit repository to your local machine:
    ```bash
-   git clone git@github.com:NVIDIA/NeMo-Agent-Toolkit.git aiqtoolkit
-   cd aiqtoolkit
+   git clone git@github.com:NVIDIA/NeMo-Agent-Toolkit.git nat-toolkit
+   cd nat-toolkit
    ```
 
 2. Initialize, fetch, and update submodules in the Git repository:
@@ -145,7 +145,7 @@ uv pip install -e .
 
 ### [Optional] Verify if all prerequisite packages are installed
 ```bash
-uv pip list | grep -E "aiqtoolkit|aiqtoolkit-ragaai|aiqtoolkit-phoenix|vanna|chromadb|xgboost|pytest|torch|matplotlib"
+uv pip list | grep -E "nvidia-nat|nvidia-nat-ragaai|nvidia-nat-phoenix|vanna|chromadb|xgboost|pytest|torch|matplotlib"
 ```
 
 ### 4. Database Setup
@@ -231,12 +231,12 @@ echo $NVIDIA_API_KEY
 
 ### Start FastAPI Server
 
-With other frameworks like LangGraph or CrewAI, users are expected to develop a FastAPI server to interact with their agentic workflow. Fortunately, NeMo Agent Toolkit offers this out of the box with the simple `aiq serve --config_file <path-to-file>` command.
+With other frameworks like LangGraph or CrewAI, users are expected to develop a FastAPI server to interact with their agentic workflow. Fortunately, NeMo Agent Toolkit offers this out of the box with the simple `nat serve --config_file <path-to-file>` command.
 
 Start the server now:
 
 ```bash
-aiq serve --config_file=configs/config-reasoning.yml
+nat serve --config_file=configs/config-reasoning.yml
 ```
 
 You should see something like this, which indicates that the server started successfully:
@@ -259,7 +259,7 @@ Note: You will need a system that can run Docker. If you are running this on a m
 Go back to the NeMo-Agent-Toolkit folder cloned in Step 2:
 
 ```bash
-cd /path-to/NeMo-Agent-Toolkit/src/aiq/tool/code_execution
+cd /path-to/NeMo-Agent-Toolkit/src/nat/tool/code_execution
 ```
 
 Run the server by mounting your workflow's output folder as an internal volume:
@@ -279,7 +279,7 @@ For example:
 [Optional] Create a new terminal to test your sandbox by running the Python script:
 
 ```bash
-cd /path-to/NeMo-Agent-Toolkit/src/aiq/tool/code_execution
+cd /path-to/NeMo-Agent-Toolkit/src/nat/tool/code_execution
 ./test_code_execution_sandbox.py
 ```
 
@@ -288,8 +288,8 @@ Close the new terminal when done - you don't need it anymore.
 ### Setup Web Interface
 
 ```bash
-git clone https://github.com/NVIDIA/AIQToolkit-UI.git
-cd AIQToolkit-UI
+git clone https://github.com/NVIDIA/NeMo-Agent-Toolkit-UI.git
+cd NeMo-Agent-Toolkit-UI
 npm ci
 npm run dev
 ```
@@ -390,7 +390,7 @@ You should see Catalyst initialization-related information in the terminal when 
 
 ## [Optional] Testing the Workflow
 
-NeMo Agent Toolkit provides the flexibility to run workflows not just through terminal commands (`aiq serve`) but also programmatically in Python which helps in seamless CI/CD pipeline integration. 
+NeMo Agent Toolkit provides the flexibility to run workflows not just through terminal commands (`nat serve`) but also programmatically in Python which helps in seamless CI/CD pipeline integration. 
 
 You can test the workflow by running the `test_pdm_workflow.py` file using pytest instead of starting the server, which provides a Pythonic way of building and running the workflow programmatically. This approach is particularly valuable for continuous integration and deployment systems, allowing automated validation of workflow components and streamlined deployment processes.
 
@@ -412,7 +412,7 @@ This example comes with 25 curated queries and reference answers that form our e
 
 We have created a smaller version of this dataset in `eval_data/eval_set_test.json` to help with quick checks before running the larger evaluation workflow.
 
-### Evaluate with AIQ 
+### Evaluate with NAT 
 
 Update the config file with the path to the evaluation set.
 
@@ -433,7 +433,7 @@ eval:
 Now, run this command:
 
 ```bash
-aiq eval --config_file configs/config-reasoning.yml
+nat eval --config_file configs/config-reasoning.yml
 ```
 
 You should see an `eval_output` folder generated in your working directory with `multimodal_eval_output.json`. We have provided you with an example output in `eval_output/example_multimodal_eval_output.json`.
@@ -451,6 +451,6 @@ The agent provides a foundation for industrial AI applications. Planned enhancem
 ---
 
 **Resources:**
-- [NVIDIA AIQ Toolkit Documentation](https://docs.nvidia.com/aiq-toolkit/)
+- [NeMo Agent Toolkit Documentation](https://docs.nvidia.com/nemo-agent-toolkit/)
 - [Phoenix Observability](https://phoenix.arize.com/)
 - [NV-Tesseract Models](https://developer.nvidia.com/blog/new-nvidia-nv-tesseract-time-series-models-advance-dataset-processing-and-anomaly-detection/)

@@ -6,7 +6,7 @@ requires = ["setuptools >= 64"]
 name = "predictive_maintenance_agent"
 dynamic = ["version"]
 dependencies = [
-  "aiqtoolkit[profiling, langchain, telemetry]",
+  "nvidia-nat[profiling, langchain, telemetry]",
   "momentfm",
   "pydantic ~= 2.10.0, <2.11.0",
   "vanna==0.7.9",
@@ -18,16 +18,17 @@ dependencies = [
   "pytest-asyncio"
 ]
 requires-python = ">=3.11,<3.13"
-description = "Predictive maintenance workflow using AIQ"
+description = "Predictive maintenance workflow using NeMo Agent Toolkit"
 classifiers = ["Programming Language :: Python"]
 authors = [{ name = "Vineeth Kalluru" }]
 maintainers = [{ name = "NVIDIA Corporation" }]
 
-[project.entry-points.'aiq.components']
+[project.entry-points.'nat.components']
 predictive_maintenance_agent = "predictive_maintenance_agent.register"
 
 [tool.uv.sources]
 momentfm = { path = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/moment", editable = true }
+nvidia-nat = {path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit", editable = true}
 
 [tool.setuptools]
 packages = ["predictive_maintenance_agent"]

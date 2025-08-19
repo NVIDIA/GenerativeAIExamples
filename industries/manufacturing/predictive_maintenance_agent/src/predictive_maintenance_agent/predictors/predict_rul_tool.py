@@ -8,10 +8,10 @@ import numpy as np
 
 from pydantic import Field, BaseModel
 
-from aiq.builder.builder import Builder
-from aiq.builder.function_info import FunctionInfo
-from aiq.cli.register_workflow import register_function
-from aiq.data_models.function import FunctionBaseConfig
+from nat.builder.builder import Builder
+from nat.builder.function_info import FunctionInfo
+from nat.cli.register_workflow import register_function
+from nat.data_models.function import FunctionBaseConfig
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def verify_json_path(file_path: str) -> str:
 
 class PredictRulToolConfig(FunctionBaseConfig, name="predict_rul_tool"):
     """
-    AIQ Toolkit function to predict RUL (Remaining Useful Life) using trained models and provided data.
+    NeMo Agent Toolkit function to predict RUL (Remaining Useful Life) using trained models and provided data.
     """
     # Runtime configuration parameters
     scaler_path: str = Field(description="Path to the trained StandardScaler model.", default="./models/scaler_model.pkl")

@@ -6,10 +6,10 @@ import numpy as np
 from typing import List, Tuple, Optional
 from pydantic import Field, BaseModel
 
-from aiq.builder.builder import Builder
-from aiq.builder.function_info import FunctionInfo
-from aiq.cli.register_workflow import register_function
-from aiq.data_models.function import FunctionBaseConfig
+from nat.builder.builder import Builder
+from nat.builder.function_info import FunctionInfo
+from nat.cli.register_workflow import register_function
+from nat.data_models.function import FunctionBaseConfig
 
 # Note: Visualization is now handled by the separate plot_anomaly_tool
 
@@ -66,7 +66,7 @@ except Exception as e:
 
 class TimeSeriesAnomalyDetectionToolConfig(FunctionBaseConfig, name="moment_anomaly_detection_tool"):
     """
-    AIQ Toolkit function to perform anomaly detection using MOMENT-1-small foundation model.
+    NeMo Agent Toolkit function to perform anomaly detection using MOMENT-1-small foundation model.
     """
     output_folder: str = Field(description="The path to the output folder to save results.", default="./output_data")
 

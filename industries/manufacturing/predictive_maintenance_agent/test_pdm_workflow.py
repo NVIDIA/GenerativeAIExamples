@@ -23,7 +23,7 @@ from pathlib import Path
 import pytest
 from predictive_maintenance_agent import register
 
-from aiq.runtime.loader import load_workflow
+from nat.runtime.loader import load_workflow
 
 logger = logging.getLogger(__name__)
 

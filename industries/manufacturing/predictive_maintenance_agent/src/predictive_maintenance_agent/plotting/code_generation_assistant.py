@@ -3,19 +3,19 @@ from typing import Any, Dict
 
 from pydantic import Field, BaseModel
 
-from aiq.builder.builder import Builder
-from aiq.builder.function_info import FunctionInfo
-from aiq.cli.register_workflow import register_function
-from aiq.data_models.function import FunctionBaseConfig
-from aiq.data_models.component_ref import LLMRef, FunctionRef
-from aiq.builder.framework_enum import LLMFrameworkEnum
+from nat.builder.builder import Builder
+from nat.builder.function_info import FunctionInfo
+from nat.cli.register_workflow import register_function
+from nat.data_models.function import FunctionBaseConfig
+from nat.data_models.component_ref import LLMRef, FunctionRef
+from nat.builder.framework_enum import LLMFrameworkEnum
 
 logger = logging.getLogger(__name__)
 
 
 class CodeGenerationAssistantConfig(FunctionBaseConfig, name="code_generation_assistant"):
     """
-    AIQ Toolkit function to generate and execute Python code based on input instructions and context.
+    NeMo Agent Toolkit function to generate and execute Python code based on input instructions and context.
     This tool combines code generation with direct execution, returning results and any generated files.
     """
     llm_name: LLMRef = Field(description="The LLM to use for code generation")

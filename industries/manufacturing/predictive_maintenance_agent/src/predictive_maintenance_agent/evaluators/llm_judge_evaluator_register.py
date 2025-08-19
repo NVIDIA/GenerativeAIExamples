@@ -1,9 +1,9 @@
 from pydantic import Field
 
-from aiq.builder.builder import EvalBuilder
-from aiq.builder.evaluator import EvaluatorInfo
-from aiq.cli.register_workflow import register_evaluator
-from aiq.data_models.evaluator import EvaluatorBaseConfig
+from nat.builder.builder import EvalBuilder
+from nat.builder.evaluator import EvaluatorInfo
+from nat.cli.register_workflow import register_evaluator
+from nat.data_models.evaluator import EvaluatorBaseConfig
 
 
 class LLMJudgeEvaluatorConfig(EvaluatorBaseConfig, name="llm_judge"):
@@ -44,8 +44,8 @@ The score should be:
 
 @register_evaluator(config_type=LLMJudgeEvaluatorConfig)
 async def register_llm_judge_evaluator(config: LLMJudgeEvaluatorConfig, builder: EvalBuilder):
-    """Register the LLM Judge evaluator with AIQ Toolkit."""
-    from aiq.builder.framework_enum import LLMFrameworkEnum
+    """Register the LLM Judge evaluator with NeMo Agent Toolkit."""
+    from nat.builder.framework_enum import LLMFrameworkEnum
     
     from .llm_judge_evaluator import LLMJudgeEvaluator
     

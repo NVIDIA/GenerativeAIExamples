@@ -4,17 +4,17 @@ import os
 
 from pydantic import Field, BaseModel
 
-from aiq.builder.builder import Builder
-from aiq.builder.function_info import FunctionInfo
-from aiq.cli.register_workflow import register_function
-from aiq.data_models.function import FunctionBaseConfig
-from aiq.builder.framework_enum import LLMFrameworkEnum
+from nat.builder.builder import Builder
+from nat.builder.function_info import FunctionInfo
+from nat.cli.register_workflow import register_function
+from nat.data_models.function import FunctionBaseConfig
+from nat.builder.framework_enum import LLMFrameworkEnum
 
 logger = logging.getLogger(__name__)
 
 class GenerateSqlQueryAndRetrieveToolConfig(FunctionBaseConfig, name="generate_sql_query_and_retrieve_tool"):
     """
-    AIQ Toolkit function to generate SQL queries and retrieve data.
+    NeMo Agent Toolkit function to generate SQL queries and retrieve data.
     """
     # Runtime configuration parameters
     llm_name: str = Field(description="The name of the LLM to use for the function.")
