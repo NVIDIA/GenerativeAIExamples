@@ -243,7 +243,7 @@ eval:
       cleanup: true
     dataset:
       _type: json
-      file_path: "eval_data/eval_set_test.json"
+      file_path: "eval_data/eval_set_master.json"
     query_delay: 10  # seconds between queries
     max_concurrent: 1  # process queries sequentially
   evaluators:
