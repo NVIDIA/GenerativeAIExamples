@@ -219,11 +219,7 @@ workflow:
     ### SPECIAL TASK 0: RUL Comparison (Actual vs Predicted) ###
     1) Retrieve ground truth RUL data for specified engine from database
     2) Predict RUL for same engine using the model  
-    3) Transform actual RUL to piecewise representation using code generation assistant with simple instruction:
-       "Apply piecewise RUL transformation to [filename] using the workspace utility. Use MAXLIFE=125."
-       
-       The workspace utility handles the complete transformation automatically, creating a "knee" pattern where RUL stays constant at MAXLIFE until the remaining cycles drop below the threshold, then decreases linearly to 0 at failure.
-    
+    3) Transform actual RUL to piecewise representation using python code with simple instruction: "Apply piecewise RUL transformation to [filename] using the available utilities in /workspace/utils. Use MAXLIFE=125."
     4) Generate comparison visualization showing the clean piecewise pattern alongside predictions using provided plot comparison tool
 
     ### GUIDELINES ###
