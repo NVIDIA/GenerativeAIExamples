@@ -6,7 +6,7 @@ requires = ["setuptools >= 64"]
 name = "predictive_maintenance_agent"
 dynamic = ["version"]
 dependencies = [
-  "nvidia-nat[profiling, langchain, telemetry]",
+  "nvidia-nat[profiling, langchain, telemetry]==1.2.0",
   "momentfm",
   "pydantic ~= 2.10.0, <2.11.0",
   "vanna==0.7.9",
@@ -27,8 +27,7 @@ maintainers = [{ name = "NVIDIA Corporation" }]
 predictive_maintenance_agent = "predictive_maintenance_agent.register"
 
 [tool.uv.sources]
-momentfm = { path = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/moment", editable = true }
-nvidia-nat = {path = "/Users/vikalluru/Documents/NeMo-Agent-Toolkit", editable = true}
+momentfm = { path = "./moment", editable = true }
 
 [tool.setuptools]
 packages = ["predictive_maintenance_agent"]
