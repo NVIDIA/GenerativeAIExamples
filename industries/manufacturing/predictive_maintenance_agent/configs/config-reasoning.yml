@@ -9,7 +9,7 @@ general:
         _type: file
         path: "pdm.log"
         level: DEBUG
-    # Uncomment this to enable tracing
+    # Uncomment this to enable tracing with observability platforms
     # tracing:
     #   catalyst:
     #     _type: catalyst
@@ -21,25 +21,36 @@ general:
     #     project: pdm-test
 
 llms:
+  # SQL query generation model
   sql_llm:
     _type: nim
     model_name: "qwen/qwen2.5-coder-32b-instruct"
+  
+  # Data analysis and tool calling model
   analyst_llm:
     _type: nim
     model_name: "qwen/qwen2.5-coder-32b-instruct"
+  
+  # Python code generation model
   coding_llm:
     _type: nim
     model_name: "qwen/qwen2.5-coder-32b-instruct"
     max_tokens: 4000
+  
+  # Main reasoning and planning model
   reasoning_llm:
     _type: nim
     model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
+    # Alternative smaller model option:
     # model_name: "nvidia/nvidia-nemotron-nano-9b-v2"
+  
+  # Multimodal evaluation model (Vision-Language Model)
   multimodal_judging_llm:
     _type: nim
     model_name: nvidia/llama-3.1-nemotron-nano-vl-8b-v1
 
 embedders:
+  # Text embedding model for vector database operations
   vanna_embedder:
     _type: nim
     model_name: "nvidia/nv-embed-v1"
@@ -53,45 +64,65 @@ functions:
     db_path: "database/nasa_turbo.db"
     output_folder: "output_data"
     vanna_training_data_path: "vanna_training_data.yaml"
+
+  # Legacy RUL prediction tool
   # predict_rul:
   #   _type: predict_rul_tool
   #   output_folder: "output_data"
   #   scaler_path: "models/scaler_model.pkl"
   #   model_path: "models/xgb_model_fd001.pkl"
+  
   predict_rul:
     _type: moment_predict_rul_tool
     output_folder: "output_data"
-  plot_distribution:
-    _type: plot_distribution_tool
-    output_folder: "output_data"
-  plot_line_chart:
-    _type: plot_line_chart_tool
-    output_folder: "output_data"
-  plot_comparison:
-    _type: plot_comparison_tool
-    output_folder: "output_data"
+  
   anomaly_detection:
     _type: moment_anomaly_detection_tool
     output_folder: "output_data"
+
+  plot_distribution:
+    _type: plot_distribution_tool
+    output_folder: "output_data"
+  
+  plot_line_chart:
+    _type: plot_line_chart_tool
+    output_folder: "output_data"
+  
+  plot_comparison:
+    _type: plot_comparison_tool
+    output_folder: "output_data"
+  
   plot_anomaly:
     _type: plot_anomaly_tool
     output_folder: "output_data"
+
   code_generation_assistant:
     _type: code_generation_assistant
     llm_name: coding_llm
     code_execution_tool: code_execution
     verbose: true
+  
   code_execution:
     _type: code_execution
     uri: http://127.0.0.1:6000/execute
     sandbox_type: local
     max_output_characters: 2000
+
   data_analysis_assistant:
     _type: react_agent
     llm_name: analyst_llm
     max_iterations: 20
     max_retries: 3
-    tool_names: [sql_retriever, code_generation_assistant, predict_rul, plot_distribution, plot_line_chart, plot_comparison, anomaly_detection, plot_anomaly]
+    tool_names: [
+      sql_retriever, 
+      code_generation_assistant, 
+      predict_rul, 
+      plot_distribution, 
+      plot_line_chart, 
+      plot_comparison, 
+      anomaly_detection, 
+      plot_anomaly
+    ]
     system_prompt: |
       ### TASK DESCRIPTION ####
       You are a helpful data analysis assistant that can help with predictive maintenance tasks for a turbofan engine. 
@@ -192,12 +223,12 @@ workflow:
     Your Role and Capabilities:**
     - Expert in turbofan engine data analysis, predictive maintenance, and anomaly detection
     - Provide conversational responses while maintaining technical accuracy
-    - Create step-by-step execution plans using available tools which will be invoked by a data analysis assitant
+    - Create step-by-step execution plans using available tools which will be invoked by a data analysis assistant
     
     **You are given a data analysis assistant to execute your plan, all you have to do is generate the plan**
     DO NOT USE MARKDOWN FORMATTING IN YOUR RESPONSE.
 
-    ### ASSITANT DESCRIPTION ###
+    ### ASSISTANT DESCRIPTION ###
     {augmented_function_desc}
 
     ### TOOLS AVAILABLE TO THE ASSISTANT ###
@@ -224,7 +255,7 @@ workflow:
     4) Generate comparison visualization showing the clean piecewise pattern alongside predictions using provided plot comparison tool
 
     ### GUIDELINES ###
-    **DO NOT use predict_rul tool to fetch RUL data unless the user explicitly uses the word "predict" or somthing similar, this is because there is also ground truth RUL data in the database which the user might request sometimes.**
+    **DO NOT use predict_rul tool to fetch RUL data unless the user explicitly uses the word "predict" or something similar, this is because there is also ground truth RUL data in the database which the user might request sometimes.**
     **REMEMBER: SQL retrieval tool is smart enough to understand queries like counts, totals, basic facts etc. It can use UNIQUE(), COUNT(), SUM(), AVG(), MIN(), MAX() to answer simple queries. NO NEED TO USE CODE GENERATION ASSISTANT FOR SIMPLE QUERIES.**
     **CODE GENERATION ASSISTANT IS COSTLY AND UNRELIABLE MOST OF THE TIMES. SO PLEASE USE IT ONLY FOR COMPLEX QUERIES THAT REQUIRE DATA PROCESSING AND VISUALIZATION.**
 
@@ -241,45 +272,46 @@ eval:
     dataset:
       _type: json
       file_path: "eval_data/eval_set_master.json"
-    query_delay: 10  # seconds between queries
-    max_concurrent: 1  # process queries sequentially
+    query_delay: 10         # seconds between queries
+    max_concurrent: 1       # process queries sequentially
+  
   evaluators:
     multimodal_eval:
       _type: multimodal_llm_judge_evaluator
       llm_name: multimodal_judging_llm
       judge_prompt: |
-        You are an expert evaluator for predictive maintenance agentic workflows. Your task is to evaluate how well a generated response (which may include both text and visualizations) matches the reference answer for a given question.
+        You are an expert evaluator for predictive maintenance agentic workflows. 
+        Your task is to evaluate how well a generated response (which may include both text and visualizations) 
+        matches the reference answer for a given question.
 
         Question: {question}
-
         Reference Answer: {reference_answer}
-
         Generated Response: {generated_answer}
 
-        IMPORTANT: You MUST provide your response ONLY as a valid JSON object. Do not include any text before or after the JSON.
+        IMPORTANT: You MUST provide your response ONLY as a valid JSON object. 
+        Do not include any text before or after the JSON.
 
-        EVALUATION LOGIC:
-        IMPORTANT: Your evaluation mode is determined by whether actual plot images are attached to this message:
-        - If PLOT IMAGES are attached to this message: Perform ONLY PLOT EVALUATION by examining the actual plot images
-        - If NO IMAGES are attached: Perform ONLY TEXT EVALUATION of the text response
+        # EVALUATION LOGIC
+        Your evaluation mode is determined by whether actual plot images are attached to this message:
+        - If PLOT IMAGES are attached → Perform ONLY PLOT EVALUATION by examining the actual plot images
+        - If NO IMAGES are attached → Perform ONLY TEXT EVALUATION of the text response
         
-        DO NOT confuse text mentions of plots/files with actual attached images. Only evaluate plots if you can actually see plot images in this message.
+        DO NOT confuse text mentions of plots/files with actual attached images. 
+        Only evaluate plots if you can actually see plot images in this message.
 
-        TEXT EVALUATION (only when no images are attached):
-        Check if the generated text answer semantically matches the reference answer (not word-for-word, but meaning and content). Score:
+        ## TEXT EVALUATION (only when no images are attached)
+        Check if the generated text answer semantically matches the reference answer:
         - 1.0: Generated answer fully matches the reference answer semantically
-        - 0.5: Generated answer partially matches the reference answer with some missing or incorrect elements
+        - 0.5: Generated answer partially matches with some missing/incorrect elements  
         - 0.0: Generated answer does not match the reference answer semantically
 
-        PLOT EVALUATION (only when images are attached):
-        Use the reference answer as the expected plot description and check how well the actual generated plot matches it. Score:
+        ## PLOT EVALUATION (only when images are attached)
+        Use the reference answer as expected plot description and check how well the actual plot matches:
         - 1.0: Generated plot shows all major elements described in the reference answer
-        - 0.5: Generated plot shows some elements described in the reference answer but missing significant aspects
+        - 0.5: Generated plot shows some elements but missing significant aspects
         - 0.0: Generated plot does not match the reference answer description
 
-        FINAL SCORING:
-        Your final score should be based on whichever evaluation type was performed (TEXT or PLOT, not both).
-
+        # RESPONSE FORMAT
         You MUST respond with ONLY this JSON format:
         {{
             "score": 0.0,
