@@ -194,11 +194,7 @@ async def predict_rul_tool(
 **Results saved to:** {output_filepath}
 
 The predictions have been added to the original dataset with column name 'predicted_RUL'. The original JSON file has been updated with the RUL predictions.
-All columns from the original dataset have been preserved, and the predicted RUL column has been renamed to 'predicted_RUL' and the actual RUL column has been renamed to 'actual_RUL'.
-
-**Model Details:**
-- **XGBoost Model:** Gradient boosting with engineered features
-- **Feature Engineering:** 12 sensor measurements processed with StandardScaler"""
+All columns from the original dataset have been preserved, and the predicted RUL column has been renamed to 'predicted_RUL' and the actual RUL column has been renamed to 'actual_RUL'."""
             
             return response
             

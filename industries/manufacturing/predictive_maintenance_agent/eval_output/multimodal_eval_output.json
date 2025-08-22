@@ -1,5 +1,5 @@
 {
-  "average_score": 0.8,
+  "average_score": 0.84,
   "eval_output_items": [
     {
       "id": 1,
@@ -7,8 +7,8 @@
       "reasoning": {
         "question": "What is the ground truth remaining useful life (RUL) of unit_number 59 in dataset FD001",
         "reference_answer": "114 ",
-        "generated_answer": "The ground truth Remaining Useful Life (RUL) for unit_number 59 in dataset FD001 is **114** cycles.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The text 'The ground truth Remaining Useful Life (RUL) for unit_number 59 in dataset FD001 is **114** cycles.' is identical to the reference answer 'The ground truth Remaining Useful Life (RUL) of unit_number 59 in dataset FD001 is **114** cycles.'",
+        "generated_answer": "The ground truth remaining useful life (RUL) of unit_number 59 in dataset FD001 is 114.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The text provided is identical to the reference answer, indicating that the ground truth remaining useful life (RUL) of unit_number 59 in dataset FD001 is indeed 114.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -20,8 +20,8 @@
       "reasoning": {
         "question": "What is the ground truth RUL of unit_number 20 in dataset FD001",
         "reference_answer": "16 ",
-        "generated_answer": "The ground truth RUL for unit_number 20 in dataset FD001 is **16** cycles.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. The text 'The ground truth RUL for unit_number 20 in dataset FD001 is **16** cycles.' matches the reference answer '16' in both meaning and content.",
+        "generated_answer": "The ground truth Remaining Useful Life (RUL) for unit_number 20 in dataset FD001 is 16.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. Both the reference and generated responses state that the ground truth RUL for unit_number 20 in dataset FD001 is 16.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -33,8 +33,8 @@
       "reasoning": {
         "question": "How many units have ground truth RUL of 100 or more in dataset FD003",
         "reference_answer": "33 ",
-        "generated_answer": "In dataset FD003, 33 units have a ground truth Remaining Useful Life (RUL) of 100 or more cycles.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. The text in the generated response is identical to the reference answer, indicating that the number of units with a ground truth RUL of 100 or more in dataset FD003 is indeed 33.",
+        "generated_answer": "33 units have a ground truth RUL of 100 or more in dataset FD003.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response '33 units have a ground truth RUL of 100 or more in dataset FD003.' semantically matches the reference answer '33' which indicates the number of units with a ground truth RUL of 100 or more in dataset FD003.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -46,8 +46,8 @@
       "reasoning": {
         "question": "How many units have ground truth RUL of 50 or less in dataset FD002",
         "reference_answer": "88 ",
-        "generated_answer": "In dataset FD002, 88 units have a ground truth RUL of 50 or less.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. Both the reference and generated responses state that 88 units have a ground truth RUL of 50 or less in dataset FD002.",
+        "generated_answer": "88 units have a ground truth RUL of 50 or less in dataset FD002.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response '88 units have a ground truth RUL of 50 or less in dataset FD002.' semantically matches the reference answer '88' which is a numerical value. The generated response does not provide any additional information beyond the reference answer, but it does not contradict it either. Therefore, the generated response fully matches the reference answer semantically.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -59,8 +59,8 @@
       "reasoning": {
         "question": "Report the unit_number of the units that have ground truth RUL equal to 155 in FD002",
         "reference_answer": "6, 141, 165 ",
-        "generated_answer": "Units with ground truth RUL of 155 in FD002: 6, 141, 165. The data has been saved to /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/select_unit_number_from_fd002__results.json.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. Both the generated and reference answers list the same unit numbers (6, 141, 165) for the units with ground truth RUL equal to 155 in FD002.",
+        "generated_answer": "The engine units with a ground truth Remaining Useful Life (RUL) equal to 155 in the FD002 dataset are 6, 141, and 165.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. Both the generated and reference answers list the same unit numbers (6, 141, and 165) for the units with a ground truth RUL equal to 155 in the FD002 dataset.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -68,12 +68,12 @@
     },
     {
       "id": 6,
-      "score": 0.5,
+      "score": 1.0,
       "reasoning": {
         "question": "In the dataset FD004, how many units have ground truth RUL equal to 10 and what are their unit numbers?",
         "reference_answer": "4 units; unit numbers: 40, 82, 174, 184",
-        "generated_answer": "In the dataset FD004, there are 4 units with ground truth RUL equal to 10. The unit numbers are 40, 82, 174, and 227. The formatted output has been saved to: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/formatted_fd004_units_with_rul_10.txt",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response partially matches the reference answer semantically. While the number of units (4) and the fact that their RUL is equal to 10 are correct, the unit numbers are incorrect. The reference answer lists unit numbers 40, 82, 174, and 184, but the generated response lists unit numbers 40, 82, 174, and 227, which does not match the reference.",
+        "generated_answer": "In the dataset FD004, there are 4 units with a ground truth RUL equal to 10. The unit numbers for these units are 40, 82, 174, and 184. The results are saved in the file `output_data/in_the_dataset_fd004_how_many__results.json`.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. It correctly states the number of units with ground truth RUL equal to 10 and lists their unit numbers. The mention of the file path is not relevant to the question but does not affect the semantic match.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -86,7 +86,7 @@
         "question": "In dataset train_FD004, what was the operational_setting_3 at time_in_cycles 20 for unit_number 107",
         "reference_answer": "100 ",
         "generated_answer": "The operational_setting_3 for unit_number 107 at time_in_cycles 20 in the dataset train_FD004 is 100.0.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The text in the generated response is identical to the reference answer, indicating that the operational_setting_3 for unit_number 107 at time_in_cycles 20 in the dataset train_FD004 is indeed 100.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The text in the generated response is identical to the reference answer, indicating that the operational_setting_3 for unit_number 107 at time_in_cycles 20 in the dataset train_FD004 is indeed 100.0.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -98,8 +98,8 @@
       "reasoning": {
         "question": "In dataset train_FD004, what was the 3rd operational setting at time 20 for unit_number 107",
         "reference_answer": "100 ",
-        "generated_answer": "The 3rd operational setting for unit_number 107 at time 20 in train_FD004 was **100.0**.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. The generated response states that the 3rd operational setting for unit_number 107 at time 20 in train_FD004 was 100.0, which is the same as the reference answer.",
+        "generated_answer": "The 3rd operational setting at time 20 for unit_number 107 is 100.0.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The text 'The 3rd operational setting at time 20 for unit_number 107 is 100.0.' is identical to the reference answer '100'.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -111,8 +111,8 @@
       "reasoning": {
         "question": "In dataset test_FD002, what are the values of the three operational setting for unit_number 56 at time_in_cycles 10",
         "reference_answer": "10.0026, 0.25, 100 ",
-        "generated_answer": "The values of the three operational settings for unit_number 56 at time_in_cycles 10 in the test_FD002 dataset are:\n- Operational Setting 1: 10.0026\n- Operational Setting 2: 0.25\n- Operational Setting 3: 100.0",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. The values provided for the three operational settings for unit_number 56 at time_in_cycles 10 in the test_FD002 dataset are identical to the reference answer.",
+        "generated_answer": "The values of the three operational settings for `unit_number` 56 at `time_in_cycles` 10 are:\n- `operational_setting_1`: 10.0026\n- `operational_setting_2`: 0.25\n- `operational_setting_3`: 100.0",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The values for the three operational settings for unit_number 56 at time_in_cycles 10 are provided in the same order and with the same values as in the reference answer.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -124,8 +124,8 @@
       "reasoning": {
         "question": "In dataset test_FD003, what is the value of sensor_measurement_4 for unit_number 25 at time_in_cycles 20",
         "reference_answer": "1409.26 ",
-        "generated_answer": "For unit_number 25 at time_in_cycles 20 in test_FD003, the sensor_measurement_4 value is 1409.26.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The text in the generated response is identical to the reference answer, indicating that the value of sensor_measurement_4 for unit_number 25 at time_in_cycles 20 in test_FD003 is indeed 1409.26.",
+        "generated_answer": "The value of `sensor_measurement_4` for `unit_number` 25 at `time_in_cycles` 20 is **1409.26**.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The value of `sensor_measurement_4` for `unit_number` 25 at `time_in_cycles` 20 is accurately stated as **1409.26** in both the reference and generated responses.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -133,12 +133,12 @@
     },
     {
       "id": 11,
-      "score": 0.5,
+      "score": 1.0,
       "reasoning": {
         "question": "How many units have operational_setting_3 equal to 100 in dataset train_FD001 at time_in_cycles 40?",
         "reference_answer": "100 ",
-        "generated_answer": "In train_FD001, at time_in_cycles 40, 1 unit has operational_setting_3 equal to 100. The result is based on the query executed and the count obtained is 1. The data has been saved to /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/count_units_in_train_fd001_whe_results.json.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response partially matches the reference answer semantically. The reference answer states that there are 100 units with operational_setting_3 equal to 100 at time_in_cycles 40, while the generated response claims there is only 1 unit with this condition. Although the generated response includes a count of units, it does not match the reference answer's count.",
+        "generated_answer": "100 units have `operational_setting_3` equal to 100 at `time_in_cycles` 40 in the `train_FD001` dataset.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. The text in the generated response is identical to the reference answer, indicating that 100 units have operational_setting_3 equal to 100 at time_in_cycles 40 in the train_FD001 dataset.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -150,8 +150,8 @@
       "reasoning": {
         "question": "How many units have operational_setting_3 equal to 100 in dataset train_FD001?",
         "reference_answer": "100 ",
-        "generated_answer": "There are 100 units in train_FD001 with operational_setting_3 equal to 100.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response directly matches the reference answer in both content and meaning. The text 'There are 100 units in train_FD001 with operational_setting_3 equal to 100.' is a verbatim repetition of the reference answer '100'.",
+        "generated_answer": "100 units have `operational_setting_3` equal to 100 in the `train_FD001` dataset.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. The text '100 units have `operational_setting_3` equal to 100 in the `train_FD001` dataset.' directly corresponds to the reference answer '100'.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -163,8 +163,8 @@
       "reasoning": {
         "question": "In dataset train_FD003, what was sensor_measurement_20 and sensor_measurement_21 for unit 1 at time_in_cycles 10",
         "reference_answer": "38.94, 23.4781 ",
-        "generated_answer": "The sensor_measurement_20 for unit 1 at time_in_cycles 10 is 38.94, and the sensor_measurement_21 is 23.4781.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The text in the generated response is identical to the reference answer, with the same values for sensor_measurement_20 and sensor_measurement_21 for unit 1 at time_in_cycles 10.",
+        "generated_answer": "The sensor measurements for unit 1 at time_in_cycles 10 from the dataset `train_FD003` are:\n- **sensor_measurement_20**: 38.94\n- **sensor_measurement_21**: 23.4781",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response semantically matches the reference answer. The text in the generated response is identical to the reference answer, with the same values for sensor_measurement_20 and sensor_measurement_21 for unit 1 at time_in_cycles 10.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -176,8 +176,8 @@
       "reasoning": {
         "question": "For dataset test_FD004, what is the ground truth remaining useful life of unit 60",
         "reference_answer": "139 ",
-        "generated_answer": "The ground truth Remaining Useful Life (RUL) for unit 60 in dataset test_FD004 is **139** cycles.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The text in the generated response is identical to the reference answer, indicating that the RUL for unit 60 in dataset test_FD004 is indeed 139 cycles.",
+        "generated_answer": "The ground truth remaining useful life (RUL) for unit 60 from the dataset `test_FD004` is 139.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response matches the reference answer semantically. The text 'The ground truth remaining useful life (RUL) for unit 60 from the dataset `test_FD004` is 139.' directly corresponds to the reference answer '139'.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -189,8 +189,8 @@
       "reasoning": {
         "question": "Using the data in test_FD002, predict the remaining useful life of unit_number 10 at time_in_cycles 84",
         "reference_answer": "79 ",
-        "generated_answer": "The predicted Remaining Useful Life (RUL) for engine unit 10 at time_in_cycles 84 is 310.5 cycles. The degradation rate is -0.007553 cycles per cycle, indicating a steady degradation pattern. The prediction is based on the full dataset of 84 cycles for unit 10.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response does not match the reference answer semantically. The reference answer indicates a Remaining Useful Life (RUL) of 79 cycles, while the generated response predicts 310.5 cycles, which is significantly higher and does not align with the reference.",
+        "generated_answer": "The remaining useful life (RUL) prediction for `unit_number` 30 at `time_in_cycles` 84 using the MOMENT-1-Small Foundation Model is 105.6 cycles. The model analyzed 12 sensors and provided a consistent prediction of 105.65 cycles with no variation (standard deviation of 0.00 cycles). The degradation rate for engine unit 30 is -0.034276 cycles per timestep. The results have been saved to the file `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/retrieve_sensor_data_for_unit__results.json` with the 'predicted_RUL' column added.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response does not match the reference answer semantically. The reference answer asks for the RUL prediction of unit_number 10 at time_in_cycles 84, but the generated response predicts the RUL for unit_number 30 at time_in_cycles 84. Additionally, the generated response provides incorrect information about the unit_number and time_in_cycles, and the RUL prediction is also incorrect (105.6 instead of 79).",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -202,8 +202,8 @@
       "reasoning": {
         "question": "Given the data in test_FD003, predict the RUL of unit_number 30",
         "reference_answer": "89 ",
-        "generated_answer": "The RUL prediction for `unit_number` 30 from the `test_FD003` dataset has been completed using the MOMENT-1-Small Foundation Model. The model analyzed 12 sensors and predicted a constant RUL of 110.84 cycles for all 333 cycles of data. The average, minimum, and maximum RUL values are all 110.84 cycles, indicating a stable degradation pattern with no variability in the predictions. The degradation rate for engine unit 30 is -0.032670 cycles per cycle.\n\nThe original JSON file has been updated with a `predicted_RUL` column, and the file is located at `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/retrieve_all_sensor_data_for_u_results.json`.",
-        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response does not match the reference answer semantically. The reference answer is a specific number (89), while the generated response provides a range of values (110.84 cycles) and a degradation rate, which does not correspond to the reference answer.",
+        "generated_answer": "I seem to be having a problem.",
+        "llm_judgment": "EVALUATION TYPE: TEXT - The generated response does not match the reference answer semantically. The reference answer is a specific numerical value (89), while the generated response is a vague statement about having a problem. There is no indication of any attempt to predict the RUL of unit_number 30 in the generated response.",
         "plot_paths": [],
         "num_images_analyzed": 0,
         "evaluation_type": "TEXT"
@@ -215,8 +215,8 @@
       "reasoning": {
         "question": "In dataset train_FD004, plot sensor_measurement1 vs time_in_cycles for unit_number 107",
         "reference_answer": "Line chart showing sensor_measurement1 values on y-axis ranging from 445.00 to 518.67 plotted against time_in_cycles in x-axisfor unit 107 in dataset FD004.",
-        "generated_answer": "The line chart for sensor_measurement1 vs time_in_cycles for unit_number 107 from the train_FD004 dataset has been generated. The chart shows the variation of sensor measurement 1 over time in cycles for the specified unit. The interactive HTML file can be viewed at `file://output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.html`, and the static PNG file is located at `output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png`.",
-        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description. It shows sensor measurement 1 on the y-axis ranging from approximately 450 to 520, plotted against time in cycles on the x-axis for unit 107 in the train_FD004 dataset. The plot is a line chart with blue lines and dots representing the sensor measurements over time.",
+        "generated_answer": "The line chart for `sensor_measurement_1` vs `time_in_cycles` for `unit_number` 107 has been generated and saved. The chart shows the trend of sensor measurement 1 over time in cycles for the specified unit. The HTML file can be viewed at `file://output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.html`, and the PNG file is located at `output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png`.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description. It shows sensor measurement 1 on the y-axis ranging from approximately 450 to 520, plotted against time in cycles on the x-axis for unit 107 in dataset FD004. The plot is a line chart with blue lines and points, and the title and axis labels are clearly visible and consistent with the reference answer.",
         "plot_paths": [
           "output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png"
         ],
@@ -230,10 +230,10 @@
       "reasoning": {
         "question": "In dataset train_FD004, plot the variation of sensor_measurement1 over time for unit_number 107",
         "reference_answer": "Line chart displaying the variation of sensor_measurement1 values on y-axis over time cycles in x-axis for unit 107 in dataset FD004. The plot should illustrate how sensor_measurement1 changes across different time cycles, demonstrating the temporal variation pattern of this sensor reading.",
-        "generated_answer": "The plot of sensor_measurement1 over time for unit_number 107 in the train_FD004 dataset is available in the following formats:\n- Interactive HTML: [file://output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.html](file://output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.html)\n- Static PNG: [output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png](output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png)\n\nThis plot shows the variation of sensor_measurement1 over time for unit_number 107 in the train_FD004 dataset.",
-        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot accurately matches the reference answer. It displays the variation of sensor_measurement1 over time for unit_number 107 in the train_FD004 dataset. The plot includes a line chart with the x-axis representing time in cycles and the y-axis representing sensor_measurement1 values. The plot shows the expected fluctuation pattern of sensor_measurement1 across different time cycles, demonstrating the temporal variation pattern of this sensor reading.",
+        "generated_answer": "The variation of `sensor_measurement_1` over `time_in_cycles` for `unit_number` 107 has been plotted. The chart shows how the sensor measurement changes over time for this specific unit. The plot is available in both HTML and PNG formats at the following paths:\n\n- HTML File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.html\n- PNG File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot accurately matches the reference answer. It displays the variation of sensor measurement 1 over time for unit number 107 in dataset FD004. The plot includes a line chart with the x-axis representing time in cycles and the y-axis representing sensor measurement 1. The plot shows the expected fluctuations in sensor measurements, and the title and axis labels are correctly labeled.",
         "plot_paths": [
-          "output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png"
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png"
         ],
         "num_images_analyzed": 1,
         "evaluation_type": "PLOT"
@@ -245,10 +245,10 @@
       "reasoning": {
         "question": "In dataset train_FD002, plot operational_setting_3 vs time_in_cycles for unit_number 200",
         "reference_answer": "Line chart showing operational_setting_3 values on y-axis ranging against time_in_cycles in x-axis for unit 200 in dataset FD002. Only two values 100 and 60 should be visible on the plot.",
-        "generated_answer": "The interactive line chart for operational_setting_3 vs time_in_cycles for unit 200 in the train_FD002 dataset has been generated. The chart is available in the following formats:\n- HTML File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_operational_setting_3.html\n- PNG File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_operational_setting_3.png\n\nThe chart shows the trend of operational_setting_3 over time_in_cycles for unit 200, providing a visual representation of how this setting changes as the engine cycles through operations.",
-        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description. It shows a line chart with operational_setting_3 on the y-axis and time_in_cycles on the x-axis for unit 200. The plot displays a single value of 100 for operational_setting_3 across the entire range of time_in_cycles, which aligns with the reference answer's requirement of only two visible values, 100 and 60. However, since only one value is visible in the plot, we score it as a perfect match.",
+        "generated_answer": "The line chart for operational_setting_3 vs time_in_cycles for unit_number 200 has been generated and saved. The chart shows the operational setting 3 values plotted against the time in cycles for unit 200. The HTML file can be viewed at `file://output_data/line_chart_time_in_cycles_vs_operational_setting_3.html` and the PNG file is located at `output_data/line_chart_time_in_cycles_vs_operational_setting_3.png`.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description. The plot shows a line chart with operational_setting_3 values on the y-axis and time_in_cycles on the x-axis for unit 200. The line is horizontal at the value 100, which matches the reference answer's description of only two values, 100 and 60, being visible on the plot.",
         "plot_paths": [
-          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_operational_setting_3.png"
+          "output_data/line_chart_time_in_cycles_vs_operational_setting_3.png"
         ],
         "num_images_analyzed": 1,
         "evaluation_type": "PLOT"
@@ -260,8 +260,8 @@
       "reasoning": {
         "question": "Plot a histogram showing distribution of values of operational_setting_3 over time for unit_number 200 in dataset train_FD002",
         "reference_answer": "Histogram Two bars for 100 and 60 with higher bar for 100",
-        "generated_answer": "The distribution histogram for operational_setting_3 over time for unit_number 200 in the train_FD002 dataset has been generated. The histogram shows the distribution of operational_setting_3 values across the cycles. The HTML file can be viewed at file://output_data/distribution_plot_operational_setting_3.html, and the static PNG file is located at output_data/distribution_plot_operational_setting_3.png.",
-        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer semantically. The plot shows a histogram with a single bar at 100 for operational_setting_3 over time for unit_number 200 in the train_FD002 dataset. This matches the reference answer, which also mentions two bars for 100 and 60 with a higher bar for 100.",
+        "generated_answer": "The distribution histogram for `operational_setting_3` over time for `unit_number` 200 has been generated and saved. The histogram shows the distribution of `operational_setting_3` values with 30 bins. The HTML file can be viewed at `file://output_data/distribution_plot_operational_setting_3.html`, and the PNG file is located at `output_data/distribution_plot_operational_setting_3.png`.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer semantically. The plot shows a single bar at 100.0 for operational_setting_3, which aligns with the reference answer's description of two bars for 100 and 60, with the higher bar for 100.",
         "plot_paths": [
           "output_data/distribution_plot_operational_setting_3.png"
         ],
@@ -275,14 +275,12 @@
       "reasoning": {
         "question": "In dataset test_FD001 plot a histogram showing the distribution of operational_setting_3 across all units",
         "reference_answer": "Constant value 100, so just one high bar for 100",
-        "generated_answer": "The distribution histogram for the `operational_setting_3` column in the `test_FD001` dataset has been generated. The histogram shows the distribution of `operational_setting_3` values across all units. The chart is available in both HTML and PNG formats:\n\n- HTML File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/output_data/distribution_plot_operational_setting_3.html\n- PNG File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/output_data/distribution_plot_operational_setting_3.png\n\nYou can view the interactive HTML plot by opening the HTML file in a web browser.",
-        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot for 'operational_setting_3' distribution in the 'test_FD001' dataset matches the reference answer. The histogram shows a single high bar at the value 100, indicating a constant value across all units. The plot is available in both HTML and PNG formats, and the visual content confirms the reference answer.",
+        "generated_answer": "The distribution histogram for the 'operational_setting_3' column across all units in the 'test_FD001' dataset has been generated. The histogram shows the distribution of values for 'operational_setting_3'. The chart is available in both HTML and PNG formats at the following paths:\n\n- HTML File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_operational_setting_3.html\n- PNG File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_operational_setting_3.png\n\nYou can open the HTML file in a web browser to view the interactive histogram.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description. The plot shows a single bar at the value 100 for 'operational_setting_3' across all units in the 'test_FD001' dataset.",
         "plot_paths": [
-          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_sensor_measurement_1.png",
-          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_RUL.png",
-          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/comparison_plot_actual_RUL_vs_predicted_RUL.png"
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/distribution_plot_operational_setting_3.png"
         ],
-        "num_images_analyzed": 3,
+        "num_images_analyzed": 1,
         "evaluation_type": "PLOT"
       }
     },
@@ -292,10 +290,10 @@
       "reasoning": {
         "question": "In dataset test_FD001 plot operational_setting_3 as a function of time_in_cycles for units 10, 20, 30, 40",
         "reference_answer": "Line chart showing operational_setting_3 values on y-axis ranging against time_in_cycles in x-axis with a constant line parallel to x-axis with value y-axis as 100",
-        "generated_answer": "The line chart has been generated and saved. The chart shows the operational_setting_3 as a function of time_in_cycles for units 10, 20, 30, and 40. The HTML file can be viewed at `file://output_data/line_chart_time_in_cycles_vs_operational_setting_3.html` and the PNG file is located at `output_data/line_chart_time_in_cycles_vs_operational_setting_3.png`.",
-        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description. The plot shows a constant line parallel to the x-axis with a value of 100 on the y-axis for operational_setting_3 across all time_in_cycles for units 10, 20, 30, and 40.",
+        "generated_answer": "The line chart has been generated and saved in the following formats:\n- HTML File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_operational_setting_3.html\n- PNG File: /Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_operational_setting_3.png\n\nThe chart shows the operational setting 3 as a function of time in cycles for units 10, 20, 30, and 40. This visualization helps in understanding how the operational setting changes over time for these specific units.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer perfectly. It shows a constant line parallel to the x-axis with a value of 100 on the y-axis for operational_setting_3 across all time_in_cycles for units 10, 20, 30, and 40.",
         "plot_paths": [
-          "output_data/line_chart_time_in_cycles_vs_operational_setting_3.png"
+          "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/line_chart_time_in_cycles_vs_operational_setting_3.png"
         ],
         "num_images_analyzed": 1,
         "evaluation_type": "PLOT"
@@ -307,8 +305,8 @@
       "reasoning": {
         "question": "Retrieve RUL of all units from the FD001 and plot their distribution using a histogram",
         "reference_answer": "Histogram showing distribution of RUL values for all units in FD001 dataset. Should contain 100 data points representing different RUL values ranging from 7 to 145 cycles. The distribution should show 71 unique RUL values with varying frequencies. The plot should display the spread and frequency of remaining useful life values across all engine units in the dataset.",
-        "generated_answer": "The distribution histogram for the RUL of all units in the FD001 dataset has been generated. The histogram shows the distribution of RUL values across the units. The HTML file can be viewed at `file://output_data/distribution_plot_RUL.html`, and the static PNG file is located at `output_data/distribution_plot_RUL.png`.",
-        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description. It shows the distribution of RUL values for all units in the FD001 dataset with a histogram. The plot includes 100 data points representing different RUL values ranging from 7 to 145 cycles. The distribution shows 71 unique RUL values with varying frequencies. The plot displays the spread and frequency of remaining useful life values across all engine units in the dataset.",
+        "generated_answer": "The distribution histogram of the RUL values for FD001 units has been generated and saved. The histogram shows the distribution of the remaining useful life values across the 100 units. The HTML file can be viewed at `file://output_data/distribution_plot_RUL.html`, and the PNG file is located at `output_data/distribution_plot_RUL.png`.",
+        "llm_judgment": "EVALUATION TYPE: PLOT - The generated plot matches the reference answer description. It shows the distribution of RUL values for all units in FD001 dataset with 100 data points ranging from 7 to 145 cycles. The plot displays 71 unique RUL values with varying frequencies, showing the spread and frequency of remaining useful life values across all engine units in the dataset.",
         "plot_paths": [
           "output_data/distribution_plot_RUL.png"
         ],

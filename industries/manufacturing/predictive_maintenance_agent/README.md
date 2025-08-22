@@ -338,9 +338,7 @@ The predictive maintenance agent includes a powerful **workspace utilities syste
 
 ### How Workspace Utilities Work
 
-**Location**: The utilities are located in `/workspace/utils/` (which maps to your `output_data/utils/` directory).
-
-**Philosophy**: Instead of asking the LLM to generate complex transformation code through multiple agent layers (which can lose context and introduce errors), the system provides pre-tested utility functions that can be invoked with simple instructions.
+The utilities are located in `/workspace/utils/` (which maps to your `output_data/utils/` directory). Instead of asking the LLM to generate complex transformation code through multiple agent layers (which can lose context and introduce errors), this system provides pre-tested utility functions that can be invoked with simple instructions.
 
 **Architecture Benefits**:
 - **Reliability**: Pre-tested, robust implementations instead of generated code

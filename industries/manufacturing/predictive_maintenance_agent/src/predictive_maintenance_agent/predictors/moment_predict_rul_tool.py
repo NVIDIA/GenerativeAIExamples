@@ -382,46 +382,24 @@ async def moment_predict_rul_tool(
             max_rul = np.max(valid_predictions)
             std_rul = np.std(valid_predictions)
             
-            # Build comprehensive response
-            response_parts = [
-                "🚀 MOMENT-1-SMALL FOUNDATION MODEL RUL PREDICTION COMPLETED SUCCESSFULLY",
-                "",
-                f"📊 **Analysis Details:**",
-                f"   • Model: MOMENT-1-Small Foundation Model (Time Series Forecasting)",
-                f"   • Source Data: {os.path.basename(sensor_data_json_path)}",
-                f"   • Engine Units Processed: {len(engine_units)}",
-                f"   • Sensors Analyzed: {len(feature_columns)}",
-                f"   • Forecast Horizon: {config.forecast_horizon} timesteps",
-                f"   • Sequence Length: 512 timesteps (MOMENT standard)",
-                "",
-                f"📈 **RUL Prediction Summary:**",
-                f"   • Total Predictions: {len(valid_predictions)}",
-                f"   • Average RUL: {avg_rul:.2f} cycles",
-                f"   • Minimum RUL: {min_rul:.2f} cycles",
-                f"   • Maximum RUL: {max_rul:.2f} cycles",
-                f"   • Standard Deviation: {std_rul:.2f} cycles",
-                "",
-                f"💾 **Output Files:**",
-                f"   • Enhanced Data with RUL Predictions: {results_filepath}",
-                f"   • Original file updated with 'predicted_RUL' column",
-                f"📋 **Per-Engine Results:**"
-            ]
+            # Build response similar to predict_rul_tool format  
+            response = f"""RUL predictions generated successfully! 📊
+
+**Model Used:** MOMENT-1-Small Foundation Model (Time Series Forecasting)
+
+**Prediction Summary:**
+- **Total predictions:** {len(valid_predictions)}
+- **Average RUL:** {avg_rul:.2f} cycles
+- **Minimum RUL:** {min_rul:.2f} cycles  
+- **Maximum RUL:** {max_rul:.2f} cycles
+- **Standard Deviation:** {std_rul:.2f} cycles
+
+**Results saved to:** {results_filepath}
+
+The predictions have been added to the original dataset with column name 'predicted_RUL'. The original JSON file has been updated with the RUL predictions.
+All columns from the original dataset have been preserved, and the predicted RUL column has been renamed to 'predicted_RUL' and the actual RUL column has been renamed to 'actual_RUL'."""
             
-            for result in results:
-                if result.get('status') == 'success':
-                    response_parts.append(
-                        f"   • Engine {result['unit_number']}: {result['predicted_RUL']:.1f} cycles "
-                        f"(degradation rate: {result.get('degradation_rate', 0):.6f})"
-                    )
-                else:
-                    response_parts.append(f"   • Engine {result['unit_number']}: {result.get('status', 'error')}")
-            
-            response_parts.extend([
-                "",
-                "✅ MOMENT-1-SMALL RUL FORECASTING COMPLETE"
-            ])
-            
-            return "\n".join(response_parts)
+            return response
             
         except Exception as e:
             error_msg = f"Error performing MOMENT-based RUL prediction: {e}"

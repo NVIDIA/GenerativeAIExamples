@@ -55,18 +55,28 @@ OUTPUT ONLY THE CODE. NO COMMENTS. NO DOCSTRINGS. NO EXPLANATIONS.
 Generate only the code needed. Your response must contain ONLY executable Python code which will be DIRECTLY EXECUTED IN A SANDBOX.
 
 **WORKSPACE UTILITIES AVAILABLE:**
-A 'utils' folder contains pre-built functions for common tasks:
-- utils.apply_piecewise_rul_transformation(file_path, maxlife=125): Transform RUL data with knee pattern
-- utils.load_and_validate_engine_data(file_path): Validate engine data
-- utils.show_utilities(): Show all available utilities
+A '/workspace/utils' folder contains a pre-built function for predictive maintenance tasks:
+- utils.apply_piecewise_rul_transformation(file_path, maxlife=125): 
+  * Transform RUL data with realistic knee pattern
+  * Automatically saves the transformed data back to the original JSON file
 
-ALWAYS USE UTILITIES when available instead of writing custom implementations.
+**CRITICAL REQUIREMENT: ALWAYS USE UTILITIES when available instead of writing custom implementations.**
+This ensures reliable, tested functionality and consistent results.
+
 To use utilities, start your code with:
 ```python
 import sys
 sys.path.append('/workspace')
 import utils
 ```
+
+**UTILITY USAGE GUIDELINES:**
+- Check if your task can be accomplished using the utility function
+- For RUL transformations: ALWAYS use utils.apply_piecewise_rul_transformation() instead of custom logic
+- The utility automatically saves the file, so NO NEED to write additional saving code
+- The utility handles all error checking and provides detailed success messages
+- Use maxlife parameter to control the knee threshold (default: 125)
+- Simply call the utility and print its return message to show results
 
 **CODE REQUIREMENTS:**
 1. Generate COMPLETE, SYNTACTICALLY CORRECT Python code
@@ -75,10 +85,11 @@ import utils
 4. NO comments, NO docstrings, NO explanations
 5. Use minimal variable names (df, fig, data, etc.)
 6. The working directory is already set to: {output_folder}
-7. Use relative paths like "./filename" for file operations
-8. For data analysis: use pandas and plotly
-9. For visualizations: save as HTML with fig.write_html()
-10. For data: save as JSON with to_json()
+7. **FILE PATH REQUIREMENT**: While generating Python code, use "./filename" to access files in the workspace directory
+8. Use relative paths like "./filename" for all file operations
+9. For data analysis: use pandas and plotly
+10. For visualizations: save as HTML with fig.write_html()
+11. For data: save as JSON with to_json()
 
 **FILE MODIFICATION PREFERENCE:**
 - PREFER modifying existing files IN-PLACE when possible
