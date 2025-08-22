@@ -34,6 +34,7 @@ llms:
   reasoning_llm:
     _type: nim
     model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
+    # model_name: "nvidia/nvidia-nemotron-nano-9b-v2"
   multimodal_judging_llm:
     _type: nim
     model_name: nvidia/llama-3.1-nemotron-nano-vl-8b-v1

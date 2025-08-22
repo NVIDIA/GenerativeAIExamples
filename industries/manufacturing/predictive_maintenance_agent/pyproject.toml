@@ -6,7 +6,7 @@ requires = ["setuptools >= 64"]
 name = "predictive_maintenance_agent"
 dynamic = ["version"]
 dependencies = [
-  "nvidia-nat[profiling, langchain, telemetry]==1.2.0",
+  "nvidia-nat[profiling, langchain, telemetry]==1.2.1",
   "momentfm",
   "pydantic ~= 2.10.0, <2.11.0",
   "vanna==0.7.9",

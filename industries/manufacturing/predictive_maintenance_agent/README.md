@@ -44,6 +44,43 @@ Multi-agent architecture with:
 - NVIDIA NIM API access
 - Node.js v18+ (for web interface)
 
+### Hardware Requirements
+
+**CPU:**
+- Minimum: 8 cores, 16GB RAM
+
+**GPU:**
+
+| Model Name                              | Minimum GPU Requirement         |
+|------------------------------------------|---------------------------------|
+| qwen/qwen2.5-coder-32b-instruct          | 2×A100 or 1×H100                |
+| nvidia/llama-3.3-nemotron-super-49b-v1   | 2×A100 or 1×H100                |
+| nvidia/llama-3.1-nemotron-nano-vl-8b-v1  | 1×A100 or 1×H100                |
+| nvidia/nv-embed-v1                       | 1×L40s or 1×A100                |
+
+- GPU is **not required** if you are using NVIDIA NIM cloud APIs.
+- For local deployment, the table above lists the minimum recommended GPUs for each model.
+- For most applications, a system with 8×A100 or 4×H100 GPUs will be more than sufficient (application sizing is still being finalized).
+
+**Operating System:**
+- Linux (Ubuntu 20.04+ recommended)
+- macOS (Intel or Apple Silicon) - Tested on MAC M2 Pro 32GB RAM
+- Windows 10/11 with WSL2
+
+**Storage:**
+- **Base Installation**: 250MB (includes database, MOMENT library, and source code)
+- **NASA Dataset**: ~50-100MB (when downloaded from Kaggle)
+- **Working Space**: 500MB-1GB (for logs, additional outputs, temporary files)
+- **Recommended Total**: 2-3GB free space for comfortable operation
+**Approximate Memory Requirements for Local Model Storage (if not using NVIDIA endpoints):**
+
+| Model Name                              | Approx. Memory Requirement (BF16) |
+|-----------------------------------------|-----------------------------------|
+| qwen/qwen2.5-coder-32b-instruct         | 64 GB                             |
+| nvidia/llama-3.3-nemotron-super-49b-v1  | 98 GB                             |
+| nvidia/llama-3.1-nemotron-nano-vl-8b-v1 | 16 GB                             |
+| nvidia/nv-embed-v1                      | ~14 GB                            |
+
 ### 1. Create Conda Environment
 
 ```bash
@@ -53,9 +90,9 @@ conda activate pdm
 
 ### 2. Install NVIDIA NeMo Agent Toolkit
 
-1. Clone the NeMo Agent Toolkit repository to your local machine:
+1. Clone the NeMo Agent Toolkit repository version 1.2.1 to your local machine:
    ```bash
-   git clone git@github.com:NVIDIA/NeMo-Agent-Toolkit.git nat-toolkit
+   git clone --branch v1.2.1 https://github.com/NVIDIA/NeMo-Agent-Toolkit.git nat-toolkit
    cd nat-toolkit
    ```
 
@@ -150,7 +187,7 @@ uv pip list | grep -E "nvidia-nat|nvidia-nat-ragaai|nvidia-nat-phoenix|vanna|chr
 
 ### 4. Database Setup
 
-1. Download the [NASA Turbofan Dataset](https://ti.arc.nasa.gov/tech/dash/groups/pcoe/prognostic-data-repository/)
+1. Download the [NASA Turbofan Dataset](https://www.kaggle.com/datasets/behrad3d/nasa-cmaps)
 2. Extract files to the `data/` directory
 3. Run the setup script:
 ```bash
@@ -180,22 +217,23 @@ Create an empty folder for the output data and point the output folder to that p
 output_folder: "output_data"
 ```
 
-### 6. Train Vanna SQL Agent (Important)
+### 6. Vanna SQL Agent Training (Automatic)
 
-Before starting the workflow server, you need to train the Vanna SQL agent with domain-specific knowledge. The `vanna_training_data.yaml` file contains:
+**Important**: The Vanna SQL agent training happens automatically when you start the workflow server. The `vanna_training_data.yaml` file contains pre-configured domain-specific knowledge that will be loaded automatically during server startup.
 
+This training data includes:
 - **Synthetic DDL statements**: Table schemas for all NASA turbofan datasets
 - **Domain documentation**: Detailed explanations of database structure and query patterns
 - **Example queries**: Common SQL patterns for turbofan data analysis
 - **Question-SQL pairs**: Natural language to SQL mappings
 
-This training data helps the SQL agent understand:
+The automatic training helps the SQL agent understand:
 - How to distinguish between training, test, and RUL tables
 - Proper handling of remaining useful life calculations
 - Domain-specific terminology and query patterns
 - Table relationships and data structure
 
-The training happens automatically when you start the workflow server, using the path specified in `configs/config-reasoning.yml`:
+Training configuration is specified in `configs/config-reasoning.yml`:
 ```yaml
 vanna_training_data_path: "vanna_training_data.yaml"
 ```
@@ -206,7 +244,12 @@ vanna_training_data_path: "vanna_training_data.yaml"
 
 Set the required environment variables for the workflow:
 
-1. Update the `.env` file with your actual values:
+1. Create a `.env` file from the template and update it with your actual values:
+   ```bash
+   cp env_template.txt .env
+   ```
+   
+   Then edit the `.env` file and replace the placeholder values with your actual keys:
    ```bash
    # Replace the placeholder values with your actual keys
    NVIDIA_API_KEY="your-actual-nvidia-api-key"
@@ -219,7 +262,7 @@ Set the required environment variables for the workflow:
    source .env
    ```
 
-**Note**: The `.env` file contains placeholder values. Replace them with your actual API keys before sourcing the file.
+**Note**: The `env_template.txt` file contains placeholder values. Copy it to `.env` and replace them with your actual API keys before sourcing the file.
 
 Verify that the NVIDIA API key is set:
 
@@ -248,7 +291,7 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 ```
 
-During startup, you'll also see Vanna training logs as the SQL agent learns from the `vanna_training_data.yaml` file.
+During startup, you'll see Vanna training logs as the SQL agent automatically loads the domain knowledge from `vanna_training_data.yaml` (as described in Section 6).
 
 ### Start Code Execution Sandbox
 
@@ -277,10 +320,7 @@ For example:
 [Optional] Verify the sandbox is running correctly:
 
 ```bash
-# Check health status
-curl http://localhost:6000/health
-
-# Test code execution
+# Test code execution (the main endpoint)
 curl -X POST http://localhost:6000/execute \
   -H 'Content-Type: application/json' \
   -d '{"generated_code": "print(\"Hello from sandbox!\")", "timeout": 10, "language": "python"}'
@@ -481,7 +521,7 @@ Access the dashboard at `http://localhost:6006` to monitor traces, performance, 
 
 Follow the instructions [here](https://github.com/NVIDIA/NeMo-Agent-Toolkit/blob/develop/docs/source/workflows/observe/observe-workflow-with-catalyst.md) to set up your RAGA AI profile.
 
-Ensure you update the CATALYST-related environment variables in the `.env` file and source that file again:
+Ensure you update the CATALYST-related environment variables in the `.env` file (uncomment and set the values) and source that file again:
 
 ```bash
 CATALYST_ACCESS_KEY="xxxxxxxxxxxxxxxx" # Change this to your RAGA AI Access key
@@ -526,6 +566,34 @@ pytest test_pdm_workflow.py -k "<test_name>" -v
 
 This example comes with 25 curated queries and reference answers that form our evaluation dataset. You can access this in the `eval_data/eval_set_master.json` file.
 
+### Multimodal Evaluation with Vision-Language Models
+
+We have implemented an innovative **Multimodal LLM Judge Evaluator** for agentic workflow evaluation, specifically designed for predictive maintenance tasks that generate both text and visual outputs.
+
+**Why Custom Multimodal Evaluation?**
+
+The built-in evaluators in NeMo Agent Toolkit have significant limitations:
+- **Text-Only Evaluation**: Cannot assess visual outputs like plots and charts
+- **Rigid String Matching**: Uses LangChain's `TrajectoryEvalChain` which only looks for exact patterns
+- **No Visual Understanding**: Cannot evaluate whether generated plots match expected visualizations
+- **Generic Prompts**: Not tailored for predictive maintenance domain
+
+**Our Innovative Multimodal Approach:**
+
+**Vision-Language Model Evaluation** - Uses `nvidia/llama-3.1-nemotron-nano-vl-8b-v1` (VLM) to evaluate both text semantic correctness and visual plot accuracy in a unified evaluation framework.
+
+**Key Innovation: Dual-Mode Intelligent Evaluation**
+- **Text Evaluation Mode**: When no plots are present, evaluates semantic correctness of text responses
+- **Visual Evaluation Mode**: When plot images are detected, automatically switches to visual analysis mode to assess plot accuracy against reference descriptions
+- **Automatic Plot Detection**: System automatically discovers plot file paths in responses and includes actual plot images in the evaluation
+
+**Advantages:**
+- ✅ **Unified Multimodal Assessment**: Single VLM evaluates both text quality and visual accuracy
+- ✅ **Intelligent Mode Switching**: Automatically detects whether to evaluate text or plots
+- ✅ **Visual Understanding**: Can assess if generated plots show correct data patterns, axis labels, trends
+- ✅ **Simple Scoring**: Supports only three scores from 0.0 (fully incorrect), 0.5 (partially correct) to 1.0 (fully correct)
+- ✅ **Domain-Specific**: Tailored prompts for predictive maintenance visualization patterns
+
 We have created a smaller version of this dataset in `eval_data/eval_set_test.json` to help with quick checks before running the larger evaluation workflow.
 
 ### Evaluate with NAT 
@@ -553,6 +621,19 @@ nat eval --config_file configs/config-reasoning.yml
 ```
 
 You should see an `eval_output` folder generated in your working directory with `multimodal_eval_output.json`. We have provided you with an example output in `eval_output/example_multimodal_eval_output.json`.
+
+## Known Issues
+
+- **Rate Limiting**: When using hosted build.nvidia.com endpoints, you may receive `[429] Too Many Requests` errors. This happens because the agentic workflow can generate a high volume of requests in a short period, exceeding the service's rate limits. To avoid these errors, consider running models locally instead of relying on the hosted endpoints.
+
+- **Code Generation Failures**: Sometimes the code generation assistant cannot generate correct code and reaches the maximum retry limit. In this case, you may see a workflow response like "I seem to have a problem." Try running the query again - we are actively working to improve the code generation assistant experience.
+
+- **Poor Response Quality**: If you're not getting good responses with the provided LLMs:
+  - First, switch the reasoning model if the generated plan appears incorrect
+  - Then, swap the analyst LLM to a model that excels at both tool calling and instruction following
+  - You typically won't need to replace the embedding model, SQL model, code generation model, or evaluation model.
+
+- **Evaluation Benchmark**: The workflow currently achieves an `average_score` of 0.75 or above on the master evaluation dataset. We are actively working to improve this score toward 1.0.
 
 ## Next Steps
 
