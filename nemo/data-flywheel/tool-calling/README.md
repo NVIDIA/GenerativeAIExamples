@@ -25,7 +25,9 @@ The Salesforce [xLAM](https://huggingface.co/datasets/Salesforce/xlam-function-c
 
 ### About NVIDIA NeMo Microservices
 
-The NVIDIA NeMo microservices platform provides a flexible foundation for building AI workflows such as fine-tuning, evaluation, running inference, or applying guardrails to AI models on your Kubernetes cluster on-premises or in cloud. Refer to [documentation](https://docs.nvidia.com/nemo/microservices/latest/about/index.html) for further information.
+NVIDIA NeMo is a modular, enterprise-ready software suite for managing the AI agent lifecycle, enabling enterprises to build, deploy, and optimize agentic systems.
+
+NVIDIA NeMo microservices, part of the [NVIDIA NeMo software suite](https://www.nvidia.com/en-us/ai-data-science/products/nemo/), are an API-first modular set of tools that you can use to customize, evaluate, and secure large language models (LLMs) and embedding models while optimizing AI applications across on-premises or cloud-based Kubernetes clusters.
 
 ## Objectives
 
