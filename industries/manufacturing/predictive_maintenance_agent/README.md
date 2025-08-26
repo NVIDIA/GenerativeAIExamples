@@ -358,20 +358,6 @@ The utilities are located in `/workspace/utils/` (which maps to your `output_dat
 - **Pattern**: RUL stays constant at `MAXLIFE` until remaining cycles drop below threshold, then decreases linearly to 0
 - **Use case**: Creating realistic RUL patterns for comparison with predicted values
 
-**`transform_rul_data(file_path, maxlife=125)`**
-- Simplified interface for RUL transformation (same functionality as above)
-
-#### Data Validation Utilities
-
-**`load_and_validate_engine_data(file_path)`**
-- Loads and validates engine data from JSON files
-- Returns detailed information about data structure, ranges, and sample records
-- Useful for data quality checks before processing
-
-**`show_utilities()`**
-- Displays help information about all available utilities
-- Shows usage examples and function signatures
-
 ### Usage in Workflows
 
 **For Users**: When interacting with the system, you can request complex data transformations knowing that reliable utilities will handle the implementation. For example:
@@ -466,7 +452,12 @@ Retrieve real RUL of each unit in the FD001 test dataset. Then plot a distributi
 
 **Prediction and Comparison (Uses Workspace Utilities)**
 ```
-Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.
+Perform the following steps:
+
+1. Retrieve the time in cycles, all sensor measurements, and the ground truth RUL values for engine unit 24 from the FD001 test and RUL tables.
+2. Use the retrieved data to predict the Remaining Useful Life (RUL).
+3. Apply piecewise RUL transformation to actual RUL values
+4. Generate a plot that updated actual RUL values and the predicted RUL values across time.
 ```
 ![Prediction Example](imgs/test_prompt_3.png)
 
@@ -474,14 +465,14 @@ Retrieve time in cycles, all sensor measurements and RUL value for engine unit 2
 
 **Workspace Utilities Demo**
 ```
-Show me what workspace utilities are available, then apply piecewise RUL transformation to engine unit 10 data with MAXLIFE=100.
+Apply piecewise RUL transformation to ground truth RUL values of engine unit 10 from FD001 train dataset with MAXLIFE=100 and plot it across time.
 ```
 
 *This example demonstrates how to discover and use workspace utilities directly. The system will show available utilities and then apply the RUL transformation using the pre-built, reliable utility functions.*
 
 **Anomaly Detection**
 ```bash
-Retrieve and detect anomalies in sensor 4 measurements for engine number 78.
+Retrieve and detect anomalies in sensor 4 measurements for engine number 78 in dataset FD001.
 ```
 
 ![Anomaly Detection Example](imgs/test_prompt_4.png)

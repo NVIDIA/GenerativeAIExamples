@@ -184,7 +184,7 @@ async def moment_anomaly_detection_tool(
         logger.info(f"Using device: {device}")
         
         # Process batches following the tutorial pattern
-        trues, preds, labels = [], [], []
+        trues, preds = [], []
         with torch.no_grad():
             for batch_x, batch_masks, batch_labels in tqdm(dataloader, total=len(dataloader), desc="Processing batches"):
                 batch_x = batch_x.to(device).float()
@@ -221,12 +221,10 @@ async def moment_anomaly_detection_tool(
                     
                     trues.append(true_seq)
                     preds.append(pred_seq)
-                    labels.append(batch_labels[i].detach().cpu().numpy())
         
         # Concatenate all results
         trues = np.concatenate(trues, axis=0)
         preds = np.concatenate(preds, axis=0)
-        labels = np.concatenate(labels, axis=0)
         
         logger.info(f"Final concatenated shapes - trues: {trues.shape}, preds: {preds.shape}")
         

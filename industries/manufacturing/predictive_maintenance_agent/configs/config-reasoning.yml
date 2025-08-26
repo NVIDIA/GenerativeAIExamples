@@ -5,20 +5,20 @@ general:
       console:
         _type: console
         level: INFO
-      file:
-        _type: file
-        path: "pdm.log"
-        level: DEBUG
-    # Uncomment this to enable tracing with observability platforms
+      # file:
+      #   _type: file
+      #   path: "pdm.log"
+      #   level: DEBUG
+    # Enable tracing with observability platforms
     # tracing:
-    #   catalyst:
-    #     _type: catalyst
-    #     project: "pdm-test"
-    #     dataset: "pdm-dataset"
     #   phoenix:
     #     _type: phoenix
     #     endpoint: http://localhost:6006/v1/traces
     #     project: pdm-test
+      # catalyst:
+      #   _type: catalyst
+      #   project: "pdm-test"
+      #   dataset: "pdm-dataset"
 
 llms:
   # SQL query generation model
@@ -33,16 +33,15 @@ llms:
   
   # Python code generation model
   coding_llm:
-    _type: nim
-    model_name: "qwen/qwen2.5-coder-32b-instruct"
-    max_tokens: 4000
+    # _type: nim
+    # model_name: "qwen/qwen2.5-coder-32b-instruct"
+    _type: openai
+    model_name: "gpt-4.1-mini"
   
   # Main reasoning and planning model
   reasoning_llm:
     _type: nim
     model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
-    # Alternative smaller model option:
-    # model_name: "nvidia/nvidia-nemotron-nano-9b-v2"
   
   # Multimodal evaluation model (Vision-Language Model)
   multimodal_judging_llm:
@@ -112,7 +111,7 @@ functions:
     _type: react_agent
     llm_name: analyst_llm
     max_iterations: 20
-    max_retries: 3
+    max_retries: 2
     tool_names: [
       sql_retriever, 
       code_generation_assistant, 
@@ -123,6 +122,7 @@ functions:
       anomaly_detection, 
       plot_anomaly
     ]
+    parse_agent_response_max_retries: 2
     system_prompt: |
       ### TASK DESCRIPTION ####
       You are a helpful data analysis assistant that can help with predictive maintenance tasks for a turbofan engine. 
@@ -137,20 +137,20 @@ functions:
       
       **FORMAT 1 (to share your thoughts)**
       Input plan: Summarize all the steps in the plan.
-      Executing step: the step you are currently executing from the plan
-      Thought: you should always think about what to do
+      Executing step: the step you are currently executing from the plan along with any instructions provided
+      Thought: describe how you are going to execute the step
 
       **FORMAT 2 (to return the final answer)**
       Input plan: Summarize all the steps in the plan.
-      Executing step: highlight the step you are currently executing from the plan
-      Thought: you should always think about what to do
+      Executing step: the step you are currently executing from the plan along with any instructions provided
+      Thought: describe how you are going to execute the step
       Final Answer: the final answer to the original input question including the absolute file paths of the generated files with 
       `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/` prepended to the filename.     
       
       **FORMAT 3 (when using a tool)**
       Input plan: Summarize all the steps in the plan.
-      Executing step: the step you are currently executing from the plan
-      Thought: you should always think about what to do
+      Executing step: the step you are currently executing from the plan along with any instructions provided
+      Thought: describe how you are going to execute the step
       Action: the action to take, should be one of [{tool_names}]
       Action Input: the input to the tool (if there is no required input, include "Action Input: None")
       Observation: wait for the tool to finish execution and return the result
@@ -184,22 +184,24 @@ functions:
          • Specify available data files and their structure (columns, format, location)
          • Combine multiple related tasks into bullet points within one instruction
          • Mention specific output requirements (HTML files, JSON data, visualizations)
-         • Include file path details and any constraints or preferences
-         • Add example: "Load 'data.json' with columns A,B,C. Create time series plot. Save as HTML."
          • The tool automatically generates and executes Python code, returning results and file paths.
+
+      6. **File Path Handling**
+         - Always pass only the filename directly (e.g., "filename.json") while providing instructions to the code_generation_assistant. This is because code_generation_assitant is already mounted to the generated outputs folder.
+         - Use absolute file paths like "/output_data/filename.json" while passing to other tools.
 
       ### TYPICAL WORKFLOW FOR EXECUTING A PLAN ###
 
-      **IMPORTANT**: DO NOT SKIP ANY STEP IN THE PLAN.
-      
       First, Data Extraction
          - Use SQL retrieval tool to fetch required data
-      Next, Data Processing and visualization
+      Next, Data Analysis
+         - Optionally use code_generation_assistant to perform any data processing using Python code if instructed to do so
+      Finally, Data Visualization
          - Use existing plotting tools to generate plots
-         - **For Anomaly Detection**: Follow modular workflow: sql_retriever → anomaly_detection → plot_anomaly
-         - If existing tools are not enough, use code_generation_assistant which will generate and execute custom Python code automatically
+         - Use predict_rul, anomaly_detection or any other relevant tools to perform analysis
+         - If existing tools are not enough, use code_generation_assistant to generate plots using Python code
       Finally, return the result to the user
-         - Return processed information to calling agent along with the absolute file paths of the generated files.
+         - Return processed information to calling agent along with the absolute file paths to the generated files.
 
 workflow:
   _type: reasoning_agent
@@ -236,14 +238,9 @@ workflow:
     This context helps you understand user queries about engine health, sensor patterns, failure prediction, and maintenance planning.
     REMEMBER TO RELY ON DATA ANALYSIS ASSITANT TO RETRIEVE DATA FROM THE DATABASE.
     
-    ### SPECIAL TASKS ###
+    ### SPECIAL CONSTRAINTS ###
     Create execution plans for specialized predictive maintenance tasks. For other queries, use standard reasoning.
-
-    ### SPECIAL TASK 0: RUL Comparison (Actual vs Predicted) ###
-    1) Retrieve ground truth RUL data for specified engine from database
-    2) Predict RUL for same engine using the model  
-    3) Transform actual RUL to piecewise representation using python code with simple instruction: "Apply piecewise RUL transformation to [filename] using the available utilities in utils folder. Use MAXLIFE=125."
-    4) Generate comparison visualization showing the clean piecewise pattern alongside predictions using provided plot comparison tool
+    Apply piecewise RUL transformation to the actual RUL values when plotting it against predicted RUL values using the code generation assistant.
 
     ### GUIDELINES ###
     **DO NOT use predict_rul tool to fetch RUL data unless the user explicitly uses the word "predict" or something similar, this is because there is also ground truth RUL data in the database which the user might request sometimes.**

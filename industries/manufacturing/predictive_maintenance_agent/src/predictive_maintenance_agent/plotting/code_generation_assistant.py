@@ -20,8 +20,9 @@ class CodeGenerationAssistantConfig(FunctionBaseConfig, name="code_generation_as
     """
     llm_name: LLMRef = Field(description="The LLM to use for code generation")
     code_execution_tool: FunctionRef = Field(description="The code execution tool to run generated code")
-    output_folder: str = Field(description="The path to the output folder for generated files", default="/workspace")
+    output_folder: str = Field(description="The path to the output folder for generated files", default="/output_data")
     verbose: bool = Field(description="Enable verbose logging", default=True)
+    max_retries: int = Field(description="Maximum number of retries if code execution fails", default=3)
 
 
 @register_function(config_type=CodeGenerationAssistantConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])
@@ -36,13 +37,15 @@ async def code_generation_assistant(
     code_execution_fn = builder.get_function(config.code_execution_tool)
     
     async def _generate_and_execute_code(
-        instructions: str
+        instructions: str,
+        max_retries: int = config.max_retries
     ) -> str:
         """
         Generate and execute code based on complete instructions.
         
         Args:
             instructions: Complete instructions including context, data information, and requirements for what the code should do
+            max_retries: Maximum number of retries if code execution fails
             
         Returns:
             String containing execution results and summary
@@ -54,11 +57,13 @@ async def code_generation_assistant(
 OUTPUT ONLY THE CODE. NO COMMENTS. NO DOCSTRINGS. NO EXPLANATIONS.
 Generate only the code needed. Your response must contain ONLY executable Python code which will be DIRECTLY EXECUTED IN A SANDBOX.
 
-**WORKSPACE UTILITIES AVAILABLE:**
-A '/workspace/utils' folder contains a pre-built function for predictive maintenance tasks:
-- utils.apply_piecewise_rul_transformation(file_path, maxlife=125): 
+**UTILITIES AVAILABLE:**
+A 'utils' folder contains a pre-built function for predictive maintenance tasks:
+- utils.apply_piecewise_rul_transformation(file_path, maxlife=required maxlife, time_col=time column name, rul_col=RUL column name to apply transformation to):
   * Transform RUL data with realistic knee pattern
   * Automatically saves the transformed data back to the original JSON file
+  * Returns a success message with transformation details
+- utils.show_utilities(): Show all available utilities, which are anyways listed above
 
 **CRITICAL REQUIREMENT: ALWAYS USE UTILITIES when available instead of writing custom implementations.**
 This ensures reliable, tested functionality and consistent results.
@@ -66,17 +71,17 @@ This ensures reliable, tested functionality and consistent results.
 To use utilities, start your code with:
 ```python
 import sys
-sys.path.append('/workspace')
+sys.path.append(".")
 import utils
 ```
 
 **UTILITY USAGE GUIDELINES:**
 - Check if your task can be accomplished using the utility function
 - For RUL transformations: ALWAYS use utils.apply_piecewise_rul_transformation() instead of custom logic
-- The utility automatically saves the file, so NO NEED to write additional saving code
+- The utility automatically saves the transformed data back to the original file, so NO ADDITIONAL SAVING CODE IS NEEDED
 - The utility handles all error checking and provides detailed success messages
 - Use maxlife parameter to control the knee threshold (default: 125)
-- Simply call the utility and print its return message to show results
+- Simply print the result message returned by the utility function
 
 **CODE REQUIREMENTS:**
 1. Generate COMPLETE, SYNTACTICALLY CORRECT Python code
@@ -84,42 +89,15 @@ import utils
 3. EVERY if/elif statement MUST have a complete return statement or action
 4. NO comments, NO docstrings, NO explanations
 5. Use minimal variable names (df, fig, data, etc.)
-6. The working directory is already set to: {output_folder}
-7. **FILE PATH REQUIREMENT**: While generating Python code, use "./filename" to access files in the workspace directory
-8. Use relative paths like "./filename" for all file operations
-9. For data analysis: use pandas and plotly
-10. For visualizations: save as HTML with fig.write_html()
-11. For data: save as JSON with to_json()
-
-**FILE MODIFICATION PREFERENCE:**
-- PREFER modifying existing files IN-PLACE when possible
-- Use utilities that modify files in-place (like RUL transformation)
-- Only create new files when explicitly required
-
-**MANDATORY COMPLETION:**
-Every script MUST end with file saving and print statement:
-```python
-fig.write_html('./filename.html')
-print(f"Successfully saved file to: filename.html")
-```
+6. **CRITICAL FILE PATH RULE**: Use ONLY the filename directly (e.g., "filename.json"), NOT "output_data/filename.json"
+7. For data analysis: use pandas and plotly
+8. For visualizations: save as HTML with fig.write_html()
+9. For data: if the utility does not save the data, add a new column and save it to the original file.
 
 GENERATE CODE ONLY. NO COMMENTS. NO EXPLANATIONS."""
 
         user_prompt = """**INSTRUCTIONS:**
-{instructions}
-
-**IMPORTANT FILE PATH HANDLING:**
-- Input files mentioned in instructions should be accessed using ONLY the filename (e.g., "data.json")
-- All files are available in the current working directory
-- Use "./filename" pattern for all file operations
-
-**UTILITIES REMINDER:**
-- Check if task can be accomplished using workspace utilities
-- Add path setup: sys.path.append('/workspace'); import utils
-- For RUL transformations: use utils.apply_piecewise_rul_transformation(file_path)
-- Utilities handle error checking and provide detailed success messages
-
-Generate the Python code that fulfills these instructions."""
+{instructions}. Generate a Python code that fulfills these instructions."""
 
         if config.verbose:
             logger.info(f"Generating code with instructions: {instructions}")
@@ -133,7 +111,6 @@ Generate the Python code that fulfills these instructions."""
             
             # Generate code using the LLM with proper parameter passing
             response = await coding_chain.ainvoke({
-                "output_folder": config.output_folder,
                 "instructions": instructions
             })
             
@@ -145,117 +122,126 @@ Generate the Python code that fulfills these instructions."""
                 logger.info(f"Generated code length: {len(code)} characters")
                 logger.info(f"Generated code:\n{code}")
             
-            # Check if code appears to be truncated and request completion
-            is_truncated = (not code.endswith(')') and not code.endswith('"') and 
-                          not code.endswith("'") and not code.endswith(';'))
-            has_incomplete_fig_write = 'fig.write' in code and not 'fig.write_html(' in code
-            
-            if is_truncated or has_incomplete_fig_write:
-                logger.warning("Generated code appears to be incomplete. Requesting completion from LLM...")
-                logger.warning(f"Code ends with: '{code[-100:]}'")
+            # Execute the generated code with retry logic
+            for attempt in range(max_retries + 1):
+                if config.verbose:
+                    logger.info(f"Attempt {attempt + 1}/{max_retries + 1}: Executing generated code...")
                 
-                # Create a completion prompt
-                completion_prompt = f"""The following Python code was generated but appears to be incomplete:
+                # Check if code appears incomplete
+                def is_code_incomplete(code):
+                    is_truncated = (not code.endswith(')') and not code.endswith('"') and 
+                                  not code.endswith("'") and not code.endswith(';'))
+                    has_incomplete_fig_write = 'fig.write' in code and not 'fig.write_html(' in code
+                    return is_truncated or has_incomplete_fig_write
+                
+                # Skip execution if code is incomplete on retry attempts
+                execution_failed = False
+                error_info = ""
+                
+                if is_code_incomplete(code):
+                    execution_failed = True
+                    error_info = "Code generation was incomplete - code appears to be truncated or has incomplete statements"
+                    logger.warning(f"Code appears incomplete: {code[-100:]}")
+                else:
+                    # Execute the code
+                    execution_result = await code_execution_fn.acall_invoke(generated_code=code)
+                    
+                    if config.verbose:
+                        logger.info(f"Execution result: {execution_result}")
+                    
+                    # Parse result
+                    process_status = execution_result.get('process_status', 'unknown')
+                    raw_stdout = execution_result.get('stdout', '')
+                    stderr = execution_result.get('stderr', '')
+                    
+                    # Handle nested JSON result
+                    actual_stdout, actual_stderr = raw_stdout, stderr
+                    try:
+                        if raw_stdout.startswith('{"') and raw_stdout.endswith('}\n'):
+                            import json
+                            nested = json.loads(raw_stdout.strip())
+                            if nested.get('process_status') == 'error' or nested.get('stderr'):
+                                process_status = 'error'
+                                actual_stdout = nested.get('stdout', '')
+                                actual_stderr = nested.get('stderr', '')
+                    except:
+                        pass
+                    
+                    # Check if execution succeeded
+                    if process_status in ['completed', 'success'] and not actual_stderr:
+                        # Success! Return result
+                        generated_files = _extract_file_paths(actual_stdout, config.output_folder)
+                        file_count = len(generated_files)
+                        
+                        if file_count > 0:
+                            file_list = ', '.join([f.split('/')[-1] for f in generated_files])
+                            response = f"Code executed successfully. Generated {file_count} file(s): {file_list}"
+                        else:
+                            response = "Code executed successfully."
+                        
+                        if actual_stdout:
+                            clean_output = actual_stdout.strip().replace('\n', ' ')
+                            response += f"\n\nOutput: {clean_output}"
+                        
+                        logger.info(f"Code generation successful: {response}")
+                        return response
+                    else:
+                        # Execution failed
+                        execution_failed = True
+                        error_info = ""
+                        if actual_stderr:
+                            error_info += f"Error: {actual_stderr.strip()}"
+                        if actual_stdout:
+                            error_info += f"\nOutput: {actual_stdout.strip()}"
+                
+                # If we have retries left, ask LLM to fix the code
+                if execution_failed and attempt < max_retries:
+                    logger.warning(f"Execution failed, asking LLM to fix (attempt {attempt + 1})...")
+                    
+                    fix_prompt_text = f"""The previous code needs to be fixed. Please analyze the issue and generate corrected Python code.
 
-```python
+ORIGINAL INSTRUCTIONS: {instructions}
+
+PREVIOUS CODE:
 {code}
-```
 
-Please complete ONLY the remaining code that's missing. Do not repeat the existing code, just provide the completion starting from where it left off. Ensure you complete any unfinished statements and add proper file saving and print statements.
+ISSUE TO FIX:
+{error_info}
 
-Requirements:
-- Complete any unfinished lines or statements
-- If there's a visualization (fig), ensure it's saved with fig.write_html('./filename.html')
-- If there's data output, save with appropriate method (e.g., to_json())
-- Add a print statement showing the saved file
-- Do not include any explanations, just the completion code
+Please generate corrected Python code that fixes the problem. Follow all requirements:
+- Use utilities when available
+- Generate only executable Python code
+- No comments or explanations
+- Handle file paths correctly
+- Complete all code blocks properly
+- Ensure the code is complete and not truncated
 
-Completion:"""
+CORRECTED CODE:"""
 
-                try:
-                    # Request completion from LLM
-                    completion_response = await llm.ainvoke(completion_prompt)
-                    raw_completion = completion_response.content.strip() if hasattr(completion_response, 'content') else str(completion_response).strip()
-                    completion_code = _clean_generated_code(raw_completion)
-                    
-                    # Append completion to original code
-                    if completion_code:
-                        code = code + "\n" + completion_code
-                        logger.info(f"Code completion added. New total length: {len(code)} characters")
+                    try:
+                        fix_prompt = ChatPromptTemplate.from_messages([("system", system_prompt), ("user", fix_prompt_text)])
+                        fix_chain = fix_prompt | llm
+                        fix_response = await fix_chain.ainvoke({})
+                        raw_fixed_code = fix_response.content.strip() if hasattr(fix_response, 'content') else str(fix_response).strip()
+                        code = _clean_generated_code(raw_fixed_code)
+                        
                         if config.verbose:
-                            logger.info(f"Added completion:\n{completion_code}")
-                    
-                except Exception as e:
-                    logger.error(f"Failed to get code completion: {e}")
-                    # Fallback to simple auto-fix for fig.write
-                    if code.endswith('fig.write'):
-                        code += f"_html('./plot.html')\nprint(f'Plot saved to: plot.html')"
-                        logger.info("Applied fallback auto-fix for fig.write statement")
+                            logger.info(f"Generated corrected code:\n{code}")
+                        
+                    except Exception as e:
+                        logger.error(f"Failed to generate corrected code: {e}")
+                        break
+                elif execution_failed:
+                    # Max retries reached
+                    break
             
-            # Execute the generated code
-            if config.verbose:
-                logger.info("Executing generated code...")
+            # All retries failed
+            response = f"Code generation failed after {max_retries + 1} attempts."
+            if error_info:
+                response += f" Last error: {error_info.strip().replace('\n', ' ')}"
+            response += " Consider using alternative approaches."
             
-            execution_result = await code_execution_fn.acall_invoke(generated_code=code)
-            
-            if config.verbose:
-                logger.info(f"Code execution completed with status: {execution_result.get('process_status', 'unknown')}")
-                logger.info(f"Execution output: {execution_result}")
-            
-            # Parse execution result and create clean response
-            process_status = execution_result.get('process_status', 'unknown')
-            raw_stdout = execution_result.get('stdout', '')
-            stderr = execution_result.get('stderr', '')
-            
-            # Handle nested JSON in stdout and check for actual execution errors
-            actual_execution_failed = False
-            try:
-                if raw_stdout.startswith('{"') and raw_stdout.endswith('}\n'):
-                    import json
-                    nested_result = json.loads(raw_stdout.strip())
-                    nested_status = nested_result.get('process_status', '')
-                    actual_stdout = nested_result.get('stdout', '')
-                    actual_stderr = nested_result.get('stderr', '')
-                    
-                    # Check if the nested execution actually failed
-                    if nested_status == 'error' or actual_stderr:
-                        actual_execution_failed = True
-                        process_status = 'error'  # Override the outer status
-                        if config.verbose:
-                            logger.warning(f"Detected nested execution error: {actual_stderr}")
-                else:
-                    actual_stdout = raw_stdout
-                    actual_stderr = stderr
-            except:
-                actual_stdout = raw_stdout
-                actual_stderr = stderr
-            
-            # Extract generated files from output
-            generated_files = _extract_file_paths(actual_stdout, config.output_folder)
-            
-            # Create clean string response following the codebase pattern
-            if process_status in ['completed', 'success'] and not actual_execution_failed:
-                file_count = len(generated_files)
-                if file_count > 0:
-                    file_list = ', '.join([f.split('/')[-1] for f in generated_files])
-                    response = f"Code executed successfully. Generated {file_count} file(s): {file_list}"
-                else:
-                    response = "Code executed successfully."
-                
-                if actual_stdout:
-                    # Clean and add output info
-                    clean_output = actual_stdout.strip().replace('\n', ' ')
-                    response += f"\n\nOutput: {clean_output}"
-            else:
-                response = f"Code execution failed with status: {process_status}"
-                if actual_stderr:
-                    clean_error = actual_stderr.strip().replace('\n', ' ')
-                    response += f"\nError: {clean_error}"
-                if actual_stdout:
-                    clean_output = actual_stdout.strip().replace('\n', ' ')
-                    response += f"\nOutput: {clean_output}"
-
-            logger.info(f"Code generation assistant response: {response}")
+            logger.error(response)
             return response
             
         except Exception as e:
@@ -267,6 +253,7 @@ Completion:"""
         input_schema=CodeGenerationInputSchema,
         description="""Generate and execute Python code based on complete instructions. 
         Accepts comprehensive instructions including context, data information, and requirements in a single parameter.
+        Includes retry logic with max_retries parameter for handling execution failures.
         Returns a summary with execution status, generated files, and output details.
         Specializes in data analysis, visualization, and file processing tasks.
         Include all necessary context, data file information, and requirements in the instructions parameter.""")
