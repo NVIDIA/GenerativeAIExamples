@@ -87,3 +87,7 @@ Community examples are sample code and deployments for RAG pipelines that are no
 * [Chat with LLM Llama 3.1 Nemotron Nano 4B](./chat-llama-nemotron/)
 
   This is a React-based conversational UI designed for interacting with a powerful local LLM. It incorporates RAG to enhance contextual understanding and is backed by an NVIDIA Dynamo inference server running the NVIDIA Llama-3.1-Nemotron-Nano-4B-v1.1 model. The setup enables low-latency, cloud-free AI assistant capabilities, with live document search and reasoning, all deployable on local or edge infrastructure.
+
+* [Smart Health Agent](./smart-health-agent/)
+
+  This example demonstrates a comprehensive multi-agent workflow for health data analysis and personalized recommendations. It integrates real-time health metrics, weather data, and Retrieval Augmented Generation (RAG) to process multimodal health documents. The system uses LangGraph for agent orchestration and Ollama with Gemma 3 models for intelligent health insights. Features include multimodal document processing, weather-aware exercise recommendations, and personalized health guidance through an interactive chat interface.
