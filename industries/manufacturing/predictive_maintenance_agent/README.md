@@ -639,6 +639,17 @@ nat eval --config_file configs/config-reasoning.yml
 
 You should see an `eval_output` folder generated in your working directory with `multimodal_eval_output.json`. We have provided you with an example output in `eval_output/example_multimodal_eval_output.json`.
 
+### Model Performance Notes
+
+Our evaluation results show that **GPT 4.1 mini model achieves higher accuracies** when used as the ReAct agent compared to other models. If you're looking to maximize evaluation performance, consider configuring GPT 4.1 mini as your reasoning agent in the workflow configuration.
+
+Add this to the config file:
+```
+analyst_llm:
+   _type: openai
+   model_name: "gpt-4.1-mini"
+```
+
 ## Known Issues
 
 - **Rate Limiting**: When using hosted build.nvidia.com endpoints, you may receive `[429] Too Many Requests` errors. This happens because the agentic workflow can generate a high volume of requests in a short period, exceeding the service's rate limits. To avoid these errors, consider running models locally instead of relying on the hosted endpoints.
