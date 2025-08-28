@@ -33,8 +33,11 @@ async def plot_anomaly_tool(config: PlotAnomalyToolConfig, builder: Builder):
 
     def load_json_data(json_path: str) -> Optional[pd.DataFrame]:
         """Load data from JSON file."""
+        from .plot_utils import resolve_relative_path
         try:
-            with open(json_path, 'r') as f:
+            # Resolve path relative to output folder
+            resolved_path = resolve_relative_path(json_path, config.output_folder)
+            with open(resolved_path, 'r') as f:
                 data = json.load(f)
             return pd.DataFrame(data)
         except Exception as e:
@@ -80,8 +83,8 @@ async def plot_anomaly_tool(config: PlotAnomalyToolConfig, builder: Builder):
                 f"   • Anomalous Points: {len(data_df[data_df['is_anomaly'] == True])}",
                 "",
                 f"Output Files:",
-                f"   • Interactive HTML: {html_filepath}",
-                f"   • PNG Image: {png_filepath if png_filepath else 'Not generated'}",
+                f"   • Interactive HTML: {os.path.relpath(html_filepath, config.output_folder)}",
+                f"   • PNG Image: {os.path.relpath(png_filepath, config.output_folder) if png_filepath else 'Not generated'}",
                 "",
                 f"Visualization Features:",
                 f"   • Blue line shows observed sensor readings",

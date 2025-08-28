@@ -6,14 +6,53 @@ from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-def load_data_from_json(json_path: str) -> Optional[pd.DataFrame]:
+def resolve_relative_path(file_path: str, output_folder: str) -> str:
+    """
+    Resolve file path relative to output folder.
+    
+    Args:
+        file_path: Input file path (can be relative or absolute)
+        output_folder: Output folder to use as base for relative paths
+        
+    Returns:
+        Resolved absolute path
+    """
+    if os.path.isabs(file_path):
+        # If absolute path exists, use it
+        if os.path.exists(file_path):
+            return file_path
+        # If absolute path doesn't exist, try relative to output folder
+        basename = os.path.basename(file_path)
+        relative_path = os.path.join(output_folder, basename)
+        if os.path.exists(relative_path):
+            return relative_path
+        # Return original if neither exists (will be handled by calling function)
+        return file_path
+    else:
+        # If relative path, first try relative to output folder
+        relative_to_output = os.path.join(output_folder, file_path)
+        if os.path.exists(relative_to_output):
+            return relative_to_output
+        # Then try as provided (relative to current working directory)
+        if os.path.exists(file_path):
+            return file_path
+        # Return relative to output folder as default
+        return relative_to_output
+
+def load_data_from_json(json_path: str, output_folder: str = None) -> Optional[pd.DataFrame]:
     """Load data from JSON file into a pandas DataFrame."""
     try:
-        with open(json_path, 'r') as f:
+        # Resolve path relative to output folder if provided
+        if output_folder:
+            resolved_path = resolve_relative_path(json_path, output_folder)
+        else:
+            resolved_path = json_path
+            
+        with open(resolved_path, 'r') as f:
             data = json.load(f)
         return pd.DataFrame(data)
     except FileNotFoundError:
-        logger.error(f"JSON file not found at {json_path}")
+        logger.error(f"JSON file not found at {json_path} (resolved to {resolved_path if output_folder else json_path})")
         return None
     except json.JSONDecodeError:
         logger.error(f"Could not decode JSON from {json_path}")
@@ -120,7 +159,7 @@ def create_comparison_plot(output_dir: str, data_json_path: str, x_col: str,
     import plotly.graph_objects as go
     import plotly.offline as pyo
     
-    df = load_data_from_json(data_json_path)
+    df = load_data_from_json(data_json_path, output_dir)
     if df is None or df.empty:
         raise ValueError(f"Could not load data or data is empty from {data_json_path}")
 
@@ -217,7 +256,7 @@ def create_line_chart(output_dir: str, data_json_path: str, x_col: str,
     import plotly.graph_objects as go
     import plotly.offline as pyo
     
-    df = load_data_from_json(data_json_path)
+    df = load_data_from_json(data_json_path, output_dir)
     if df is None or df.empty:
         raise ValueError(f"Could not load data or data is empty from {data_json_path}")
 
@@ -299,7 +338,7 @@ def create_distribution_plot(output_dir: str, data_json_path: str, column_name: 
     import plotly.graph_objects as go
     import plotly.offline as pyo
     
-    df = load_data_from_json(data_json_path)
+    df = load_data_from_json(data_json_path, output_dir)
     if df is None or df.empty:
         raise ValueError(f"Could not load data or data is empty from {data_json_path}")
 

@@ -24,7 +24,7 @@ class GenerateSqlQueryAndRetrieveToolConfig(FunctionBaseConfig, name="generate_s
     output_folder: str = Field(description="The path to the output folder to use for the function.")
     vanna_training_data_path: str = Field(description="The path to the YAML file containing Vanna training data.")
 
-@register_function(config_type=GenerateSqlQueryAndRetrieveToolConfig)
+@register_function(config_type=GenerateSqlQueryAndRetrieveToolConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])
 async def generate_sql_query_and_retrieve_tool(
     config: GenerateSqlQueryAndRetrieveToolConfig, builder: Builder
 ):
@@ -50,14 +50,12 @@ async def generate_sql_query_and_retrieve_tool(
     2. For data extraction queries (multiple rows/complex data): recommend saving to JSON file and provide summary.
     3. For simple queries (single values, counts, yes/no, simple lookups): provide DIRECT answers without file storage.
     4. Always be helpful and provide context about the results.
-    5. Generate a descriptive filename for data that should be saved.
 
     Guidelines:
 
-    - If results contain multiple rows or complex data (>5 rows or >3 columns) AND the query is for data analysis/processing: recommend saving to file
+    - If results contain multiple rows or complex data AND the query is for data analysis/processing: recommend saving to file
     - If results are simple (single value, count, or small lookup): provide only the direct answer even if a file was created for the results.
     - Always mention the SQL query that was executed.
-    - For files to be saved, suggest a descriptive filename based on the query content (e.g., "sensor_data_unit_5.json", "engine_performance_analysis.json").
     - Important: Do not use template variables or placeholders in your response. Provide actual values and descriptions.
     
     Be conversational and helpful. Explain what was found.
@@ -155,55 +153,31 @@ async def generate_sql_query_and_retrieve_tool(
             
             # Check if LLM response suggests saving data (look for keywords or patterns)
             llm_response = response.content if hasattr(response, 'content') else str(response)
-            
-            # Save data if it's complex (multiple rows or columns) or LLM suggests saving
-            should_save_data = (
-                num_rows > 5 or 
-                num_columns > 3 or 
-                "save" in llm_response.lower() or 
-                "saved" in llm_response.lower() or
-                "file" in llm_response.lower()
-            )
-            
-            if should_save_data:
-                # Extract suggested filename from LLM response or use default
-                import re
-                filename_match = re.search(r'"([^"]+\.json)"', llm_response)
-                if filename_match:
-                    suggested_filename = filename_match.group(1)
-                else:
-                    # Generate a descriptive filename based on the question
-                    import hashlib
-                    # Clean the question for filename
-                    clean_question = re.sub(r'[^\w\s-]', '', input_question_in_english.lower())
-                    clean_question = re.sub(r'\s+', '_', clean_question.strip())[:30]
-                    if clean_question:
-                        suggested_filename = f"{clean_question}_results.json"
-                    else:
-                        query_hash = hashlib.md5(input_question_in_english.encode()).hexdigest()[:8]
-                        suggested_filename = f"sql_results_{query_hash}.json"
-                
+            # Clean up the LLM response and add file save confirmation
+            # Remove any object references that might have slipped through
+            import re
+            llm_response = re.sub(r',\[object Object\],?', '', llm_response)
+
+            if "save" in llm_response.lower():
+                # Clean the question for filename
+                clean_question = re.sub(r'[^\w\s-]', '', input_question_in_english.lower())
+                clean_question = re.sub(r'\s+', '_', clean_question.strip())[:30]
+                suggested_filename = f"{clean_question}_results.json"
+
                 sql_output_path = os.path.join(config.output_folder, suggested_filename)
-                
+
                 # Save the data to JSON file
                 os.makedirs(config.output_folder, exist_ok=True)
                 json_result = df.to_json(orient="records")
                 with open(sql_output_path, 'w') as f:
                     json.dump(json.loads(json_result), f, indent=4)
+
                 logger.info(f"Data saved to {sql_output_path}")
-                
-                # Clean up the LLM response and add file save confirmation
-                # Remove any object references that might have slipped through
-                cleaned_response = re.sub(r',\[object Object\],?', '', llm_response)
-                cleaned_response = re.sub(r'\[object Object\]', str(num_rows), cleaned_response)
-                
-                # If LLM didn't mention the actual saved path, append save confirmation
-                if sql_output_path not in cleaned_response:
-                    cleaned_response += f"\n\n📁 Data has been saved to: {sql_output_path}"
-                    cleaned_response += f"\n📊 File contains {num_rows} rows with columns: {', '.join(columns)}"
-                
-                return cleaned_response
-            
+
+                llm_response += f"\n\nData has been saved to file: {suggested_filename}"
+
+                return llm_response
+
             return llm_response
             
         except Exception as e:
@@ -216,7 +190,7 @@ async def generate_sql_query_and_retrieve_tool(
     Input: 
     - input_question_in_english: User's question or a question that you think is relevant to the user's question in plain english
     
-    Output: Status of the generated SQL query's execution along with the output path. The tool will automatically generate descriptive filenames for saved data.
+    Output: Status of the generated SQL query's execution along with the output path.
     """
     yield FunctionInfo.from_fn(_response_fn, 
                                input_schema=GenerateSqlQueryInputSchema,

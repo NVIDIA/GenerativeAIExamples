@@ -80,10 +80,31 @@ async def moment_predict_rul_tool(
         sensor_data_json_path: str = Field(description="Path to JSON file containing sensor measurements data for RUL prediction")
         engine_unit: int = Field(description="Specific engine unit to analyze (optional, analyzes all if not specified)", default=None)
 
-    def load_data_from_json(json_path: str) -> pd.DataFrame:
+    def load_data_from_json(json_path: str, output_folder: str = None) -> pd.DataFrame:
         """Load data from JSON file into a pandas DataFrame."""
         try:
-            with open(json_path, 'r') as f:
+            # Resolve path relative to output folder if provided
+            if output_folder:
+                if os.path.isabs(json_path):
+                    # If absolute path exists, use it
+                    if os.path.exists(json_path):
+                        resolved_path = json_path
+                    else:
+                        # If absolute path doesn't exist, try relative to output folder
+                        basename = os.path.basename(json_path)
+                        resolved_path = os.path.join(output_folder, basename)
+                else:
+                    # If relative path, first try relative to output folder
+                    relative_to_output = os.path.join(output_folder, json_path)
+                    if os.path.exists(relative_to_output):
+                        resolved_path = relative_to_output
+                    else:
+                        # Then try as provided (relative to current working directory)
+                        resolved_path = json_path
+            else:
+                resolved_path = json_path
+                
+            with open(resolved_path, 'r') as f:
                 data = json.load(f)
             df = pd.DataFrame(data)
             logger.info(f"Loaded data with shape: {df.shape}")
@@ -286,7 +307,7 @@ async def moment_predict_rul_tool(
                 return f"JSON file not found at path: {sensor_data_json_path}"
             
             # Load data
-            df = load_data_from_json(sensor_data_json_path)
+            df = load_data_from_json(sensor_data_json_path, config.output_folder)
             
             if df.empty:
                 return f"No data found in JSON file: {sensor_data_json_path}"
@@ -368,12 +389,18 @@ async def moment_predict_rul_tool(
             df_result['predicted_RUL'] = all_predictions
             
             # Save results back to the original JSON file (consistent with predict_rul_tool)
+            # For saving, we want to save relative to output_folder if the original path was relative
+            if not os.path.isabs(sensor_data_json_path):
+                save_path = os.path.join(config.output_folder, os.path.basename(sensor_data_json_path))
+            else:
+                save_path = sensor_data_json_path
+                
             results_json = df_result.to_dict('records')
-            with open(sensor_data_json_path, 'w') as f:
+            with open(save_path, 'w') as f:
                 json.dump(results_json, f, indent=2)
             
-            logger.info(f"MOMENT RUL prediction results saved back to original file: {sensor_data_json_path}")
-            results_filepath = sensor_data_json_path
+            logger.info(f"MOMENT RUL prediction results saved back to file: {save_path}")
+            results_filepath = save_path
             
             # Generate summary statistics
             valid_predictions = [p for p in all_predictions if p is not None]
@@ -382,7 +409,8 @@ async def moment_predict_rul_tool(
             max_rul = np.max(valid_predictions)
             std_rul = np.std(valid_predictions)
             
-            # Build response similar to predict_rul_tool format  
+            # Build response similar to predict_rul_tool format (relative path from output folder)
+            results_relpath = os.path.relpath(results_filepath, config.output_folder)
             response = f"""RUL predictions generated successfully! 📊
 
 **Model Used:** MOMENT-1-Small Foundation Model (Time Series Forecasting)
@@ -394,7 +422,7 @@ async def moment_predict_rul_tool(
 - **Maximum RUL:** {max_rul:.2f} cycles
 - **Standard Deviation:** {std_rul:.2f} cycles
 
-**Results saved to:** {results_filepath}
+**Results saved to:** {results_relpath}
 
 The predictions have been added to the original dataset with column name 'predicted_RUL'. The original JSON file has been updated with the RUL predictions.
 All columns from the original dataset have been preserved, and the predicted RUL column has been renamed to 'predicted_RUL' and the actual RUL column has been renamed to 'actual_RUL'."""

@@ -212,10 +212,37 @@ The `db_path` should point to the database inside your data directory:
 db_path: "data/nasa_turbo.db"
 ```
 
-Create an empty folder for the output data and point the output folder to that path:
+#### Output Folder Configuration
+
+Create an empty folder for the output data and configure the `output_folder` path. You have two options:
+
+**Option 1: Relative Path (Recommended)**
 ```yaml
 output_folder: "output_data"
 ```
+- Path is relative to where you run the workflow
+- **Recommended**: Always run the workflow from the `predictive_maintenance_agent/` directory
+- Creates `output_data/` folder in your project directory
+
+**Option 2: Absolute Path**
+```yaml
+output_folder: "/absolute/path/to/your/output_data"
+```
+- Works regardless of where you run the workflow from
+- Provides consistent output location
+
+**Best Practice**: We recommend using relative paths and always running the workflow from the `predictive_maintenance_agent/` directory:
+
+```bash
+cd /path/to/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/
+# Run all workflow commands from here
+nat serve --config_file=configs/config-reasoning.yml
+```
+
+This ensures that:
+- All relative paths work correctly
+- Output files are organized within your project
+- Configuration remains portable across different machines
 
 ### 6. Vanna SQL Agent Training (Automatic)
 
@@ -351,10 +378,10 @@ The utilities are located in `/workspace/utils/` (which maps to your `output_dat
 
 #### RUL Transformation Utilities
 
-**`apply_piecewise_rul_transformation(file_path, maxlife=125)`**
+**`apply_piecewise_rul_transformation(file_path, maxlife=100)`**
 - Transforms RUL data to create realistic "knee" patterns
 - **Input**: JSON file with engine time series data
-- **Output**: Same file modified in-place with transformed RUL values
+- **Output**: pandas DataFrame with original data plus new 'transformed_RUL' column (also saves file in-place)
 - **Pattern**: RUL stays constant at `MAXLIFE` until remaining cycles drop below threshold, then decreases linearly to 0
 - **Use case**: Creating realistic RUL patterns for comparison with predicted values
 
@@ -363,7 +390,7 @@ The utilities are located in `/workspace/utils/` (which maps to your `output_dat
 **For Users**: When interacting with the system, you can request complex data transformations knowing that reliable utilities will handle the implementation. For example:
 
 ```
-"Transform the actual RUL data for engine 24 to piecewise representation with MAXLIFE=125"
+"Transform the actual RUL data for engine 24 to piecewise representation with MAXLIFE=100"
 ```
 
 **For Developers**: The code generation assistant automatically uses these utilities when available. The system prompts include instructions to:
@@ -377,7 +404,7 @@ The utilities are located in `/workspace/utils/` (which maps to your `output_dat
 2. **System Process**:
    - Retrieves ground truth data from database
    - Predicts RUL using the model
-   - **Uses utility**: `utils.apply_piecewise_rul_transformation(data_file, maxlife=125)`
+   - **Uses utility**: `utils.apply_piecewise_rul_transformation(data_file, maxlife=100)` (returns DataFrame)
    - Generates comparison visualization
 3. **Result**: Clean, reliable transformation with consistent knee pattern
 
@@ -450,32 +477,33 @@ Retrieve real RUL of each unit in the FD001 test dataset. Then plot a distributi
 
 ![Visualization Example](imgs/test_prompt_2.png)
 
-**Prediction and Comparison (Uses Workspace Utilities)**
-```
-Perform the following steps:
 
-1. Retrieve the time in cycles, all sensor measurements, and the ground truth RUL values for engine unit 24 from the FD001 test and RUL tables.
-2. Use the retrieved data to predict the Remaining Useful Life (RUL).
-3. Apply piecewise RUL transformation to actual RUL values
-4. Generate a plot that updated actual RUL values and the predicted RUL values across time.
+**Anomaly Detection**
 ```
-![Prediction Example](imgs/test_prompt_3.png)
+Retrieve and detect anomalies in sensor 4 measurements for engine number 78 in train FD001 dataset.
+```
 
-*Note: This example automatically uses the workspace `apply_piecewise_rul_transformation` utility to create realistic knee-pattern RUL data for comparison, resulting in much cleaner and more meaningful visualizations.*
+![Anomaly Detection Example](imgs/test_prompt_4.png)
 
 **Workspace Utilities Demo**
 ```
-Apply piecewise RUL transformation to ground truth RUL values of engine unit 10 from FD001 train dataset with MAXLIFE=100 and plot it across time.
+Retrieve ground truth RUL values and time in cycles from FD001 train dataset. Apply piecewise RUL transformation with MAXLIFE=100. Finally, Plot a line chart of the transformed values across time.
 ```
 
 *This example demonstrates how to discover and use workspace utilities directly. The system will show available utilities and then apply the RUL transformation using the pre-built, reliable utility functions.*
 
-**Anomaly Detection**
-```bash
-Retrieve and detect anomalies in sensor 4 measurements for engine number 78 in dataset FD001.
+**Prediction and Comparison (Uses Workspace Utilities)**
 ```
+Perform the following steps:
 
-![Anomaly Detection Example](imgs/test_prompt_4.png)
+1.Retrieve the time in cycles, all sensor measurements, and ground truth RUL values for engine unit 24 from FD001 train dataset.
+2.Use the retrieved data to predict the Remaining Useful Life (RUL). 
+3.Use the piece wise RUL transformation code utility to apply piecewise RUL transformation only to the observed RUL column. 
+4.Generate a plot that compares the transformed RUL values and the predicted RUL values across time.
+```
+![Prediction Example](imgs/test_prompt_3.png)
+
+*Note: This example automatically uses the workspace `apply_piecewise_rul_transformation` utility to create realistic knee-pattern RUL data for comparison, resulting in much cleaner and more meaningful visualizations.*
 
 ## Observability (Optional)
 

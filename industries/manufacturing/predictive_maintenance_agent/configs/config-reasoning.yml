@@ -1,24 +1,23 @@
 general:
   use_uvloop: true
-  telemetry:
-    logging:
-      console:
-        _type: console
-        level: INFO
-      # file:
-      #   _type: file
-      #   path: "pdm.log"
-      #   level: DEBUG
-    # Enable tracing with observability platforms
-    # tracing:
-    #   phoenix:
-    #     _type: phoenix
-    #     endpoint: http://localhost:6006/v1/traces
-    #     project: pdm-test
-      # catalyst:
-      #   _type: catalyst
-      #   project: "pdm-test"
-      #   dataset: "pdm-dataset"
+  # telemetry:
+  #   logging:
+  #     console:
+  #       _type: console
+  #       level: INFO
+  #     file:
+  #       _type: file
+  #       path: "pdm.log"
+  #       level: DEBUG
+  #   tracing:
+  #     phoenix:
+  #       _type: phoenix
+  #       endpoint: http://localhost:6006/v1/traces
+  #       project: pdm-test
+  #     catalyst:
+  #       _type: catalyst
+  #       project: "pdm-test"
+  #       dataset: "pdm-dataset"
 
 llms:
   # SQL query generation model
@@ -28,15 +27,15 @@ llms:
   
   # Data analysis and tool calling model
   analyst_llm:
-    _type: nim
-    model_name: "qwen/qwen2.5-coder-32b-instruct"
-  
-  # Python code generation model
-  coding_llm:
     # _type: nim
     # model_name: "qwen/qwen2.5-coder-32b-instruct"
     _type: openai
     model_name: "gpt-4.1-mini"
+  
+  # Python code generation model
+  coding_llm:
+    _type: nim
+    model_name: "qwen/qwen2.5-coder-32b-instruct"
   
   # Main reasoning and planning model
   reasoning_llm:
@@ -64,16 +63,11 @@ functions:
     output_folder: "output_data"
     vanna_training_data_path: "vanna_training_data.yaml"
 
-  # Legacy RUL prediction tool
   predict_rul:
     _type: predict_rul_tool
     output_folder: "output_data"
     scaler_path: "models/scaler_model.pkl"
     model_path: "models/xgb_model_fd001.pkl"
-  
-  # predict_rul:
-  #   _type: moment_predict_rul_tool
-  #   output_folder: "output_data"
   
   anomaly_detection:
     _type: moment_anomaly_detection_tool
@@ -114,13 +108,13 @@ functions:
     max_retries: 2
     tool_names: [
       sql_retriever, 
-      code_generation_assistant, 
       predict_rul, 
       plot_distribution, 
       plot_line_chart, 
       plot_comparison, 
       anomaly_detection, 
-      plot_anomaly
+      plot_anomaly,
+      code_generation_assistant
     ]
     parse_agent_response_max_retries: 2
     system_prompt: |
@@ -145,7 +139,7 @@ functions:
       Executing step: the step you are currently executing from the plan along with any instructions provided
       Thought: describe how you are going to execute the step
       Final Answer: the final answer to the original input question including the absolute file paths of the generated files with 
-      `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/` prepended to the filename.     
+      `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/` prepended to the filename.
       
       **FORMAT 3 (when using a tool)**
       Input plan: Summarize all the steps in the plan.
@@ -157,6 +151,7 @@ functions:
 
       ### HOW TO CHOOSE THE RIGHT TOOL ###
       Follow these guidelines while deciding the right tool to use:
+      **Ensure that tool calls do not use single quotes or double quotes within the key-value pairs.**
       
       1. **SQL Retrieval Tool**
          - Use this tool to retrieve data from the database.
@@ -176,7 +171,6 @@ functions:
          - **REQUIRES JSON DATA**: First use sql_retriever to get sensor data, then pass the JSON file path to anomaly_detection.
          - **OUTPUT**: Creates enhanced sensor data with added 'is_anomaly' boolean column.
          - Use plot_anomaly to create interactive visualizations of anomaly detection results.
-         - **WORKFLOW**: sql_retriever → anomaly_detection → plot_anomaly for complete anomaly analysis with visualization.
       
       5. **Code Generation Guidelines**
          When using code_generation_assistant, provide comprehensive instructions in a single parameter:
@@ -187,21 +181,18 @@ functions:
          • The tool automatically generates and executes Python code, returning results and file paths.
 
       6. **File Path Handling**
-         - Always pass only the filename directly (e.g., "filename.json") while providing instructions to the code_generation_assistant. This is because code_generation_assitant is already mounted to the generated outputs folder.
-         - Use absolute file paths like "/output_data/filename.json" while passing to other tools.
+         - When giving instructions to the code_generation_assistant, use only the filename itself (for example, filename.json). Do not include any folder paths, since the code_generation_assistant already operates within the outputs directory.
 
       ### TYPICAL WORKFLOW FOR EXECUTING A PLAN ###
 
-      First, Data Extraction
+      First, Data Extraction and analysis
          - Use SQL retrieval tool to fetch required data
-      Next, Data Analysis
-         - Optionally use code_generation_assistant to perform any data processing using Python code if instructed to do so
+         - **Use code_generation_assistant to perform any data processing using Python code ONLY IF INSTRUCTED TO DO SO.**
       Finally, Data Visualization
          - Use existing plotting tools to generate plots
          - Use predict_rul, anomaly_detection or any other relevant tools to perform analysis
-         - If existing tools are not enough, use code_generation_assistant to generate plots using Python code
       Finally, return the result to the user
-         - Return processed information to calling agent along with the absolute file paths to the generated files.
+         - Return processed information to calling agent.
 
 workflow:
   _type: reasoning_agent

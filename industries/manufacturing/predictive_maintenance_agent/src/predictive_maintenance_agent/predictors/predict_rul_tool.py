@@ -15,12 +15,13 @@ from nat.data_models.function import FunctionBaseConfig
 
 logger = logging.getLogger(__name__)
 
-def verify_json_path(file_path: str) -> str:
+def verify_json_path(file_path: str, output_folder: str = None) -> str:
     """
     Verify that the input is a valid path to a JSON file.
     
     Args:
         file_path (str): Path to verify
+        output_folder (str): Output folder to use as base for relative paths
         
     Returns:
         str: Verified file path
@@ -35,17 +36,40 @@ def verify_json_path(file_path: str) -> str:
     
     if not file_path.lower().endswith('.json'):
         return "Input must be a path to a JSON file (ending with .json)"
+    
+    # Resolve path relative to output folder if provided
+    if output_folder:
+        # Import here to avoid circular imports
+        import os.path
+        if os.path.isabs(file_path):
+            # If absolute path exists, use it
+            if os.path.exists(file_path):
+                resolved_path = file_path
+            else:
+                # If absolute path doesn't exist, try relative to output folder
+                basename = os.path.basename(file_path)
+                resolved_path = os.path.join(output_folder, basename)
+        else:
+            # If relative path, first try relative to output folder
+            relative_to_output = os.path.join(output_folder, file_path)
+            if os.path.exists(relative_to_output):
+                resolved_path = relative_to_output
+            else:
+                # Then try as provided (relative to current working directory)
+                resolved_path = file_path
+    else:
+        resolved_path = file_path
         
-    if not os.path.exists(file_path):
+    if not os.path.exists(resolved_path):
         return f"JSON file not found at path: {file_path}"
         
     try:
-        with open(file_path, 'r') as f:
+        with open(resolved_path, 'r') as f:
             json.load(f)  # Verify file contains valid JSON
     except json.JSONDecodeError:
-        return f"File at {file_path} does not contain valid JSON data"
+        return f"File at {resolved_path} does not contain valid JSON data"
         
-    return file_path
+    return resolved_path
 
 class PredictRulToolConfig(FunctionBaseConfig, name="predict_rul_tool"):
     """
@@ -63,11 +87,34 @@ async def predict_rul_tool(
     class PredictRulInputSchema(BaseModel):
         json_file_path: str = Field(description="Path to a JSON file containing sensor measurements data for RUL prediction")
 
-    def load_data_from_json(json_path: str):
+    def load_data_from_json(json_path: str, output_folder: str = None):
         """Load data from JSON file into a pandas DataFrame."""
         import pandas as pd
         try:
-            with open(json_path, 'r') as f:
+            # Resolve path relative to output folder if provided
+            if output_folder:
+                # Import here to avoid circular imports
+                import os.path
+                if os.path.isabs(json_path):
+                    # If absolute path exists, use it
+                    if os.path.exists(json_path):
+                        resolved_path = json_path
+                    else:
+                        # If absolute path doesn't exist, try relative to output folder
+                        basename = os.path.basename(json_path)
+                        resolved_path = os.path.join(output_folder, basename)
+                else:
+                    # If relative path, first try relative to output folder
+                    relative_to_output = os.path.join(output_folder, json_path)
+                    if os.path.exists(relative_to_output):
+                        resolved_path = relative_to_output
+                    else:
+                        # Then try as provided (relative to current working directory)
+                        resolved_path = json_path
+            else:
+                resolved_path = json_path
+                
+            with open(resolved_path, 'r') as f:
                 data = json.load(f)
             return pd.DataFrame(data)
         except FileNotFoundError:
@@ -99,7 +146,7 @@ async def predict_rul_tool(
         warnings.filterwarnings("ignore", message="X does not have valid feature names")
         
         # Load the data
-        df = load_data_from_json(data_json_path)
+        df = load_data_from_json(data_json_path, output_dir)
         if df is None or df.empty:
             raise ValueError(f"Could not load data or data is empty from {data_json_path}")
 
@@ -147,24 +194,33 @@ async def predict_rul_tool(
         
         # Create results DataFrame
         results_df = df.copy()
-        results_df = results_df.rename(columns={'RUL': 'actual_RUL'})
         results_df['predicted_RUL'] = y_pred
         
-        # Save results back to the original JSON file
+        # Save results back to the original JSON file (resolve path for saving)
+        if output_dir:
+            # For saving, we want to save relative to output_dir if the original path was relative
+            import os.path
+            if not os.path.isabs(data_json_path):
+                save_path = os.path.join(output_dir, os.path.basename(data_json_path))
+            else:
+                save_path = data_json_path
+        else:
+            save_path = data_json_path
+            
         results_json = results_df.to_dict('records')
-        with open(data_json_path, 'w') as f:
+        with open(save_path, 'w') as f:
             json.dump(results_json, f, indent=2)
         
-        logger.info(f"Prediction results saved back to original file: {data_json_path}")
+        logger.info(f"Prediction results saved back to file: {save_path}")
         
-        return y_pred, data_json_path
+        return y_pred, save_path
 
     async def _response_fn(json_file_path: str) -> str:
         """
         Process the input message and generate RUL predictions using trained XGBoost models.
         """
         logger.info(f"Input message: {json_file_path}")
-        data_json_path = verify_json_path(json_file_path)
+        data_json_path = verify_json_path(json_file_path, config.output_folder)
         try:
             predictions, output_filepath = predict_rul_from_data(
                 data_json_path=data_json_path,
@@ -179,7 +235,8 @@ async def predict_rul_tool(
             max_rul = np.max(predictions)
             std_rul = np.std(predictions)
             
-            # Create response with prediction summary
+            # Create response with prediction summary (relative path from output folder)
+            output_relpath = os.path.relpath(output_filepath, config.output_folder)
             response = f"""RUL predictions generated successfully! 📊
 
 **Model Used:** XGBoost (Traditional Machine Learning)
@@ -191,10 +248,10 @@ async def predict_rul_tool(
 - **Maximum RUL:** {max_rul:.2f} cycles
 - **Standard Deviation:** {std_rul:.2f} cycles
 
-**Results saved to:** {output_filepath}
+**Results saved to:** {output_relpath}
 
 The predictions have been added to the original dataset with column name 'predicted_RUL'. The original JSON file has been updated with the RUL predictions.
-All columns from the original dataset have been preserved, and the predicted RUL column has been renamed to 'predicted_RUL' and the actual RUL column has been renamed to 'actual_RUL'."""
+All columns from the original dataset have been preserved, and a new 'predicted_RUL' column has been added."""
             
             return response
             
@@ -238,7 +295,7 @@ All columns from the original dataset have been preserved, and the predicted RUL
     4. Save predictions to JSON file
 
     Output:
-    - RUL predictions for each engine unit
+    - RUL predictions for each unit
     - Summary statistics of predictions
     - Updated JSON file with predictions added as 'predicted_RUL' column
     """

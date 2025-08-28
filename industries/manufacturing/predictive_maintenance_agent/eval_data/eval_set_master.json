@@ -241,8 +241,8 @@
     },
     {
       "id": "25",
-      "question": "Retrieve and detect anomalies in sensor 4 measurements for engine number 78.",
-      "answer": "A Plot showing observed values and anomalies in sensor 4 measurements for engine number 78",
+      "question": "Retrieve and detect anomalies in sensor 4 measurements for engine number 78 in train FD001 dataset.",
+      "answer": "A Plot showing observed values and anomalies in sensor 4 measurements for engine number 78.",
       "type": "text_plus_plot",
       "category": "visualization",
       "subcategory": "hard",
@@ -251,12 +251,12 @@
     },
     {
       "id": "26",
-      "question ": "Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.",
-      "answer": "Two line charts with actual RUL in Knee pattern and predicted RUL values across time",
+      "question ": "Perform the following steps: 1.Retrieve the time in cycles, all sensor measurements, and ground truth RUL values for engine unit 24 from FD001 train dataset. 2.Use the retrieved data to predict the Remaining Useful Life (RUL). 3.Use the piece wise RUL transformation code utility to apply piecewise RUL transformation only to the observed RUL column. 4.Generate a plot that compares the transformed RUL values and the predicted RUL values across time.",
+      "answer": "Two line charts with transformed RUL values in Knee pattern and predicted RUL values across time",
       "type": "text_plus_plot",
       "category": "visualization",
       "subcategory": "hard",
       "original_id": "10",
       "source": "eval_set"
-    }    
+    }
 ]

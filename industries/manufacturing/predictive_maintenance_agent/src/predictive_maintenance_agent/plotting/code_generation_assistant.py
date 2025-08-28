@@ -12,7 +12,6 @@ from nat.builder.framework_enum import LLMFrameworkEnum
 
 logger = logging.getLogger(__name__)
 
-
 class CodeGenerationAssistantConfig(FunctionBaseConfig, name="code_generation_assistant"):
     """
     NeMo Agent Toolkit function to generate and execute Python code based on input instructions and context.
@@ -35,17 +34,16 @@ async def code_generation_assistant(
     # Get the LLM and code execution tool from builder
     llm = await builder.get_llm(config.llm_name, wrapper_type=LLMFrameworkEnum.LANGCHAIN)
     code_execution_fn = builder.get_function(config.code_execution_tool)
+    max_retries = config.max_retries
     
     async def _generate_and_execute_code(
         instructions: str,
-        max_retries: int = config.max_retries
     ) -> str:
         """
         Generate and execute code based on complete instructions.
         
         Args:
             instructions: Complete instructions including context, data information, and requirements for what the code should do
-            max_retries: Maximum number of retries if code execution fails
             
         Returns:
             String containing execution results and summary
@@ -59,11 +57,18 @@ Generate only the code needed. Your response must contain ONLY executable Python
 
 **UTILITIES AVAILABLE:**
 A 'utils' folder contains a pre-built function for predictive maintenance tasks:
-- utils.apply_piecewise_rul_transformation(file_path, maxlife=required maxlife, time_col=time column name, rul_col=RUL column name to apply transformation to):
+- utils.apply_piecewise_rul_transformation
+   INPUTS:
+    - file_path: Path to JSON file with time series data
+    - maxlife: Maximum life threshold for the piecewise function (default: 100)
+    - time_col: Name of the time/cycle column (default: 'time_in_cycles')
+    - rul_col: Name of the RUL column to transform (default: 'RUL')
+   OUTPUTS:
+    - pandas DataFrame with original data plus new 'transformed_RUL' column
   * Transform RUL data with realistic knee pattern
-  * Automatically saves the transformed data back to the original JSON file
-  * Returns a success message with transformation details
-- utils.show_utilities(): Show all available utilities, which are anyways listed above
+  * Returns a pandas DataFrame with original data plus new 'transformed_RUL' column
+
+- utils.show_utilities(): Show all available utilities if you need to see them
 
 **CRITICAL REQUIREMENT: ALWAYS USE UTILITIES when available instead of writing custom implementations.**
 This ensures reliable, tested functionality and consistent results.
@@ -78,10 +83,9 @@ import utils
 **UTILITY USAGE GUIDELINES:**
 - Check if your task can be accomplished using the utility function
 - For RUL transformations: ALWAYS use utils.apply_piecewise_rul_transformation() instead of custom logic
-- The utility automatically saves the transformed data back to the original file, so NO ADDITIONAL SAVING CODE IS NEEDED
 - The utility handles all error checking and provides detailed success messages
-- Use maxlife parameter to control the knee threshold (default: 125)
-- Simply print the result message returned by the utility function
+- Use maxlife parameter to control the knee threshold (default: 100)
+- Capture the DataFrame returned by the utility function for further processing
 
 **CODE REQUIREMENTS:**
 1. Generate COMPLETE, SYNTACTICALLY CORRECT Python code
@@ -90,9 +94,7 @@ import utils
 4. NO comments, NO docstrings, NO explanations
 5. Use minimal variable names (df, fig, data, etc.)
 6. **CRITICAL FILE PATH RULE**: Use ONLY the filename directly (e.g., "filename.json"), NOT "output_data/filename.json"
-7. For data analysis: use pandas and plotly
-8. For visualizations: save as HTML with fig.write_html()
-9. For data: if the utility does not save the data, add a new column and save it to the original file.
+8. **IF YOU STILL NEED TO SAVE FILES, THEN PRINT FILE NAMES TO STDOUT. (eg: print("Saved file to: filename.json"))**
 
 GENERATE CODE ONLY. NO COMMENTS. NO EXPLANATIONS."""
 

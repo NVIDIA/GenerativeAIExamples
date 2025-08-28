@@ -11,12 +11,13 @@ from nat.data_models.function import FunctionBaseConfig
 
 logger = logging.getLogger(__name__)
 
-def verify_json_path(file_path: str) -> str:
+def verify_json_path(file_path: str, output_folder: str = None) -> str:
     """
     Verify that the input is a valid path to a JSON file.
     
     Args:
         file_path (str): Path to verify
+        output_folder (str): Output folder to use as base for relative paths
         
     Returns:
         str: Verified file path
@@ -31,17 +32,24 @@ def verify_json_path(file_path: str) -> str:
     
     if not file_path.lower().endswith('.json'):
         raise ValueError("Input must be a path to a JSON file (ending with .json)")
+    
+    # Resolve path relative to output folder if provided
+    if output_folder:
+        from .plot_utils import resolve_relative_path
+        resolved_path = resolve_relative_path(file_path, output_folder)
+    else:
+        resolved_path = file_path
         
-    if not os.path.exists(file_path):
+    if not os.path.exists(resolved_path):
         raise FileNotFoundError(f"JSON file not found at path: {file_path}")
         
     try:
-        with open(file_path, 'r') as f:
+        with open(resolved_path, 'r') as f:
             json.load(f)  # Verify file contains valid JSON
     except json.JSONDecodeError:
         raise ValueError(f"File at {file_path} does not contain valid JSON data")
         
-    return file_path
+    return resolved_path
 
 class PlotDistributionToolConfig(FunctionBaseConfig, name="plot_distribution_tool"):
     """
@@ -64,10 +72,10 @@ async def plot_distribution_tool(
         """
         Process the input message and generate distribution histogram file.
         """
-        data_json_path = verify_json_path(data_json_path)
+        data_json_path = verify_json_path(data_json_path, config.output_folder)
         try:
             # Load data to validate column exists
-            df = load_data_from_json(data_json_path)
+            df = load_data_from_json(data_json_path, config.output_folder)
             if df is None or df.empty:
                 return "Could not load data or data is empty from the provided JSON file"
             
@@ -82,13 +90,12 @@ async def plot_distribution_tool(
                 title=plot_title
             )
             
-            # Convert absolute path to file:// URL for proper browser handling
-            html_file_url = f"file://{html_filepath}"
-            
-            # Build file information for response
-            file_info = f"- HTML File: {html_filepath}\n- HTML URL: {html_file_url}"
+            # Build file information for response (relative paths from output folder)
+            html_relpath = os.path.relpath(html_filepath, config.output_folder)
+            file_info = f"- HTML File: {html_relpath}"
             if png_filepath:
-                file_info += f"\n- PNG File: {png_filepath}"
+                png_relpath = os.path.relpath(png_filepath, config.output_folder)
+                file_info += f"\n- PNG File: {png_relpath}"
             
             # Return a clear completion message that the LLM will understand
             return f"""TASK COMPLETED SUCCESSFULLY
