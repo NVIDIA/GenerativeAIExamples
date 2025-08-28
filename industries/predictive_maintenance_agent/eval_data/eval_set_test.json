@@ -1,0 +1,42 @@
+[ 
+  {
+    "id": "1",
+    "question": "In dataset test_FD001 plot operational_setting_3 as a function of time_in_cycles for units 10, 20, 30, 40",
+    "answer": "Line chart showing operational_setting_3 values on y-axis ranging against time_in_cycles in x-axis with a constant line parallel to x-axis with value y-axis as 100",
+    "type": "text_plus_plot",
+    "category": "visualization",
+    "subcategory": "medium",
+    "original_id": "6",
+    "source": "eval_set"
+  },  
+  {
+    "id": "2",
+    "question": "What is the ground truth remaining useful life (RUL) of unit_number 59 in dataset test FD001",
+    "answer": "114 "
+  },  
+  {
+    "id": "2",
+    "question": "What is the ground truth RUL of unit_number 20 in dataset test FD001",
+    "answer": "16 "
+  },    
+  {
+      "id": "3",
+      "question": "In dataset train_FD004, plot sensor_measurement1 vs time_in_cycles for unit_number 107",
+      "answer": "Line chart showing sensor_measurement1 values on y-axis ranging from 445.00 to 518.67 plotted against time_in_cycles in x-axis for unit 107 in dataset FD004.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "easy",
+      "original_id": "1",
+      "source": "eval_set"
+    },
+    {
+      "id": "4",
+      "question": "Retrieve and detect anomalies in sensor 4 measurements for engine number 78.",
+      "answer": "A Plot showing observed values and anomalies in sensor 4 measurements for engine number 78",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "hard",
+      "original_id": "9",
+      "source": "eval_set"
+    }        
+]

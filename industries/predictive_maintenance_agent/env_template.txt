@@ -1,0 +1,13 @@
+# Environment Variables for Predictive Maintenance Agent
+# 
+# Copy this file to .env and replace the placeholder values with your actual API keys
+# To use: cp env_template.txt .env && source .env
+
+# NVIDIA NIM API key - Replace with your actual key from build.nvidia.com
+NVIDIA_API_KEY="your-actual-nvidia-api-key"
+
+# Optional: Catalyst observability credentials (for monitoring with RAGA AI)
+# Uncomment and set these if you want to use Catalyst tracing
+# CATALYST_ACCESS_KEY="your-actual-catalyst-access-key"
+# CATALYST_SECRET_KEY="your-actual-catalyst-secret-key"
+# CATALYST_ENDPOINT="https://catalyst.raga.ai/api"
