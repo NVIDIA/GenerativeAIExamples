@@ -26,7 +26,7 @@ from transformers import AutoTokenizer
 import time
 
 # Page config
-st.set_page_config(page_title="Nemotron Coder", page_icon="💻", layout="wide")
+st.set_page_config(page_title="Reasoning Coder", page_icon="💻", layout="wide")
 
 # Constants
 MODEL_ID = "nvidia/NVIDIA-Nemotron-Nano-9B-v2"
@@ -129,7 +129,7 @@ def finish_generation(content, blocks, elapsed_time, reasoning_enabled, current_
     st.rerun()
 
 class NemotronCodingAgent:
-    """Ultra-compact Nemotron coding agent with reasoning capabilities."""
+    """Ultra-compact reasoning coding agent with reasoning capabilities."""
     
     def __init__(self):
         self.model_id = MODEL_ID
@@ -289,7 +289,7 @@ def display_chat_message(message, reasoning_enabled):
                         st.metric("🏎️ Speed", "N/A")
 
 def main():
-    st.title("💻 Nemotron Coder-R")
+    st.title("💻 Reasoning Coder")
     st.markdown("""<div style='text-align:left;color:#666;'>Powered by <a href='https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2' target='_blank'>NVIDIA Nemotron Nano 9B v2</a></div>""", unsafe_allow_html=True)
     st.markdown("---")
 

@@ -1,5 +1,0 @@
-streamlit>=1.28.0
-requests>=2.31.0
-transformers>=4.35.0
-pyperclip>=1.8.2
-watchdog
