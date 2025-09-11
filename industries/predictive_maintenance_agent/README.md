@@ -2,7 +2,7 @@
 
 A comprehensive AI-powered predictive maintenance system built with NeMo Agent Toolkit for turbofan engine health monitoring and failure prediction.
 
-Work done by: Vineeth Kalluru, Janaki Vamaraju, Sugandha Sharma, Ze Yang, and Viraj Modak
+Work done by: Vineeth Kalluru, Janaki Vamaraju, Sugandha Sharma, Ze Yang, Viraj Modak, Sridurga Krithivasan
 
 ## Overview
 
