@@ -1,0 +1,262 @@
+[
+    {
+      "id": "1",
+      "question": "What is the ground truth remaining useful life (RUL) of unit_number 59 in dataset FD001",
+      "answer": "114 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "easy",
+      "original_id": "1",
+      "source": "eval_set"
+    },
+    {
+      "id": "2",
+      "question": "What is the ground truth RUL of unit_number 20 in dataset FD001",
+      "answer": "16 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "easy",
+      "original_id": "2",
+      "source": "eval_set"
+    },
+    {
+      "id": "3",
+      "question": "How many units have ground truth RUL of 100 or more in dataset FD003",
+      "answer": "33 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "easy",
+      "original_id": "3",
+      "source": "eval_set"
+    },
+    {
+      "id": "4",
+      "question": "How many units have ground truth RUL of 50 or less in dataset FD002",
+      "answer": "88 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "easy",
+      "original_id": "4",
+      "source": "eval_set"
+    },
+    {
+      "id": "5",
+      "question": "Report the unit_number of the units that have ground truth RUL equal to 155 in FD002",
+      "answer": "6, 141, 165 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "easy",
+      "original_id": "5",
+      "source": "eval_set"
+    },
+    {
+      "id": "6",
+      "question": "In the dataset FD004, how many units have ground truth RUL equal to 10 and what are their unit numbers?",
+      "answer": "4 units; unit numbers: 40, 82, 174, 184",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "medium",
+      "original_id": "6",
+      "source": "eval_set"
+    },
+    {
+      "id": "7",
+      "question": "In dataset train_FD004, what was the operational_setting_3 at time_in_cycles 20 for unit_number 107",
+      "answer": "100 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "easy",
+      "original_id": "7",
+      "source": "eval_set"
+    },
+    {
+      "id": "8",
+      "question": "In dataset train_FD004, what was the 3rd operational setting at time 20 for unit_number 107",
+      "answer": "100 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "medium",
+      "original_id": "8",
+      "source": "eval_set"
+    },
+    {
+      "id": "9",
+      "question": "In dataset test_FD002, what are the values of the three operational setting for unit_number 56 at time_in_cycles 10",
+      "answer": "10.0026, 0.25, 100 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "medium",
+      "original_id": "9",
+      "source": "eval_set"
+    },
+    {
+      "id": "10",
+      "question": "In dataset test_FD003, what is the value of sensor_measurement_4 for unit_number 25 at time_in_cycles 20",
+      "answer": "1409.26 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "easy",
+      "original_id": "10",
+      "source": "eval_set"
+    },
+    {
+      "id": "11",
+      "question": "How many units have operational_setting_3 equal to 100 in dataset train_FD001 at time_in_cycles 40?",
+      "answer": "100 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "medium",
+      "original_id": "11",
+      "source": "eval_set"
+    },
+    {
+      "id": "12",
+      "question": "How many units have operational_setting_3 equal to 100 in dataset train_FD001?",
+      "answer": "100 ",
+      "type": "text",
+      "category": "retrieval",
+      "subcategory": "medium",
+      "original_id": "12",
+      "source": "eval_set"
+    },
+    {
+        "id": "13",
+        "question": "In dataset train_FD003, what was sensor_measurement_20 and sensor_measurement_21 for unit 1 at time_in_cycles 10",
+        "answer": "38.94, 23.4781 ",
+        "type": "text",
+        "category": "retrieval",
+        "subcategory": "easy",
+        "original_id": "13",
+        "source": "eval_set"
+    },
+    {
+        "id": "14",
+        "question": "For dataset test_FD004, what is the ground truth remaining useful life of unit 60",
+        "answer": "139 ",
+        "type": "text",
+        "category": "retrieval",
+        "subcategory": "easy",
+        "original_id": "14",
+        "source": "eval_set"
+    },    
+    {
+      "id": "15",
+      "question": "Using the data in test_FD002, predict the remaining useful life of unit_number 10 at time_in_cycles 84",
+      "answer": "79 ",
+      "type": "text",
+      "category": "prediction",
+      "subcategory": "medium",
+      "original_id": "15",
+      "source": "eval_set"
+    },
+    {
+      "id": "16",
+      "question": "Given the data in test_FD003, predict the RUL of unit_number 30",
+      "answer": "89 ",
+      "type": "text",
+      "category": "prediction",
+      "subcategory": "medium",
+      "original_id": "16",
+      "source": "eval_set"
+    },
+    {
+      "id": "17",
+      "question": "In dataset train_FD004, plot sensor_measurement1 vs time_in_cycles for unit_number 107",
+      "answer": "Line chart showing sensor_measurement1 values on y-axis ranging from 445.00 to 518.67 plotted against time_in_cycles in x-axisfor unit 107 in dataset FD004.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "easy",
+      "original_id": "1",
+      "source": "eval_set"
+    },
+    {
+      "id": "18",
+      "question": "In dataset train_FD004, plot the variation of sensor_measurement1 over time for unit_number 107",
+      "answer": "Line chart displaying the variation of sensor_measurement1 values on y-axis over time cycles in x-axis for unit 107 in dataset FD004. The plot should illustrate how sensor_measurement1 changes across different time cycles, demonstrating the temporal variation pattern of this sensor reading.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "easy",
+      "original_id": "2",
+      "source": "eval_set"
+    },
+    {
+      "id": "19",
+      "question": "In dataset train_FD002, plot operational_setting_3 vs time_in_cycles for unit_number 200",
+      "answer": "Line chart showing operational_setting_3 values on y-axis ranging against time_in_cycles in x-axis for unit 200 in dataset FD002. Only two values 100 and 60 should be visible on the plot.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "easy",
+      "original_id": "3",
+      "source": "eval_set"
+    },
+    {
+      "id": "20",
+      "question": "Plot a histogram showing distribution of values of operational_setting_3 over time for unit_number 200 in dataset train_FD002",
+      "answer": "Histogram Two bars for 100 and 60 with higher bar for 100",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "medium",
+      "original_id": "4",
+      "source": "eval_set"
+    },
+    {
+      "id": "21",
+      "question": "In dataset test_FD001 plot a histogram showing the distribution of operational_setting_3 across all units",
+      "answer": "Constant value 100, so just one high bar for 100",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "medium",
+      "original_id": "5",
+      "source": "eval_set"
+    },
+    {
+      "id": "22",
+      "question": "In dataset test_FD001 plot operational_setting_3 as a function of time_in_cycles for units 10, 20, 30, 40",
+      "answer": "Line chart showing operational_setting_3 values on y-axis ranging against time_in_cycles in x-axis with a constant line parallel to x-axis with value y-axis as 100",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "medium",
+      "original_id": "6",
+      "source": "eval_set"
+    },
+    {
+      "id": "23",
+      "question": "Retrieve RUL of all units from the FD001 and plot their distribution using a histogram",
+      "answer": "Histogram showing distribution of RUL values for all units in FD001 dataset. Should contain 100 data points representing different RUL values ranging from 7 to 145 cycles. The distribution should show 71 unique RUL values with varying frequencies. The plot should display the spread and frequency of remaining useful life values across all engine units in the dataset.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "medium",
+      "original_id": "7",
+      "source": "eval_set"
+    },
+    {
+        "id": "24",
+        "question": "Retrieve time in cycles, all sensor measurements and RUL value for engine unit 24 from FD001 test and RUL tables. Predict RUL for it. Finally, generate a plot to compare actual RUL value with predicted RUL value across time.",
+        "answer": "A Plot showing both actual RUL values and predicted RUL values trend (in y-axis) plotted against time in cycles (in x-axis) for engine unit 24",
+        "type": "text_plus_plot",
+        "category": "visualization",
+        "subcategory": "hard",
+        "original_id": "8",
+        "source": "eval_set"
+    },
+    {
+      "id": "25",
+      "question": "Retrieve and detect anomalies in sensor 4 measurements for engine number 78 in train FD001 dataset.",
+      "answer": "A Plot showing observed values and anomalies in sensor 4 measurements for engine number 78.",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "hard",
+      "original_id": "9",
+      "source": "eval_set"
+    },
+    {
+      "id": "26",
+      "question ": "Perform the following steps: 1.Retrieve the time in cycles, all sensor measurements, and ground truth RUL values for engine unit 24 from FD001 train dataset. 2.Use the retrieved data to predict the Remaining Useful Life (RUL). 3.Use the piece wise RUL transformation code utility to apply piecewise RUL transformation only to the observed RUL column. 4.Generate a plot that compares the transformed RUL values and the predicted RUL values across time.",
+      "answer": "Two line charts with transformed RUL values in Knee pattern and predicted RUL values across time",
+      "type": "text_plus_plot",
+      "category": "visualization",
+      "subcategory": "hard",
+      "original_id": "10",
+      "source": "eval_set"
+    }
+]
