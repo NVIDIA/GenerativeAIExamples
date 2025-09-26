@@ -18,13 +18,13 @@ class HybridRetriever:
         self.hybrid_retriever = self.create_hybrid_retriever()
 
     def initialize_nvidia_components(self):
-        embeddings =NVIDIAEmbeddings(model="nvidia/llama-3.2-nv-embedqa-1b-v2", truncate="NONE")
+        embeddings =NVIDIAEmbeddings(model="nvidia/llama-3.2-nv-embedqa-1b-v2", truncate="END")
         return  embeddings
 
     def load_and_split_documents(self):
         loader = TextLoader(self.file_path)
         docs = loader.load()
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=600)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=20000, chunk_overlap=10000)
         doc_splits = text_splitter.split_documents(docs)
         return doc_splits
 
@@ -35,7 +35,7 @@ class HybridRetriever:
         return bm25_retriever, faiss_retriever
 
     def create_hybrid_retriever(self):
-        hybrid_retriever = EnsembleRetriever(retrievers=[self.bm25_retriever, self.faiss_retriever], weights=[0.7, 0.3])
+        hybrid_retriever = EnsembleRetriever(retrievers=[self.bm25_retriever, self.faiss_retriever], weights=[0.5, 0.5])
         return hybrid_retriever
 
     def get_retriever(self):
