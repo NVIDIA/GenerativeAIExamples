@@ -1,0 +1,40 @@
+// Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+//
+// NVIDIA CORPORATION and its licensors retain all intellectual property
+// and proprietary rights in and to this software, related documentation
+// and any modifications thereto.  Any use, reproduction, disclosure or
+// distribution of this software and related documentation without an express
+// license agreement from NVIDIA CORPORATION is strictly prohibited.
+
+
+syntax = "proto3";
+
+package nvidia.riva;
+
+option cc_enable_arenas = true;
+
+
+/*
+ * AudioEncoding specifies the encoding of the audio bytes in the encapsulating message.
+ */
+enum AudioEncoding {
+    // Not specified.
+    ENCODING_UNSPECIFIED = 0;
+
+    // Uncompressed 16-bit signed little-endian samples (Linear PCM).
+    LINEAR_PCM = 1;
+
+    // `FLAC` (Free Lossless Audio
+    // Codec) is the recommended encoding because it is
+    // lossless--therefore recognition is not compromised--and
+    // requires only about half the bandwidth of `LINEAR16`. `FLAC` stream
+    // encoding supports 16-bit and 24-bit samples, however, not all fields in
+    // `STREAMINFO` are supported.
+    FLAC = 2;
+
+    // 8-bit samples that compand 14-bit audio samples using G.711 PCMU/mu-law.
+    MULAW = 3;
+
+    // 8-bit samples that compand 13-bit audio samples using G.711 PCMU/a-law.
+    ALAW = 20;
+}

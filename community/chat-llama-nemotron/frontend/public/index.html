@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Chat with LLM - A React-based chat interface"
+    />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>Chat with LLM</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <script>
+      // Initialize config with defaults
+      window.appConfig = {
+        api: {
+          ip: 'localhost',
+          port: '8001',
+          base_url: 'http://localhost:8001'
+        },
+        llm: {
+          ip: 'localhost',
+          port: '8000',
+          model: {
+            name: 'nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1',
+            max_tokens: 350,
+            temperature: 0.7,
+            top_p: 0.9
+          }
+        },
+        ui: {
+          components: {
+            search: {
+              default_results: 3,
+              relevance_threshold: 0.5
+            },
+            file_upload: {
+              timeouts: {
+                status_reset: 3000,
+                error_reset: 3000
+              }
+            }
+          }
+        }
+      };
+
+      // Load configuration
+      async function loadConfig() {
+        try {
+          console.log('Attempting to load config from /config/app_config.yaml');
+          const response = await fetch('/config/app_config.yaml');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const text = await response.text();
+          console.log('Received config text:', text);
+          
+          // Parse YAML text to JavaScript object
+          const config = jsyaml.load(text);
+          console.log('Parsed config:', config);
+          
+          // Make config available globally
+          window.appConfig = config;
+          console.log('Final config:', window.appConfig);
+        } catch (error) {
+          console.error('Error loading/parsing config:', error);
+          console.log('Using default config:', window.appConfig);
+        }
+      }
+
+      // Load config before React app starts
+      loadConfig().then(() => {
+        console.log('Config loaded, React app can now start');
+      });
+    </script>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>

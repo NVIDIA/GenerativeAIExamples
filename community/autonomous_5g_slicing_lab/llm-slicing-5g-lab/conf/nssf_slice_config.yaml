@@ -1,0 +1,46 @@
+# Reference:- TS 29.531 R16.0.0., Section- 6.1.6 Data Model 
+info:
+  version: 1.4.0
+  description: OAI-NSSF Release v1.4.0
+configuration:
+  nsiInfoList:
+    - snssai:
+        sst: 1
+        sd: '000001'
+      nsiInformationList:
+        nrfId: http://192.168.70.130:8080/nnrf-disc/v1/nf-instances
+        nsiId: '11'
+    - snssai:
+        sst: 1
+        sd: '000005'
+      nsiInformationList:
+        nrfId: http://192.168.70.130:8080/nnrf-disc/v1/nf-instances
+        nsiId: '12'
+  taInfoList:
+    - tai:
+        plmnId:
+          mcc: '001'
+          mnc: '01'
+        tac: '1'
+      supportedSnssaiList:
+      - sst: 1
+        sd: '000001'
+      - sst: 11
+        sd: '000005'
+  amfInfoList:
+    - targetAmfSet: oai5gcn.mcc001.mnc01.regionid001.setid1.3gppnetwork.org
+      nrfAmfSet: http://192.168.70.130:8080/nnrf-disc/v1/nf-instances'
+      nrfAmfSetNfMgtUri: http://192.168.70.130:8080/nnrf-nfm/v1/nf-instances
+      amfList:
+        - nfId: 405e8251-cc5a-45dd-a494-efb9eaf1cd58
+          supportedNssaiAvailabilityData:
+              tai:
+                plmnId:
+                  mcc: 001cd ..
+                  mnc: 01
+                tac: 0x0001
+              supportedSnssaiList:
+                - sst: 1
+                  sd: "000001"
+                - sst: 1
+                  sd: "000005"

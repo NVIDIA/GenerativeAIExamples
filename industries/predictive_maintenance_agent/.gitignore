@@ -1,0 +1,46 @@
+# macOS system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database and vector store files
+database/
+*.db
+*.sqlite3
+
+# Output and generated files
+output_data/
+moment/
+readmes/
+*.html
+*.csv
+*.npy
+
+# Python package metadata
+src/**/*.egg-info/
+*.egg-info/
+
+# Environment files (if they contain secrets)
+env.sh
+
+# Model files (if large/binary)
+models/*.pkl
+models/*.joblib
+models/*.model
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.pytest_cache/
+__pycache__/ 
+
+# dot env
+mydot.env

@@ -41,15 +41,14 @@ The agentic tool calling capability in each of the customer care assistants is p
 
 ## Prerequisites
 ### Hardware 
-There are no local GPU requirements for running any application in this repo. The LLMs utilized in LangGraph in this repo are by default set to calling NVIDIA AI Endpoints, as seen in the directory [`graph_definitions/`](./graph_definitions/), and require a valid NVIDIA API KEY.
+There are no local GPU requirements for running any application in this repo. The LLMs utilized in LangGraph in this repo are by default set to calling NVIDIA AI Endpoints since `BASE_URL` is set to the default value of `"https://integrate.api.nvidia.com/v1"` in [vars.env](./vars.env), and require a valid NVIDIA API KEY. As seen in the [graph definitions](./graph_definitions/):
 ```python
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-llm_model = "meta/llama-3.1-70b-instruct" 
-assistant_llm = ChatNVIDIA(model=llm_model)
+assistant_llm = ChatNVIDIA(model=llm_model, ...)
 ```
-You can experiment with other LLMs available on build.nvidia.com by changing the `model` param for `ChatNVIDIA` in the Python files in the directory [`graph_definitions/`](./graph_definitions/).
+You can experiment with other LLMs available on build.nvidia.com by changing the `LLM_MODEL` values in [vars.env](./vars.env), for passing into `ChatNVIDIA` in the Python files in the directory [`graph_definitions/`](./graph_definitions/).
 
-If instead of calling NVIDIA AI Endpoints with an API key, you would like to host your own LLM NIM instance, please refer to the [Docker tab of the LLM NIM](https://build.nvidia.com/meta/llama-3_1-70b-instruct?snippet_tab=Docker) on how to host, and add a [`base_url` parameter](https://python.langchain.com/docs/integrations/chat/nvidia_ai_endpoints/#working-with-nvidia-nims) to point to your own instance when specifying `ChatNVIDIA` in the Python files in the directory [`graph_definitions/`](./graph_definitions/). For the hardware configuration of self hosting the LLM, please refer to the [documentation for LLM support matrix](https://docs.nvidia.com/nim/large-language-models/latest/support-matrix.html).
+If instead of calling NVIDIA AI Endpoints with an API key, you would like to host your own LLM NIM instance, please refer to the [Docker tab of the LLM NIM](https://build.nvidia.com/meta/llama-3_1-70b-instruct?snippet_tab=Docker) on how to host, and changed the `BASE_URL` parameter in [vars.env](./vars.env) to [point to your own instance](https://python.langchain.com/docs/integrations/chat/nvidia_ai_endpoints/#working-with-nvidia-nims) when specifying `ChatNVIDIA` in the Python files in the directory [`graph_definitions/`](./graph_definitions/). For the hardware configuration of self hosting the LLM, please refer to the [documentation for LLM support matrix](https://docs.nvidia.com/nim/large-language-models/latest/support-matrix.html).
 
 ### NVIDIA API KEY
 You will need an NVIDIA API KEY to call NVIDIA AI Endpoints.  You can use different model API endpoints with the same API key, so even if you change the LLM specification in `ChatNVIDIA(model=llm_model)` you can still use the same API KEY.

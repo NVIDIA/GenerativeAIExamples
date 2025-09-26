@@ -23,6 +23,18 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
 ## Inventory
 
+* [Smart Health Agent](./smart-health-agent/)
+
+  This example demonstrates a comprehensive multi-agent workflow for health data analysis and personalized recommendations. It integrates real-time health metrics, weather data, and Retrieval Augmented Generation (RAG) to process multimodal health documents. The system uses LangGraph for agent orchestration and Ollama with Gemma 3 models for intelligent health insights. Features include multimodal document processing, weather-aware exercise recommendations, and personalized health guidance through an interactive chat interface.
+
+* [Vanna with NVIDIA AI Endpoints](./Vanna_with_NVIDIA_AI_Endpoints/)
+
+  This example demonstrates how to optimize Vanna's open-source text-to-SQL pipeline using NVIDIA NIM and NeMo Retriever for faster and more efficient analytics. The notebook showcases integration with NVIDIA's AI endpoints to accelerate natural language to SQL queries on a Steam games dataset, enabling data exploration through simple English questions that are automatically converted to optimized SQL queries.
+
+* [NVIDIA Data Analysis Agent](./data-analysis-agent/)
+
+  This example demonstrates an interactive, agentic data analysis application that leverages NVIDIA Llama-3.1-Nemotron-Ultra-253B-v1 for advanced reasoning and data exploration. Users can upload CSV files, ask questions in natural language, and receive automated visualizations with clear, step-by-step reasoning. The implementation features a modular agent architecture for data insight, code generation, execution, and transparent reasoning.
+
 * [NVIDIA RAG in 5 minutes](./5_mins_rag_no_gpu/)
 
   This is a simple standalone implementation showing rag pipeline using Nvidia API Catalog models. It uses a simple Streamlit UI and one file implementation of a minimalistic RAG pipeline.
@@ -68,6 +80,14 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
   This tool demonstrates how to utilize a user-friendly interface to interact with NVIDIA NIMs, including those available in the API catalog, self-deployed NIM endpoints, and NIMs hosted on Hugging Face. It also provides settings to integrate RAG pipelines with either local and temporary vector stores or self-hosted search engines. Developers can use this tool to design system prompts, few-shot prompts, and configure LLM settings.
 
-  * [Chatbot with RAG and Glean](./chat-and-rag-glean/)
+* [Chatbot with RAG and Glean](./chat-and-rag-glean/)
 
   This tool shows how to build a chat interface that uses NVIDIA NIMs along with the Glean Search API to enable internal knowledge base search, chat, and retrieval. 
+
+* [AI Podcast Assistant](./ai-podcast-assistant/)
+
+  This example demonstrates a comprehensive workflow for processing podcast audio using the Phi-4-Multimodal LLM through NVIDIA NIM Microservices. It includes functionality for generating detailed notes from audio content, creating concise summaries, and translating both transcriptions and summaries into different languages. The implementation handles long audio files by automatically chunking them for efficient processing and preserves formatting during translation.
+
+* [Chat with LLM Llama 3.1 Nemotron Nano 4B](./chat-llama-nemotron/)
+
+  This is a React-based conversational UI designed for interacting with a powerful local LLM. It incorporates RAG to enhance contextual understanding and is backed by an NVIDIA Dynamo inference server running the NVIDIA Llama-3.1-Nemotron-Nano-4B-v1.1 model. The setup enables low-latency, cloud-free AI assistant capabilities, with live document search and reasoning, all deployable on local or edge infrastructure.
