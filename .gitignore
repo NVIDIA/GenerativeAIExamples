@@ -38,3 +38,9 @@ RAG/notebooks/langchain/data/save_embedding
 
 # egg-info directories
 **/egg-info
+
+# uv exclusion
+uv.lock
+
+# data designer exclusion
+data-designer-tutorial-output/

@@ -1,5 +1,9 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
-name = "nemo-data-designer"
+name = "tutorial_helpers"
 version = "0.0.1"
 description = "NeMo Data Designer Tutorial Notebooks"
 readme = "README.md"
