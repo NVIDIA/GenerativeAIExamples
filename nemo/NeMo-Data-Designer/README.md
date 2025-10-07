@@ -43,5 +43,6 @@ We have a [managed service of NeMo Data Designer](https://build.nvidia.com/nemo/
 ## 📚 Tutorial Directory
 
 #### Self-hosted tutorials:
-  - [Getting Started](./self-hosted-tutorials/getting-started/README.md)
-  - [Community Contributions](./self-hosted-tutorials/community-contributions/README.md)
+  - [Getting Started](./self-hosted-tutorials/getting-started/)
+
+  - [Community Contributions](./self-hosted-tutorials/community-contributions/)

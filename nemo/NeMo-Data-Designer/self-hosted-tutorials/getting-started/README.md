@@ -14,6 +14,6 @@
 
 | Notebook                                          | Description                                                                      |
 |---------------------------------------------------|----------------------------------------------------------------------------------|
-| [1-the-basics.ipynb](./self-hosted-tutorials/getting-started/1-the-basics.ipynb) | Learn the basics of Data Designer by generating a simple product review dataset |
-| [2-structured-outputs-and-jinja-expressions.ipynb](./self-hosted-tutorials/getting-started/2-structured-outputs-and-jinja-expressions.ipynb) | Explore advanced data generation using structured outputs and Jinja expressions |
-| [3-seeding-with-a-dataset.ipynb](./self-hosted-tutorials/getting-started/3-seeding-with-a-dataset.ipynb) | Discover how to seed synthetic data generation with an external dataset         |
+| [1-the-basics.ipynb](./1-the-basics.ipynb) | Learn the basics of Data Designer by generating a simple product review dataset |
+| [2-structured-outputs-and-jinja-expressions.ipynb](./2-structured-outputs-and-jinja-expressions.ipynb) | Explore advanced data generation using structured outputs and Jinja expressions |
+| [3-seeding-with-a-dataset.ipynb](./3-seeding-with-a-dataset.ipynb) | Discover how to seed synthetic data generation with an external dataset         |
