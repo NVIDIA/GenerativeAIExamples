@@ -112,7 +112,22 @@ To Obtain NVIDIA Developer Program Membership and a Personal API Key:
    docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d
    ```
 
-2. Open your browser to http://localhost:3000
+2. Run the frontend in development mode:
+   
+   The web interface is built with React and Next.js. To run the frontend in development mode:
+   
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   
+   The frontend will be available at http://localhost:3000 and provides an intuitive interface for:
+   - Configuring AI workload parameters
+   - Receiving vGPU sizing recommendations
+   - Viewing detailed capacity calculations and performance estimates
+   - Exploring recommendation citations and sources
+
 
 #### Configure Your Workload
 
