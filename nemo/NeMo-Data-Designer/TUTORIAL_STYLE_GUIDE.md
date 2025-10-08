@@ -134,11 +134,11 @@ Use progressive header levels:
 Use emojis strategically to make section headers more scannable, draw attention to important information, and create visual hierarchy.
 
 **Standard emoji mappings:**
+- 🎨 Dataset Designer
 - 📦 Imports/Packages
 - ⚙️ Configuration/Setup
-- 🎛️ Model configurations
+- 🎛️ Configuration Settings
 - 🏗️ Builder/Construction
-- 🎨 Design/Creation
 - 🎲 Samplers/Random generation
 - 🦜 LLM-related content
 - 🔁 Iteration/Preview
@@ -147,7 +147,7 @@ Use emojis strategically to make section headers more scannable, draw attention 
 - ⏭️ Next steps
 - 💡 Tips
 - ⚡ Advanced features
-- 🌱 Conceptual explanations
+- 🌱 Seeds and Seed Datasets
 - 👋 Important notices
 - ⚠️ Warnings
 
