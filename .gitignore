@@ -9,6 +9,10 @@
 RAG/examples/**/volumes
 uploaded_files/
 
+
+# Mac OS exclusions
+.DS_Store
+
 # Visual Studio Code
 .vscode
 
