@@ -40,6 +40,8 @@ We have a [managed service of NeMo Data Designer](https://build.nvidia.com/nemo/
 
 ## 📚 Tutorial Directory
 
+If you find yourself writing Data Designer tutorial notebooks (thank you 🫶), please check out the [TUTORIAL_STYLE_GUIDE.md](./TUTORIAL_STYLE_GUIDE.md) for best practices and style guidelines.
+
 #### Self-hosted tutorials:
 
   - [Getting Started](./self-hosted-tutorials/getting-started): Learn the foundations of generating synthetic data with Data Designer.
