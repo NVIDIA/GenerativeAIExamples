@@ -1,7 +1,6 @@
 bleach==6.2.0
 dataclass-wizard==0.27.0
 fastapi==0.115.5
-requests==2.32.3
 langchain-core==0.3.18
 langchain-nvidia-ai-endpoints==0.3.7
 langchain-openai==0.2.8
@@ -23,4 +22,5 @@ opentelemetry-exporter-prometheus==0.50b0
 opentelemetry-instrumentation-milvus==0.36.0
 opentelemetry-instrumentation-fastapi==0.50b0
 opentelemetry-processor-baggage==0.50b0
+requests==2.32.3
 paramiko==3.5.1
