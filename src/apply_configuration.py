@@ -312,6 +312,7 @@ class ApplyConfigurationRequest(BaseModel):
     timeout: int = Field(default=30, description="SSH connection timeout")
     hf_token: Optional[str] = Field(None, description="Hugging Face token for model downloads")
     description: Optional[str] = Field(None, description="Original query description")
+    advanced_config: Optional[Dict[str, Any]] = Field(None, description="Advanced calculator configuration options")
 
     temperature: Optional[float] = Field(None, description="LLM sampling temperature")
     max_tokens: Optional[int] = Field(None, description="Maximum tokens for LLM response")

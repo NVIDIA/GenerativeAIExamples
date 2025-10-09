@@ -1316,6 +1316,58 @@ async def generate_structured_answer(request: Request, prompt: Prompt) -> JSONRe
                      exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
         return JSONResponse(content={"error": "Internal server error occurred"}, status_code=500)
 
+@app.get(
+    "/available-models",
+    tags=["vGPU Configuration APIs"],
+    responses={
+        200: {
+            "description": "List of available models",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "models": [
+                            "meta-llama/Llama-3.1-8B-Instruct",
+                            "mistralai/Mistral-7B-Instruct-v0.3"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+)
+async def get_available_models(request: Request) -> JSONResponse:
+    """Get list of available models from HuggingFace."""
+    try:
+        from .apply_configuration import MODEL_TAGS
+        
+        # Format models for frontend consumption
+        models = []
+        for model_id in MODEL_TAGS:
+            # Extract simple name and size from model ID
+            simple_name = model_id.split('/')[-1]
+            
+            # Extract size (e.g., "8B", "70B")
+            import re
+            size_match = re.search(r'(\d+(?:\.\d+)?)[Bb]', simple_name)
+            size = size_match.group(0) if size_match else ""
+            
+            models.append({
+                "id": model_id,
+                "name": simple_name,
+                "label": simple_name.replace('-', ' ').replace('Instruct', '').strip(),
+                "size": size,
+                "modelTag": model_id
+            })
+        
+        return JSONResponse(content={"models": models})
+    except Exception as e:
+        logger.error(f"Error fetching available models: {str(e)}")
+        return JSONResponse(
+            content={"error": "Failed to fetch models", "models": []},
+            status_code=500
+        )
+
+
 @app.post(
     "/apply-configuration",
     tags=["vGPU Configuration APIs"],
@@ -1371,7 +1423,7 @@ async def apply_configuration(request: Request, config_request: ApplyConfigurati
         
 
         llm_kwargs = {}
-        for field in ['temperature', 'max_tokens', 'model', 'llm_endpoint']:
+        for field in ['temperature', 'max_tokens', 'model', 'llm_endpoint', 'advanced_config']:
             value = getattr(config_request, field, None)
             if value is not None:
                 llm_kwargs[field] = value

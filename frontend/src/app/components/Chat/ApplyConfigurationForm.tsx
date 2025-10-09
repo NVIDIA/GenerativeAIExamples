@@ -100,9 +100,9 @@ export default function ApplyConfigurationForm({
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error for this field when user starts typing
-    if (formErrors[field]) {
-      setFormErrors((prev) => ({ ...prev, [field]: undefined }));
+    // Clear error for this field when user starts typing (only for fields that exist in FormErrors)
+    if (field in formErrors) {
+      setFormErrors((prev) => ({ ...prev, [field as keyof FormErrors]: undefined }));
     }
   };
 
@@ -266,6 +266,13 @@ export default function ApplyConfigurationForm({
       username: "",
       password: "",
       huggingFaceToken: "",
+      advancedConfig: {
+        modelMemoryOverhead: 1.3,
+        hypervisorReserveGb: 3.0,
+        cudaMemoryOverhead: 1.2,
+        vcpuPerGpu: 8,
+        ramGbPerVcpu: 8,
+      },
     });
     setFormErrors({});
     setShowPassword(false);
@@ -276,6 +283,7 @@ export default function ApplyConfigurationForm({
     setIsConfigurationComplete(false);
     setShowDebugLogs(false);
     setCurrentDisplayMessage("");
+    setActiveTab("basic");
     onClose();
   };
 

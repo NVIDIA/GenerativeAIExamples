@@ -330,9 +330,36 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      const text = JSON.stringify(config, null, 2);
+      
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        // Fallback for older browsers or non-HTTPS contexts
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }
+        } catch (err) {
+          console.error('Fallback copy failed: ', err);
+        }
+        
+        document.body.removeChild(textArea);
+      }
     } catch (err) {
       console.error('Failed to copy: ', err);
     }
@@ -472,11 +499,19 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
             <button
               onClick={() => setShowRawJSON(!showRawJSON)}
               className="p-2 hover:bg-white/10 rounded transition-colors"
-              title="Toggle Raw JSON"
+              title={showRawJSON ? "Show Visualization" : "Show JSON Code"}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>
+              {showRawJSON ? (
+                /* Chart/Graph icon when viewing JSON - click to see visualization */
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              ) : (
+                /* Code icon when viewing visualization - click to see JSON */
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              )}
             </button>
             <button
               onClick={handleCopy}
@@ -570,16 +605,15 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
             </div>
           )}
 
-          {showRawJSON ? (
-            /* Raw JSON View */
-            <div className="bg-black rounded-lg p-4 overflow-x-auto border border-neutral-800">
-              <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">
-                {JSON.stringify(config, null, 2)}
-              </pre>
-            </div>
-          ) : (
-            /* Structured Configuration View */
-            <div className="space-y-6">
+          {/* Raw JSON View */}
+          <div className={`bg-black rounded-lg p-4 overflow-x-auto border border-neutral-800 ${showRawJSON ? '' : 'hidden'}`}>
+            <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">
+              {JSON.stringify(config, null, 2)}
+            </pre>
+          </div>
+          
+          {/* Structured Configuration View */}
+          <div className={`space-y-6 ${showRawJSON ? 'hidden' : ''}`}>
               {/* VRAM Usage Chart - Moved to top before Key Parameters */}
               {vramUsage && (
                 <div className="bg-gradient-to-br from-neutral-850/50 to-neutral-900/50 rounded-lg p-8 border border-neutral-700/60 shadow-inner">
@@ -763,7 +797,6 @@ export default function VGPUConfigCard({ config }: VGPUConfigCardProps) {
                 </div>
               )}
             </div>
-          )}
         </div>
       )}
     </div>

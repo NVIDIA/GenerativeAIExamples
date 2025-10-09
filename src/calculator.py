@@ -451,6 +451,11 @@ class VGPUCalculator:
 
     def _calc_kv_cache_size_per_token(self, n_layers: int, d_model: int, quantization: str) -> float:
         """Calculate KV cache size per token in GB"""
+        if n_layers is None or d_model is None:
+            # Return a reasonable default if model architecture details are missing
+            logging.warning(f"Missing model architecture details (n_layers={n_layers}, d_model={d_model}), using defaults")
+            n_layers = n_layers or 32
+            d_model = d_model or 4096
         elem_size = 1 if quantization == "int8" else 2
         return 2 * elem_size * n_layers * d_model / self.BYTES_IN_GB
     
@@ -495,6 +500,9 @@ class VGPUCalculator:
         """
         if num_gpu * gpu_mem < hypervisor_reserve_gb:
             raise Exception("Not enough memory to run the model")
+        if kv_size is None or kv_size <= 0:
+            logging.warning(f"Invalid kv_size: {kv_size}, returning 0 tokens")
+            return 0
         available = ((num_gpu * gpu_mem) - hypervisor_reserve_gb) - math.ceil((params_billion * bytes_per_param) * cuda_overhead)
         return max(available / kv_size, 0)
     

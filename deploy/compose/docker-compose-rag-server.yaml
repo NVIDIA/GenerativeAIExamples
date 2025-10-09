@@ -117,6 +117,8 @@ services:
     expose:
       - "8081"
     shm_size: 5gb
+    volumes:
+      - ../../src:/workspace/src:ro
 
   # Sample UI container which interacts with APIs exposed by rag-server container
   rag-playground:

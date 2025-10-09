@@ -22,7 +22,7 @@ from typing import Any, Iterable, Dict, Generator, List, Optional, Tuple
 import json
 import re
 
-from .calculator import VGPUCalculator, VGPURequest
+from .calculator import VGPUCalculator, VGPURequest, AdvancedCalculatorConfig
 from langchain_nvidia_ai_endpoints.callbacks import get_usage_callback
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_core.output_parsers.string import StrOutputParser
@@ -681,6 +681,17 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                         # If we have model info and it's a workload we can calculate, enhance with calculator
                         if model_name and workload in ["RAG", "LLM Inference", "Inference"]:
                             try:
+                                # Check if advanced_config was provided in kwargs (from API request)
+                                advanced_config = None
+                                if 'advanced_config' in kwargs and kwargs['advanced_config']:
+                                    adv_cfg_dict = kwargs['advanced_config']
+                                    advanced_config = AdvancedCalculatorConfig(
+                                        model_memory_overhead=adv_cfg_dict.get('model_memory_overhead', 1.3),
+                                        hypervisor_reserve_gb=adv_cfg_dict.get('hypervisor_reserve_gb', 3.0),
+                                        cuda_memory_overhead=adv_cfg_dict.get('cuda_memory_overhead', 1.2),
+                                        vcpu_per_gpu=adv_cfg_dict.get('vcpu_per_gpu', 8),
+                                        ram_gb_per_vcpu=adv_cfg_dict.get('ram_gb_per_vcpu', 8),
+                                    )
                                 
                                 vgpu_request = VGPURequest(
                                     model_name=model_name,
@@ -688,7 +699,8 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                                     n_concurrent_request=1,  # Default to 1 if not specified
                                     vgpu_profile=corrected_params["vgpu_profile"] or f"{gpu_model}-{corrected_params['gpu_memory_size']}Q",
                                     prompt_size=prompt_size,
-                                    response_size=response_size
+                                    response_size=response_size,
+                                    advanced_config=advanced_config
                                 )
                                 
                                 calculator = VGPUCalculator()
@@ -715,7 +727,6 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                                             corrected_params["throughput"] = str(round(corrected_params["throughput"], 5)) + " (tokens/s)"
                                     
                                     # Use advanced config values for vCPU and RAM calculation
-                                    from .calculator import AdvancedCalculatorConfig
                                     adv_config = vgpu_request.advanced_config if vgpu_request.advanced_config else AdvancedCalculatorConfig()
                                     
                                     num_gpu = calculation.resultant_configuration.num_gpus

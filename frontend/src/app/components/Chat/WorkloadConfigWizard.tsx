@@ -15,7 +15,15 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+interface AdvancedConfig {
+  modelMemoryOverhead: number;
+  hypervisorReserveGb: number;
+  cudaMemoryOverhead: number;
+  vcpuPerGpu: number;
+  ramGbPerVcpu: number;
+}
 
 interface WorkloadConfig {
   workloadType: string;
@@ -29,6 +37,7 @@ interface WorkloadConfig {
   precision: string;
   vectorDimension?: string;
   numberOfVectors?: string;
+  advancedConfig: AdvancedConfig;
 }
 
 interface WorkloadConfigWizardProps {
@@ -54,10 +63,58 @@ export default function WorkloadConfigWizard({
     precision: "",
     vectorDimension: "384",  // Default to 384
     numberOfVectors: "10000", // Default to 10,000
+    advancedConfig: {
+      modelMemoryOverhead: 1.3,
+      hypervisorReserveGb: 3.0,
+      cudaMemoryOverhead: 1.2,
+      vcpuPerGpu: 8,
+      ramGbPerVcpu: 8,
+    },
   });
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
+  const [dynamicModels, setDynamicModels] = useState<Array<{ value: string; label: string; modelTag: string }>>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(true);
+  const [showAdvancedConfig, setShowAdvancedConfig] = useState(false);
+
+  // Fetch dynamic models from backend on mount
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        // Use Next.js API route to avoid CORS issues
+        const response = await fetch('/api/available-models');
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.models && data.models.length > 0) {
+            // Use modelTag as value to ensure uniqueness (full model ID like "org/model-name")
+            const formattedModels = data.models.map((model: any) => ({
+              value: model.modelTag.toLowerCase().replace(/\//g, '-').replace(/\./g, '-'),
+              label: model.label,
+              modelTag: model.modelTag
+            }));
+            setDynamicModels(formattedModels);
+            console.log(`✓ Successfully loaded ${formattedModels.length} models from HuggingFace`);
+          } else {
+            console.warn('No models returned from API');
+          }
+        } else {
+          console.warn('API returned non-OK status:', response.status);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dynamic models:', error);
+        console.log('Using fallback model list');
+        // Fallback to hardcoded models will be used
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchModels();
+    }
+  }, [isOpen]);
 
   const workloadTypes = [
     { value: "rag", label: "RAG (Retrieval-Augmented Generation)", desc: "Document search and generation workflows" },
@@ -96,7 +153,8 @@ export default function WorkloadConfigWizard({
     { value: "DC", label: "NVIDIA RTX PRO 6000 Blackwell Server Edition (Refer as DC)", desc: "96GB GDDR7 with ECC, Blackwell, passive‑cooled dual‑slot PCIe Gen5 – Enterprise AI/graphics, scientific computing & virtual workstations" },
   ];
 
-  const specificModels = [
+  // Fallback hardcoded models in case dynamic fetch fails
+  const fallbackModels = [
     { value: "llama-3-8b", label: "Llama-3-8B", modelTag: "meta-llama/Meta-Llama-3-8B-Instruct" },
     { value: "llama-3-70b", label: "Llama-3-70B", modelTag: "meta-llama/Meta-Llama-3-70B-Instruct" },
     { value: "llama-3.1-8b", label: "Llama-3.1-8B", modelTag: "meta-llama/Llama-3.1-8B-Instruct" },
@@ -108,6 +166,9 @@ export default function WorkloadConfigWizard({
     { value: "qwen-14b", label: "Qwen-14B", modelTag: "Qwen/Qwen3-14B" },
   ];
 
+  // Use dynamic models if loaded, otherwise use fallback
+  const specificModels = dynamicModels.length > 0 ? dynamicModels : fallbackModels;
+
   const precisionOptions = [
     { value: "fp16", label: "FP16", desc: "Half precision - Recommended balance of performance and accuracy" },
     { value: "int8", label: "INT-8", desc: "8-bit integer - Highest performance, some accuracy trade-off" },
@@ -115,6 +176,16 @@ export default function WorkloadConfigWizard({
 
   const handleInputChange = (field: keyof WorkloadConfig, value: string) => {
     setConfig((prev: WorkloadConfig) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAdvancedConfigChange = (field: keyof AdvancedConfig, value: number) => {
+    setConfig((prev: WorkloadConfig) => ({
+      ...prev,
+      advancedConfig: {
+        ...prev.advancedConfig,
+        [field]: value,
+      },
+    }));
   };
 
   const handleGPUInventoryChange = (gpuType: string, quantity: number) => {
@@ -289,6 +360,8 @@ export default function WorkloadConfigWizard({
       // Add computed values for easier backend processing
       selectedGPU: Object.keys(config.gpuInventory)[0] || 'l40s',
       gpuCount: Object.values(config.gpuInventory)[0] as number || 1,
+      // Include advanced configuration
+      advancedConfig: config.advancedConfig,
     };
     
     // Embed as HTML comment that won't be visible to user but can be parsed in backend
@@ -312,6 +385,13 @@ export default function WorkloadConfigWizard({
       precision: "",
       vectorDimension: "384",  // Default to 384
       numberOfVectors: "10000", // Default to 10,000
+      advancedConfig: {
+        modelMemoryOverhead: 1.3,
+        hypervisorReserveGb: 3.0,
+        cudaMemoryOverhead: 1.2,
+        vcpuPerGpu: 8,
+        ramGbPerVcpu: 8,
+      },
     });
     setCurrentStep(1);
   };
@@ -405,18 +485,27 @@ export default function WorkloadConfigWizard({
                 <h3 className="text-lg font-semibold text-white mb-4">Model Size & Performance</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Specific Model (if known)</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Specific Model (if known)
+                      {isLoadingModels && <span className="ml-2 text-sm text-green-500 animate-pulse">Loading models...</span>}
+                    </label>
                     <select
                       value={config.specificModel}
                       onChange={(e) => handleInputChange("specificModel", e.target.value)}
                       className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white mb-4"
+                      disabled={isLoadingModels}
                     >
-                      <option value="" disabled>Select a specific model</option>
+                      <option value="" disabled>
+                        {isLoadingModels ? "Loading models from HuggingFace..." : "Select a specific model"}
+                      </option>
                       <option value="unknown">Unknown / Not Sure</option>
                       {specificModels.map((model) => (
                         <option key={model.value} value={model.value}>{model.label}</option>
                       ))}
                     </select>
+                    {!isLoadingModels && dynamicModels.length > 0 && (
+                      <p className="text-xs text-green-500 mb-2">✓ {dynamicModels.length} models loaded from HuggingFace</p>
+                    )}
                   </div>
 
                   {/* Only show model size category when "unknown" is selected */}
@@ -617,6 +706,188 @@ export default function WorkloadConfigWizard({
                     <p className="text-sm text-gray-400">
                       {availableGPUInventory.find(g => g.value === Object.keys(config.gpuInventory)[0])?.desc}
                     </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Advanced Configuration Dropdown */}
+              <div className="mt-6 pt-6 border-t border-neutral-700">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
+                  className="w-full flex items-center justify-between p-4 bg-neutral-800 hover:bg-neutral-750 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-md font-semibold text-white">Advanced Configuration</span>
+                    <span className="text-xs text-gray-400 bg-neutral-700 px-2 py-1 rounded">Optional</span>
+                  </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-400 transition-transform ${showAdvancedConfig ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showAdvancedConfig && (
+                  <div className="mt-4 p-4 bg-neutral-800 rounded-lg border border-neutral-700">
+                    <p className="text-sm text-gray-400 mb-6">
+                      Fine-tune calculator accuracy with advanced parameters. The defaults are suitable for most use cases.
+                    </p>
+
+                    <div className="space-y-6">
+                      {/* Model Memory Overhead */}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-sm font-medium text-gray-300">
+                            Model Memory Overhead
+                          </label>
+                          <span className="text-sm text-green-500 font-mono">
+                            {config.advancedConfig.modelMemoryOverhead.toFixed(2)}x
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1.0"
+                          max="2.0"
+                          step="0.1"
+                          value={config.advancedConfig.modelMemoryOverhead}
+                          onChange={(e) =>
+                            handleAdvancedConfigChange("modelMemoryOverhead", parseFloat(e.target.value))
+                          }
+                          className="w-full h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Multiplier for model weight memory footprint (1.0-2.0)
+                        </p>
+                      </div>
+
+                      {/* Hypervisor Reserve GB */}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-sm font-medium text-gray-300">
+                            Hypervisor Reserve (GB)
+                          </label>
+                          <span className="text-sm text-green-500 font-mono">
+                            {config.advancedConfig.hypervisorReserveGb.toFixed(1)} GB
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.0"
+                          max="10.0"
+                          step="0.5"
+                          value={config.advancedConfig.hypervisorReserveGb}
+                          onChange={(e) =>
+                            handleAdvancedConfigChange("hypervisorReserveGb", parseFloat(e.target.value))
+                          }
+                          className="w-full h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          GPU memory reserved for hypervisor layer (0.0-10.0 GB)
+                        </p>
+                      </div>
+
+                      {/* CUDA Memory Overhead */}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-sm font-medium text-gray-300">
+                            CUDA Memory Overhead
+                          </label>
+                          <span className="text-sm text-green-500 font-mono">
+                            {config.advancedConfig.cudaMemoryOverhead.toFixed(2)}x
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1.0"
+                          max="1.5"
+                          step="0.05"
+                          value={config.advancedConfig.cudaMemoryOverhead}
+                          onChange={(e) =>
+                            handleAdvancedConfigChange("cudaMemoryOverhead", parseFloat(e.target.value))
+                          }
+                          className="w-full h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          CUDA runtime memory overhead multiplier (1.0-1.5)
+                        </p>
+                      </div>
+
+                      {/* vCPU per GPU */}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-sm font-medium text-gray-300">
+                            vCPUs per GPU
+                          </label>
+                          <span className="text-sm text-green-500 font-mono">
+                            {config.advancedConfig.vcpuPerGpu}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="32"
+                          step="1"
+                          value={config.advancedConfig.vcpuPerGpu}
+                          onChange={(e) =>
+                            handleAdvancedConfigChange("vcpuPerGpu", parseInt(e.target.value))
+                          }
+                          className="w-full h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Number of vCPUs to allocate per GPU (1-32)
+                        </p>
+                      </div>
+
+                      {/* RAM GB per vCPU */}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-sm font-medium text-gray-300">
+                            RAM per vCPU (GB)
+                          </label>
+                          <span className="text-sm text-green-500 font-mono">
+                            {config.advancedConfig.ramGbPerVcpu} GB
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="2"
+                          max="32"
+                          step="1"
+                          value={config.advancedConfig.ramGbPerVcpu}
+                          onChange={(e) =>
+                            handleAdvancedConfigChange("ramGbPerVcpu", parseInt(e.target.value))
+                          }
+                          className="w-full h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          GB of system RAM to allocate per vCPU (2-32 GB)
+                        </p>
+                      </div>
+
+                      {/* Reset to Defaults Button */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setConfig((prev) => ({
+                            ...prev,
+                            advancedConfig: {
+                              modelMemoryOverhead: 1.3,
+                              hypervisorReserveGb: 3.0,
+                              cudaMemoryOverhead: 1.2,
+                              vcpuPerGpu: 8,
+                              ramGbPerVcpu: 8,
+                            },
+                          }))
+                        }
+                        className="w-full px-4 py-2 bg-neutral-700 text-white rounded-lg hover:bg-neutral-600 transition-colors"
+                      >
+                        Reset to Defaults
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
