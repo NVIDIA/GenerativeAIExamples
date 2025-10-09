@@ -12,6 +12,152 @@ from datetime import datetime
 from pydantic import BaseModel, Field, validator
 import json
 import argparse
+import requests
+from functools import lru_cache
+import re
+
+
+# ============= Helper Functions =============
+
+@lru_cache(maxsize=100)
+def fetch_model_config_from_hf(model_id: str, hf_token: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """
+    Fetch model configuration from HuggingFace Hub.
+    
+    Args:
+        model_id: HuggingFace model ID (e.g., "meta-llama/Llama-3.1-8B-Instruct")
+        hf_token: Optional HuggingFace token for authenticated requests
+    
+    Returns:
+        Dictionary with model configuration or None if fetch fails
+    """
+    try:
+        headers = {}
+        if hf_token:
+            headers["Authorization"] = f"Bearer {hf_token}"
+        
+        # Try to fetch config.json from HuggingFace
+        config_url = f"https://huggingface.co/{model_id}/resolve/main/config.json"
+        response = requests.get(config_url, headers=headers, timeout=5)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logging.warning(f"Failed to fetch config for {model_id}: HTTP {response.status_code}")
+            return None
+    except Exception as e:
+        logging.warning(f"Error fetching model config for {model_id}: {e}")
+        return None
+
+
+def extract_model_params_from_name(model_name: str) -> Optional[float]:
+    """
+    Extract parameter count from model name (e.g., "Llama-3-8B" -> 8.0).
+    
+    Args:
+        model_name: Model name containing parameter count
+    
+    Returns:
+        Parameter count in billions or None if not found
+    """
+    # Look for patterns like "8B", "70B", "7B", "180B", etc.
+    match = re.search(r'(\d+(?:\.\d+)?)[Bb](?:-|$|\s)', model_name)
+    if match:
+        return float(match.group(1))
+    return None
+
+
+def estimate_model_spec_from_params(params_billion: float, model_name: str = "") -> Dict[str, Any]:
+    """
+    Estimate d_model and n_layers based on parameter count using scaling laws.
+    
+    Args:
+        params_billion: Model parameters in billions
+        model_name: Optional model name for better heuristics
+    
+    Returns:
+        Dictionary with estimated d_model and n_layers
+    """
+    # Heuristic based on common LLM architectures
+    # Small models (< 10B): typically 32 layers
+    # Medium models (10-40B): typically 40-60 layers
+    # Large models (> 40B): typically 60-80 layers
+    
+    if params_billion < 3:
+        n_layers = 22
+        d_model = int((params_billion * 1e9 / (12 * n_layers)) ** 0.5)
+    elif params_billion < 10:
+        n_layers = 32
+        d_model = int((params_billion * 1e9 / (12 * n_layers)) ** 0.5)
+    elif params_billion < 20:
+        n_layers = 40
+        d_model = int((params_billion * 1e9 / (12 * n_layers)) ** 0.5)
+    elif params_billion < 40:
+        n_layers = 60
+        d_model = int((params_billion * 1e9 / (12 * n_layers)) ** 0.5)
+    else:
+        n_layers = 80
+        d_model = int((params_billion * 1e9 / (12 * n_layers)) ** 0.5)
+    
+    return {"d_model": d_model, "n_layers": n_layers}
+
+
+def create_model_spec_from_hf(model_id: str, hf_token: Optional[str] = None) -> Optional['ModelSpec']:
+    """
+    Create ModelSpec by fetching config from HuggingFace or using estimation.
+    
+    Args:
+        model_id: HuggingFace model ID
+        hf_token: Optional HuggingFace token
+    
+    Returns:
+        ModelSpec object or None if creation fails
+    """
+    # First, try to fetch from HuggingFace
+    config = fetch_model_config_from_hf(model_id, hf_token)
+    
+    # Extract simple name from full ID
+    simple_name = model_id.split('/')[-1] if '/' in model_id else model_id
+    
+    params_billion = None
+    d_model = None
+    n_layers = None
+    
+    # Try to get from config
+    if config:
+        # Try to extract parameter count from config
+        if 'num_parameters' in config:
+            params_billion = config['num_parameters'] / 1e9
+        
+        # Try to extract d_model (can be named differently in different models)
+        d_model = config.get('hidden_size') or config.get('d_model') or config.get('n_embd')
+        
+        # Try to extract n_layers (can be named differently)
+        n_layers = config.get('num_hidden_layers') or config.get('n_layers') or config.get('num_layers')
+    
+    # If we don't have params_billion yet, try to extract from name
+    if params_billion is None:
+        params_billion = extract_model_params_from_name(model_id)
+    
+    # If we still don't have params, we can't create the spec
+    if params_billion is None:
+        logging.warning(f"Could not determine parameter count for {model_id}")
+        return None
+    
+    # If we're missing d_model or n_layers, estimate them
+    if d_model is None or n_layers is None:
+        estimated = estimate_model_spec_from_params(params_billion, model_id)
+        d_model = d_model or estimated['d_model']
+        n_layers = n_layers or estimated['n_layers']
+    
+    logging.info(f"Created ModelSpec for {model_id}: {params_billion}B params, d_model={d_model}, n_layers={n_layers}")
+    
+    return ModelSpec(
+        name=simple_name,
+        params_billion=params_billion,
+        d_model=d_model,
+        n_layers=n_layers
+    )
 
 
 # ============= Pydantic Models =============
@@ -147,8 +293,9 @@ class VGPUCalculator:
         ]
     
     def _initialize_model_specs(self) -> List[ModelSpec]:
-        """Initialize available model specifications"""
-        return [
+        """Initialize available model specifications from HuggingFace and defaults"""
+        # Start with hardcoded fallback specs for common models
+        default_specs = [
             ModelSpec(name="Llama-3-8B", params_billion=8, d_model=4096, n_layers=32),
             ModelSpec(name="Llama-3-70B", params_billion=70, d_model=8192, n_layers=80),
             ModelSpec(name="Llama-3.1-8B", params_billion=8, d_model=4096, n_layers=32),
@@ -159,6 +306,31 @@ class VGPUCalculator:
             ModelSpec(name="Falcon-180B", params_billion=180, d_model=14848, n_layers=80),
             ModelSpec(name="Qwen-14B", params_billion=14, d_model=5120, n_layers=40),
         ]
+        
+        # Try to dynamically fetch popular models from HuggingFace
+        try:
+            # Import here to avoid circular dependency
+            from .apply_configuration import fetch_huggingface_models
+            
+            hf_models = fetch_huggingface_models()
+            logging.info(f"Fetched {len(hf_models)} models from HuggingFace")
+            
+            # Create specs for fetched models (if not already in defaults)
+            default_names = {spec.name for spec in default_specs}
+            
+            for model_id in hf_models[:15]:  # Limit to top 15 models
+                simple_name = model_id.split('/')[-1]
+                if simple_name not in default_names:
+                    spec = create_model_spec_from_hf(model_id)
+                    if spec:
+                        default_specs.append(spec)
+                        default_names.add(simple_name)
+            
+            logging.info(f"Initialized {len(default_specs)} model specifications")
+        except Exception as e:
+            logging.warning(f"Could not fetch dynamic models: {e}, using defaults only")
+        
+        return default_specs
     
     def add_custom_gpu(self, gpu_spec: GPUSpec) -> None:
         """Add a custom GPU specification"""
@@ -177,10 +349,35 @@ class VGPUCalculator:
         return [gpu.name for gpu in self.gpu_specs]
     
     def _find_model(self, model_name: str) -> Optional[ModelSpec]:
-        """Find model specification by name"""
+        """Find model specification by name, fetching from HuggingFace if not found"""
+        # First, try to find in existing specs
         for model in self.model_specs:
-            if model.name == model_name:
+            if model.name == model_name or model.name.lower() == model_name.lower():
                 return model
+        
+        # If not found, try to create it dynamically from HuggingFace
+        logging.info(f"Model '{model_name}' not in cache, attempting to fetch from HuggingFace")
+        
+        # Try with the name as-is
+        spec = create_model_spec_from_hf(model_name)
+        if spec:
+            self.model_specs.append(spec)
+            logging.info(f"Successfully added model '{model_name}' from HuggingFace")
+            return spec
+        
+        # Try to find in HuggingFace models list
+        try:
+            from .apply_configuration import MODEL_TAGS, model_extractor
+            extracted_model = model_extractor.extract(model_name)
+            if extracted_model and extracted_model != model_name:
+                spec = create_model_spec_from_hf(extracted_model)
+                if spec:
+                    self.model_specs.append(spec)
+                    logging.info(f"Successfully added model '{extracted_model}' (matched from '{model_name}')")
+                    return spec
+        except Exception as e:
+            logging.warning(f"Could not extract model from '{model_name}': {e}")
+        
         return None
     
     def _find_gpu(self, gpu_name: str) -> Optional[GPUSpec]:
