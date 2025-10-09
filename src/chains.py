@@ -644,7 +644,7 @@ Now provide a complete structured vGPU configuration based on this grounded anal
 
                         corrected_params = {
                             "vgpu_profile": params.get("vgpu_profile"),
-                            "vcpu_count": (params.get("system_RAM") // 4),
+                            "vcpu_count": ((params.get("system_RAM") or 96) // 4),
                             "gpu_memory_size": params.get("gpu_memory_size") or 24,
                             "system_RAM": params.get("system_RAM") or params.get("system_ram") or 96,
                             "max_kv_tokens": None,

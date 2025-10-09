@@ -37,7 +37,7 @@ export default function Header({ onToggleSidebar, activePanel }: HeaderProps) {
 
       <div className="absolute left-1/2 -translate-x-1/2 transform"></div>
       <span className="rounded-lg border border-neutral-800 bg-neutral-900 px-8 py-1 text-sm text-neutral-100">
-        {process.env.NEXT_PUBLIC_MODEL_NAME || "Model not found"}
+        {process.env.NEXT_PUBLIC_MODEL_NAME || "Meta Llama 3.1 8B"}
       </span>
 
       <div className="flex items-center gap-4">
