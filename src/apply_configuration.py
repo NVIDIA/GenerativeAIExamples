@@ -10,6 +10,8 @@ from contextlib import contextmanager
 import time
 import difflib
 from collections import OrderedDict
+import requests
+from functools import lru_cache
 
 
 logger = logging.getLogger(__name__)
@@ -133,6 +135,73 @@ def grab_total_size(query: Optional[str]) -> Optional[int]:
         return response_size
     else:
         return 2024
+@lru_cache(maxsize=1)
+def fetch_huggingface_models(hf_token: Optional[str] = None) -> List[str]:
+    """
+    Fetch popular LLM models from HuggingFace API with fallback to default list.
+    
+    Args:
+        hf_token: Optional HuggingFace token for authenticated requests
+    
+    Returns:
+        List of model IDs (e.g., "meta-llama/Llama-3.1-8B-Instruct")
+    """
+    # Default fallback models
+    DEFAULT_MODELS = [
+        "meta-llama/Llama-3.1-8B-Instruct",  # General fallback model
+        "meta-llama/Meta-Llama-3-8B-Instruct",
+        "meta-llama/Llama-3.3-70B-Instruct",
+        "meta-llama/Meta-Llama-3-70B-Instruct",
+        "mistralai/Mistral-7B-Instruct-v0.3",
+        "Qwen/Qwen2.5-7B-Instruct",
+        "tiiuae/falcon-40b-instruct",
+        "tiiuae/falcon-180B"
+    ]
+    
+    try:
+        # Fetch popular text-generation models from HuggingFace
+        headers = {}
+        if hf_token:
+            headers["Authorization"] = f"Bearer {hf_token}"
+        
+        # Query for popular instruct/chat models
+        params = {
+            "filter": "text-generation",
+            "sort": "downloads",
+            "limit": 50,
+            "full": False
+        }
+        
+        response = requests.get(
+            "https://huggingface.co/api/models",
+            params=params,
+            headers=headers,
+            timeout=5
+        )
+        
+        if response.status_code == 200:
+            models = response.json()
+            # Filter for instruct/chat models and extract IDs
+            model_ids = []
+            for model in models:
+                model_id = model.get("id", "")
+                # Only include instruct/chat models
+                if any(keyword in model_id.lower() for keyword in ["instruct", "chat"]):
+                    model_ids.append(model_id)
+            
+            # Combine fetched models with defaults (defaults first as fallback)
+            combined = DEFAULT_MODELS + [m for m in model_ids if m not in DEFAULT_MODELS]
+            logger.info(f"Successfully fetched {len(model_ids)} models from HuggingFace API")
+            return combined[:50]  # Limit to 50 models
+        else:
+            logger.warning(f"HuggingFace API returned status {response.status_code}, using default models")
+            return DEFAULT_MODELS
+            
+    except Exception as e:
+        logger.warning(f"Failed to fetch models from HuggingFace API: {e}, using default models")
+        return DEFAULT_MODELS
+
+
 class ModelNameExtractor:
     """
     Generic model tag extractor.
@@ -225,17 +294,10 @@ class ModelNameExtractor:
 
         return None
 
-# Initialize the model extractor with known tags
-MODEL_TAGS = [
-    "meta-llama/Meta-Llama-3-8B-Instruct",
-    "meta-llama/Llama-3.1-8B-Instruct",
-    "meta-llama/Llama-3.3-70B-Instruct",
-    "meta-llama/Meta-Llama-3-70B-Instruct",
-    "mistralai/Mistral-7B-Instruct-v0.3",
-    "Qwen/Qwen3-14B",
-    "tiiuae/falcon-40b-instruct",
-    "tiiuae/falcon-180B"
-]
+# Initialize the model extractor with dynamically fetched models
+# The list will be fetched from HuggingFace API on first use with fallback to defaults
+MODEL_TAGS = fetch_huggingface_models()
+GENERAL_FALLBACK_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 
 model_extractor = ModelNameExtractor(MODEL_TAGS, fuzzy_cutoff=0.6)
 

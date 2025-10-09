@@ -47,6 +47,7 @@ from .utils import format_document_with_source
 from .utils import streaming_filter_think, get_streaming_filter_think_parser
 from .reflection import ReflectionCounter, check_context_relevance, check_response_groundedness
 from .utils import normalize_relevance_scores
+from .apply_configuration import model_extractor, GENERAL_FALLBACK_MODEL
 
 # Import enhanced components
 try:
@@ -634,25 +635,12 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                         # Build properly structured parameters with correct field names
                         model_tag = None
                         if model_name:
-                            llm_model_name = model_name.lower()
-                            if llm_model_name in ['llama-3-8b', 'llama-3-8b-instruct']:
-                                model_tag = "meta-llama/Meta-Llama-3-8B-Instruct"
-                            elif llm_model_name in ['llama-3-70b', 'llama-3-70b-instruct']:
-                                model_tag = "meta-llama/Meta-Llama-3-70B-Instruct"
-                            elif llm_model_name in ['llama-3.1-8b', 'llama-3.1-8b-instruct']:
-                                model_tag = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-                            elif llm_model_name in ['llama-3.1-70b', 'llama-3.1-70b-instruct']:
-                                model_tag = "meta-llama/Meta-Llama-3.3-70B-Instruct"
-                            elif llm_model_name in ['mistral-7b', 'mistral-7b-instruct']:
-                                model_tag = "mistralai/Mistral-7B-Instruct-v0.3"
-                            elif llm_model_name in ['falcon-7b', 'falcon-7b-instruct']:
-                                model_tag = "tiiuae/falcon-7B-instruct"
-                            elif llm_model_name in ['falcon-40b', 'falcon-40b-instruct']:
-                                model_tag = "tiiuae/falcon-40B-instruct"
-                            elif llm_model_name in ['falcon-180b', 'falcon-180b-instruct']:
-                                model_tag = "tiiuae/falcon-180B"
-                            elif llm_model_name in ['qwen-14b', 'qwen-14b-instruct']:
-                                model_tag = "Qwen/Qwen3-14B"
+                            # Use the dynamic model extractor instead of hardcoded mapping
+                            model_tag = model_extractor.extract(model_name)
+                            # If no match found, use general fallback model
+                            if not model_tag:
+                                logger.info(f"No exact match for model '{model_name}', using fallback: {GENERAL_FALLBACK_MODEL}")
+                                model_tag = GENERAL_FALLBACK_MODEL
 
                         corrected_params = {
                             "vgpu_profile": params.get("vgpu_profile"),
