@@ -1,6 +1,7 @@
 bleach==6.2.0
 dataclass-wizard==0.27.0
 fastapi==0.115.5
+requests==2.32.3
 langchain-core==0.3.18
 langchain-nvidia-ai-endpoints==0.3.7
 langchain-openai==0.2.8
