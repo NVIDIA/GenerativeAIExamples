@@ -214,6 +214,47 @@ class PerformanceMetrics(BaseModel):
     throughput_tokens_per_second: Union[float, str]
 
 
+class AdvancedCalculatorConfig(BaseModel):
+    """Advanced configuration options for calculator accuracy tuning.
+    
+    These are optional parameters that allow fine-tuning of memory calculations
+    for different deployment scenarios. Default values are industry best practices.
+    """
+    model_memory_overhead: float = Field(
+        default=1.3,
+        ge=1.0,
+        le=2.0,
+        description="Model memory overhead multiplier (default 1.3 = 30% overhead for framework + hypervisor)"
+    )
+    hypervisor_reserve_gb: float = Field(
+        default=3.0,
+        ge=0.0,
+        le=10.0,
+        description="GPU memory reserved for hypervisor layer in GB (default 3GB)"
+    )
+    cuda_memory_overhead: float = Field(
+        default=1.2,
+        ge=1.0,
+        le=1.5,
+        description="CUDA memory overhead multiplier (default 1.2 = 20% overhead)"
+    )
+    vcpu_per_gpu: int = Field(
+        default=8,
+        ge=1,
+        le=32,
+        description="Number of vCPUs to allocate per GPU (default 8)"
+    )
+    ram_gb_per_vcpu: int = Field(
+        default=8,
+        ge=2,
+        le=32,
+        description="GB of system RAM to allocate per vCPU (default 8GB)"
+    )
+    
+    class Config:
+        frozen = False  # Allow modification if needed
+
+
 class VGPURequest(BaseModel):
     """Input request parameters"""
     num_gpu: int = Field(default=1, ge=1, description="Number of GPUs")
@@ -223,6 +264,10 @@ class VGPURequest(BaseModel):
     quantization: str = Field(default="fp16", pattern="^(fp16|int8)$", description="Quantization precision")
     model_name: str = Field(default="Llama-3-8B", description="Model name")
     vgpu_profile: str = Field(default="A40-12Q", description="vGPU profile")
+    advanced_config: Optional[AdvancedCalculatorConfig] = Field(
+        default=None,
+        description="Advanced configuration options for fine-tuning calculations"
+    )
 
 
 class VGPUResult(BaseModel):
@@ -410,9 +455,17 @@ class VGPUCalculator:
         return 2 * elem_size * n_layers * d_model / self.BYTES_IN_GB
     
     def _calc_memory_footprint(self, model: ModelSpec, concurrent: int, context: int, 
-                               bytes_per_param: int) -> float:
-        """Calculate total memory footprint in GB"""
-        return math.ceil(model.params_billion * bytes_per_param * 1.3) # this gets the model memory footprint + hypervisor layer + additional overhead 
+                               bytes_per_param: int, memory_overhead: float = 1.3) -> float:
+        """Calculate total memory footprint in GB
+        
+        Args:
+            model: Model specification
+            concurrent: Number of concurrent requests
+            context: Context window size
+            bytes_per_param: Bytes per parameter (2 for FP16, 1 for INT8)
+            memory_overhead: Overhead multiplier (default 1.3 = 30% overhead)
+        """
+        return math.ceil(model.params_billion * bytes_per_param * memory_overhead) 
     
     def _calc_total_memory_with_kv_cache(self, model_memory: float, model: ModelSpec, context_window: int,
                                          concurrent_requests: int, bytes_per_param: int,
@@ -426,13 +479,23 @@ class VGPUCalculator:
         return math.ceil(model_memory + kv_cache_memory) # accounting for the 40% overhead from 20% and 20% HV layer
     
     def _calc_kv_cache_tokens(self, num_gpu: int, gpu_mem: int, params_billion: float, 
-                              kv_size: float, bytes_per_param: int) -> float:
-        """Calculate maximum KV cache tokens"""
-        # 3 GB is the margin for the hypervisor layer
-        # 1.2 is the overhead for CUDA
-        if num_gpu * gpu_mem < 3:
+                              kv_size: float, bytes_per_param: int, 
+                              hypervisor_reserve_gb: float = 3.0,
+                              cuda_overhead: float = 1.2) -> float:
+        """Calculate maximum KV cache tokens
+        
+        Args:
+            num_gpu: Number of GPUs
+            gpu_mem: GPU memory in GB
+            params_billion: Model parameters in billions
+            kv_size: KV cache size per token in GB
+            bytes_per_param: Bytes per parameter
+            hypervisor_reserve_gb: GPU memory reserved for hypervisor (default 3GB)
+            cuda_overhead: CUDA memory overhead multiplier (default 1.2 = 20%)
+        """
+        if num_gpu * gpu_mem < hypervisor_reserve_gb:
             raise Exception("Not enough memory to run the model")
-        available = ((num_gpu * gpu_mem) - 3) - math.ceil((params_billion * bytes_per_param) * 1.2)
+        available = ((num_gpu * gpu_mem) - hypervisor_reserve_gb) - math.ceil((params_billion * bytes_per_param) * cuda_overhead)
         return max(available / kv_size, 0)
     
     def _effective_flops(self, gpu: GPUSpec) -> float:
@@ -536,6 +599,9 @@ class VGPUCalculator:
     
     def calculate(self, request: VGPURequest) -> VGPUResult:
         """Main calculation method"""
+        # Get advanced config or use defaults
+        config = request.advanced_config if request.advanced_config else AdvancedCalculatorConfig()
+        
         # Find model and GPU
         model = self._find_model(request.model_name)
         if not model:
@@ -548,9 +614,10 @@ class VGPUCalculator:
         bytes_per_param = 2 if request.quantization == "fp16" else 1
         context_window = request.prompt_size + request.response_size
         
-        # Calculate model memory footprint which is the model weights + overhead (1.2 percent following best practices)
+        # Calculate model memory footprint using configurable overhead
         model_memory_footprint = self._calc_memory_footprint(
-            model, request.n_concurrent_request, context_window, bytes_per_param
+            model, request.n_concurrent_request, context_window, bytes_per_param, 
+            memory_overhead=config.model_memory_overhead
         ) 
         logging.info(f"hello: {model_memory_footprint:.2f} GB")
         print(f"hello: {model_memory_footprint:.2f} GB")
@@ -571,8 +638,12 @@ class VGPUCalculator:
         logging.info(f"num_gpu: {request.num_gpu}")
         kv_size = self._calc_kv_cache_size_per_token(model.n_layers, model.d_model, request.quantization)
         logging.info(f"heres the kv_size: {kv_size}")
-        max_kv = self._calc_kv_cache_tokens(request.num_gpu, gpu.memory_gb, model.params_billion, 
-                                             kv_size, bytes_per_param)
+        max_kv = self._calc_kv_cache_tokens(
+            request.num_gpu, gpu.memory_gb, model.params_billion, 
+            kv_size, bytes_per_param,
+            hypervisor_reserve_gb=config.hypervisor_reserve_gb,
+            cuda_overhead=config.cuda_memory_overhead
+        )
         
 
         # Store configuration
@@ -588,15 +659,23 @@ class VGPUCalculator:
             gpu = optimal_gpu
             used_gpu = optimal_gpu
             used_num_gpu = request.num_gpu
-            max_kv = self._calc_kv_cache_tokens(request.num_gpu, gpu.memory_gb, model.params_billion, 
-                                             kv_size, bytes_per_param)
+            max_kv = self._calc_kv_cache_tokens(
+                request.num_gpu, gpu.memory_gb, model.params_billion, 
+                kv_size, bytes_per_param,
+                hypervisor_reserve_gb=config.hypervisor_reserve_gb,
+                cuda_overhead=config.cuda_memory_overhead
+            )
 
         
         if max_kv == 0:
             # increase the num_gpu by 1 and recalculate the max_kv and total_memory_required
             request.num_gpu += 1
-            max_kv = self._calc_kv_cache_tokens(request.num_gpu, gpu.memory_gb, model.params_billion, 
-                                                kv_size, bytes_per_param)
+            max_kv = self._calc_kv_cache_tokens(
+                request.num_gpu, gpu.memory_gb, model.params_billion, 
+                kv_size, bytes_per_param,
+                hypervisor_reserve_gb=config.hypervisor_reserve_gb,
+                cuda_overhead=config.cuda_memory_overhead
+            )
             used_num_gpu = request.num_gpu
         else:
             resultant_configuration = Configuration(

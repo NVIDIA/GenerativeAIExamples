@@ -714,9 +714,13 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                                         if corrected_params["throughput"] is not None:
                                             corrected_params["throughput"] = str(round(corrected_params["throughput"], 5)) + " (tokens/s)"
                                     
+                                    # Use advanced config values for vCPU and RAM calculation
+                                    from .calculator import AdvancedCalculatorConfig
+                                    adv_config = vgpu_request.advanced_config if vgpu_request.advanced_config else AdvancedCalculatorConfig()
+                                    
                                     num_gpu = calculation.resultant_configuration.num_gpus
-                                    vCPU_count = 8 * num_gpu
-                                    system_RAM = 8 * vCPU_count
+                                    vCPU_count = adv_config.vcpu_per_gpu * num_gpu
+                                    system_RAM = adv_config.ram_gb_per_vcpu * vCPU_count
                                     corrected_params["vcpu_count"] = vCPU_count
                                     corrected_params["system_RAM"] = system_RAM
 
