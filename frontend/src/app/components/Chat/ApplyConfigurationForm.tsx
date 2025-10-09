@@ -266,13 +266,6 @@ export default function ApplyConfigurationForm({
       username: "",
       password: "",
       huggingFaceToken: "",
-      advancedConfig: {
-        modelMemoryOverhead: 1.3,
-        hypervisorReserveGb: 3.0,
-        cudaMemoryOverhead: 1.2,
-        vcpuPerGpu: 8,
-        ramGbPerVcpu: 8,
-      },
     });
     setFormErrors({});
     setShowPassword(false);
@@ -283,7 +276,6 @@ export default function ApplyConfigurationForm({
     setIsConfigurationComplete(false);
     setShowDebugLogs(false);
     setCurrentDisplayMessage("");
-    setActiveTab("basic");
     onClose();
   };
 
