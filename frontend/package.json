@@ -10,8 +10,6 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\""
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.12.4",
-    "@grpc/proto-loader": "^0.7.15",
     "axios": "^1.9.0",
     "marked": "^15.0.7",
     "next": "15.4.0-canary.23",
