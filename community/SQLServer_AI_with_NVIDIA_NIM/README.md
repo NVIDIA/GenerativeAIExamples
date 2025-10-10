@@ -1,4 +1,4 @@
-## Running NVIDIA NIM with SQL Server 2025 (Windows + Ubuntu VM or WSL 2 + TLS)**
+## Running NVIDIA NIM with SQL Server 2025 (Windows + Ubuntu VM or WSL 2 + TLS)
 
 This guide explains how to securely connect **SQL Server 2025** (running on Windows) to **NVIDIA NIM** (running in Docker with GPU acceleration on Ubuntu), using **TLS certificates** for encryption and mutual trust.  
 It supports two configurations:
