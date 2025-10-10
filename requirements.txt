@@ -23,4 +23,3 @@ opentelemetry-instrumentation-milvus==0.36.0
 opentelemetry-instrumentation-fastapi==0.50b0
 opentelemetry-processor-baggage==0.50b0
 requests==2.32.3
-paramiko==3.5.1

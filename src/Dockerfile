@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Install required ubuntu packages for setting up python 3.10
 RUN apt update && \
-    apt install -y curl software-properties-common libgl1 libglib2.0-0 libmagic1 file && \
+    apt install -y curl software-properties-common libgl1 libglib2.0-0 libmagic1 file sshpass openssh-client && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt update && apt install -y python3.10 && \
     apt-get clean

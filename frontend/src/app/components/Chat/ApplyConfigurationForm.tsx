@@ -65,6 +65,7 @@ export default function ApplyConfigurationForm({
   const [isConfigurationComplete, setIsConfigurationComplete] = useState(false);
   const [showDebugLogs, setShowDebugLogs] = useState(false);
   const [currentDisplayMessage, setCurrentDisplayMessage] = useState<string>("");
+  const [testMetrics, setTestMetrics] = useState<any>(null);
 
   // Validate IP address format
   const validateIpAddress = (ip: string): boolean => {
@@ -116,12 +117,13 @@ export default function ApplyConfigurationForm({
     setIsSubmitting(true);
     setShowLogs(false); // Hide logs initially
     setIsConfigurationComplete(false);
-    setConfigurationLogs(["Starting configuration process..."]);
+    setTestMetrics(null); // Clear previous test metrics
+    setConfigurationLogs(["Starting configuration test..."]);
     setCurrentDisplayMessage(""); // Initialize with empty string
 
     try {
       // Extract and normalize the configuration data
-      let configData = {};
+      let configData: any = {};
       if (configuration && configuration.parameters) {
         // The configuration comes from the vGPU generation which has parameters field
         configData = configuration.parameters;
@@ -130,7 +132,7 @@ export default function ApplyConfigurationForm({
         configData = configuration;
       }
 
-      const response = await fetch("/api/apply-configuration", {
+      const response = await fetch('/api/test-configuration', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -139,9 +141,10 @@ export default function ApplyConfigurationForm({
           vm_ip: formData.vmIpAddress,
           username: formData.username,
           password: formData.password,
-          configuration: configData,
           hf_token: formData.huggingFaceToken,
-          description: configuration?.description || "vGPU configuration request from UI",
+          configuration: configData,
+          model_tag: configData?.model_tag || 'meta-llama/Llama-3.2-1B',
+          test_duration_seconds: 30,
         }),
       });
 
@@ -174,6 +177,12 @@ export default function ApplyConfigurationForm({
                 // Update display message if present
                 if (data.display_message) {
                   setCurrentDisplayMessage(data.display_message);
+                }
+                
+                // Handle test metrics
+                if (data.metrics) {
+                  setTestMetrics(data.metrics);
+                  setShowLogs(true); // Show logs when metrics arrive
                 }
                 
                 // Update logs based on the progress
@@ -214,7 +223,7 @@ export default function ApplyConfigurationForm({
                 }
 
                 // Check for completion or error
-                if (data.status === "completed") {
+                if (data.status === "completed" || data.status === "success") {
                   // Don't add another success message, it's already in the logs
                   setIsConfigurationComplete(true);
                   setShowLogs(true); // Automatically show logs on completion
@@ -222,7 +231,7 @@ export default function ApplyConfigurationForm({
                 } else if (data.status === "error") {
                   setConfigurationLogs((prev) => [
                     ...prev,
-                    `❌ Error: ${data.error || "Configuration failed"}`,
+                    `❌ Error: ${data.error || "Configuration test failed"}`,
                   ]);
                   setIsConfigurationComplete(true);
                   setShowLogs(true); // Automatically show logs on error
@@ -253,6 +262,7 @@ export default function ApplyConfigurationForm({
     // Reset state but keep form data
     setIsConfigurationComplete(false);
     setConfigurationLogs([]);
+    setTestMetrics(null);
     setShowLogs(false);
     setShowDebugLogs(false);
     setCurrentDisplayMessage("");
@@ -273,6 +283,7 @@ export default function ApplyConfigurationForm({
     setIsSubmitting(false);
     setShowLogs(false);
     setConfigurationLogs([]);
+    setTestMetrics(null);
     setIsConfigurationComplete(false);
     setShowDebugLogs(false);
     setCurrentDisplayMessage("");
@@ -317,7 +328,7 @@ export default function ApplyConfigurationForm({
     
     // Add header information
     const header = [
-      '=== vGPU Configuration Logs ===',
+      '=== vLLM Deployment Logs ===',
       `Date: ${new Date().toLocaleString()}`,
       `VM IP: ${formData.vmIpAddress}`,
       `Username: ${formData.username}`,
@@ -348,9 +359,9 @@ export default function ApplyConfigurationForm({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-700">
           <div>
-            <h2 className="text-xl font-semibold text-white">Apply Configuration</h2>
+            <h2 className="text-xl font-semibold text-white">Deploy vLLM Server</h2>
             <p className="text-sm text-gray-400 mt-1">
-              Configure your VM with the recommended vGPU settings
+              Deploy vLLM inference server on remote VM with Hugging Face integration
             </p>
           </div>
           <button
@@ -499,14 +510,14 @@ export default function ApplyConfigurationForm({
               className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
                 isSubmitting
                   ? "bg-neutral-700 text-gray-400 cursor-not-allowed"
-                  : "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
             >
               {isSubmitting 
-                ? "Applying Configuration..." 
+                ? "Running Test..." 
                 : isConfigurationComplete
-                ? "Apply Configuration Again"
-                : "Apply Configuration"}
+                ? "Run Test Again"
+                : "Deploy vLLM Server"}
             </button>
 
             {/* Retry Button - Show after completion */}
@@ -534,13 +545,13 @@ export default function ApplyConfigurationForm({
           {isSubmitting && (
             <div className="mt-6 border-t border-neutral-700 pt-6">
               <div className="text-center">
-                <h3 className="text-lg font-medium text-white mb-4">Applying Configuration</h3>
+                <h3 className="text-lg font-medium text-white mb-4">Running Configuration Test</h3>
                 <Spinner />
                 <p className="text-sm text-gray-400 mt-4">
-                  Please wait while we configure your VM...
+                  Please wait while we test your VM configuration...
                 </p>
                 <p className="text-xs text-gray-500 mt-2">
-                  This process typically takes 1-3 minutes
+                  This test typically takes 30-60 seconds
                 </p>
                 {currentDisplayMessage && (
                   <div className="mt-4 p-3 bg-neutral-800 rounded-lg border border-neutral-600">
@@ -562,7 +573,7 @@ export default function ApplyConfigurationForm({
           {!isSubmitting && isConfigurationComplete && configurationLogs.length > 0 && (
             <div className="mt-6 border-t border-neutral-700 pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-white">Configuration Logs</h3>
+                <h3 className="text-lg font-medium text-white">Deployment Logs</h3>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"

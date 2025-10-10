@@ -43,7 +43,7 @@ from pymilvus.exceptions import MilvusUnavailableException
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 from langchain_core.documents import Document
 from src.chains import UnstructuredRAG
-from src.apply_configuration import VGPUConfigurationApplier, ApplyConfigurationRequest
+from src.apply_configuration import ApplyConfigurationRequest, deploy_vllm_server
 
 from .utils import (
     get_config,
@@ -1406,41 +1406,18 @@ async def apply_configuration(request: Request, config_request: ApplyConfigurati
         logger.info(f"SSH Port: {config_request.description}")
         logger.info(f"Username: {config_request.username}")
         
-        # Create the configuration applier instance
-        applier = VGPUConfigurationApplier()
-        
-        # Validate the configuration
-        try:
-            applier.validate_configuration(config_request.configuration)
-            logger.info("Configuration validation passed")
-        except ValueError as e:
-            logger.error(f"Invalid configuration: {str(e)}")
-            logger.error(f"Received configuration fields: {list(config_request.configuration.keys())}")
-            return JSONResponse(
-                content={"error": f"Invalid configuration: {str(e)}"},
-                status_code=400
-            )
-        
-
-        llm_kwargs = {}
-        for field in ['temperature', 'max_tokens', 'model', 'llm_endpoint', 'advanced_config']:
-            value = getattr(config_request, field, None)
-            if value is not None:
-                llm_kwargs[field] = value
-
-        # Apply configuration and stream results
+        # Deploy vLLM server on remote VM
         async def stream_configuration_progress():
-            """Stream configuration progress as Server-Sent Events."""
+            """Stream vLLM deployment progress as Server-Sent Events."""
             try:
-                async for progress in applier.apply_configuration_async(config_request, **llm_kwargs):
+                async for progress in deploy_vllm_server(config_request):
                     yield f"data: {progress}\n\n"
-                    # Force flush by yielding empty string
                     yield ""
             except Exception as e:
-                logger.error(f"Error during configuration: {str(e)}")
+                logger.error(f"Error during vLLM deployment: {str(e)}")
                 error_response = {
                     "status": "error",
-                    "message": "Configuration failed",
+                    "message": "vLLM deployment failed",
                     "error": str(e)
                 }
                 yield f"data: {json.dumps(error_response)}\n\n"
@@ -1460,5 +1437,77 @@ async def apply_configuration(request: Request, config_request: ApplyConfigurati
                     exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
         return JSONResponse(
             content={"error": "Failed to apply configuration"},
+            status_code=500
+        )
+
+
+@app.post(
+    "/test-configuration",
+    tags=["vGPU Configuration APIs"],
+    responses={
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Invalid configuration parameters"
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Failed to test configuration"
+                    }
+                }
+            },
+        }
+    },
+)
+async def test_configuration(request: Request, config_request: ApplyConfigurationRequest) -> StreamingResponse:
+    """Test a vGPU configuration on a remote host via SSH by running a lightweight workload."""
+    
+    if metrics:
+        metrics.update_api_requests(method=request.method, endpoint=request.url.path)
+    
+    try:
+        logger.info(f"Testing configuration on host: {config_request.vm_ip}")
+        logger.info(f"Configuration details: {config_request.configuration}")
+        logger.info(f"Username: {config_request.username}")
+        
+        # Deploy vLLM server (same as apply-configuration)
+        async def stream_test_progress():
+            """Stream vLLM deployment progress as Server-Sent Events."""
+            try:
+                async for progress in deploy_vllm_server(config_request):
+                    yield f"data: {progress}\n\n"
+                    yield ""
+            except Exception as e:
+                logger.error(f"Error during vLLM deployment: {str(e)}")
+                error_response = {
+                    "status": "error",
+                    "message": "vLLM deployment failed",
+                    "error": str(e)
+                }
+                yield f"data: {json.dumps(error_response)}\n\n"
+        
+        return StreamingResponse(
+            stream_test_progress(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in /test-configuration endpoint: {str(e)}", 
+                    exc_info=logger.getEffectiveLevel() <= logging.DEBUG)
+        return JSONResponse(
+            content={"error": "Failed to test configuration"},
             status_code=500
         )
