@@ -2346,10 +2346,15 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
                 if code == 0:
                     yield send_progress("Successfully authenticated with Hugging Face")
                 else:
-                    yield send_progress(f"Warning: HF authentication may have failed: {stderr[:200]}")
+                    # HF authentication failed - stop deployment
+                    error_msg = f"HuggingFace authentication failed. Please check your token. Error: {stderr[:200]}"
+                    yield send_error(error_msg)
+                    return
                     
             except Exception as e:
-                yield send_progress(f"Warning: Failed to authenticate with HF (will try with token): {str(e)[:200]}")
+                error_msg = f"Failed to authenticate with HF: {str(e)[:200]}"
+                yield send_error(error_msg)
+                return
         else:
             yield send_progress("Warning: No Hugging Face token provided. Public models only.")
         
