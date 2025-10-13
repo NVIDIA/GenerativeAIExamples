@@ -1,53 +1,52 @@
-# Python Exclusions
-.venv
-**__pycache__**
+# Python
+.venv/
+__pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Helm Exclusions
-**/helm-charts/*.tgz
-
-# Docker Compose exclusions
-deploy/compose/volumes
+# Docker & Compose
+deploy/compose/volumes/
 uploaded_files/
 
-# Visual Studio Code
-.vscode
+# Node.js
+**/node_modules/
 
-# Node modules
-**/node_modules
+# Next.js
+frontend/.next/
+frontend/out/
 
-# Next.js build output
-.next/
-out/
+# Build outputs
+**/build/
+**/dist/
 
-# File from docs builds
-docs/_*
+# Helm
+**/helm-charts/*.tgz
 
-# Log files
+# Logs
 *.log
 logs/
 
-# Temporary files
-temp.txt
-*.tmp
-*.temp
-*.swp
-*.bak
-*~
+# Environment files
+.env
+.env.local
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+*.iml
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# Environment files with secrets (keep .env.example)
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# IDE files
-.idea/
-*.iml
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.bak
+*~
 
 # Test outputs
 test-results/
