@@ -43,7 +43,7 @@ from pymilvus.exceptions import MilvusUnavailableException
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 from langchain_core.documents import Document
 from src.chains import UnstructuredRAG
-from src.apply_configuration import ApplyConfigurationRequest, deploy_vllm_server
+from src.apply_configuration import ApplyConfigurationRequest, deploy_vllm_server, ensure_ssh_key_exists, test_ssh_connection
 
 from .utils import (
     get_config,
@@ -1368,6 +1368,96 @@ async def get_available_models(request: Request) -> JSONResponse:
         logger.error(f"Error fetching available models: {str(e)}")
         return JSONResponse(
             content={"error": "Failed to fetch models", "models": []},
+            status_code=500
+        )
+
+
+@app.post(
+    "/test-ssh-connection",
+    tags=["vGPU Configuration APIs"],
+    responses={
+        200: {
+            "description": "SSH connection test result",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "message": "SSH connection successful",
+                        "key_path": "~/.ssh/vgpu_sizing_advisor"
+                    }
+                }
+            }
+        },
+        400: {
+            "description": "SSH setup required",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": False,
+                        "message": "SSH key authentication failed",
+                        "setup_instructions": "Run: ssh-copy-id -i ~/.ssh/vgpu_sizing_advisor.pub user@host"
+                    }
+                }
+            }
+        }
+    },
+)
+async def test_ssh_connection_endpoint(request: Request, config_request: ApplyConfigurationRequest) -> JSONResponse:
+    """Test SSH connection to verify key-based authentication is set up."""
+    
+    if metrics:
+        metrics.update_api_requests(method=request.method, endpoint=request.url.path)
+    
+    try:
+        host = config_request.vm_ip
+        username = config_request.username
+        port = getattr(config_request, 'ssh_port', 22)
+        
+        # Ensure SSH key exists
+        key_exists, key_path, key_msg = await ensure_ssh_key_exists()
+        
+        if not key_exists:
+            return JSONResponse(
+                content={
+                    "success": False,
+                    "message": "SSH key generation failed",
+                    "error": key_msg
+                },
+                status_code=500
+            )
+        
+        # Test SSH connection
+        conn_success, conn_msg = await test_ssh_connection(host, username, port)
+        
+        if not conn_success:
+            setup_instructions = f"ssh-copy-id -i {key_path}.pub -p {port} {username}@{host}"
+            return JSONResponse(
+                content={
+                    "success": False,
+                    "message": conn_msg,
+                    "setup_instructions": setup_instructions,
+                    "key_path": key_path
+                },
+                status_code=400
+            )
+        
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": "SSH connection successful",
+                "key_path": key_path
+            },
+            status_code=200
+        )
+        
+    except Exception as e:
+        logger.error(f"Error testing SSH connection: {str(e)}", exc_info=True)
+        return JSONResponse(
+            content={
+                "success": False,
+                "message": "SSH connection test failed",
+                "error": str(e)
+            },
             status_code=500
         )
 

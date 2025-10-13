@@ -1936,30 +1936,18 @@ class VGPUConfigurationApplierDisabled:
                 yield msg
 
 
-async def setup_ssh_keys(host: str, username: str, password: str, port: int = 22) -> tuple[bool, str]:
+async def ensure_ssh_key_exists() -> tuple[bool, str, str]:
     """
-    Automatically set up SSH key authentication for a remote host.
+    Ensure SSH key exists for vGPU sizing advisor.
     
-    Pure Python + subprocess solution - ZERO external dependencies!
-    Uses bash script to handle password prompts - 100% Apache-compatible!
+    This function ONLY generates the key if it doesn't exist.
+    It does NOT try to copy it automatically.
     
-    This function:
-    1. Auto-generates SSH keys (vgpu_sizing_advisor) if they don't exist
-    2. Copies public key to VM using an inline bash expect-like script
-    3. No GPL dependencies, no external Python libraries
-    
-    Args:
-        host: Remote host IP/hostname
-        username: SSH username
-        password: SSH password (used once to set up keys)
-        port: SSH port (default 22)
-        
     Returns:
-        (success, message)
+        (key_exists, key_path, message)
     """
     import os
     import subprocess
-    import tempfile
     
     ssh_dir = os.path.expanduser('~/.ssh')
     key_name = 'vgpu_sizing_advisor'
@@ -1970,89 +1958,93 @@ async def setup_ssh_keys(host: str, username: str, password: str, port: int = 22
         # Create .ssh directory if it doesn't exist
         os.makedirs(ssh_dir, mode=0o700, exist_ok=True)
         
-        # Generate SSH key if it doesn't exist
-        if not os.path.exists(key_path):
-            logger.info(f"Auto-generating SSH key pair '{key_name}'...")
-            result = subprocess.run(
-                ['ssh-keygen', '-t', 'rsa', '-b', '4096', '-f', key_path, '-N', ''],
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            if result.returncode != 0:
-                return False, f"Failed to generate SSH key: {result.stderr}"
-            logger.info(f"SSH key pair '{key_name}' generated successfully at {key_path}")
+        # Check if key already exists
+        if os.path.exists(key_path) and os.path.exists(pub_key_path):
+            logger.info(f"SSH key already exists at {key_path}")
+            return True, key_path, f"Using existing SSH key: {key_path}"
         
-        # Read public key
-        with open(pub_key_path, 'r') as f:
-            pub_key = f.read().strip()
+        # Generate SSH key
+        logger.info(f"Generating SSH key pair '{key_name}'...")
+        result = subprocess.run(
+            ['ssh-keygen', '-t', 'rsa', '-b', '4096', '-f', key_path, '-N', ''],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
         
-        logger.info(f"Copying SSH key '{key_name}' to remote host...")
+        if result.returncode != 0:
+            return False, "", f"Failed to generate SSH key: {result.stderr}"
         
-        # Create a simple bash script that uses ssh-copy-id with password
-        # This uses bash's "expect-like" behavior with a here-document
-        bash_script = f"""#!/bin/bash
-# Pure bash solution for SSH key copy with password
-export SSH_ASKPASS_REQUIRE=force
-export DISPLAY=dummy:0
-
-# Create a temporary SSH askpass script
-ASKPASS_SCRIPT=$(mktemp)
-cat > "$ASKPASS_SCRIPT" << 'ASKPASS_EOF'
-#!/bin/bash
-echo '{password}'
-ASKPASS_EOF
-chmod +x "$ASKPASS_SCRIPT"
-
-# Use SSH_ASKPASS to provide password
-export SSH_ASKPASS="$ASKPASS_SCRIPT"
-
-# Run ssh-copy-id with custom key
-setsid ssh-copy-id -i {key_path}.pub -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {port} {username}@{host} 2>&1
-EXIT_CODE=$?
-
-# Cleanup
-rm -f "$ASKPASS_SCRIPT"
-
-exit $EXIT_CODE
-"""
-        
-        # Write script to temporary file and execute it
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as script_file:
-            script_file.write(bash_script)
-            script_path = script_file.name
-        
-        try:
-            # Make script executable
-            os.chmod(script_path, 0o700)
-            
-            # Execute the script
-            result = subprocess.run(
-                ['bash', script_path],
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
-            
-            if result.returncode == 0:
-                logger.info("SSH keys copied successfully")
-                return True, "SSH keys set up successfully"
-            else:
-                logger.warning(f"SSH key copy may have failed: {result.stderr}")
-                return False, f"Failed to copy SSH key. Please manually run: ssh-copy-id -p {port} {username}@{host}"
-        
-        finally:
-            # Clean up temporary script
-            try:
-                os.unlink(script_path)
-            except:
-                pass
+        logger.info(f"SSH key pair generated successfully at {key_path}")
+        return True, key_path, f"Generated new SSH key: {key_path}"
             
     except subprocess.TimeoutExpired:
-        return False, "SSH key setup timed out"
+        return False, "", "SSH key generation timed out"
     except Exception as e:
-        logger.error(f"SSH key setup failed: {e}")
-        return False, f"SSH key setup error: {str(e)}"
+        logger.error(f"SSH key generation failed: {e}")
+        return False, "", f"SSH key generation error: {str(e)}"
+
+
+async def test_ssh_connection(host: str, username: str, port: int = 22) -> tuple[bool, str]:
+    """
+    Test SSH connection using key-based authentication.
+    
+    Args:
+        host: Remote host IP/hostname
+        username: SSH username
+        port: SSH port (default 22)
+        
+    Returns:
+        (success, message)
+    """
+    import os
+    
+    ssh_dir = os.path.expanduser('~/.ssh')
+    key_name = 'vgpu_sizing_advisor'
+    key_path = os.path.join(ssh_dir, key_name)
+    
+    # Check if key exists
+    if not os.path.exists(key_path):
+        return False, f"SSH key not found at {key_path}. Please generate it first."
+    
+    # Try SSH connection with key
+    ssh_cmd = [
+        'ssh',
+        '-i', key_path,
+        '-o', 'StrictHostKeyChecking=no',
+        '-o', 'UserKnownHostsFile=/dev/null',
+        '-o', 'ConnectTimeout=10',
+        '-o', 'BatchMode=yes',  # Non-interactive mode
+        '-p', str(port),
+        f'{username}@{host}',
+        'echo "SSH connection successful"'
+    ]
+    
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *ssh_cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        stdout, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=15
+        )
+        
+        if process.returncode == 0:
+            return True, "SSH connection successful"
+        else:
+            stderr_str = stderr.decode('utf-8', errors='replace')
+            if 'Permission denied' in stderr_str:
+                return False, "SSH key authentication failed. Please run ssh-copy-id to set up the key."
+            else:
+                return False, f"SSH connection failed: {stderr_str}"
+                
+    except asyncio.TimeoutError:
+        return False, "SSH connection timed out. Please check network connectivity."
+    except Exception as e:
+        return False, f"SSH test failed: {str(e)}"
 
 
 async def execute_ssh_command(
@@ -2062,22 +2054,22 @@ async def execute_ssh_command(
     command: str,
     port: int = 22,
     timeout: int = 300,
-    setup_keys_if_needed: bool = True
+    setup_keys_if_needed: bool = False  # Deprecated, kept for compatibility
 ) -> tuple[str, str, int]:
     """
     Execute a command on remote host via SSH using SSH keys.
     
-    If SSH key authentication fails and a password is provided, automatically
-    sets up SSH keys for future use.
+    Note: This function expects SSH keys to be already set up.
+    Use ensure_ssh_key_exists() and test_ssh_connection() before calling this.
     
     Args:
         host: Remote host IP/hostname
         username: SSH username
-        password: SSH password (used for initial key setup if needed)
+        password: SSH password (not used, kept for compatibility)
         command: Command to execute
         port: SSH port (default 22)
         timeout: Command timeout in seconds
-        setup_keys_if_needed: Auto-setup SSH keys if they don't work
+        setup_keys_if_needed: Deprecated, kept for compatibility
         
     Returns:
         (stdout, stderr, exit_code)
@@ -2089,7 +2081,7 @@ async def execute_ssh_command(
     key_name = 'vgpu_sizing_advisor'
     key_path = os.path.join(ssh_dir, key_name)
     
-    # Try SSH with custom key first
+    # SSH with custom key
     ssh_cmd = [
         'ssh',
         '-i', key_path,  # Use custom key
@@ -2113,28 +2105,6 @@ async def execute_ssh_command(
             process.communicate(),
             timeout=timeout
         )
-        
-        # If SSH key auth failed and we have a password, try to set up keys
-        if process.returncode != 0 and password and setup_keys_if_needed:
-            if 'Permission denied' in stderr.decode('utf-8', errors='replace') or process.returncode == 255:
-                logger.info("SSH key authentication failed, attempting to set up SSH keys...")
-                success, message = await setup_ssh_keys(host, username, password, port)
-                
-                if success:
-                    logger.info("SSH keys set up successfully, retrying command...")
-                    # Retry the command with keys now set up
-                    process = await asyncio.create_subprocess_exec(
-                        *ssh_cmd,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    stdout, stderr = await asyncio.wait_for(
-                        process.communicate(),
-                        timeout=timeout
-                    )
-                else:
-                    logger.error(f"Failed to set up SSH keys: {message}")
-                    return ("", f"SSH key setup failed: {message}", 1)
         
         return (
             stdout.decode('utf-8', errors='replace').strip(),
@@ -2261,42 +2231,59 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
         # Initialize with default - will be recalculated after detecting physical GPU
         gpu_util = 0.85  # Conservative default
         
-        # Step 1: Check for SSH key and test connectivity
+        # Step 1: Ensure SSH key exists
         import os
-        ssh_dir = os.path.expanduser('~/.ssh')
-        key_name = 'vgpu_sizing_advisor'
-        key_path = os.path.join(ssh_dir, key_name)
-        key_existed = os.path.exists(key_path)
+        yield send_progress("Checking SSH key...")
+        key_exists, key_path, key_msg = await ensure_ssh_key_exists()
         
-        if key_existed:
-            yield send_progress(f"Using existing SSH key: {key_path}")
-        else:
-            yield send_progress(f"SSH key '{key_name}' not found - will be auto-generated if needed")
+        if not key_exists:
+            debug_info["errors"].append(f"SSH key generation failed: {key_msg}")
+            yield send_error("SSH key generation failed", key_msg)
+            return
         
+        yield send_progress(key_msg)
+        
+        # Step 2: Test SSH connection
         yield send_progress("Testing SSH connection...")
+        conn_success, conn_msg = await test_ssh_connection(host, username, port)
+        
+        if not conn_success:
+            debug_info["errors"].append(f"SSH connection failed: {conn_msg}")
+            
+            # Provide clear instructions
+            setup_instructions = f"""SSH key authentication not set up yet.
+
+Please run this command on your host machine:
+
+ssh-copy-id -i {key_path}.pub -p {port} {username}@{host}
+
+(You'll be prompted for the password)
+
+After running this command, click 'Test Connection' or try deployment again."""
+            
+            yield send_error("SSH Setup Required", setup_instructions)
+            return
+        
+        yield send_progress("✓ SSH connection successful")
+        
+        # Verify we can actually execute commands
         try:
             step_start = time_module.time()
             stdout, stderr, code = await execute_ssh_command(
                 host, username, password,
-                "echo 'Connection OK'",
+                "echo 'Connection verified'",
                 port=port,
                 timeout=30
             )
-            log_command("echo 'Connection OK'", stdout, stderr, code, time_module.time() - step_start)
-            
-            # Check if key was created during the connection attempt
-            if not key_existed and os.path.exists(key_path):
-                yield send_progress(f"✓ SSH key auto-generated and saved to: {key_path}")
-                yield send_progress(f"✓ Public key copied to {username}@{host}")
+            log_command("echo 'Connection verified'", stdout, stderr, code, time_module.time() - step_start)
             
             if code != 0:
-                debug_info["errors"].append(f"SSH test failed: {stderr}")
-                yield send_error("SSH connection failed", stderr or "Could not establish connection")
+                debug_info["errors"].append(f"SSH verification failed: {stderr}")
+                yield send_error("SSH verification failed", stderr or "Could not execute commands")
                 return
-            yield send_progress("SSH connection successful")
         except Exception as e:
-            debug_info["errors"].append(f"SSH connection exception: {str(e)}")
-            yield send_error("SSH connection failed", str(e))
+            debug_info["errors"].append(f"SSH verification exception: {str(e)}")
+            yield send_error("SSH verification failed", str(e))
             return
         
         # Step 2: Check NVIDIA GPU and validate against configuration
