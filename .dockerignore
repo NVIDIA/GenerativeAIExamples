@@ -3,6 +3,7 @@
 .gitignore
 .gitlab-ci.yml
 .gitmodules
+.gitattributes
 
 # Ignore temperory volumes
 deploy/compose/volumes

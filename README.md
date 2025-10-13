@@ -40,23 +40,23 @@ AI vWS Sizing Advisor helps you determine the optimal NVIDIA vGPU configuration 
 
 ### 1. Clone Repository
 
-```bash
-git clone https://github.com/anpandacoding/vws-sizing
-cd vws-sizing
-```
+   ```bash
+   git clone https://github.com/anpandacoding/vws-sizing
+   cd vws-sizing
+   ```
 
 ### 2. Set Up NGC Authentication
 
-```bash
-export NGC_API_KEY="nvapi-your-key-here"
-echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
+   ```bash
+   export NGC_API_KEY="nvapi-your-key-here"
+   echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
 ```
 
 ### 3. Start RAG Infrastructure
 
 ```bash
-source deploy/compose/.env
-./scripts/start_vgpu_rag.sh --skip-nims
+   source deploy/compose/.env
+   ./scripts/start_vgpu_rag.sh --skip-nims
 ```
 
 This starts:
@@ -65,20 +65,20 @@ This starts:
 
 ### 4. Start RAG Server
 
-```bash
-docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d
-```
+   ```bash
+   docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d
+   ```
 
 This starts the RAG API server at http://localhost:8081
-
+   
 ### 5. Start Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
+   
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   
 Access the UI at **http://localhost:3000**
 
 ### 6. Configure Your Workload
@@ -176,9 +176,9 @@ npm run dev
 
 We're actively developing new features to enhance the AI vWS Sizing Advisor:
 
-- 🎯 **Fine-Tuning Workload Support** - Sizing recommendations for model fine-tuning scenarios
-- 🧪 **Local vLLM Testing** - Test configurations on your local machine before VM deployment
-- 🎥 **Demo Video** - Watch a complete walkthrough of the advisor in action
+- **Fine-Tuning Workload Support** - Sizing recommendations for model fine-tuning scenarios
+- **Local vLLM Testing** - Test configurations on your local machine before VM deployment
+- **Demo Video** - Watch a complete walkthrough of the advisor in action
 
 
 ## License

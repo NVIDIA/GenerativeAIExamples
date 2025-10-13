@@ -23,9 +23,6 @@ out/
 # File from docs builds
 docs/_*
 
-# Notebook checkpoints
-notebooks/.ipynb_checkpoints
-
 # Log files
 *.log
 logs/

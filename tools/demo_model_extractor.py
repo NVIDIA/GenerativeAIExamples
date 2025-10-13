@@ -5,9 +5,10 @@ Interactive demo for ModelNameExtractor with sentence transformers.
 
 import sys
 import logging
+import os
 
-# Add the src directory to the path
-sys.path.insert(0, 'src')
+# Add the src directory to the path (parent directory)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from apply_configuration import ModelNameExtractor, MODEL_TAGS
 
