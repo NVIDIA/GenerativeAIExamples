@@ -2316,7 +2316,17 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
                     timeout=60
                 )
                 
-                # Logout first to clear any cached tokens, then login with new token
+                # Clear any cached HuggingFace credentials before login
+                yield send_progress("Clearing cached HuggingFace credentials...")
+                
+                # Delete HF token cache file and logout to ensure clean state
+                await execute_ssh_command(
+                    host, username, password,
+                    f"rm -f ~/.huggingface/token ~/.cache/huggingface/token 2>/dev/null || true",
+                    port=port,
+                    timeout=10
+                )
+                
                 await execute_ssh_command(
                     host, username, password,
                     f"source {venv_path}/bin/activate && huggingface-cli logout 2>/dev/null || true",
@@ -2324,7 +2334,8 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
                     timeout=10
                 )
                 
-                # Login using huggingface-cli
+                # Login using huggingface-cli with fresh token
+                yield send_progress("Authenticating with HuggingFace...")
                 stdout, stderr, code = await execute_ssh_command(
                     host, username, password,
                     f"source {venv_path}/bin/activate && huggingface-cli login --token {hf_token}",
