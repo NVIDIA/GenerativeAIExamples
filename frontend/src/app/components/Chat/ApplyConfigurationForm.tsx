@@ -89,7 +89,7 @@ export default function ApplyConfigurationForm({
     }
 
     if (!formData.password) {
-      errors.password = "Password is required";
+      errors.password = "Password is required (used for automatic SSH key setup)";
     }
 
     if (!formData.huggingFaceToken) {
@@ -542,7 +542,28 @@ export default function ApplyConfigurationForm({
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                Password
+                Password{' '}
+                <span className="relative group">
+                  <span className="text-green-400 text-xs cursor-help">(Auto-configures SSH keys)</span>
+                  {/* Hover Tooltip */}
+                  <div className="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-green-900/95 border border-green-500/50 rounded-lg p-4 shadow-xl z-50">
+                    <div className="flex items-start gap-3">
+                      <svg className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <h4 className="text-green-300 font-semibold mb-1 text-sm">Automatic SSH Setup</h4>
+                        <p className="text-green-200 text-xs">
+                          Just enter your VM password once! The tool will automatically set up secure SSH keys (vgpu_sizing_advisor) for you.
+                        </p>
+                        <p className="text-green-200 text-xs mt-2">
+                          <strong>First time:</strong> Uses password to copy SSH keys to VM.<br />
+                          <strong>After that:</strong> Secure key-based authentication (no password needed).
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </span>
               </label>
               <div className="relative">
                 <input

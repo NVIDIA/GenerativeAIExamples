@@ -124,6 +124,40 @@ To Obtain NVIDIA Developer Program Membership and a Personal API Key:
 5. Enter the key name and expiration. Under Services Included, make sure NGC Catalog is selected.
 6. Once your personal API key is generated, save the key that is required for accessing NVIDIA NIMs during the subsequent deployment phase.
 
+### Easy VM Access - Automatic SSH Setup
+
+**No manual setup required!** The tool automatically configures secure SSH keys for you.
+
+#### How It Works
+
+1. **First Time Connection:**
+   - Enter your VM username and password in the UI
+   - The tool automatically generates SSH keys `vgpu_sizing_advisor` (if needed)
+   - Copies the public key to your VM
+   - All done automatically in seconds!
+
+2. **Subsequent Connections:**
+   - Uses secure SSH key authentication (`~/.ssh/vgpu_sizing_advisor`)
+   - No password needed anymore
+   - Faster and more secure
+
+#### Manual Setup (Optional)
+
+If you prefer to set up SSH keys manually or if automatic setup fails:
+
+```bash
+# Generate custom SSH key pair for vGPU sizing tool
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/vgpu_sizing_advisor -N ""
+
+# Copy to your VM (requires password once)
+ssh-copy-id -i ~/.ssh/vgpu_sizing_advisor.pub username@vm-ip-address
+
+# Test connection (should work without password)
+ssh -i ~/.ssh/vgpu_sizing_advisor username@vm-ip-address
+```
+
+**Note:** The tool automatically generates and copies SSH keys using pure Python (subprocess + tempfile) and bash with SSH_ASKPASS. **ZERO external dependencies, no GPL libraries (no sshpass, no pexpect), 100% Apache-compatible!**
+
 ### Deployment Steps
 
 #### Launch the Local Server
