@@ -317,6 +317,7 @@ class ApplyConfigurationRequest(BaseModel):
     temperature: Optional[float] = Field(None, description="LLM sampling temperature")
     max_tokens: Optional[int] = Field(None, description="Maximum tokens for LLM response")
     model: Optional[str] = Field(None, description="LLM model name")
+    model_tag: Optional[str] = Field(None, description="Model tag/ID for vLLM deployment (e.g., mistralai/Mistral-7B-Instruct-v0.3)")
     llm_endpoint: Optional[str] = Field(None, description="LLM endpoint URL")
 
 
@@ -2086,7 +2087,14 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
         }
         
         config = config_request.configuration
-        model = config_request.model_tag if hasattr(config_request, 'model_tag') else config.get('model_tag', 'meta-llama/Llama-3.1-8B-Instruct')
+        # Try to get model from: 1) direct model_tag field, 2) model field, 3) configuration dict, 4) fallback
+        model = (
+            getattr(config_request, 'model_tag', None) or 
+            getattr(config_request, 'model', None) or 
+            config.get('model_tag', None) or 
+            config.get('model_name', None) or
+            'meta-llama/Llama-3.1-8B-Instruct'
+        )
         max_tokens = config.get('max_kv_tokens', 2048)
         
         # Calculate optimal GPU utilization based on vGPU profile
@@ -2095,15 +2103,8 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
         profile_value = int(prof_val.group(1)) if prof_val else None
         estimated_vram = config.get('gpu_memory_size', None)
         
-        if estimated_vram is not None and profile_value is not None:
-            num_gpus = math.ceil(estimated_vram / profile_value)
-            total_value = num_gpus * profile_value
-            ratio = estimated_vram / total_value
-            # Cap at 0.9 (90%) to leave room for KV cache and overhead
-            gpu_util = min(0.9, round(ratio, 1))
-            logger.info(f"Calculated optimal GPU utilization: {gpu_util} (estimated VRAM: {estimated_vram}GB, profile: {profile_value}GB, ratio: {ratio:.2f})")
-        else:
-            gpu_util = 0.9  # Default fallback
+        # Initialize with default - will be recalculated after detecting physical GPU
+        gpu_util = 0.85  # Conservative default
         
         # Step 1: Test SSH connectivity
         yield send_progress("Testing SSH connection...")
@@ -2159,6 +2160,40 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
                 
                 yield send_progress(f"GPU detected: {detected_gpu_name}, {gpu_memory_total}")
                 yield send_progress(f"NVIDIA Driver: {driver_version}")
+                
+                # Recalculate GPU utilization dynamically based on vGPU profile and physical GPU
+                if profile_value is not None:
+                    # Parse physical GPU memory (format: "46068 MiB" or "48 GB")
+                    gpu_memory_str = gpu_memory_total.replace(',', '').strip()
+                    if 'MiB' in gpu_memory_str:
+                        physical_gpu_gb = float(gpu_memory_str.replace('MiB', '').strip()) / 1024
+                    elif 'GiB' in gpu_memory_str:
+                        physical_gpu_gb = float(gpu_memory_str.replace('GiB', '').strip())
+                    elif 'GB' in gpu_memory_str:
+                        physical_gpu_gb = float(gpu_memory_str.replace('GB', '').strip())
+                    else:
+                        # Try to parse as number (assume GB)
+                        try:
+                            physical_gpu_gb = float(gpu_memory_str.split()[0])
+                        except:
+                            physical_gpu_gb = None
+                    
+                    if physical_gpu_gb:
+                        # Target: use 85-90% of vGPU profile capacity
+                        # For L40S-24Q: target = 24GB * 0.88 = 21.12GB
+                        target_memory_gb = profile_value * 0.88
+                        
+                        # Calculate what percentage of physical GPU that represents
+                        # For 24GB target on 48GB physical: 21.12 / 48 = 0.44 (44%)
+                        gpu_util = target_memory_gb / physical_gpu_gb
+                        
+                        # Safety bounds: 0.4 to 0.95
+                        gpu_util = max(0.4, min(0.95, gpu_util))
+                        
+                        logger.info(f"Dynamic GPU utilization: {gpu_util:.2f} (vGPU profile: {profile_value}GB, physical: {physical_gpu_gb:.1f}GB, target: {target_memory_gb:.1f}GB)")
+                        yield send_progress(f"Configuring for vGPU profile {profile} ({profile_value}GB): GPU utilization set to {int(gpu_util*100)}%")
+                    else:
+                        logger.warning(f"Could not parse GPU memory: {gpu_memory_total}")
                 
                 # Validate GPU matches requested profile
                 expected_prefix = profile.split('-')[0] if profile != 'N/A' else None
@@ -2566,31 +2601,100 @@ nohup bash -c 'source {venv_path}/bin/activate && \
         vllm_running = bool(stdout and stdout.strip()) if code == 0 else False
         if vllm_running:
             debug_info["vllm_config"]["process_info"] = stdout.strip()[:500]
+            logger.info("vLLM process verified as running")
+        else:
+            logger.warning("vLLM process not found in ps output")
         
-        # Step 9: Test inference endpoint
-        yield send_progress("Testing inference endpoint...")
+        # Step 9: Test inference endpoint with a longer prompt
+        test_prompt = "Explain the concept of GPU virtualization in 2-3 sentences."
+        test_max_tokens = 100
+        logger.info("=== STARTING INFERENCE TEST ===")
+        yield send_progress(f"Testing inference endpoint with prompt: {test_prompt}")
+        logger.info(f"Starting inference test with prompt: {test_prompt}")
+        
+        inference_response = ""
+        inference_test_success = False
         try:
             test_payload = json.dumps({
                 "model": model,
-                "messages": [{"role": "user", "content": "Hi"}],
-                "max_tokens": 10
+                "messages": [{"role": "user", "content": test_prompt}],
+                "max_tokens": test_max_tokens
             }).replace("'", "'\\''")  # Escape single quotes for bash
             
-            curl_test = f"""curl -X POST http://localhost:8000/v1/chat/completions \
+            # Use -v for verbose output to stderr if there are issues
+            curl_test = f"""curl -s -X POST http://localhost:8000/v1/chat/completions \
 -H 'Content-Type: application/json' \
 -d '{test_payload}' \
---max-time 60"""
+--max-time 60 2>&1"""
             
+            logger.info(f"Running inference test with payload: {test_payload[:200]}")
             stdout, stderr, code = await execute_ssh_command(
                 host, username, password,
                 curl_test,
                 port=port,
                 timeout=70
             )
+            logger.info(f"Inference test completed with code {code}, stdout length: {len(stdout)}, stderr length: {len(stderr)}")
             
-            if code == 0 and 'choices' in stdout:
+            if code == 0:
+                # Parse and display inference response
+                try:
+                    response_json = json.loads(stdout)
+                    if 'choices' in response_json and len(response_json['choices']) > 0:
+                        choice = response_json['choices'][0]
+                        inference_response = choice.get('message', {}).get('content', '')
+                        if not inference_response:
+                            # Try alternative response format
+                            inference_response = choice.get('text', '')
+                        
+                        if inference_response:
+                            yield send_progress(f"Inference response: {inference_response.strip()}")
+                            debug_info["vllm_config"]["inference_response"] = inference_response.strip()
+                            inference_test_success = True
+                        else:
+                            yield send_progress("Inference test completed but response content is empty")
+                            logger.warning(f"Empty inference response. Full response: {stdout[:500]}")
+                    else:
+                        yield send_progress("Inference test completed but no choices in response")
+                        logger.warning(f"No choices in response: {stdout[:500]}")
+                except json.JSONDecodeError as e:
+                    yield send_progress(f"Inference test completed but response is not valid JSON")
+                    logger.warning(f"JSON decode error: {e}, stdout: {stdout[:500]}")
+                except Exception as e:
+                    yield send_progress(f"Inference test completed but failed to parse: {str(e)}")
+                    logger.error(f"Inference response parse error: {e}, stdout: {stdout[:500]}")
+            else:
+                yield send_progress(f"Inference test failed with exit code {code}")
+                logger.error(f"Inference test failed. stderr: {stderr[:500]}, stdout: {stdout[:500]}")
+            
+            # Continue with deployment summary if we got any response
+            if code == 0:
                 debug_info["timing"]["total_deployment_time"] = time_module.time() - deploy_start
-                debug_info["vllm_config"]["inference_test_passed"] = True
+                debug_info["vllm_config"]["inference_test_passed"] = inference_test_success
+                
+                # Get additional GPU stats after inference
+                gpu_stats = {}
+                try:
+                    stdout, stderr, code = await execute_ssh_command(
+                        host, username, password,
+                        "nvidia-smi --query-gpu=utilization.gpu,utilization.memory,temperature.gpu,power.draw,power.limit --format=csv,noheader,nounits",
+                        port=port,
+                        timeout=5
+                    )
+                    if code == 0 and stdout:
+                        parts = stdout.strip().split(',')
+                        if len(parts) >= 5:
+                            gpu_stats = {
+                                "gpu_utilization": f"{parts[0].strip()}%",
+                                "memory_utilization": f"{parts[1].strip()}%",
+                                "temperature": f"{parts[2].strip()}°C",
+                                "power_draw": f"{parts[3].strip()}W",
+                                "power_limit": f"{parts[4].strip()}W"
+                            }
+                            debug_info["gpu_metrics"]["runtime_stats"] = gpu_stats
+                except Exception as e:
+                    logger.debug(f"Failed to get GPU stats: {e}")
+                
                 # Determine configuration status
                 if vllm_running and successful_gpu_mem:
                     status_line = f"  • Status: ✅ vLLM running and allocated {successful_gpu_mem}\n"
@@ -2606,18 +2710,33 @@ nohup bash -c 'source {venv_path}/bin/activate && \
                     f"  • Model: {model}\n"
                     + status_line +
                     f"  • GPU Detected: {detected_gpu_name or 'Unknown'}\n"
-                    f"  • GPU Memory Utilization: {int(attempt_gpu_util * 100)}%\n"
+                    f"  • GPU Memory Utilization Setting: {int(attempt_gpu_util * 100)}%\n"
                     f"  • Max Model Length: {adjusted_max_tokens} tokens\n"
                     f"  • KV Cache: {kv_cache_tokens if kv_cache_tokens else 'N/A'} tokens\n"
-                    f"  • Server Endpoint: http://{host}:8000\n"
-                    f"  • Health Endpoint: http://{host}:8000/health\n\n"
-                    "Advisor System Configuration:\n"
-                    f"  • vGPU Profile: {config.get('vgpu_profile', 'N/A')}\n"
-                    f"  • vCPUs: {config.get('vcpu_count', 'N/A')}\n"
-                    f"  • System RAM: {config.get('system_RAM', 'N/A')} GB\n"
-                    f"  • GPU Memory Size: {config.get('gpu_memory_size', 'N/A')} GB\n\n"
-                    "Configuration Validation:\n"
                 )
+                
+                # Add hardware usage stats if available
+                if gpu_stats:
+                    summary_message += "\nHardware Usage During Test:\n"
+                    summary_message += f"  • GPU Compute Utilization: {gpu_stats.get('gpu_utilization', 'N/A')}\n"
+                    summary_message += f"  • GPU Memory Active: {gpu_stats.get('memory_utilization', 'N/A')}\n"
+                    summary_message += f"  • GPU Temperature: {gpu_stats.get('temperature', 'N/A')}\n"
+                    summary_message += f"  • Power Draw: {gpu_stats.get('power_draw', 'N/A')} / {gpu_stats.get('power_limit', 'N/A')}\n"
+                
+                # Add test prompt info
+                summary_message += f"\nInference Test:\n"
+                summary_message += f"  • Query: {test_prompt}\n"
+                summary_message += f"  • Max Tokens: {test_max_tokens}\n"
+                if inference_response:
+                    response_preview = inference_response[:150] + "..." if len(inference_response) > 150 else inference_response
+                    summary_message += f"  • Response Preview: {response_preview}\n"
+                
+                summary_message += "\nAdvisor System Configuration:\n"
+                summary_message += f"  • vGPU Profile: {config.get('vgpu_profile', 'N/A')}\n"
+                summary_message += f"  • vCPUs: {config.get('vcpu_count', 'N/A')}\n"
+                summary_message += f"  • System RAM: {config.get('system_RAM', 'N/A')} GB\n"
+                summary_message += f"  • GPU Memory Size: {config.get('gpu_memory_size', 'N/A')} GB\n\n"
+                summary_message += "Configuration Validation:\n"
                 
                 # Add validation results
                 if detected_gpu_name and profile != 'N/A':
@@ -2696,6 +2815,8 @@ nohup bash -c 'source {venv_path}/bin/activate && \
                 return
                 
         except Exception as e:
+            logger.error(f"Inference test exception: {e}", exc_info=True)
+            yield send_progress(f"Inference test failed with error: {str(e)}")
             yield send_error("Failed to test inference", str(e))
             return
             

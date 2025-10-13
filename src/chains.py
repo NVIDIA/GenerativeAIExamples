@@ -84,10 +84,22 @@ def parse_vgpu_query(query: str) -> dict:
 
 
     # 1) Explicit model mention
-    for model in VALID_MODELS:
-        if re.search(rf"\b{re.escape(model)}\b", query, re.IGNORECASE):
-            result["Model"] = model
-            break
+    # First, try to extract a HuggingFace model tag (format: org/model-name)
+    hf_model_match = re.search(r'\b([a-zA-Z0-9_-]+/[a-zA-Z0-9._-]+(?:-[vV]?[\d.]+)?)\b', query)
+    if hf_model_match:
+        result["Model"] = hf_model_match.group(1)
+    else:
+        # Fallback: check against VALID_MODELS with flexible matching
+        normalized_query = re.sub(r'[-\s]+', ' ', query.lower())
+        
+        for model in VALID_MODELS:
+            # Normalize model name too (replace dashes/spaces with flexible pattern)
+            normalized_model = re.sub(r'[-\s]+', ' ', model.lower())
+            # Create a flexible pattern that matches the model name with optional version suffix
+            pattern = rf"\b{re.escape(normalized_model)}(?:\s+v?[\d.]+)?\b"
+            if re.search(pattern, normalized_query, re.IGNORECASE):
+                result["Model"] = model
+                break
     
 
 
@@ -635,12 +647,18 @@ Now provide a complete structured vGPU configuration based on this grounded anal
                         # Build properly structured parameters with correct field names
                         model_tag = None
                         if model_name:
-                            # Use the dynamic model extractor instead of hardcoded mapping
-                            model_tag = model_extractor.extract(model_name)
-                            # If no match found, use general fallback model
-                            if not model_tag:
-                                logger.info(f"No exact match for model '{model_name}', using fallback: {GENERAL_FALLBACK_MODEL}")
-                                model_tag = GENERAL_FALLBACK_MODEL
+                            # Check if model_name is already a HuggingFace model tag (contains "/")
+                            if "/" in model_name:
+                                # Use the full HF model tag directly
+                                model_tag = model_name
+                                logger.info(f"Using HuggingFace model tag directly: {model_tag}")
+                            else:
+                                # Use the dynamic model extractor for simplified names
+                                model_tag = model_extractor.extract(model_name)
+                                # If no match found, use general fallback model
+                                if not model_tag:
+                                    logger.info(f"No exact match for model '{model_name}', using fallback: {GENERAL_FALLBACK_MODEL}")
+                                    model_tag = GENERAL_FALLBACK_MODEL
 
                         corrected_params = {
                             "vgpu_profile": params.get("vgpu_profile"),

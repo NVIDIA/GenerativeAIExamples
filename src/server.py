@@ -97,7 +97,11 @@ app.add_middleware(
 
 
 EXAMPLE_DIR = "./"
-MINIO_OPERATOR = get_minio_operator()
+try:
+    MINIO_OPERATOR = get_minio_operator()
+except Exception as e:
+    logger.warning(f"MinIO operator initialization failed: {e}. MinIO features will be disabled.")
+    MINIO_OPERATOR = None
 FALLBACK_EXCEPTION_MSG = "Error from rag-server. Please check rag-server logs for more details."
 
 # Log server initialization details first
@@ -755,7 +759,7 @@ def prepare_citations(
                 else:
                     document_type = doc.metadata.get("content_metadata").get("subtype")
                 try:
-                    if enable_citations:
+                    if enable_citations and MINIO_OPERATOR is not None:
                         logger.info("Pulling content from minio for image/table/chart for citations ...")
                         unique_thumbnail_id = get_unique_thumbnail_id(
                             collection_name=collection_name,

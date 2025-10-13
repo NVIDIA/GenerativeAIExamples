@@ -1,0 +1,432 @@
+nohup: ignoring input
+INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+INFO:     Started parent process [1582892]
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Enhanced components not available. Using standard RAG only.
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+Enhanced components not available. Using standard RAG only.
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+Enhanced components not available. Using standard RAG only.
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+Enhanced components not available. Using standard RAG only.
+Enhanced components not available. Using standard RAG only.
+Enhanced components not available. Using standard RAG only.
+Enhanced components not available. Using standard RAG only.
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+Enhanced components not available. Using standard RAG only.
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+INFO:     Started server process [1582900]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+INFO:     Started server process [1582896]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+INFO:     Started server process [1582898]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+INFO:     Started server process [1582895]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1582901]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1582902]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1582899]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1582897]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Received SIGHUP, restarting processes.
+INFO:     Waiting for child process [1582895]
+/usr/lib/python3.10/multiprocessing/resource_tracker.py:104: UserWarning: resource_tracker: process died unexpectedly, relaunching.  Some resources might leak.
+  warnings.warn('resource_tracker: process died unexpectedly, '
+INFO:     Waiting for child process [1582896]
+INFO:     Waiting for child process [1582897]
+INFO:     Waiting for child process [1582898]
+INFO:     Waiting for child process [1582899]
+INFO:     Waiting for child process [1582900]
+INFO:     Waiting for child process [1582901]
+INFO:     Waiting for child process [1582902]
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_memory_overhead" in AdvancedCalculatorConfig has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/pydantic/_internal/_fields.py:132: UserWarning: Field "model_name" in VGPURequest has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Optional nv_ingest_client module not installed.
+Enhanced components not available. Using standard RAG only.
+Enhanced components not available. Using standard RAG only.
+Enhanced components not available. Using standard RAG only.
+Enhanced components not available. Using standard RAG only.
+Enhanced components not available. Using standard RAG only.
+Enhanced components not available. Using standard RAG only.
+Enhanced components not available. Using standard RAG only.
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+Enhanced components not available. Using standard RAG only.
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+/home/nvadmin/.local/lib/python3.10/site-packages/langchain_nvidia_ai_endpoints/_common.py:176: UserWarning: An API key is required for the hosted NIM. This will become an error in the future.
+  warnings.warn(
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+INFO:     Started server process [1606452]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Unable to connect to vector store during initialization: <MilvusException: (code=2, message=Fail connecting to server on milvus:19530, illegal connection params or server unavailable)>
+INFO:src.server:default_max_tokens: 1024
+INFO:src.server:default_temperature: 0.2
+INFO:src.server:default_top_p: 0.7
+WARNING:src.server:MinIO operator initialization failed: can only concatenate str (not "NoneType") to str. MinIO features will be disabled.
+INFO:src.server:Initializing NVIDIA RAG server...
+INFO:     Started server process [1606447]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1606449]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1606450]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1606451]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1606448]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1606445]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Started server process [1606446]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Received SIGTERM, exiting.
+INFO:     Terminated child process [1606445]
+INFO:     Terminated child process [1606446]
+INFO:     Terminated child process [1606447]
+INFO:     Terminated child process [1606448]
+INFO:     Terminated child process [1606449]
+INFO:     Terminated child process [1606450]
+INFO:     Terminated child process [1606451]
+INFO:     Terminated child process [1606452]
+INFO:     Waiting for child process [1606445]
+INFO:     Shutting down
+INFO:     Shutting down
+INFO:     Shutting down
+INFO:     Shutting down
+INFO:     Shutting down
+INFO:     Shutting down
+INFO:     Shutting down
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1606452]
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1606447]
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1606449]
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1606451]
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1606445]
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1606450]
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1606448]
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1606446]
+INFO:     Waiting for child process [1606446]
+INFO:     Waiting for child process [1606447]
+INFO:     Waiting for child process [1606448]
+INFO:     Waiting for child process [1606449]
+INFO:     Waiting for child process [1606450]
+INFO:     Waiting for child process [1606451]
+INFO:     Waiting for child process [1606452]
+INFO:     Stopping parent process [1582892]

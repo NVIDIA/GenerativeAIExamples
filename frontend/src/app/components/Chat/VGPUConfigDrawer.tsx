@@ -17,7 +17,6 @@
 
 import { useState, useEffect } from "react";
 import VGPUConfigCard from "./VGPUConfigCard";
-import ApplyConfigurationForm from "./ApplyConfigurationForm";
 
 interface VGPUConfigDrawerProps {
   config: any;
@@ -27,7 +26,6 @@ interface VGPUConfigDrawerProps {
 
 export default function VGPUConfigDrawer({ config, isOpen, onClose }: VGPUConfigDrawerProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
 
   // Close drawer on escape key
   useEffect(() => {
@@ -116,29 +114,9 @@ export default function VGPUConfigDrawer({ config, isOpen, onClose }: VGPUConfig
         <div className="h-full overflow-y-auto pb-20">
           <div className={`p-6 ${isFullScreen ? "max-w-6xl mx-auto" : ""}`}>
             {config && <VGPUConfigCard config={config} />}
-            
-            {/* Additional Actions */}
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button 
-                onClick={() => setIsApplyFormOpen(true)}
-                className="px-4 py-2 bg-[#76b900] hover:bg-[#5a8c00] text-white rounded-lg font-medium transition-colors"
-              >
-                Verify Configuration
-              </button>
-
-            </div>
-
-            
           </div>
         </div>
       </div>
-
-      {/* Apply Configuration Form Modal */}
-      <ApplyConfigurationForm 
-        isOpen={isApplyFormOpen}
-        onClose={() => setIsApplyFormOpen(false)}
-        configuration={config}
-      />
     </>
   );
 } 

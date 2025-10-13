@@ -281,10 +281,10 @@ export default function WorkloadConfigWizard({
       parts.push(`using available GPU inventory: 1x NVIDIA L40S`);
     }
     
-    // Specific Model
+    // Specific Model - use full HuggingFace model tag
     if (config.specificModel && config.specificModel !== 'unknown') {
-      const modelLabel = specificModels.find(m => m.value === config.specificModel)?.label || config.specificModel;
-      parts.push(`running ${modelLabel}`);
+      const modelTag = specificModels.find(m => m.value === config.specificModel)?.modelTag || config.specificModel;
+      parts.push(`running ${modelTag}`);
     }
     
     // Performance requirements

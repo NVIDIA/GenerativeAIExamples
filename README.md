@@ -90,6 +90,27 @@ At this point, the VM setup is complete. The installation guide for Ubuntu can b
 
    # Start core service
    ./scripts/start_vgpu_rag.sh --skip-nims
+
+   ℹ️  Access URLs:
+   • RAG Playground: http://localhost:8090
+   • RAG API: http://localhost:8081
+   • Ingestor API: http://localhost:8082
+   • Milvus Console: http://localhost:9011
+
+   ℹ️  vGPU Knowledge Base:
+   • Collection: vgpu_knowledge_base
+   • Status: All PDFs from ./vgpu_docs are automatically loaded
+   • No manual collection selection needed!
+
+   ℹ️  To add more vGPU documentation:
+   1. Place PDF files in: ./vgpu_docs
+   2. Re-run bootstrap: docker compose -f /home/nvadmin/Desktop/ai-vws-sizing-tool/deploy/compose/docker-compose-bootstrap.yaml up
+
+   ℹ️  To stop all services:
+   /home/nvadmin/Desktop/ai-vws-sizing-tool/scripts/stop_vgpu_rag.sh
+
+   - Local:        http://localhost:3000
+   - Network:      http://10.185.118.27:3000
    ```
 
 ### NVIDIA Developer Program Setup

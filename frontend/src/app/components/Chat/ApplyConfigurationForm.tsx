@@ -66,6 +66,7 @@ export default function ApplyConfigurationForm({
   const [showDebugLogs, setShowDebugLogs] = useState(false);
   const [currentDisplayMessage, setCurrentDisplayMessage] = useState<string>("");
   const [testMetrics, setTestMetrics] = useState<any>(null);
+  const [deploymentError, setDeploymentError] = useState<string | null>(null);
 
   // Validate IP address format
   const validateIpAddress = (ip: string): boolean => {
@@ -226,13 +227,16 @@ export default function ApplyConfigurationForm({
                 if (data.status === "completed" || data.status === "success") {
                   // Don't add another success message, it's already in the logs
                   setIsConfigurationComplete(true);
+                  setDeploymentError(null); // Clear any previous errors
                   setShowLogs(true); // Automatically show logs on completion
                   // Don't clear display message - let the last one persist
                 } else if (data.status === "error") {
+                  const errorMsg = data.error || "Configuration test failed";
                   setConfigurationLogs((prev) => [
                     ...prev,
-                    `❌ Error: ${data.error || "Configuration test failed"}`,
+                    `❌ Error: ${errorMsg}`,
                   ]);
+                  setDeploymentError(errorMsg);
                   setIsConfigurationComplete(true);
                   setShowLogs(true); // Automatically show logs on error
                   // Don't clear display message - let the last one persist
@@ -246,10 +250,12 @@ export default function ApplyConfigurationForm({
       }
     } catch (error) {
       console.error("Configuration error:", error);
+      const errorMsg = error instanceof Error ? error.message : "Failed to apply configuration";
       setConfigurationLogs((prev) => [
         ...prev,
-        `❌ Error: ${error instanceof Error ? error.message : "Failed to apply configuration"}`,
+        `❌ Error: ${errorMsg}`,
       ]);
+      setDeploymentError(errorMsg);
       setIsConfigurationComplete(true);
       setShowLogs(true); // Show logs on error
       // Don't clear display message here either
@@ -262,6 +268,7 @@ export default function ApplyConfigurationForm({
     // Reset state but keep form data
     setIsConfigurationComplete(false);
     setConfigurationLogs([]);
+    setDeploymentError(null);
     setTestMetrics(null);
     setShowLogs(false);
     setShowDebugLogs(false);
@@ -287,48 +294,132 @@ export default function ApplyConfigurationForm({
     setIsConfigurationComplete(false);
     setShowDebugLogs(false);
     setCurrentDisplayMessage("");
+    setDeploymentError(null);
     onClose();
   };
 
-  const handleExportLogs = () => {
-    // Create log content without timestamps for cleaner export
-    let logContent = configurationLogs.join('\n');
-    
-    // If debug logs are shown, add them to the export
-    if (showDebugLogs) {
-      const debugSection = "\n\n=== Debug Output ===\n" + 
-        configurationLogs.filter(log => {
-          if (log.includes("===") || log.startsWith("✓")) return false;
-          const includePatterns = [
-            "Starting configuration process",
-            "Connecting to",
-            "Connected successfully",
-            "Gathering system information",
-            "Hypervisor Layer",
-            "Checking GPU availability",
-            "GPU:",
-            "Starting setup phase",
-            "Authenticating with",
-            "Setting up Python",
-            "Installing",
-            "Cleaned up",
-            "Attempt",
-            "server started",
-            "Found",
-            "GPU memory detected",
-            "Post-launch cleanup",
-            "SSH connection closed",
-            "PID"
-          ];
-          return includePatterns.some(pattern => log.includes(pattern));
-        }).join('\n');
-      
-      logContent += debugSection;
+  // Helper function to copy text to clipboard with fallback
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for older browsers or non-HTTPS
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy to clipboard');
     }
+  };
+
+  // Helper function to get formatted deployment results
+  const getDeploymentResultsText = () => {
+    const resultPatterns = [
+      "=== vLLM Server Configuration",
+      "Configuration Details:",
+      "Model:",
+      "Status:",
+      "GPU Detected:",
+      "GPU Memory Utilization",
+      "Max Model Length:",
+      "KV Cache:",
+      "Hardware Usage During Test:",
+      "GPU Compute Utilization:",
+      "GPU Memory Active:",
+      "GPU Temperature:",
+      "Power Draw:",
+      "Advisor System Configuration:",
+      "vGPU Profile:",
+      "vCPUs:",
+      "System RAM:",
+      "GPU Memory Size:",
+      "Configuration Validation:",
+      "✅",
+      "⚠️",
+      "❌",
+      "vLLM deployment successful",
+      "NVIDIA Driver:"
+    ];
+    
+    return configurationLogs.filter(log => {
+      // Exclude "Next Steps" section and API testing commands
+      if (log.includes("Next Steps:") || 
+          log.includes("Test API:") || 
+          log.includes("View Logs:") || 
+          log.includes("Stop Server:") ||
+          log.includes("Server Endpoint:") ||
+          log.includes("Health Endpoint:") ||
+          log.includes("curl") ||
+          log.includes("ssh") ||
+          log.includes("tail") ||
+          log.includes("pkill")) {
+        return false;
+      }
+      // Exclude Inference Test section
+      if (log.includes("Inference Test:") ||
+          log.includes("Query:") ||
+          log.includes("Max Tokens:") ||
+          log.includes("Response Preview:")) {
+        return false;
+      }
+      return resultPatterns.some(pattern => log.includes(pattern));
+    });
+  };
+
+  // Helper function to get debug logs
+  const getDebugLogsText = () => {
+    const debugPatterns = [
+      "Starting configuration",
+      "Testing SSH connection",
+      "SSH connection",
+      "Checking NVIDIA GPU",
+      "GPU detected:",
+      "NVIDIA Driver:",
+      "GPU matches requested",
+      "Checking Python",
+      "Python version:",
+      "Virtual environment",
+      "Checking vLLM",
+      "vLLM already installed",
+      "Successfully authenticated",
+      "Checking for existing vLLM",
+      "Cleared any existing",
+      "Starting vLLM server with model:",
+      "Starting vLLM",
+      "vLLM server starting",
+      "Waiting for vLLM",
+      "vLLM server is ready",
+      "Verifying vLLM process",
+      "Testing inference endpoint with prompt:",
+      "Inference response:",
+      "Inference test",
+      "Stopping vLLM server"
+    ];
+    
+    return configurationLogs.filter(log => {
+      return debugPatterns.some(pattern => log.includes(pattern));
+    });
+  };
+
+  const handleExportLogs = () => {
+    // Get deployment results
+    const deploymentResults = getDeploymentResultsText();
+    const debugLogs = getDebugLogsText();
     
     // Add header information
     const header = [
-      '=== vLLM Deployment Logs ===',
+      '=== vLLM Deployment Export ===',
       `Date: ${new Date().toLocaleString()}`,
       `VM IP: ${formData.vmIpAddress}`,
       `Username: ${formData.username}`,
@@ -337,7 +428,22 @@ export default function ApplyConfigurationForm({
       '================================\n'
     ].filter(Boolean).join('\n');
     
-    const fullContent = header + '\n' + logContent;
+    // Build content
+    let fullContent = header + '\n';
+    
+    // Add deployment results
+    if (deploymentResults.length > 0) {
+      fullContent += '\n=== DEPLOYMENT RESULTS ===\n\n';
+      fullContent += deploymentResults.join('\n');
+      fullContent += '\n';
+    }
+    
+    // Add debug logs if they exist
+    if (debugLogs.length > 0) {
+      fullContent += '\n\n=== DEBUG OUTPUT ===\n\n';
+      fullContent += debugLogs.join('\n');
+      fullContent += '\n';
+    }
     
     // Create blob and download
     const blob = new Blob([fullContent], { type: 'text/plain' });
@@ -357,21 +463,24 @@ export default function ApplyConfigurationForm({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-neutral-900 rounded-lg border border-neutral-700 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-neutral-700">
-          <div>
-            <h2 className="text-xl font-semibold text-white">Deploy vLLM Server</h2>
-            <p className="text-sm text-gray-400 mt-1">
-              Deploy vLLM inference server on remote VM with Hugging Face integration
-            </p>
+        <div className="p-6 border-b border-neutral-700">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Deploy vLLM Server</h2>
+              <p className="text-sm text-gray-400 mt-1">
+                Deploy vLLM inference server on remote VM with Hugging Face integration
+              </p>
+            </div>
+            <button
+              onClick={handleClose}
+              className="p-2 hover:bg-neutral-800 rounded transition-colors group"
+              title="Close"
+            >
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
         {/* Form Content */}
@@ -519,26 +628,6 @@ export default function ApplyConfigurationForm({
                 ? "Run Test Again"
                 : "Deploy vLLM Server"}
             </button>
-
-            {/* Retry Button - Show after completion */}
-            {isConfigurationComplete && (
-              <div className="mt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleRetry}
-                  className="flex-1 py-3 px-4 rounded-lg font-medium bg-neutral-700 text-white hover:bg-neutral-600 transition-all"
-                >
-                  Clear Logs & Retry
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="flex-1 py-3 px-4 rounded-lg font-medium bg-neutral-800 text-gray-300 hover:bg-neutral-700 transition-all"
-                >
-                  Close
-                </button>
-              </div>
-            )}
           </form>
 
           {/* Configuration Status */}
@@ -569,16 +658,39 @@ export default function ApplyConfigurationForm({
             </div>
           )}
 
-          {/* Configuration Logs - Only show after completion */}
+          {/* Deployment Summary - VM Performance Info */}
           {!isSubmitting && isConfigurationComplete && configurationLogs.length > 0 && (
             <div className="mt-6 border-t border-neutral-700 pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-white">Deployment Logs</h3>
+                <div className="flex items-center gap-2">
+                  {deploymentError || configurationLogs.some(log => 
+                    log.includes('failed') || 
+                    log.includes('Error:') || 
+                    log.includes('Permission denied') ||
+                    log.includes('Connection refused')
+                  ) ? (
+                    <svg className="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                  <h3 className="text-lg font-semibold text-white">
+                    {deploymentError || configurationLogs.some(log => 
+                      log.includes('failed') || 
+                      log.includes('Error:') || 
+                      log.includes('Permission denied') ||
+                      log.includes('Connection refused')
+                    ) ? 'Deployment Failed' : 'Deployment Results'}
+                  </h3>
+                </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={handleExportLogs}
-                    className="px-3 py-1 text-sm bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                    className="px-3 py-1.5 text-sm bg-neutral-700 hover:bg-neutral-600 text-white rounded-md transition-colors flex items-center gap-2 font-medium"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -589,6 +701,7 @@ export default function ApplyConfigurationForm({
                     type="button"
                     onClick={() => setShowLogs(!showLogs)}
                     className="text-gray-400 hover:text-white transition-colors"
+                    title={showLogs ? "Collapse results" : "Expand results"}
                   >
                     {showLogs ? (
                       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -604,127 +717,149 @@ export default function ApplyConfigurationForm({
               </div>
               
               {showLogs && (
-                <div className="bg-black rounded-lg border border-neutral-700 p-4 max-h-64 overflow-y-auto">
-                  <div className="space-y-1 font-mono text-sm">
+                <div className="bg-gradient-to-br from-neutral-900 to-black rounded-lg border border-neutral-700 overflow-hidden group">
+                  <div className="relative">
+                    <div className="p-6 max-h-96 overflow-y-auto">
+                    {/* Error Display */}
+                    {(deploymentError || configurationLogs.some(log => 
+                      log.includes('failed') || 
+                      log.includes('Error:') || 
+                      log.includes('Permission denied') ||
+                      log.includes('Connection refused')
+                    )) && (
+                      <div className="mb-6 p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <svg className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="flex-1">
+                            <h4 className="text-red-400 font-semibold mb-2">Deployment Error</h4>
+                            <p className="text-red-300 text-sm">
+                              {deploymentError || 
+                                configurationLogs.find(log => 
+                                  log.includes('Error:') || 
+                                  log.includes('failed') ||
+                                  log.includes('Permission denied') ||
+                                  log.includes('Connection refused')
+                                )?.replace(/^[❌$]\s*/, '') || 
+                                'Deployment failed. Check the debug output for details.'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {(() => {
-                      // Separate logs into categories
-                      const summaryLogs: string[] = [];
-                      const stepsLogs: string[] = [];
-                      const otherLogs: string[] = [];
-                      let inSummary = false;
-                      let inSteps = false;
+                      // Get filtered deployment results
+                      const resultLogs = getDeploymentResultsText();
                       
-                      configurationLogs.forEach((log) => {
-                        if (log.includes("=== Configuration Summary ===")) {
-                          inSummary = true;
-                          inSteps = false;
-                          summaryLogs.push(log);
-                        } else if (log.includes("=== Steps Completed ===")) {
-                          inSummary = false;
-                          inSteps = true;
-                          stepsLogs.push(log);
-                        } else if (inSummary) {
-                          summaryLogs.push(log);
-                        } else if (inSteps) {
-                          stepsLogs.push(log);
-                        } else {
-                          // Filter out redundant messages
-                          const skipMessages = [
-                            "✅ Configuration applied successfully!",
-                            "Configuration applied successfully.",
-                            "PID .* no GPU usage entry found"  // Skip PID messages that show no GPU usage
-                          ];
-                          
-                          const shouldSkip = skipMessages.some(pattern => {
-                            if (pattern.includes(".*")) {
-                              return new RegExp(pattern).test(log);
-                            }
-                            return log === pattern;
-                          });
-                          
-                          if (!shouldSkip) {
-                            otherLogs.push(log);
-                          }
+                      // Group logs into sections
+                      const sections: { title: string; logs: string[]; }[] = [];
+                      let currentSection: { title: string; logs: string[]; } | null = null;
+                      
+                      resultLogs.forEach((log) => {
+                        if (log.includes("=== vLLM Server Configuration")) {
+                          currentSection = { title: "Status", logs: [] };
+                          sections.push(currentSection);
+                        } else if (log.includes("Configuration Details:")) {
+                          currentSection = { title: "Configuration Details", logs: [] };
+                          sections.push(currentSection);
+                        } else if (log.includes("Hardware Usage During Test:")) {
+                          currentSection = { title: "Hardware Usage", logs: [] };
+                          sections.push(currentSection);
+                        } else if (log.includes("Inference Test:")) {
+                          currentSection = { title: "Inference Test", logs: [] };
+                          sections.push(currentSection);
+                        } else if (log.includes("Advisor System Configuration:")) {
+                          currentSection = { title: "System Specification", logs: [] };
+                          sections.push(currentSection);
+                        } else if (log.includes("Configuration Validation:")) {
+                          currentSection = { title: "Validation", logs: [] };
+                          sections.push(currentSection);
+                        } else if (currentSection && !log.includes("===")) {
+                          currentSection.logs.push(log);
                         }
                       });
                       
-                      // Display summary first, then other logs, then steps
-                      const orderedLogs = [...summaryLogs, ...otherLogs, ...stepsLogs];
-                      
-                      // Filter out debug messages from main configuration logs
-                      const debugPatterns = [
-                        "Starting configuration process",
-                        "Connecting to",
-                        "Connected successfully",
-                        "Gathering system information",
-                        "Hypervisor Layer",
-                        "Checking GPU availability",
-                        "GPU:",
-                        "Starting setup phase",
-                        "Authenticating with",
-                        "Setting up Python",
-                        "Installing",
-                        "Cleaned up",
-                        "Attempt",
-                        "server started",
-                        "Found",
-                        "GPU memory detected",
-                        "Post-launch cleanup",
-                        "SSH connection closed"
-                      ];
-                      
-                      const filteredLogs = orderedLogs.filter(log => {
-                        // Keep summary and steps
-                        if (summaryLogs.includes(log) || stepsLogs.includes(log)) {
-                          return true;
-                        }
-                        // Exclude debug messages
-                        return !debugPatterns.some(pattern => log.includes(pattern));
-                      });
-                      
-                      return filteredLogs.map((log, index) => {
-                        const isSummaryHeader = log.includes("=== Configuration Summary ===") || log.includes("=== Steps Completed ===");
-                        const isStepItem = log.startsWith("✓");
-                        const isSummaryItem = summaryLogs.includes(log) && !isSummaryHeader;
+                      return (
+                        <div className="space-y-6">
+                          {sections.map((section, sectionIndex) => (
+                            <div key={sectionIndex}>
+                              <div className="mb-3">
+                                <h4 className="text-sm font-semibold text-green-400 uppercase tracking-wide">{section.title}</h4>
+                              </div>
+                              <div className="space-y-1.5 pl-4">
+                                {section.logs.map((log, logIndex) => {
+                                  // Determine log styling based on content
+                                  let className = "text-gray-300 text-sm leading-relaxed break-words";
+                                  
+                                  if (log.startsWith("•")) {
+                                    className = "text-gray-200 font-medium break-words";
+                                  } else if (log.includes("✅")) {
+                                    className = "text-green-400 break-words";
+                                  } else if (log.includes("⚠️")) {
+                                    className = "text-yellow-400 break-words";
+                                  } else if (log.includes("❌") || log.includes("Error")) {
+                                    className = "text-red-400 break-words";
+                                  } else if (log.includes("Model:") || log.includes("Status:") || log.includes("GPU Detected:")) {
+                                    className = "text-blue-300 font-medium break-words";
+                                  } else if (log.includes("Response Preview:") || log.includes("Query:")) {
+                                    className = "text-purple-300 font-mono text-xs bg-black/50 px-2 py-1.5 rounded block break-words";
+                                  }
                         
                         return (
-                          <div 
-                            key={index} 
-                            className={`
-                              text-gray-300 
-                              ${isSummaryHeader ? 'font-bold text-green-400 mt-3 mb-1' : ''} 
-                              ${isStepItem ? 'ml-4 text-green-300' : ''}
-                              ${isSummaryItem ? 'ml-4' : ''}
-                            `}
-                          >
+                                    <div key={logIndex} className={className}>
                             {log}
                           </div>
                         );
-                      });
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
                     })()}
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const deploymentResults = getDeploymentResultsText();
+                        const text = `Deployment Results\n${"=".repeat(18)}\n${deploymentResults.join("\n")}`;
+                        await copyToClipboard(text);
+                      }}
+                      className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-neutral-800 hover:bg-neutral-700 text-gray-400 hover:text-gray-200 p-1.5 rounded"
+                      title="Copy deployment results"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Debug Output - Show detailed intermediate steps */}
+          {/* Debug Output - Execution Steps */}
           {!isSubmitting && isConfigurationComplete && configurationLogs.length > 0 && (
             <div className="mt-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-white">Debug Output</h3>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <h3 className="text-sm font-medium text-gray-300">Debug Output</h3>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowDebugLogs(!showDebugLogs)}
-                  className="text-gray-400 hover:text-white transition-colors flex items-center gap-2"
+                  className="text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-2"
                 >
-                  <span className="text-sm">Show detailed steps</span>
+                  <span className="text-xs">Show execution steps</span>
                   {showDebugLogs ? (
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                     </svg>
                   ) : (
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   )}
@@ -732,61 +867,59 @@ export default function ApplyConfigurationForm({
               </div>
               
               {showDebugLogs && (
-                <div className="bg-black rounded-lg border border-neutral-700 p-4 max-h-64 overflow-y-auto">
+                <div className="bg-black rounded-lg border border-neutral-800 overflow-hidden group">
+                  <div className="relative">
+                    <div className="p-4 max-h-80 overflow-y-auto">
                   <div className="space-y-1 font-mono text-xs">
                     {(() => {
-                      // Filter logs to show only intermediate/debug steps
-                      const debugLogs = configurationLogs.filter(log => {
-                        // Exclude summary sections
-                        if (log.includes("===") || log.startsWith("✓")) return false;
-                        
-                        // Include these types of messages
-                        const includePatterns = [
-                          "Starting configuration process",
-                          "Connecting to",
-                          "Connected successfully",
-                          "Gathering system information",
-                          "Hypervisor Layer",
-                          "Checking GPU availability",
-                          "GPU:",
-                          "Starting setup phase",
-                          "Authenticating with",
-                          "Setting up Python",
-                          "Installing",
-                          "Cleaned up",
-                          "Attempt",
-                          "server started",
-                          "Found",
-                          "GPU memory detected",
-                          "Post-launch cleanup",
-                          "SSH connection closed",
-                          "PID"
-                        ];
-                        
-                        return includePatterns.some(pattern => log.includes(pattern));
-                      });
+                          // Get filtered debug logs
+                          const debugLogs = getDebugLogsText();
                       
                       return debugLogs.map((log, index) => {
                         // Color code different types of messages
                         let className = "text-gray-400";
+                            let prefix = "$";
                         
                         if (log.includes("Error") || log.includes("failed")) {
                           className = "text-red-400";
-                        } else if (log.includes("successfully") || log.includes("✓")) {
+                              prefix = "$";
+                            } else if (log.includes("Inference response:")) {
+                              className = "text-purple-400";
+                              prefix = "→";
+                            } else if (log.includes("successful") || log.includes("ready") || log.includes("detected")) {
                           className = "text-green-400";
-                        } else if (log.includes("Attempt") || log.includes("GPU memory")) {
-                          className = "text-yellow-400";
-                        } else if (log.includes("Connecting") || log.includes("Starting")) {
+                              prefix = "$";
+                            } else if (log.includes("Waiting") || log.includes("Starting")) {
                           className = "text-blue-400";
+                              prefix = "$";
+                            } else if (log.includes("Checking") || log.includes("Testing")) {
+                              className = "text-cyan-400";
+                              prefix = "$";
                         }
                         
                         return (
-                          <div key={index} className={className}>
-                            <span className="text-gray-600">$</span> {log}
+                              <div key={index} className={`${className} flex gap-2`}>
+                                <span className="text-gray-600 select-none">{prefix}</span>
+                                <span className="break-words">{log}</span>
                           </div>
                         );
                       });
                     })()}
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const debugLogs = getDebugLogsText();
+                        const text = `Debug Output\n${"=".repeat(12)}\n${debugLogs.join("\n")}`;
+                        await copyToClipboard(text);
+                      }}
+                      className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-neutral-800 hover:bg-neutral-700 text-gray-400 hover:text-gray-200 p-1.5 rounded"
+                      title="Copy debug output"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               )}
