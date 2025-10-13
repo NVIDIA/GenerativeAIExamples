@@ -1,0 +1,52 @@
+services: 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.91.0
+    hostname: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ../config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "9988:9988" # Prometheus metrics exposed by the collector
+      - "8889:8889" # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "9411" # Zipkin receiver
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP/HTTP receiver
+      - "55680:55679" # zpages extension
+    depends_on:
+      - zipkin
+
+  zipkin:
+    image: openzipkin/zipkin
+    environment:
+      JAVA_OPTS: "-Xms4g -Xmx8g -XX:+ExitOnOutOfMemoryError"
+    ports:
+      - "9411:9411" # Zipkin UI and API
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --storage.tsdb.retention.time=1h
+      - --config.file=/etc/prometheus/prometheus-config.yaml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - --web.route-prefix=/
+      - --enable-feature=exemplar-storage
+      - --enable-feature=otlp-write-receiver
+    volumes:
+      - ../config/prometheus.yaml:/etc/prometheus/prometheus-config.yaml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    container_name: grafana-service
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+
+networks:
+  default:
+    name: nvidia-rag
+
