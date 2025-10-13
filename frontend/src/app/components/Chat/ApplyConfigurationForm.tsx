@@ -347,12 +347,15 @@ export default function ApplyConfigurationForm({
       "Configuration Validation:",
       "✅",
       "⚠️",
-      "❌",
       "vLLM deployment successful",
       "NVIDIA Driver:"
     ];
     
     return configurationLogs.filter(log => {
+      // Exclude error messages if deploymentError is set (shown separately)
+      if (deploymentError && (log.includes("❌ Error:") || log.includes("Error:"))) {
+        return false;
+      }
       // Exclude "Next Steps" section and API testing commands
       if (log.includes("Next Steps:") || 
           log.includes("Test API:") || 
@@ -392,7 +395,13 @@ export default function ApplyConfigurationForm({
       "Virtual environment",
       "Checking vLLM",
       "vLLM already installed",
+      "Authenticating with Hugging Face",
+      "Authenticating with HuggingFace",
+      "Clearing cached HuggingFace",
       "Successfully authenticated",
+      "HuggingFace authentication failed",
+      "Failed to authenticate",
+      "Error:",
       "Checking for existing vLLM",
       "Cleared any existing",
       "Starting vLLM server with model:",
@@ -432,8 +441,12 @@ export default function ApplyConfigurationForm({
     let fullContent = header + '\n';
     
     // Add deployment results
-    if (deploymentResults.length > 0) {
-      fullContent += '\n=== DEPLOYMENT RESULTS ===\n\n';
+    fullContent += '\n=== DEPLOYMENT RESULTS ===\n\n';
+    if (deploymentError) {
+      fullContent += `Status: ❌ Deployment Failed\n\n`;
+      fullContent += `${deploymentError}\n\n`;
+    } else if (deploymentResults.length > 0) {
+      fullContent += `Status: ✅ Deployment Successful\n\n`;
       fullContent += deploymentResults.join('\n');
       fullContent += '\n';
     }

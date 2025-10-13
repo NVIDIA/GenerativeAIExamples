@@ -2347,13 +2347,44 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
                     yield send_progress("Successfully authenticated with Hugging Face")
                 else:
                     # HF authentication failed - stop deployment
-                    error_msg = f"HuggingFace authentication failed. Please check your token. Error: {stderr[:200]}"
-                    yield send_error(error_msg)
+                    # Clean up the error message
+                    error_details = stderr
+                    
+                    # Remove SSH warnings
+                    error_details = '\n'.join([
+                        line for line in error_details.split('\n') 
+                        if not any(x in line for x in [
+                            'Warning: Permanently added',
+                            'ED25519',
+                            'known hosts',
+                            'git credentials helper',
+                            'add_to_git_credential'
+                        ])
+                    ]).strip()
+                    
+                    # Extract the meaningful error message (before traceback)
+                    if 'Traceback' in error_details:
+                        error_details = error_details.split('Traceback')[0].strip()
+                    
+                    # If still too long, truncate
+                    if len(error_details) > 300:
+                        error_details = error_details[:300] + "..."
+                    
+                    # If empty after cleaning, provide generic message
+                    if not error_details:
+                        error_details = "Authentication failed. Token may be invalid or lack required permissions."
+                    
+                    yield send_error(
+                        "HuggingFace authentication failed",
+                        f"Invalid HuggingFace token. Please verify your token has the required permissions for this model.\n\n{error_details}"
+                    )
                     return
                     
             except Exception as e:
-                error_msg = f"Failed to authenticate with HF: {str(e)[:200]}"
-                yield send_error(error_msg)
+                yield send_error(
+                    "Failed to authenticate with HuggingFace",
+                    f"Authentication error: {str(e)[:500]}"
+                )
                 return
         else:
             yield send_progress("Warning: No Hugging Face token provided. Public models only.")
