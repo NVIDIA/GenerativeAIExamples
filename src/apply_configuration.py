@@ -2316,6 +2316,14 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
                     timeout=60
                 )
                 
+                # Logout first to clear any cached tokens, then login with new token
+                await execute_ssh_command(
+                    host, username, password,
+                    f"source {venv_path}/bin/activate && huggingface-cli logout 2>/dev/null || true",
+                    port=port,
+                    timeout=10
+                )
+                
                 # Login using huggingface-cli
                 stdout, stderr, code = await execute_ssh_command(
                     host, username, password,
