@@ -3,7 +3,93 @@ All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
 
+## [2.2.0] - 2025-10-13
+
+This release focuses on the AI vWS Sizing Advisor with enhanced deployment capabilities, improved user experience, and zero external dependencies for SSH operations.
+
+### Added
+- **Dynamic HuggingFace Model Integration**
+  - Dynamically populated model list from HuggingFace API
+  - Support for any HuggingFace model in vLLM deployment
+  - Real-time model validation and availability checking
+
+- **Adjustable Workload Calculation Parameters**
+  - Configurable overhead parameters for workload calculations
+  - Dynamic GPU utilization settings based on vGPU profile
+  - Customizable memory overhead and KV cache calculations
+  - User-controllable performance vs resource trade-offs
+
+- **Backend Management Scripts**
+  - New `restart_backend.sh` script for container management
+  - Automated health checking and verification
+  - Clean restart workflow with status reporting
+
+- **Enhanced Debugging Output**
+  - Clear, structured deployment logs
+  - Real-time progress updates during vLLM deployment
+  - SSH key generation path logging
+  - Detailed error messages with automatic cleanup
+  - Separate debug and deployment result views in UI
+
+- **Comprehensive GPU Performance Metrics**
+  - GPU memory utilization reporting
+  - Actual vs estimated memory usage comparison
+  - Real-time GPU saturation monitoring
+  - Time-to-first-token (TTFT) measurements
+  - Throughput and latency metrics
+  - Inference test results with sample outputs
+
+### Changed
+- **SSH Implementation (Zero External Dependencies)**
+  - Removed `paramiko` library (LGPL) dependency
+  - Removed `sshpass` (GPL) dependency
+  - Implemented pure Python solution using built-in `subprocess`, `tempfile`, and `os` modules
+  - Auto-generates SSH keys (`vgpu_sizing_advisor`) on first use
+  - Automatic SSH key copying to remote VMs using bash with `SSH_ASKPASS`
+  - 100% Apache-compatible implementation
+
+- **HuggingFace Token Management**
+  - Clear cached tokens before authentication
+  - Explicit `huggingface-cli logout` before login
+  - Automatic token file cleanup (`~/.huggingface/token`, `~/.cache/huggingface/token`)
+  - Immediate deployment failure on invalid tokens
+  - Clean error messages without SSH warnings or tracebacks
+
+- **UI/UX Improvements**
+  - Updated configuration wizard with better flow
+  - Dynamic status indicators (success/failure)
+  - Prominent error display with red alert boxes
+  - Hover tooltips for SSH key configuration
+  - Separate tabs for deployment logs and debug output
+  - Copy buttons for log export
+  - Cleaner deployment result formatting
+
+### Improved
+- **Error Handling**
+  - Structured error messages with context
+  - Automatic error message cleanup (removes SSH warnings, tracebacks)
+  - Better error propagation from backend to frontend
+  - Explicit failure states in UI
+
+- **Deployment Process**
+  - Automatic SSH key setup on first connection
+  - Faster subsequent deployments (key-based auth)
+  - More reliable vLLM server startup detection
+  - Better cleanup on deployment failure
+
+### Technical Improvements
+- Pure Python SSH implementation (no GPL dependencies)
+- Apache 2.0 license compliance verified
+- Cleaner repository structure
+- Comprehensive .gitignore for production readiness
+- Removed unnecessary notebooks and demo files
+
+### Security
+- SSH key-based authentication (more secure than passwords)
+- Automatic key generation with proper permissions (700/600)
+
 ## [2.1.0] - 2025-05-13
+
 
 This release reduces overall GPU requirement for the deployment of the blueprint. It also improves the performance and stability for both docker and helm based deployments.
 
