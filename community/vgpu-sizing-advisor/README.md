@@ -92,21 +92,30 @@ Access the UI at **http://localhost:3000**
 
 To validate the recommendation on a real VM:
 
+**First-time SSH Setup:**
+1. Click **"Test Connection"** in the Apply Configuration form
+2. If SSH key doesn't exist, it will be auto-generated at `~/.ssh/vgpu_sizing_advisor`
+3. You'll see instructions to copy the key to your VM:
+   ```bash
+   ssh-copy-id -i ~/.ssh/vgpu_sizing_advisor.pub -p 22 username@vm-ip
+   ```
+4. Run that command (you'll enter your password once)
+5. Click **"Test Connection"** again to verify
+
+**Deploy and Test:**
 1. Click **"Apply Configuration"**
-2. Enter VM credentials:
+2. Enter VM details:
    - VM IP Address
    - Username
-   - Password (used once for SSH key setup)
    - HuggingFace Token
 3. Click **"Apply Configuration"**
 
 The tool will:
-- Auto-generate SSH keys (`vgpu_sizing_advisor`) if needed
 - Deploy vLLM server on your VM
 - Run inference tests
 - Report actual performance metrics
 
-**Note:** SSH keys are configured automatically. Just enter your password once - the tool handles the rest!
+**Note:** SSH key setup is a one-time process. After setup, deployments work seamlessly!
 
 ## What You Get
 
@@ -168,9 +177,24 @@ npm run dev
 ```
 
 ### SSH Connection Issues
-- Ensure VM is accessible on the network
-- Check SSH is enabled: `ssh username@vm-ip`
-- Verify password is correct
+
+The tool uses SSH key-based authentication. If you see "SSH Setup Required":
+
+**Solution:**
+1. The tool auto-generates a key at `~/.ssh/vgpu_sizing_advisor`
+2. Copy it to your VM with this command (shown in the error message):
+   ```bash
+   ssh-copy-id -i ~/.ssh/vgpu_sizing_advisor.pub -p 22 username@vm-ip
+   ```
+3. Enter your password when prompted (one time only)
+4. Click "Test Connection" to verify
+
+**Common issues:**
+- **Cannot connect:** Ensure VM is accessible on the network
+- **SSH not enabled:** Check with `ssh username@vm-ip`
+- **Wrong password:** Verify credentials are correct
+- **Firewall:** Check firewall rules allow SSH (port 22)
+- **Permissions:** Ensure the VM user can modify `~/.ssh/authorized_keys`
 
 ## Coming Soon
 
