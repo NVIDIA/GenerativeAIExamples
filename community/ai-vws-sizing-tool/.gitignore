@@ -1,0 +1,55 @@
+# Python Exclusions
+.venv
+**__pycache__**
+*.pyc
+
+# Helm Exclusions
+**/helm-charts/*.tgz
+
+# Docker Compose exclusions
+deploy/compose/volumes
+uploaded_files/
+
+# Visual Studio Code
+.vscode
+
+# Node modules
+**/node_modules
+
+# Next.js build output
+.next/
+out/
+
+# File from docs builds
+docs/_*
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+temp.txt
+*.tmp
+*.temp
+*.swp
+*.bak
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files with secrets (keep .env.example)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.idea/
+*.iml
+
+# Test outputs
+test-results/
+coverage/
+community/ai-vws-sizing-tool/deploy/compose/volumes/community/ai-vws-sizing-tool/deploy/compose/volumes/
