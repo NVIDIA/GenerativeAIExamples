@@ -1,0 +1,4 @@
+*.pyc
+__pycache__
+vectorstore/image_references
+vectorstore/table_references

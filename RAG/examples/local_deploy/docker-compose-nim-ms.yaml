@@ -1,0 +1,86 @@
+services:
+  nemollm-inference:
+    container_name: nemollm-inference-microservice
+    image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.3
+    volumes:
+    - ${MODEL_DIRECTORY}:/opt/nim/.cache
+    user: "${USERID}"
+    ports:
+    - "8000:8000"
+    expose:
+    - "8000"
+    environment:
+      NGC_API_KEY: ${NGC_API_KEY}
+    shm_size: 20gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${INFERENCE_GPU_COUNT:-all}
+              # device_ids: ['${LLM_MS_GPU_ID:-0}']
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:8000/v1/health/ready')"]
+      interval: 10s
+      timeout: 20s
+      retries: 100
+    profiles: ["local-nim", "nemo-retriever"]
+
+  nemollm-embedding:
+    container_name: nemo-retriever-embedding-microservice
+    image: nvcr.io/nim/nvidia/nv-embedqa-e5-v5:1.0.1
+    volumes:
+    - ${MODEL_DIRECTORY}:/opt/nim/.cache
+    ports:
+    - "9080:8000"
+    expose:
+    - "8000"
+    environment:
+      NGC_API_KEY: ${NGC_API_KEY}
+    user: "${USERID}"
+    shm_size: 16GB
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${EMBEDDING_MS_GPU_ID:-0}']
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health/ready"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 10m
+    profiles: ["local-nim", "nemo-retriever"]
+
+  ranking-ms:
+    container_name: nemo-retriever-ranking-microservice
+    image: nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.1
+    volumes:
+    - ${MODEL_DIRECTORY}:/opt/nim/.cache
+    ports:
+    - "1976:8000"
+    expose:
+    - "8000"
+    environment:
+      NGC_API_KEY: ${NGC_API_KEY}
+    user: "${USERID}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 20s
+      retries: 100
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${RANKING_MS_GPU_ID:-0}']
+              capabilities: [gpu]
+    profiles: ["nemo-retriever"]
+
+networks:
+  default:
+    name: nvidia-rag

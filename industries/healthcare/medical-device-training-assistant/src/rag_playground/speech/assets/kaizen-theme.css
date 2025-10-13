@@ -1,0 +1,28 @@
+.tabitem {
+    background-color: var(--block-background-fill);
+  }
+
+  .gradio-container {
+    /* This needs to be !important, otherwise the breakpoint override the container being full width */
+    max-width: 100%  !important;
+    padding: 10px !important;
+  }
+
+  footer {
+    visibility: hidden;
+  }
+
+.record-button {
+  width: 35px !important;
+  overflow: hidden !important;
+}
+.record-button::before {
+  content: "🎤" !important;
+  background-color: var(--block-background-fill) !important;
+}
+.mic-wrap {float: left}
+#microphone{min-width: min(0px, 100%) !important;}
+#microphone div.small {
+  width: 25px;
+  height: 100%;
+}

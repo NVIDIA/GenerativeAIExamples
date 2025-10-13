@@ -1,30 +1,30 @@
 <!--
-  SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+  SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0
 -->
 
-# Change the Inference or Embedding Model
+# Changing the Inference or Embedding Model
 
-You can change inference or embedding models by using the following procedures.
+<!-- TOC -->
 
-- [Change the Inference or Embedding Model](#change-the-inference-or-embedding-model)
-  - [Change the Inference Model](#change-the-inference-model)
-  - [Change the Embedding Model to a Model from the API Catalog](#change-the-embedding-model-to-a-model-from-the-api-catalog)
-  - [On Premises Microservices](#on-premises-microservices)
+* [Models from the API Catalog](#models-from-the-api-catalog)
+    * [Changing the Inference Model](#changing-the-inference-model)
+    * [Changing the Embedding Model](#changing-the-embedding-model)
+* [On Premises Microservices](#on-premises-microservices)
 
+<!-- /TOC -->
 
+## Models from the API Catalog
 
-## Change the Inference Model
+### Changing the Inference Model
 
-To change the inference model to a model from the API catalog,
-specify the model in the `APP_LLM_MODELNAME` environment variable when you start the RAG Server.
-The following example uses the `Mistral AI Mixtral 8x7B Instruct` model.
+You can specify the model to use in the `APP_LLM_MODELNAME` environment variable when you start the Chain Server. The following sample command uses the Mistral AI Mixtral 8x7B Instruct model.
 
 ```console
-APP_LLM_MODELNAME='mistralai/mixtral-8x7b-instruct-v0.1' docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d --build
+APP_LLM_MODELNAME='mistralai/mixtral-8x7b-instruct-v0.1' docker compose up -d --build
 ```
 
-To get a list of valid model names, use one of the following methods:
+You can determine the available model names using one of the following methods:
 
 - Browse the models at <https://build.ngc.nvidia.com/explore/discover>.
   View the sample Python code and get the model name from the `model` argument to the `client.chat.completions.create` method.
@@ -33,22 +33,16 @@ To get a list of valid model names, use one of the following methods:
   Use the `get_available_models()` method on an instance of a `ChatNVIDIA` object to list the models.
   Refer to the package web page for sample code to list the models.
 
+### Changing the Embedding Model
 
-
-## Change the Embedding Model to a Model from the API Catalog
-
-To change the embedding model to a model from the API catalog,
-specify the model in the `APP_EMBEDDINGS_MODELNAME` environment variable when you start the RAG server.
-The following example uses the `NVIDIA Embed QA 4` model.
+You can specify the embedding model to use in the `APP_EMBEDDINGS_MODELNAME` environment variable when you start the Chain Server.
+The following sample command uses the NVIDIA Embed QA 4 model.
 
 ```console
-APP_EMBEDDINGS_MODELNAME='NV-Embed-QA' docker compose -f deploy/compose/docker-compose-ingestor-server.yaml up -d
-APP_EMBEDDINGS_MODELNAME='NV-Embed-QA' docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d --build
+APP_EMBEDDINGS_MODELNAME='NV-Embed-QA' docker compose up -d --build
 ```
 
-As an alternative you can also specify the model names at runtime using `/generate` API call. Please refer to the `Generate Answer Endpoint` and `Document Search Endpoint` payload schema in [this](../notebooks/retriever_api_usage.ipynb) notebook.
-
-To get a list of valid model names, use one of the following methods:
+You can determine the available model names using one of the following methods:
 
 - Browse the models at <https://build.ngc.nvidia.com/explore/retrieval>.
   View the sample Python code and get the model name from the `model` argument to the `client.embeddings.create` method.
@@ -57,43 +51,32 @@ To get a list of valid model names, use one of the following methods:
   Use the `get_available_models()` method to on an instance of an `NVIDIAEmbeddings` object to list the models.
   Refer to the package web page for sample code to list the models.
 
-[!TIP] Always use same embedding model or model having same tokinizers for both ingestion and retrieval to yield good accuracy.
-
 
 ## On Premises Microservices
 
-You can specify the model for NVIDIA NIM containers to use in the [nims.yaml](../deploy/compose/nims.yaml) file.
+You can specify the model for NVIDIA NIM containers to use in the `docker-compose-nim-ms.yaml` file.
 
-1. Edit the `deploy/nims.yaml` file and specify an image that includes the model to deploy.
+Edit the `RAG/examples/local_deploy/docker-compose-nim-ms.yaml` file and specify an image name that includes the name of the model to deploy.
 
-   ```yaml
-   services:
-     nim-llm:
-       container_name: nim-llm-ms
-       image: nvcr.io/nim/meta/<image>:<tag>
-       ...
+```yaml
+services:
+  nemollm-inference:
+    container_name: nemollm-inference-microservice
+    image: nvcr.io/nim/meta/<image>:<tag>
+    ...
 
-     nemoretriever-embedding-ms:
-       container_name: nemoretriever-embedding-ms
-       image: nvcr.io/nim/<image>:<tag>
+  nemollm-embedding:
+    container_name: nemo-retriever-embedding-microservice
+    image: nvcr.io/nim/<image>:<tag>
 
 
-     nemoretriever-ranking-ms:
-       container_name: nemoretriever-ranking-ms
-       image: nvcr.io/nim/<image>:<tag>
-   ```
+  ranking-ms:
+    container_name: nemo-retriever-ranking-microservice
+    image: nvcr.io/nim/<image>:<tag>
+```
 
-   To get a list of valid model names, use one of the following methods:
+You can determine the available model names using one of the following methods:
 
-   - Run `ngc registry image list "nim/*"`.
+- Run `ngc registry image list "nim/*"`.
 
-   - Browse the NGC catalog at <https://catalog.ngc.nvidia.com/containers>.
-
-2. Update the corresponding model names using environment variables as required.
-   ```bash
-   export APP_EMBEDDINGS_MODELNAME=<>
-   export APP_RANKING_MODELNAME=<>
-   export APP_EMBEDDINGS_MODELNAME=<>
-   ```
-
-3. Follow the steps specified [here](quickstart.md#start-using-on-prem-models) to relaunch the containers with the updated models. Make sure to specify the correct model names using appropriate environment variables as shown in the earlier step.
+- Browse the NGC catalog at <https://catalog.ngc.nvidia.com/containers>.

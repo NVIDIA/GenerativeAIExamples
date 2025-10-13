@@ -1,0 +1,6 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pymilvus==2.3.5
+langchain==0.2.6
+langchain_core==0.2.25
+langchain_nvidia_ai_endpoints==0.2.0

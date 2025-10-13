@@ -3,10 +3,9 @@
 .gitignore
 .gitlab-ci.yml
 .gitmodules
-.gitattributes
 
 # Ignore temperory volumes
-deploy/compose/volumes
+RAG/examples/**/volumes
 
 # creating a docker image
 .dockerignore

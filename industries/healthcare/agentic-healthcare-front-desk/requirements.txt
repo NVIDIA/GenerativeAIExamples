@@ -1,0 +1,17 @@
+langchain==0.3.7
+langgraph==0.2.50
+langchain-community==0.3.7
+langchain_nvidia_ai_endpoints==0.3.5
+gradio==4.43.0
+nvidia-riva-client==2.14.0
+pydantic==2.8.2
+fastapi==0.112.1
+annoy==1.17.3
+PyStemmer==2.2.0.1
+pydantic_core==2.20.1
+tavily-python==0.4.0
+pandas==2.2.2
+fhirclient==4.2.0
+python-dotenv==1.0.1
+pycountry==23.12.11
+bleach==6.1.0

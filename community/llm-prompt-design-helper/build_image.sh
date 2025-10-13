@@ -1,0 +1,1 @@
+docker build . -t integrate_api:v1

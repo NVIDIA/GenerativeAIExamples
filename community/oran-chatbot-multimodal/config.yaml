@@ -1,0 +1,24 @@
+## Default settings
+nvidia_api_key: "nvapi--***"
+## Set these to required models endpoints from NVIDIA NGC 
+llm_model: "mistralai/mixtral-8x7b-instruct-v0.1"
+embedding_model: "nvidia/nv-embedqa-e5-v5"
+reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+NIM: false
+nim_model_name: "meta/llama3-8b-instruct"
+nim_base_url: "http://localhost:8000/v1"
+temperature: 0.1
+top_p: 0.5
+max_tokens: 1600
+
+NREM: false
+nrem_model_name: "nvidia/nv-embedqa-e5-v5"
+nrem_api_endpoint_url: "http://localhost:8001/v1"
+nrem_truncate: "END"
+
+Reranker_NIM: false
+reranker_model_name: "nvidia/nv-rerankqa-mistral-4b-v3"
+reranker_api_endpoint_url: "http://localhost:8000/v1"
+
+file_delete_password: "oranpwd"

@@ -1,0 +1,7 @@
+{
+  "/api/available-models/route": "app/api/available-models/route.js",
+  "/api/generate/route": "app/api/generate/route.js",
+  "/api/test-configuration/route": "app/api/test-configuration/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
+}

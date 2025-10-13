@@ -1,0 +1,19 @@
+**Event Overview**
+
+For two users, june@domain.com and daniel@domain.com, a series of authentication logs were collected over significant periods of time. The logs indicate activities across various applications such as Box, Google Cloud / G Suite Connector by Microsoft, Spike Email - Mail & Team Chat, and WeVideo, accessed from multiple devices including desktop and mobile clients using Chrome and Edge browsers on Windows 10 and Mac OS. These activities spanned from August 2022 to May 2024, suggesting either potential compromise or malicious software usage.
+
+**Triage Overview**
+
+The events indicate unusually high activity levels and diversity in applications and devices used. The authentication logs for both users show high z-scores in log count, application increment, and application display names, which deviate significantly from their normal behavior. The anomalies in the frequency and variety of the logs suggest potential compromise, automation, or malicious activities. The usage patterns and device diversity further indicate possible evasion attempts.
+
+**Most Anomalous Fields**
+
+The most significant anomalies are in the log count, app increment, and app display names. For example, log counts have z-scores ranging from 102 to 248, app increments from 101 to 633, and app display names from 6 to 12. These elevated z-scores highlight abnormal user behavior that warrants further investigation.
+
+**Cyber Triage**
+
+The observed behavior suggests potential attack techniques such as location hopping and credential stuffing. The continuous high values in log counts and app increments, along with discrepancies between actual and predicted values, indicate significant deviations from normal patterns. The use of multiple devices and applications, especially in different locations within short time frames, may be tactics to evade detection.
+
+**Threat Intelligence Enrichment and Recommendation**
+
+The behavior observed may align with tactics used by known APT groups like APT10 (ShadowCrows), known for evading prevention controls and simulating legitimate activities to assess security postures. Recommended actions include further investigation into the users' activities, monitoring for similar behaviors, and potentially blocking IP addresses to halt potential attacks. Additionally, reviewing network and system logs for unauthorized access, implementing Multi-Factor Authentication (MFA), and setting up Conditional Access policies are advised to prevent future incidents. Indicators of Compromise (IoCs) to look out for include synchronized login attempts from multiple IPs, unusual geographic locations of login attempts, and the use of multiple applications with unique identities.

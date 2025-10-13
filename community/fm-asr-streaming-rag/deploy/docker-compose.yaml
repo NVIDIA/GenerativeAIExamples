@@ -1,0 +1,145 @@
+# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+services:
+  sdr:
+    container_name: fm-asr-sdr-holoscan
+    image: fm-asr-sdr-holoscan:latest
+    restart: "no"
+    build:
+      context: ${PROJECT_DIR?:source compose.env}/sdr-holoscan
+      dockerfile: Dockerfile
+
+    # Environment variables and command
+    environment:
+      TZ: ${TIMEZONE:-America/New_York}
+      SDR_LOG_LEVEL: ${SDR_LOG_LEVEL:-WARN}
+      FRONTEND_URI: ${FRONTEND_URI}
+      DATABASE_URI: ${CHAIN_SERVER_HOST}:${CHAIN_SERVER_PORT}
+      ASR_URI: ${ASR_URL}:${ASR_PORT}
+
+    working_dir: /workspace/
+    command: "python sdr-holoscan/app.py"
+
+    # Connectivity and devices
+    network_mode: host
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+
+    # Enable GPU usage
+    runtime: nvidia
+    shm_size: 8gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['${SDR_GPU:-0}']
+              capabilities: [gpu]
+
+  frontend:
+    container_name: fm-asr-frontend
+    image: fm-asr-frontend:latest
+    build:
+      context: ${PROJECT_DIR?:source compose.env}/frontend
+      dockerfile: Dockerfile
+
+    command: --port ${FRONTEND_SERVER_PORT}
+
+    environment:
+      TZ: ${TIMEZONE:-America/New_York}
+      FRONTEND_LOG_LEVEL: ${FRONTEND_LOG_LEVEL:-WARN}
+      FRONTEND_URI: ${FRONTEND_URI}
+      APP_SERVERURL: http://${CHAIN_SERVER_HOST}
+      APP_SERVERPORT: ${CHAIN_SERVER_PORT}
+      MAX_DOCS_RETR: ${MAX_DOCS_RETR:-}
+
+    ports:
+      - "${CHAIN_SERVER_PORT}:${CHAIN_SERVER_PORT}"
+    expose:
+      - "${CHAIN_SERVER_PORT}"
+    network_mode: host
+
+    # For viewing GPU stats
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ['all']
+            capabilities: [gpu]
+
+  chain-server:
+    container_name: fm-asr-chain-server
+    image: fm-asr-chain-server:latest
+    build:
+      context: ${PROJECT_DIR?:source compose.env}/chain-server
+      dockerfile: Dockerfile
+
+    command: --host ${CHAIN_SERVER_HOST} --port ${CHAIN_SERVER_PORT}
+
+    environment:
+      TZ: ${TIMEZONE:-America/New_York}
+      CHAIN_LOG_LEVEL: ${CHAIN_LOG_LEVEL:-WARN}
+      DB_CHUNK_SIZE: ${DB_CHUNK_SIZE:-256}
+      DB_CHUNK_OVERLAP: ${DB_CHUNK_OVERLAP:-32}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      NVIDIA_CLI_API_KEY: ${NVIDIA_CLI_API_KEY:-}
+      MAX_DOCS_RETR: ${MAX_DOCS_RETR:-}
+      MILVUS_STANDALONE_URI: ${MILVUS_STANDALONE_URI}
+      FRONTEND_URI: ${FRONTEND_URI}
+      LLM_URI: "${LLM_URL:-}:${LLM_PORT:-}"
+      RERANK_URI: "${RERANK_URL:-}:${RERANK_PORT:-}"
+      EMBED_URI: "${EMBED_URL:-}:${EMBED_PORT:-}"
+
+    ports:
+      - "8081:8081"
+    expose:
+      - "8081"
+    network_mode: host
+
+  gnuradio:
+    # Setup image and container info
+    container_name: gnuradio
+    image: gnuradio:latest
+    restart: "no"
+    build:
+      context: ${PROJECT_DIR?:source compose.env}/gnuradio
+      dockerfile: Dockerfile
+      args:
+        MY_UID: ${MY_UID}
+
+    # Set up environment to work with X-forwarding
+    volumes:
+      - $HOME/.Xauthority:/root/.Xauthority:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/${MY_UID}:/run/user/${MY_UID}
+
+    # Environment variables and command
+    environment:
+      TZ: ${TIMEZONE:-America/New_York}
+      DISPLAY: ${DISPLAY}
+      XAUTHORITY: /root/.Xauthority
+
+    working_dir: /workspace/
+    entrypoint: "./entrypoint.sh ${GNU_GRC_FILE?:source compose.env} ${GNU_USE_GUI:-0}"
+
+    # Connectivity and devices
+    network_mode: host
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+      - "/dev/snd:/dev/snd"
+    group_add:
+      - audio

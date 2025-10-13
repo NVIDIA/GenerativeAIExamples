@@ -1,0 +1,68 @@
+#
+# Copyright (c) 2025, NVIDIA CORPORATION.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+FROM Apache Spark 3.4.1
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ENV RAPIDS_VERSION=25.2.0
+
+#Install spark-rapids-ml
+
+RUN pip install --no-cache-dir \
+    cudf-cu11~=${RAPIDS_VERSION} \
+    cuml-cu11~=${RAPIDS_VERSION} \
+    cuvs-cu11~=${RAPIDS_VERSION} \
+    numpy~=1.0 \
+    --extra-index-url=https://pypi.nvidia.com
+
+# Install fixed versions of core Hugging Face + KNN deps
+RUN pip install --no-cache-dir \
+    sentence-transformers==2.2.2 \
+    transformers==4.27.4 \
+    huggingface-hub==0.13.4 \
+    "urllib3<2"
+
+# install python dependencies
+RUN pip install --no-cache-dir "scikit-learn>=1.2.1" \
+    && pip install --no-cache-dir "black>=23.1.0" "build>=0.10.0" "isort>=5.12.0" "mypy>=1.0.0" \
+    numpydoc pydata-sphinx-theme pylint pytest "sphinx<6.0" "twine>=4.0.0"
+
+# Copy MSSQL JDBC driver
+COPY ./lib/mssql-jdbc-12.6.1.jre8.jar /opt/driver/mssql-jdbc-12.6.1.jre8.jar
+
+# Install Spark Rapids ML
+RUN git clone -b branch-25.02 https://github.com/NVIDIA/spark-rapids-ml.git
+COPY ./spark-rapids-ml /spark-rapids-ml
+WORKDIR /spark-rapids-ml/python
+
+# install spark-rapids-ml with requirements_dev.txt (in case it has diverged from cache)
+RUN pip install --no-cache-dir -r requirements_dev.txt \
+    && pip install --no-cache-dir -e .
+
+# Install PyTorch (CUDA 11.x version)
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+
+ENV TERM=xterm
+
+## Install keys for Spark UI using tunneling (SOCKS proxy)
+# COPY sshd/authorized_keys /etc/ssh/authorized_keys
+# RUN chmod -R 644 /etc/ssh/authorized_keys
+
+
+

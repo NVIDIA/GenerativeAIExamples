@@ -1,0 +1,4 @@
+[submodule "vision_workflows/metropolis-nim-workflows"]
+	path = vision_workflows/metropolis-nim-workflows
+	url = https://github.com/NVIDIA/metropolis-nim-workflows
+	branch = main

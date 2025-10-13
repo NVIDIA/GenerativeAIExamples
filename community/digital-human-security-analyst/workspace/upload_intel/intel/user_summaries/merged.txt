@@ -1,0 +1,118 @@
+##Start Report##
+**Event Overview**
+Username: june@domain.com, Time Range: 2022-08-29 23:20:54.550308 to 2022-08-30T17:27:30Z, Apps: Box, Google Cloud / G Suite Connector by Microsoft, Spike Email - Mail & Team Chat, WeVideo, Devices: Mobile Apps and Desktop clients, deviceDetailbrowser: Chrome 100.0.4896, deviceDetailoperatingSystem: Windows 10, Mac OS
+
+**Triage Overview**
+The event appears to be a collection of authentication logs for a single user, june@domain.com, over a long period of time. The logs are from various applications and devices, but a majority of them are from Box and Google Cloud / G Suite Connector by Microsoft. The time range of the event is from August 31, 2022, to May 30, 2024, which is a significant amount of time. Based on my cyber knowledge, this suggests that the user may have been compromised or is using malicious software to access these applications. The frequency and variety of devices and applications used are also unusual, which could be indicative of malicious activity.
+
+**Most Anomalous Fields**
+The most anomalous fields in this event are the z-scores for the logcount, appincrement, and appDisplayName fields. The z-scores for these fields are significantly higher than the mean absolute z-score, indicating that these values are far from the average values for this user. Specifically:
+
+* logcount: z-scores range from 102.22567749023438 to 248.405029296875, indicating that the log count for this user is significantly higher than usual.
+* appincrement: z-scores range from 101.62947082519531 to 633.4866333007812, indicating that the number of distinct apps used by this user is significantly higher than usual.
+* appDisplayName: z-scores range from 6.132417678833008 to 12.531970977783203, indicating that the display name of the app used by this user is significantly more diverse than usual.
+
+**Cyber Triage**
+* The user's log count and app increment suggest that they may be using multiple accounts or have been compromised.
+* The diversity of app display names and devices used may indicate that the user is using malicious software or has been compromised.
+* The unusual time range of the event and the frequency of the logs may indicate that the user's account has been compromised or is being used for malicious activity.
+* The fact that the user is using multiple devices and applications may indicate that they are trying to evade detection or hide their activity.
+* The high z-scores for logcount, appincrement, and appDisplayName fields suggest that the user's activity is significantly different from the norm and may warrant further investigation.
+
+**Threat Intelligence Enrichment and Recommendation**
+The threat intelligence snippets provided suggest that this behavior may be related to APT activity. The use of multiple devices, applications, and IP addresses is consistent with the tactics, techniques, and procedures (TTPs) used by APT groups. The high z-scores for logcount, appincrement, and appDisplayName fields suggest that the user's activity is significantly different from the norm and may be indicative of malicious activity.
+
+Recommendation: Further investigation is required to confirm the presence of APT activity. Potential IOCs to look out for and investigate in correlation with the event include:
+
+* IP addresses: 5.189.145.248, AS63949
+* Domains: offlineearthquake[.]com, valuevault[.]com, longwatch[.]com
+* Malware families: VALUEVAULT, LONGWATCH, PICKPOCKET
+* Techniques: Obfuscated files or information, Indicator removal on host, Tor
+
+These IOCs should be correlated with the event to determine if they are related to the activity observed in this incident.
+##Start Report##
+**Event Overview**
+Username: daniel@domain.com, Time Range: 2022-08-29 23:20:54.550308 to 2022-08-30T17:27:30Z, Apps: Box, Google Cloud / G Suite Connector by Microsoft, Spike Email - Mail & Team Chat, WeVideo, Devices: Mobile Apps and Desktop clients, deviceDetailbrowser: Chrome 100.0.4896, deviceDetailoperatingSystem: Windows 10, Mac OS
+
+**Triage Overview**
+The event appears to be a collection of authentication logs for a single user, daniel@domain.com, over a long period of time. The logs are from various applications and devices, but a majority of them are from Box and Google Cloud / G Suite Connector by Microsoft. The time range of the event is from August 31, 2022, to May 30, 2024, which is a significant amount of time. Based on my cyber knowledge, this suggests that the user may have been compromised or is using malicious software to access these applications. The frequency and variety of devices and applications used are also unusual, which could be indicative of malicious activity.
+
+**Most Anomalous Fields**
+The most anomalous fields in this event are the z-scores for the logcount, appincrement, and appDisplayName fields. The z-scores for these fields are significantly higher than the mean absolute z-score, indicating that these values are far from the average values for this user. Specifically:
+
+* logcount: z-scores range from 102.22567749023438 to 248.405029296875, indicating that the log count for this user is significantly higher than usual.
+* appincrement: z-scores range from 101.62947082519531 to 633.4866333007812, indicating that the number of distinct apps used by this user is significantly higher than usual.
+* appDisplayName: z-scores range from 6.132417678833008 to 12.531970977783203, indicating that the display name of the app used by this user is significantly more diverse than usual.
+
+**Cyber Triage**
+* The user's log count and app increment suggest that they may be using multiple accounts or have been compromised.
+* The diversity of app display names and devices used may indicate that the user is using malicious software or has been compromised.
+* The unusual time range of the event and the frequency of the logs may indicate that the user's account has been compromised or is being used for malicious activity.
+* The fact that the user is using multiple devices and applications may indicate that they are trying to evade detection or hide their activity.
+* The high z-scores for logcount, appincrement, and appDisplayName fields suggest that the user's activity is significantly different from the norm and may warrant further investigation.
+
+**Threat Intelligence Enrichment and Recommendation**
+The threat intelligence snippets provided suggest that this behavior may be related to APT activity. The use of multiple devices, applications, and IP addresses is consistent with the tactics, techniques, and procedures (TTPs) used by APT groups. The high z-scores for logcount, appincrement, and appDisplayName fields suggest that the user's activity is significantly different from the norm and may be indicative of malicious activity.
+
+Recommendation: Further investigation is required to confirm the presence of APT activity. Potential IOCs to look out for and investigate in correlation with the event include:
+
+* IP addresses: 5.189.145.248, AS63949
+* Domains: offlineearthquake[.]com, valuevault[.]com, longwatch[.]com
+* Malware families: VALUEVAULT, LONGWATCH, PICKPOCKET
+* Techniques: Obfuscated files or information, Indicator removal on host, Tor
+
+These IOCs should be correlated with the event to determine if they are related to the activity observed in this incident.
+##Start Report##
+
+**Event Overview**
+Username: attacktarget@domain.com
+Time Range: 2022-08-31 23:20:54 - 2022-08-31 23:54:50
+Apps: Box, Google Cloud / G Suite Connector by Microsoft, Spike Email - Mail & Team Chat, WeVideo
+Devices: ATTACKTARGET-LT, Windows 10, Chrome 100.0.4896
+
+**Triage Overview**
+This event is likely indicative of malicious activity. The high number of login attempts from different locations and apps, as well as the discrepancy between predicted and actual values for various fields, suggests anomalous behavior.
+
+**Most Anomalous Fields**
+1. logcount: High z-scores (247.99 - 258.22) indicate a significant increase in login attempts, potentially indicating a brute-force attack.
+2. appincrement: High z-scores (600.43 - 645.85) suggest an unusual number of apps being used to authenticate, possibly indicating a malicious attempt to access the account.
+3. appDisplayName: Mismatch between predicted and actual values (InviteDesk vs. various other apps) indicates potential masquerading.
+4. clientAppUsed: Discrepancy between predicted (Browser) and actual values (Mobile Apps and Desktop clients) may indicate a malicious attempt to disguise the client app used.
+
+**Cyber Triage**
+Potential malicious activity:
+- Brute-force attack on the user account, indicated by a high number of login attempts from different locations.
+- Masquerading as legitimate apps to access the account.
+- Disguising the client app used to access the account.
+- Possible lateral movement between different apps and services.
+
+Investigation steps:
+- Verify the user's activity and account access during the time range.
+- Check for any other suspicious activity from the same IP address or location.
+- Analyze login attempt logs to determine if multiple attempts were made with the same credentials.
+- Look for potential malicious intent, such as data exfiltration or changes to account settings.
+
+**Threat Intelligence Enrichment and Recommendation**
+Based on the query and event details, it appears that this incident may be related to a brute-force attack or masquerading attempts. The use of multiple apps and locations, as well as the discrepancy in client app used, suggests a sophisticated attack.
+
+After analyzing the relevant intel snippets, I found potential correlations with the following APT groups:
+
+* APT28 (aka Fancy Bear): Known for using brute-force attacks and masquerading as legitimate apps to gain access to accounts.
+* APT29 (aka Cozy Bear): Linked to phishing and brute-force attacks, often using multiple apps and locations to disguise their activity.
+
+Potential IOCs to investigate:
+
+* IP addresses: 185.220.101.65, 104.248.91.109 (associated with APT28 and APT29)
+* Domains: azuredrink[.]com, cloudemail[.]net ( potentially used for phishing or command and control)
+* User agent strings: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36" ( potentially used to disguise the client app)
+
+Recommendations:
+
+* Investigate the user's account activity and access during the time range to determine if any unauthorized access occurred.
+* Monitor for any suspicious activity from the identified IP addresses or domains.
+* Analyze network traffic for potential command and control communication.
+* Update detection rules to include the identified IOCs.
+
+##End Report##
+
+

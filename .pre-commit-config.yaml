@@ -1,0 +1,27 @@
+repos:
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.4.2
+    hooks:
+      - id: insert-license
+        files: ^RetrievalAugmentedGeneration/
+        exclude: ^RetrievalAugmentedGeneration/llm-inference-server/conversion_scripts/|^RetrievalAugmentedGeneration/llm-inference-server/ensemble_models
+        types: [python]
+        args:
+          - --license-filepath
+          - RetrievalAugmentedGeneration/LICENSE.md
+  - repo: https://github.com/psf/black
+    rev: 19.10b0
+    hooks:
+      - id: black
+        files: ^RAG/
+        args: ["--skip-string-normalization", "--line-length=119"]
+        additional_dependencies: ['click==8.0.4']
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        files: ^RAG/
+        name: isort (python)
+        args: ["--multi-line=3", "--trailing-comma", "--force-grid-wrap=0", "--use-parenthese", "--line-width=119", "--ws"]
+
+

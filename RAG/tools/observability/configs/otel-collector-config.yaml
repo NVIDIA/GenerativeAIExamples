@@ -1,0 +1,54 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        # endpoint: 0.0.0.0:4318
+
+processors:
+  tail_sampling:
+    # filter out health checks
+    # https://github.com/open-telemetry/opentelemetry-collector/issues/2310#issuecomment-1268157484
+    policies:
+      - name: drop_noisy_traces_url
+        type: string_attribute
+        string_attribute:
+          key: http.target
+          values:
+            - \/health
+          enabled_regex_matching: true
+          invert_match: true
+  transform:
+    trace_statements:
+      - context: span
+        statements:
+          - set(status.code, 1) where attributes["http.path"] == "/health"
+          # CAN UNDO if requested: replace sensitive ID information in the http target and http URL
+          - replace_pattern(attributes["http.target"], "/collections/[\\w-]+/documents/[\\w-]+", "/collections/{collection_id}/documents/{document_id}")
+          - replace_pattern(attributes["http.target"], "/collections/[\\w-]+/search", "/collections/{collection_id}/search")
+          - replace_pattern(attributes["http.target"], "/collections/[\\w-]+$", "/collections/{collection_id}")
+          - replace_pattern(attributes["http.url"], "/collections/[\\w-]+/documents/[\\w-]+", "/collections/{collection_id}/documents/{document_id}")
+          - replace_pattern(attributes["http.url"], "/collections/[\\w-]+/search", "/collections/{collection_id}/search")
+          - replace_pattern(attributes["http.url"], "/collections/[\\w-]+$", "/collections/{collection_id}")
+
+          # after the http target has been anonymized, replace other aspects of the span
+          - replace_match(attributes["http.route"], "/v1", attributes["http.target"]) where attributes["http.target"] != nil
+
+          # replace the title of the span with the route to be more descriptive
+          - replace_pattern(name, "/v1", attributes["http.route"]) where attributes["http.route"] != nil
+
+          # set the route to equal the URL if it's nondescriptive (for the embedding case)
+          - set(name, Concat([name, attributes["http.url"]], " ")) where name == "POST"
+exporters:
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp]
+      processors: [tail_sampling, transform]
+

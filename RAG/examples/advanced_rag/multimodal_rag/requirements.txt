@@ -1,0 +1,10 @@
+pdfplumber==0.11.0
+gspread==6.0.0
+pandas==2.2.0
+Pillow==10.2.0
+pydantic==2.5.3
+pymilvus==2.3.5
+python-pptx==0.6.23
+Requests==2.31.0
+opencv-python== 4.9.0.80
+pytesseract==0.3.10

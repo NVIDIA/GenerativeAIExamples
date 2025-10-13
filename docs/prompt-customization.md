@@ -1,64 +1,88 @@
 <!--
-  SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+  SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0
 -->
 
-# Customize Prompts
+# Customizing Prompts
+
+<!-- TOC -->
+
+* [About the Prompt File](#about-the-prompt-file)
+* [Accessing Prompts](#accessing-prompts)
+* [Example: Adding a Mathematical Operation Prompt](#example-adding-a-mathematical-operation-prompt)
+
+<!-- /TOC -->
+
+## About the Prompt File
 
 Each example uses a `prompt.yaml` file that defines prompts for different contexts.
 These prompts guide the RAG model in generating appropriate responses.
-You can customize these prompts to fit your specific needs and achieve desired responses from the models.
+You can tailor these prompts to fit your specific needs and achieve desired responses from the models.
 
+## Accessing Prompts
+The prompts are loaded as a Python dictionary within the application.
+To access this dictionary, you can use the `get_prompts()` function provided by the `utils` module.
+This function retrieves the complete dictionary of prompts.
 
-
-## Example: Access a Prompt
-
-The [`prompt.yaml`](../src/prompt.yaml) file is loaded as a Python dictionary in the application.
-To access this dictionary, use the [`get_prompts()`](../src/utils.py#L150) function provided by the [`utils`](../src/utils.py) module.
-
-For example, if we have the following `prompt.yaml` file:
+Consider we have following `prompt.yaml` file:
 
 ```yaml
 chat_template: |
-    You are a helpful, respectful and honest assistant.
-    Always answer as helpfully as possible, while being safe.
+    You are a helpful, respectful and honest assistant. 
+    Always answer as helpfully as possible, while being safe. 
     Please ensure that your responses are positive in nature.
 
 rag_template: |
-    You are a helpful AI assistant named Envie.
-    You will reply to questions only based on the context that you are provided.
+    You are a helpful AI assistant named Envie. 
+    You will reply to questions only based on the context that you are provided. 
     If something is out of context, you will refrain from replying and politely decline to respond to the user.
 ```
 
-Use the following code to access the chat_template:
+You can access the chat_template using following the code in your chain server:
 
 ```python3
-from .utils import get_prompts
+from RAG.src.chain_server.utils import get_prompts
 
 prompts = get_prompts()
 
 chat_template = prompts.get("chat_template", "")
 ```
 
+After you update the prompt, you can restart the service by performing the following steps:
+
+1. Move to example directory:
+
+   ```console
+   cd RAG/examples/basic_rag/llamaindex
+   ```
+
+2. Start the chain server microservice:
+
+   ```console
+   docker compose down
+   docker compose up -d --build
+   ```
+
+3. Go to `http://<ip>:<port>` to interact with the example.
 
 
-## Example: Add a Pirate Template
+## Example: Adding a Pirate Prompt
 
-Use the following procedure to create a template that makes the LLM respond as a pirate.
+Let's create a prompt that will make llm respond in a way that resonse is coming from a pirate.
 
-1. Add a new template to [`prompt.yaml`](../src/prompt.yaml):
-
+1. Add the prompt to `prompt.yaml`:
+ 
    ```yaml
-   pirate_template: |
+   pirate_prompt: |
       You are a pirate and for every question you are asked you respond in the same way.
    ```
 
-2. Update the [`llm_chain`](../src/chains.py#L130) method in [`chains.py`](../src/chains.py) and use `pirate_template` to generate responses.
+2. Update the `llm_chain` method in `chains.py` and use `pirate_prompt` to generate responses:
 
    ```python3
     def llm_chain(self, query: str, chat_history: List["Message"], **kwargs) -> Generator[str, None, None]:
         """Execute a simple LLM chain using the components defined above.
-        It's called when the `/generate` API is invoked with `use_knowledge_base` set to `false`.
+        It's called when the `/generate` API is invoked with `use_knowledge_base` set to `False`.
 
         Args:
             query (str): Query to be answered by llm.
@@ -66,7 +90,7 @@ Use the following procedure to create a template that makes the LLM respond as a
         """
 
         logger.info("Using llm to generate response directly without knowledge base.")
-        prompt = prompts.get("pirate_template", "")
+        prompt = prompts.get("pirate_prompt", "")
 
         logger.info(f"Prompt used for response generation: {prompt}")
         system_message = [("system", prompt)]
@@ -78,30 +102,20 @@ Use the following procedure to create a template that makes the LLM respond as a
 
         # Simple langchain chain to generate response based on user's query
         chain = prompt_template | llm | StrOutputParser()
-        return chain.stream({"query_str": query})
+        return chain.stream({"query_str": query}, config={"callbacks": [self.cb_handler]},)   
    ```
 
-3. Restart the service by running the following code.
+3. Change directory to an example:
 
    ```console
-   docker compose -f deploy/compose/docker-compose-rag-server.yaml up -d --build
+   cd RAG/examples/basic_rag/llamaindex
    ```
 
-## Prompt customization in Helm chart
+4. Start the chain server microservice:
 
-The [prompt.yaml](../deploy/helm/rag-server/files/prompt.yaml) resides within `rag-server/files/prompt.yaml` in the chart. This is converted into a ConfigMap within the Helm deployment.
+   ```console
+   docker compose down
+   docker compose up -d --build
+   ```
 
-To provide custom instructions in the prompt, you can edit the [prompt.yaml](../deploy/helm/rag-server/files/prompt.yaml) and update the `chat_template`, `rag_template` or `query_rewriter_prompt`.
-
-```yaml
-chat_template: |
-    <custom prompt instructions>
-
-rag_template: |
-    <custom prompt instructions>
-
-query_rewriter_prompt: |
-    <custom prompt instructions>
-```
-
-After the required changes have been made, you can deploy the Helm chart from source by following the steps [here](./quickstart.md#deploying-e2e-from-the-source-optional).
+5. Go to `http://<ip>:<port>` to interact with example.

@@ -1,0 +1,23 @@
+services:
+  rag_evaluator:
+    container_name: rag-evaluator
+    image: rag-evaluator:${TAG:-latest}
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    volumes:
+      - ${DATA_DIR}:/data
+      - ${OUTPUT_DIR}:/output
+    command: >
+      python3 /opt/evaluation/query_rag_with_gt_questions_and_evaluate.py 
+      --gt_qa_pairs_doc /data/${GT_QA_DOC:-ELSA_IFU_RAG_Example_QandA.txt} 
+      --output_dir /output
+      --eval_result_name eval_result
+    environment:
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+    shm_size: 5gb
+
+
+networks:
+  default:
+    name: nvidia-rag

@@ -1,0 +1,3 @@
+gradio
+pymongo
+langgraph-sdk

@@ -1,0 +1,13 @@
+pymupdf==1.24.10
+streamlit==1.38.0
+python-pptx==1.0.2
+Pillow==10.4.0
+requests==2.32.3
+frontend==0.0.3
+llama-index-core==0.10.58
+llama-index-readers-file==0.1.30
+llama-index-llms-nvidia==0.1.4
+llama-index-embeddings-nvidia==0.1.4
+llama-index-vector-stores-milvus==0.1.20
+pymilvus==2.4.4
+python-pptx==1.0.2

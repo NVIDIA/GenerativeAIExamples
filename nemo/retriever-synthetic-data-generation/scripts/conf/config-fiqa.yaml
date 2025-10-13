@@ -1,0 +1,136 @@
+input_file: ${input_file}
+input_format: ${input_format}  # squad or rawdoc
+output_dir: ${output_dir}
+api_key: ${api_key}
+max_examples: 220
+use_original: false  # Set true if input file contains original questions and would like to evaluate using the original data
+
+pre_processors:
+  - 
+    _target_: nemo_retriever_sdg.DummyPreprocessor
+
+qa_generator:
+  _target_: nemo_retriever_sdg.SimpleQAGenerator
+  api_key: ${api_key}
+  model: mistralai/mixtral-8x22b-instruct-v0.1
+  # mistralai/mixtral-8x7b-instruct-v0.1
+  # nvidia/nemotron-4-340b-instruct
+  # mistralai/mixtral-8x22b-instruct-v0.1
+  base_url: https://integrate.api.nvidia.com/v1
+  max_examples: ${max_examples}
+  generate_config:
+    temperature: 0.5
+    top_p: 1.0
+    max_tokens: 2048
+    stream: true
+    parse_response: true
+    num_questions: 3
+    squad_format: true
+    system_prompt: |
+      You are a data annotator trying to generate questions and corresponding answers based on input document. Use the following guidelines:
+
+      - Identify key phrases and entities in the document and generate questions based on those key phrases and entities in the document.
+      - Generate questions that could be answered by a piece of information in the input document.
+      - Do not generate questions which requires looking at the input document to comprehend the question
+      - Do not use phrases like 'according to the document', 'according to the author', 'in the document', 'this document' etc
+      - Questions can also be in the form of key phrases in the document
+      - Generate questions that are relevant to the idea expressed in the input document, and the input document contains the complete answer to your question.
+      - Generate questions that provide specific context that can lead to the specific answer contained in the input document.
+      - Generate questions that are varied and different from each other. You can change up the phrasing, vocabulary, complexity, and the type of questions you ask throughout the task.
+      - DO NOT copy and paste exact phrasing from the test. Formulate questions in your own words. 
+      - Generate answers to the questions as well.
+      - Provide an explanation as to why the generated question is good. Use the following example questions and answers for reference. 
+      - Generated Questions should start with Question: 
+      - Generated Answers should start with Answer:
+      - Generated Explanations should start with Explanation:
+      
+      Examples:
+
+      Input document:
+      Just have the associate sign the back and then deposit it.  It's called a third party cheque and is perfectly legal.  I wouldn't be surprised if it has a longer hold period and, as always, you don't get the money if the cheque doesn't clear. Now, you may have problems if it's a large amount or you're not very well known at the bank.  In that case you can have the associate go to the bank and endorse it in front of the teller with some ID.  You don't even technically have to be there.  Anybody can deposit money to your account if they have the account number. He could also just deposit it in his account and write a cheque to the business.
+      Have the check reissued to the proper payee.
+      
+      Question:
+      How to deposit a cheque issued to an associate in my business into my business account?
+
+      Input Document:
+      Sure you can.  You can fill in whatever you want in the From section of a money order, so your business name and address would be fine. The price only includes the money order itself.  You can hand deliver it yourself if you want, but if you want to mail it, you'll have to provide an envelope and a stamp. Note that, since you won't have a bank record of this payment, you'll want to make sure you keep other records, such as the stub of the money order.  You should probably also ask the contractor to give you a receipt.
+
+      Question:
+      Can I send a money order from USPS as a business?
+
+      Input Document:
+      Funds earned and spent before opening a dedicated business account should be classified according to their origination. For example, if your business received income, where did that money go?  If you took the money personally, it would be considered either a 'distribution' or a 'loan' to you.  It is up to you which of the two options you choose. On the flip side, if your business had an expense that you paid personally, that would be considered either a 'contribution of capital' or a 'loan' from you. If you choose to record these transactions as loans, you can offset them together, so you don't need two separate accounts, loan to you and loan from you. When the bank account was opened, the initial deposit came from where?  If it came from your personal funds, then it is either a 'contribution of capital' or a 'loan' from you. From the sound of your question, you deposited what remained after the preceding income/expenses.  This would, in effect, return the 'loan' account back to zero, if choosing that route. The above would also be how to record any expenses you may pay personally for the business (if any) in the future. Because these transactions were not through a dedicated business bank account, you can't record them in Quickbooks as checks and deposits.  Instead, you can use Journal Entries.  For any income received, you would debit your capital/loan account and credit your income account.  For any expenses, you would debit the appropriate expense account and credit your distribution/loan account. Also, if setting up a loan account, you should choose either Current Asset or Current Liability type.  The capital contribution and distribution account should be Equity type. Hope this helps!
+
+      Question:
+      How to account for money earned and spent prior to establishing business bank accounts?
+
+      Input Document:
+      I called the IRS (click here for IRS contact info) and they said I do not need to get a new EIN.  I could have just filed the appropriate employer federal tax return (940/941) and then the filing requirements would have been updated.  But while I was on the phone, they just updated the filing requirements for my LLC so I am all good now (I still need to file the correct form and make the correct payments, etc. but I can use this same EIN going forward). Disclaimer: Don't trust me (or this answer) for tax advice (your situation may be different).  The IRS person on the phone was very helpful so I recommend calling them if you are in a similar situation.  FYI, I have found calling the IRS to always be very helpful.
+
+      Question:
+      Do I need a new EIN since I am hiring employees for my LLC?
+      
+    user_prompt_template: |
+      Generate {num_questions} questions and corresponding answers based on Input Document.
+
+      Input Document:
+      {document}   
+
+easiness_filter:
+  _target_: nemo_retriever_sdg.EasinessFilter
+  filter_cfg:
+    filter_threshold: 0.75
+    embedding_model: "intfloat/e5-large-unsupervised"
+    batch_size: 16
+
+answerability_filter:
+  _target_: nemo_retriever_sdg.AnswerabilityFilter
+  filter_cfg:
+    base_url: "https://integrate.api.nvidia.com/v1"
+    api_key: ${api_key}
+    model_name: "meta/llama3-70b-instruct"
+    num_criteria: 4  # Number of criteria to parse from the response. It must be alined with the prompt template
+    system_prompt: |
+      You are an evaluator who is rating questions to given context passages based on the given criteria. Assess the given question for clarity and answerability given enough domain knowledge, consider the following evaluation criterion:
+      Criterion 1 - Can the question be understood and answered without needing additional context or access to external references not provided within the question itself? Questions should be self-contained, meaning they do not rely on specific documents, tables, or prior knowledge not shared within the question.
+      Criterion 2 - Is it clear what type of answer or information the question seeks? The question should convey its purpose without ambiguity, allowing for a direct and relevant response.
+      Criterion 3 - Does the content in the context contain information that can answer the question or part of the question?
+      Criterion 4 - Does the content in the context completely answer the question?
+      
+      Provide your response in a mandatory dictionary format, and a short explanation of the rating like
+      {
+      \"criterion_1_explanation\": "<Brief explanation of why criterion_1 was satisfied or not satisfied>",
+      \"criterion_1\": "<Y/N>",
+      \"criterion_2_explanation\":  "<State the purpose of the question and justify why it was satisfied or not satisfied>",
+      \"criterion_2\": "<Y/N>",
+      \"criterion_3_explanation\": "<Show what parts of the content contain relevant information to the question if this criterion is satisfied, state why the information is irrelevant if unsatisfied>",
+      \"criterion_3\": "<Y/N>",
+      \"criterion_4_explanation\": "<Extract spans from the content that help completely answer the question if criterion is satisfied, state what parts are missing if not satisfied>",
+      \"criterion_4\": "<Y/N>"
+      }
+      Provide only the dictionary response and nothing else.    
+    
+    user_prompt_template: |
+      Context Passage:
+      {context}
+      Question:
+      {question}
+      
+filters:
+  -
+    ${answerability_filter}
+  -
+    ${easiness_filter}
+  
+
+post_processors:
+  - 
+    _target_: nemo_retriever_sdg.DivergenceCalculator
+
+analyzers:
+  -
+    _target_: nemo_retriever_sdg.QuestionLengthAnalyzer
+  -
+    _target_: nemo_retriever_sdg.LexicalDivergenceAnalyzer
+
