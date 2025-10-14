@@ -4,7 +4,7 @@ import logging
 import math
 import re
 from typing import Dict, List, AsyncGenerator, Optional, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from contextlib import contextmanager
 import time
 import difflib
@@ -303,10 +303,11 @@ model_extractor = ModelNameExtractor(MODEL_TAGS, fuzzy_cutoff=0.6)
 
 # Define request and response models
 class ApplyConfigurationRequest(BaseModel):
-    """Request model for applying vGPU configuration to a remote host."""
-    vm_ip: str = Field(..., description="IP address of the VM to configure")
-    username: str = Field(..., description="SSH username")
-    password: str = Field(..., description="SSH password")
+    """Request model for applying vGPU configuration to a remote host or locally."""
+    deployment_mode: str = Field(default="remote", description="Deployment mode: 'local' or 'remote'")
+    vm_ip: Optional[str] = Field(None, description="IP address of the VM to configure (required for remote mode)")
+    username: Optional[str] = Field(None, description="SSH username (required for remote mode)")
+    password: Optional[str] = Field(None, description="SSH password (required for remote mode)")
     configuration: Dict[str, Any] = Field(..., description="vGPU configuration to apply")
     ssh_port: int = Field(default=22, description="SSH port")
     timeout: int = Field(default=30, description="SSH connection timeout")
@@ -319,6 +320,20 @@ class ApplyConfigurationRequest(BaseModel):
     model: Optional[str] = Field(None, description="LLM model name")
     model_tag: Optional[str] = Field(None, description="Model tag/ID for vLLM deployment (e.g., mistralai/Mistral-7B-Instruct-v0.3)")
     llm_endpoint: Optional[str] = Field(None, description="LLM endpoint URL")
+    
+    @field_validator('vm_ip', 'username', 'password')
+    @classmethod
+    def validate_remote_fields(cls, v, info):
+        """Validate that VM fields are provided when in remote mode."""
+        # Get deployment_mode from the data being validated
+        deployment_mode = info.data.get('deployment_mode', 'remote')
+        field_name = info.field_name
+        
+        # Only require these fields in remote mode
+        if deployment_mode == 'remote' and not v:
+            raise ValueError(f"{field_name} is required for remote deployment mode")
+        
+        return v
 
 
 class CommandResult(BaseModel):
@@ -1985,14 +2000,16 @@ async def ensure_ssh_key_exists() -> tuple[bool, str, str]:
         return False, "", f"SSH key generation error: {str(e)}"
 
 
-async def test_ssh_connection(host: str, username: str, port: int = 22) -> tuple[bool, str]:
+async def test_ssh_connection(host: str, username: str, port: int = 22, password: str = None) -> tuple[bool, str]:
     """
     Test SSH connection using key-based authentication.
+    If key auth fails and password is provided, automatically copy the SSH key.
     
     Args:
         host: Remote host IP/hostname
         username: SSH username
         port: SSH port (default 22)
+        password: SSH password (optional, used for automatic key setup)
         
     Returns:
         (success, message)
@@ -2002,6 +2019,7 @@ async def test_ssh_connection(host: str, username: str, port: int = 22) -> tuple
     ssh_dir = os.path.expanduser('~/.ssh')
     key_name = 'vgpu_sizing_advisor'
     key_path = os.path.join(ssh_dir, key_name)
+    pub_key_path = f"{key_path}.pub"
     
     # Check if key exists
     if not os.path.exists(key_path):
@@ -2036,8 +2054,101 @@ async def test_ssh_connection(host: str, username: str, port: int = 22) -> tuple
             return True, "SSH connection successful"
         else:
             stderr_str = stderr.decode('utf-8', errors='replace')
-            if 'Permission denied' in stderr_str:
-                return False, "SSH key authentication failed. Please run ssh-copy-id to set up the key."
+            if 'Permission denied' in stderr_str and password:
+                # Attempt to automatically copy the SSH key using built-in Python
+                logger.info("SSH key not set up. Attempting automatic key copy...")
+                
+                try:
+                    # Read the public key
+                    with open(pub_key_path, 'r') as f:
+                        pub_key_content = f.read().strip()
+                    
+                    logger.info(f"Attempting to copy SSH key to {username}@{host}:{port}")
+                    
+                    # Create a temporary askpass script for non-interactive password input
+                    import tempfile
+                    import subprocess
+                    
+                    # Create askpass helper script
+                    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.sh') as f:
+                        f.write(f'#!/bin/sh\necho "{password}"')
+                        askpass_path = f.name
+                    
+                    os.chmod(askpass_path, 0o700)
+                    
+                    try:
+                        # Set up environment for SSH_ASKPASS
+                        env = os.environ.copy()
+                        env['SSH_ASKPASS'] = askpass_path
+                        env['SSH_ASKPASS_REQUIRE'] = 'force'  # Force using SSH_ASKPASS
+                        env['DISPLAY'] = ':0'
+                        
+                        # Try ssh-copy-id with SSH_ASKPASS
+                        logger.info("Using SSH_ASKPASS for non-interactive key copy")
+                        result = subprocess.run(
+                            [
+                                'ssh-copy-id',
+                                '-i', pub_key_path,
+                                '-p', str(port),
+                                '-o', 'StrictHostKeyChecking=accept-new',
+                                f'{username}@{host}'
+                            ],
+                            env=env,
+                            capture_output=True,
+                            text=True,
+                            timeout=30
+                        )
+                        
+                        if result.returncode == 0:
+                            logger.info("SSH key copied successfully!")
+                            return True, "SSH key automatically configured"
+                        else:
+                            logger.warning(f"ssh-copy-id failed: {result.stderr}")
+                            
+                            # Fallback: directly append to authorized_keys using SSH
+                            logger.info("Trying direct key copy via SSH...")
+                            
+                            # Escape single quotes in the public key
+                            safe_key = pub_key_content.replace("'", "'\\''")
+                            copy_cmd = f"mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '{safe_key}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+                            
+                            ssh_result = subprocess.run(
+                                [
+                                    'ssh',
+                                    '-p', str(port),
+                                    '-o', 'StrictHostKeyChecking=accept-new',
+                                    '-o', 'PubkeyAuthentication=no',
+                                    f'{username}@{host}',
+                                    copy_cmd
+                                ],
+                                env=env,
+                                capture_output=True,
+                                text=True,
+                                timeout=30
+                            )
+                            
+                            if ssh_result.returncode == 0:
+                                logger.info("SSH key copied via direct SSH method!")
+                                return True, "SSH key automatically configured"
+                            else:
+                                logger.error(f"Direct SSH copy also failed: {ssh_result.stderr}")
+                                return False, f"Could not copy SSH key automatically. Please run manually: ssh-copy-id -i {pub_key_path} -p {port} {username}@{host}"
+                                
+                    except subprocess.TimeoutExpired:
+                        return False, "SSH key copy timeout (30s)"
+                    finally:
+                        # Clean up askpass script
+                        try:
+                            os.unlink(askpass_path)
+                        except:
+                            pass
+                        
+                except Exception as copy_error:
+                    logger.error(f"Automatic key copy failed: {copy_error}")
+                    return False, f"Could not copy key automatically. Please run: ssh-copy-id -i {pub_key_path} -p {port} {username}@{host}"
+            elif 'Permission denied' in stderr_str:
+                # No password provided
+                return False, f"SSH key authentication failed. Please run ssh-copy-id -i {pub_key_path} -p {port} {username}@{host}"
             else:
                 return False, f"SSH connection failed: {stderr_str}"
                 
@@ -2124,6 +2235,108 @@ async def execute_ssh_command(
         raise
 
 
+async def deploy_vllm_local(config_request) -> AsyncGenerator[str, None]:
+    """
+    Deploy vLLM locally by SSHing from container to host machine.
+    This allows us to use the host's Python, GPU drivers, and vLLM installation.
+    """
+    import subprocess
+    import socket
+    import os
+    from copy import copy
+    
+    def send_progress(message: str):
+        return json.dumps({
+            "status": "executing",
+            "message": message,
+            "display_message": message,
+            "deployment_type": "local"
+        })
+    
+    def send_error(message: str, error: str):
+        return json.dumps({
+            "status": "error",
+            "message": message,
+            "error": error,
+            "display_message": f"[LOCAL] Error: {message}",
+            "deployment_type": "local"
+        })
+    
+    def send_success(message: str, data: dict = None):
+        response = {
+            "status": "success",
+            "message": message,
+            "display_message": f"[LOCAL] {message}",
+            "deployment_type": "local"
+        }
+        if data:
+            response.update(data)
+        return json.dumps(response)
+    
+    try:
+        logger.info("=" * 80)
+        logger.info(">>> LOCAL DEPLOYMENT (via SSH to host) <<<")
+        logger.info("=" * 80)
+        
+        yield send_progress("=" * 60)
+        yield send_progress("🏠 LOCAL DEPLOYMENT MODE")
+        yield send_progress("=" * 60)
+        yield send_progress("Running vLLM on host machine (same machine as RAG/vector DB)")
+        yield send_progress("")
+        
+        # Detect host machine IP from container
+        yield send_progress("🔍 Detecting host machine IP...")
+        
+        gateway_ip = None
+        try:
+            # Get Docker gateway (host IP)
+            with open('/proc/net/route') as f:
+                for line in f:
+                    fields = line.strip().split()
+                    if len(fields) < 3 or fields[1] != '00000000':
+                        continue
+                    if not int(fields[3], 16) & 2:
+                        continue
+                    gateway_hex = fields[2]
+                    gateway_ip = socket.inet_ntoa(bytes.fromhex(gateway_hex)[::-1])
+                    break
+        except Exception as e:
+            logger.debug(f"Could not read /proc/net/route: {e}")
+        
+        # Fallback
+        if not gateway_ip:
+            try:
+                gateway_ip = socket.gethostbyname('host.docker.internal')
+            except:
+                gateway_ip = "172.17.0.1"
+        
+        # Get host user from environment or default to nvadmin
+        host_user = os.environ.get('HOST_USER', 'nvadmin')
+        
+        yield send_progress(f"✓ Host: {gateway_ip}")
+        yield send_progress(f"✓ User: {host_user}")
+        yield send_progress("")
+        
+        # Create request for host machine
+        host_request = copy(config_request)
+        host_request.vm_ip = gateway_ip
+        host_request.username = host_user
+        host_request.password = ""  # Use SSH keys
+        host_request.ssh_port = 22
+        
+        # Mark as local deployment so we can account for existing GPU usage
+        if not hasattr(host_request, 'is_local_deployment'):
+            host_request.configuration['is_local_deployment'] = True
+        
+        # Use the remote deployment function (which handles everything properly)
+        async for progress_update in deploy_vllm_server(host_request):
+            yield progress_update
+            
+    except Exception as e:
+        logger.error(f"[LOCAL DEPLOYMENT] FAILED: {e}", exc_info=True)
+        yield send_error("Local deployment failed", str(e))
+
+
 async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
     """
     Deploy and start vLLM server on remote VM via SSH.
@@ -2145,31 +2358,43 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
         JSON progress updates via Server-Sent Events
     """
     
+    # Import time module for timing tracking
+    import time as time_module
+    
+    # Extract configuration first
+    host = config_request.vm_ip
+    username = config_request.username
+    password = config_request.password or ""
+    port = getattr(config_request, 'ssh_port', 22)
+    
+    # Track deployment information (minimal for cleaner output)
+    debug_info = {
+        "deployment_type": "",
+        "gpu_metrics": {},
+        "vllm_config": {},
+        "timing": {},
+        "summary": {}
+    }
+    
+    # Determine if this is actually a local deployment (SSH to localhost)
+    is_localhost = host in ['localhost', '127.0.0.1', '172.17.0.1', '172.18.0.1'] or host.startswith('172.')
+    deployment_label = "LOCAL" if is_localhost else "VM"
+    
     def send_progress(message: str):
         return json.dumps({
             "status": "executing",
             "message": message,
-            "display_message": message
+            "display_message": message,
+            "deployment_type": "remote" if not is_localhost else "local"
         })
-    
-    # Import time module for timing tracking
-    import time as time_module
-    
-    # Track detailed debug information
-    debug_info = {
-        "commands_executed": [],
-        "gpu_metrics": {},
-        "vllm_config": {},
-        "timing": {},
-        "errors": []
-    }
     
     def send_success(message: str, data: dict = None):
         response = {
             "status": "success",
             "message": message,
-            "display_message": message,
-            "debug_info": debug_info
+            "display_message": f"[{deployment_label}] {message}",
+            "debug_info": debug_info,
+            "deployment_type": "remote" if not is_localhost else "local"
         }
         if data:
             response.update(data)
@@ -2180,26 +2405,20 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
             "status": "error",
             "message": message,
             "error": error,
-            "display_message": f"Error: {message}",
-            "debug_info": debug_info
+            "display_message": f"[{deployment_label}] Error: {message}",
+            "debug_info": debug_info,
+            "deployment_type": "remote" if not is_localhost else "local"
         })
     
     def log_command(command: str, stdout: str = "", stderr: str = "", code: int = 0, duration: float = 0):
-        """Log command execution for debug output"""
-        debug_info["commands_executed"].append({
-            "command": command[:200],  # Truncate long commands
-            "stdout": stdout[:500] if stdout else "",  # Truncate long output
-            "stderr": stderr[:500] if stderr else "",
-            "exit_code": code,
-            "duration_ms": int(duration * 1000)
-        })
+        """Log command execution for debugging (logs only, not in user output)"""
+        if code != 0:
+            logger.warning(f"[{deployment_label}] Command failed (exit {code}): {command[:80]}")
+        else:
+            logger.debug(f"[{deployment_label}] Command OK: {command[:80]} ({duration:.1f}s)")
     
     try:
-        # Extract configuration
-        host = config_request.vm_ip
-        username = config_request.username
-        password = config_request.password
-        port = getattr(config_request, 'ssh_port', 22)
+        # Get HuggingFace token
         hf_token = config_request.hf_token or ""
         
         # Track deployment start time
@@ -2222,6 +2441,10 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
         )
         max_tokens = config.get('max_kv_tokens', 2048)
         
+        # Check if this is a local deployment (running on same machine as RAG/vector DB)
+        is_local = config.get('is_local_deployment', False)
+        debug_info["deployment_type"] = "local" if is_local else "remote"
+        
         # Calculate optimal GPU utilization based on vGPU profile
         profile = config.get('vgpu_profile', 'N/A')
         prof_val = re.search(r'-([0-9]{1,3})Q', profile)
@@ -2231,24 +2454,40 @@ async def deploy_vllm_server(config_request) -> AsyncGenerator[str, None]:
         # Initialize with default - will be recalculated after detecting physical GPU
         gpu_util = 0.85  # Conservative default
         
+        # Display deployment mode banner
+        deployment_icon = "🏠" if is_localhost else "☁️"
+        logger.info("=" * 80)
+        logger.info(f">>> {deployment_label} DEPLOYMENT <<<")
+        logger.info(f"Target: {host}:{port} (user: {username})")
+        logger.info("=" * 80)
+        
+        yield send_progress("=" * 60)
+        yield send_progress(f"{deployment_icon} {deployment_label} DEPLOYMENT MODE")
+        yield send_progress("=" * 60)
+        if is_localhost:
+            yield send_progress("Target: Host machine (same as RAG/vector DB)")
+        else:
+            yield send_progress(f"Target: Remote VM at {host}")
+        yield send_progress("")
+        
         # Step 1: Ensure SSH key exists
         import os
         yield send_progress("Checking SSH key...")
         key_exists, key_path, key_msg = await ensure_ssh_key_exists()
         
         if not key_exists:
-            debug_info["errors"].append(f"SSH key generation failed: {key_msg}")
+            logger.error(f"[{deployment_label}] SSH key generation failed: {key_msg}")
             yield send_error("SSH key generation failed", key_msg)
             return
         
         yield send_progress(key_msg)
         
-        # Step 2: Test SSH connection
+        # Step 2: Test SSH connection (with automatic key setup if password is provided)
         yield send_progress("Testing SSH connection...")
-        conn_success, conn_msg = await test_ssh_connection(host, username, port)
+        conn_success, conn_msg = await test_ssh_connection(host, username, port, password)
         
         if not conn_success:
-            debug_info["errors"].append(f"SSH connection failed: {conn_msg}")
+            logger.error(f"[{deployment_label}] SSH connection failed: {conn_msg}")
             
             # Provide clear instructions
             setup_instructions = f"""SSH key authentication not set up yet.
@@ -2278,11 +2517,11 @@ After running this command, click 'Test Connection' or try deployment again."""
             log_command("echo 'Connection verified'", stdout, stderr, code, time_module.time() - step_start)
             
             if code != 0:
-                debug_info["errors"].append(f"SSH verification failed: {stderr}")
+                logger.error(f"[{deployment_label}] SSH verification failed: {stderr}")
                 yield send_error("SSH verification failed", stderr or "Could not execute commands")
                 return
         except Exception as e:
-            debug_info["errors"].append(f"SSH verification exception: {str(e)}")
+            logger.error(f"[{deployment_label}] SSH verification exception: {str(e)}")
             yield send_error("SSH verification failed", str(e))
             return
         
@@ -2301,7 +2540,7 @@ After running this command, click 'Test Connection' or try deployment again."""
             log_command("nvidia-smi --query-gpu=name,memory.total,driver_version", stdout, stderr, code, time_module.time() - step_start)
             
             if code != 0:
-                debug_info["errors"].append(f"nvidia-smi failed: {stderr}")
+                logger.error(f"[{deployment_label}] nvidia-smi failed: {stderr}")
                 yield send_error("GPU not found", "nvidia-smi command failed. Please ensure NVIDIA drivers are installed.")
                 return
             
@@ -2365,7 +2604,7 @@ After running this command, click 'Test Connection' or try deployment again."""
                     else:
                         yield send_progress(f"Warning: Detected GPU ({detected_gpu_name}) may not match profile ({profile}) (match score: {similarity:.2f})")
             else:
-                debug_info["errors"].append("nvidia-smi returned empty output")
+                logger.error(f"[{deployment_label}] nvidia-smi returned empty output")
                 yield send_error("No GPU detected", "nvidia-smi returned no output")
                 return
                 
@@ -2379,7 +2618,7 @@ After running this command, click 'Test Connection' or try deployment again."""
                 debug_info["gpu_metrics"]["initial_memory"] = stdout.strip()
                 
         except Exception as e:
-            debug_info["errors"].append(f"GPU check exception: {str(e)}")
+            logger.error(f"[{deployment_label}] GPU check exception: {str(e)}")
             yield send_error("Failed to check GPU", str(e))
             return
         
@@ -2450,7 +2689,7 @@ After running this command, click 'Test Connection' or try deployment again."""
                 log_command(f"Install vLLM in {venv_path}", stdout[-500:] if stdout else "", stderr[-500:] if stderr else "", code, install_duration)
                 
                 if code != 0:
-                    debug_info["errors"].append(f"vLLM install failed: {stderr[-500:] if stderr else 'Unknown'}")
+                    logger.error(f"[{deployment_label}] vLLM install failed: {stderr[-500:] if stderr else 'Unknown'}")
                     yield send_error("Failed to install vLLM", stderr[-1000:] if stderr else "Unknown error")
                     return
                 yield send_progress(f"vLLM installation completed in {int(install_duration)}s")
@@ -2589,21 +2828,35 @@ After running this command, click 'Test Connection' or try deployment again."""
                 await asyncio.sleep(3)
             
             # Check GPU memory before starting
+            # For local deployments, also get baseline usage (existing processes like RAG/vector DB)
             stdout, stderr, code = await execute_ssh_command(
                 host, username, password,
-                "nvidia-smi --query-gpu=memory.free,memory.total --format=csv,noheader,nounits",
+                "nvidia-smi --query-gpu=memory.free,memory.total,memory.used --format=csv,noheader,nounits",
                 port=port
             )
             if code == 0 and stdout:
                 try:
-                    free_mem, total_mem = map(int, stdout.strip().split(','))
+                    parts = stdout.strip().split(',')
+                    free_mem, total_mem = int(parts[0]), int(parts[1])
+                    used_mem = int(parts[2]) if len(parts) > 2 else (total_mem - free_mem)
+                    
                     debug_info["gpu_metrics"][f"attempt_{attempt}_pre_start"] = {
                         "free_mb": free_mem,
                         "total_mb": total_mem,
+                        "used_mb": used_mem,
                         "free_percent": round(free_mem/total_mem*100, 1)
                     }
+                    
+                    # Store baseline for local deployments (overhead from RAG/vector DB/etc)
+                    if is_local and attempt == 1:
+                        debug_info["gpu_metrics"]["baseline_used_mb"] = used_mem
+                        baseline_gb = used_mem / 1024
+                        logger.info(f"LOCAL DEPLOYMENT: Baseline GPU usage: {baseline_gb:.1f}GB (RAG/vector DB overhead)")
+                        yield send_progress(f"ℹ️  Existing GPU usage: {baseline_gb:.1f}GB (RAG, vector DB, etc.)")
+                    
                     logger.info(f"GPU memory before attempt {attempt}: {free_mem}MB free / {total_mem}MB total ({free_mem/total_mem*100:.1f}% free)")
-                except:
+                except Exception as e:
+                    logger.warning(f"Could not parse GPU memory: {e}")
                     pass
             
             # Adjust max_model_len for later attempts
@@ -2611,6 +2864,32 @@ After running this command, click 'Test Connection' or try deployment again."""
             if attempt > 2 and max_tokens > 1024:
                 adjusted_max_tokens = max(1024, max_tokens - (attempt - 2) * 256)
                 logger.info(f"Reducing max_model_len from {max_tokens} to {adjusted_max_tokens} for attempt {attempt}")
+            
+            # Check if common vLLM ports (8000-8010) are available, kill processes if occupied
+            yield send_progress("Checking if ports 8000-8010 are available...")
+            ports_cleared = []
+            for check_port in range(8000, 8011):
+                stdout, stderr, code = await execute_ssh_command(
+                    host, username, password,
+                    f"lsof -ti:{check_port} 2>/dev/null || true",
+                    port=port,
+                    timeout=5
+                )
+                if code == 0 and stdout.strip():
+                    pids = [p.strip() for p in stdout.strip().split('\n') if p.strip().isdigit()]
+                    if pids:
+                        ports_cleared.append(check_port)
+                        await execute_ssh_command(
+                            host, username, password,
+                            f"kill -9 {' '.join(pids)} 2>/dev/null || true",
+                            port=port,
+                            timeout=5
+                        )
+            
+            if ports_cleared:
+                yield send_progress(f"✓ Cleared ports: {', '.join(map(str, ports_cleared))}")
+            else:
+                yield send_progress("✓ All ports available")
             
             yield send_progress(f"Starting vLLM (GPU util: {attempt_gpu_util:.0%}, max tokens: {adjusted_max_tokens})...")
             
@@ -2664,6 +2943,7 @@ nohup bash -c 'source {venv_path}/bin/activate && \
             max_wait = 900  # 15 minutes for model download and loading
             start_time = time.time()
             server_ready = False
+            actual_port = 8000  # Track the actual port vLLM is using (8000 or 8001)
             
             last_log_check = 0
             while time.time() - start_time < max_wait:
@@ -2680,26 +2960,81 @@ nohup bash -c 'source {venv_path}/bin/activate && \
                     )
                     
                     if code == 0 and stdout.strip() == '0':
-                        # Process died
-                        yield send_error("vLLM process died", "The vLLM server process has stopped unexpectedly. Check logs.")
+                        # Process died - get the logs to show what happened
+                        yield send_progress("vLLM process crashed. Retrieving error logs...")
+                        
+                        log_stdout, log_stderr, log_code = await execute_ssh_command(
+                            host, username, password,
+                            f"tail -100 /tmp/vllm.log 2>/dev/null || echo 'No log file found'",
+                            port=port,
+                            timeout=10
+                        )
+                        
+                        if log_code == 0 and log_stdout.strip():
+                            # Parse the log for the actual error
+                            log_lines = log_stdout.strip().split('\n')
+                            
+                            # Look for common error patterns
+                            error_lines = []
+                            for i, line in enumerate(log_lines):
+                                if 'Error' in line or 'Exception' in line or 'Traceback' in line or 'FAILED' in line or 'GatedRepoError' in line:
+                                    # Include context around the error
+                                    start = max(0, i - 2)
+                                    end = min(len(log_lines), i + 10)
+                                    error_lines = log_lines[start:end]
+                                    break
+                            
+                            if error_lines:
+                                yield send_progress("vLLM Error Details:")
+                                for line in error_lines[:15]:  # Show first 15 lines of error
+                                    if line.strip():
+                                        yield send_progress(f"  {line}")
+                            else:
+                                # Show last 20 lines of log
+                                yield send_progress("Last 20 lines of vLLM log:")
+                                for line in log_lines[-20:]:
+                                    if line.strip():
+                                        yield send_progress(f"  {line}")
+                        
+                        yield send_error("vLLM process died", "The vLLM server process has stopped unexpectedly. See error details above.")
                         return
                     
-                    # Check if port 8000 is listening
+                    # Dynamically detect what port vLLM is listening on
+                    # Check for any port in the common range (8000-8010)
                     stdout, stderr, code = await execute_ssh_command(
                         host, username, password,
-                        "ss -tln | grep ':8000 ' || netstat -tln | grep ':8000 ' || echo 'not_listening'",
+                        "ss -tln | grep -E ':(800[0-9]|801[0-9]) ' || netstat -tln | grep -E ':(800[0-9]|801[0-9]) ' || echo 'not_listening'",
                         port=port,
                         timeout=5
                     )
                     
                     port_listening = 'not_listening' not in stdout and code == 0
                     
+                    # Detect which port is actually listening (parse from output)
                     if port_listening:
-                        # Port is open, try health check
+                        # Extract port number from ss/netstat output (e.g., "0.0.0.0:8001")
+                        port_match = re.search(r':(\d{4,5})\s', stdout)
+                        if port_match:
+                            actual_port = int(port_match.group(1))
+                            logger.info(f"Detected vLLM listening on port {actual_port}")
+                        else:
+                            # Fallback: check which specific port
+                            for check_port in range(8000, 8020):
+                                if f':{check_port}' in stdout:
+                                    actual_port = check_port
+                                    logger.info(f"Detected vLLM listening on port {actual_port}")
+                                    break
+                    
+                    if port_listening:
+                        # Notify if using a different port than default
+                        if actual_port != 8000 and elapsed < 15:  # Only log once early
+                            yield send_progress(f"ℹ️  Detected vLLM on port {actual_port}")
+                        
+                        # Port is open, try health check on the detected port
                         # vLLM health endpoint returns HTTP 200 with empty body when healthy
                         stdout, stderr, code = await execute_ssh_command(
                             host, username, password,
-                            "curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/health",
+                            f"curl -s -o /dev/null -w '%{{http_code}}' http://localhost:{actual_port}/health",
                             port=port,
                             timeout=10
                         )
@@ -2707,12 +3042,12 @@ nohup bash -c 'source {venv_path}/bin/activate && \
                         # Check if HTTP status code is 200
                         if code == 0 and '200' in stdout:
                             server_ready = True
-                            yield send_progress("vLLM server is ready")
+                            yield send_progress(f"✓ vLLM server is ready on port {actual_port}!")
                             break
                         else:
-                            yield send_progress(f"Port 8000 is open, waiting for health check... ({elapsed}s elapsed, HTTP: {stdout})")
+                            yield send_progress(f"Port {actual_port} is open, waiting for health check... ({elapsed}s elapsed, HTTP: {stdout})")
                     else:
-                        yield send_progress(f"Waiting for vLLM to start listening on port 8000... ({elapsed}s elapsed)")
+                        yield send_progress(f"Waiting for vLLM to start listening (checking ports 8000-8019)... ({elapsed}s elapsed)")
                     
                     # Show log excerpts every 60 seconds
                     if elapsed - last_log_check >= 60:
@@ -2821,9 +3156,10 @@ nohup bash -c 'source {venv_path}/bin/activate && \
         # Step 9: Test inference endpoint with a longer prompt
         test_prompt = "Explain the concept of GPU virtualization in 2-3 sentences."
         test_max_tokens = 100
-        logger.info("=== STARTING INFERENCE TEST ===")
-        yield send_progress(f"Testing inference endpoint with prompt: {test_prompt}")
-        logger.info(f"Starting inference test with prompt: {test_prompt}")
+        logger.info(f"=== STARTING {deployment_label} INFERENCE TEST ===")
+        yield send_progress(f"[{deployment_label}] Testing inference endpoint...")
+        yield send_progress(f"Prompt: {test_prompt}")
+        logger.info(f"[{deployment_label}] Starting inference test with prompt: {test_prompt}")
         
         inference_response = ""
         inference_test_success = False
@@ -2835,7 +3171,7 @@ nohup bash -c 'source {venv_path}/bin/activate && \
             }).replace("'", "'\\''")  # Escape single quotes for bash
             
             # Use -v for verbose output to stderr if there are issues
-            curl_test = f"""curl -s -X POST http://localhost:8000/v1/chat/completions \
+            curl_test = f"""curl -s -X POST http://localhost:{actual_port}/v1/chat/completions \
 -H 'Content-Type: application/json' \
 -d '{test_payload}' \
 --max-time 60 2>&1"""
@@ -2861,12 +3197,14 @@ nohup bash -c 'source {venv_path}/bin/activate && \
                             inference_response = choice.get('text', '')
                         
                         if inference_response:
-                            yield send_progress(f"Inference response: {inference_response.strip()}")
+                            yield send_progress(f"[{deployment_label}] Inference response:")
+                            yield send_progress(f"  {inference_response.strip()}")
                             debug_info["vllm_config"]["inference_response"] = inference_response.strip()
+                            debug_info["vllm_config"]["deployment_label"] = deployment_label
                             inference_test_success = True
                         else:
-                            yield send_progress("Inference test completed but response content is empty")
-                            logger.warning(f"Empty inference response. Full response: {stdout[:500]}")
+                            yield send_progress(f"[{deployment_label}] Inference test completed but response content is empty")
+                            logger.warning(f"[{deployment_label}] Empty inference response. Full response: {stdout[:500]}")
                     else:
                         yield send_progress("Inference test completed but no choices in response")
                         logger.warning(f"No choices in response: {stdout[:500]}")
@@ -2951,37 +3289,102 @@ nohup bash -c 'source {venv_path}/bin/activate && \
                 summary_message += f"  • GPU Memory Size: {config.get('gpu_memory_size', 'N/A')} GB\n\n"
                 summary_message += "Configuration Validation:\n"
                 
-                # Add validation results
+                # Add validation results with actual vs expected
                 if detected_gpu_name and profile != 'N/A':
                     expected_prefix = profile.split('-')[0]
+                    # Get total GPU memory for comparison
+                    gpu_memory_total = debug_info["gpu_metrics"].get("total_memory", "Unknown")
+                    
                     if expected_prefix in detected_gpu_name:
-                        summary_message += f"  ✅ GPU matches recommended profile ({profile})\n"
+                        summary_message += f"  ✅ GPU Match\n"
+                        summary_message += f"     • Detected: {detected_gpu_name} ({gpu_memory_total})\n"
+                        summary_message += f"     • Expected: {profile}\n"
                     else:
-                        summary_message += f"  ⚠️  GPU ({detected_gpu_name}) differs from profile ({profile})\n"
+                        summary_message += f"  ⚠️  GPU Mismatch\n"
+                        summary_message += f"     • Detected: {detected_gpu_name} ({gpu_memory_total})\n"
+                        summary_message += f"     • Expected: {profile}\n"
                 
-                if successful_gpu_mem and estimated_vram:
+                if successful_gpu_mem:
                     actual_gb = float(successful_gpu_mem.split()[0])
-                    expected_gb = float(estimated_vram)
-                    ratio = actual_gb / expected_gb
-                    if 0.8 <= ratio <= 1.2:
-                        summary_message += f"  ✅ GPU memory usage ({actual_gb:.1f}GB) matches estimate ({expected_gb}GB)\n"
+                    
+                    # For local deployments, account for baseline overhead
+                    baseline_mb = debug_info["gpu_metrics"].get("baseline_used_mb", 0)
+                    if is_local and baseline_mb > 0:
+                        baseline_gb = baseline_mb / 1024
+                        vllm_only_gb = actual_gb - baseline_gb
+                        
+                        # Get total GPU memory
+                        total_gpu_mb = debug_info["gpu_metrics"].get("attempt_1_pre_start", {}).get("total_mb", 0)
+                        total_gpu_gb = total_gpu_mb / 1024 if total_gpu_mb > 0 else 0
+                        
+                        summary_message += f"  ✅ GPU Memory Allocation (Local)\n"
+                        summary_message += f"     • Total GPU: {total_gpu_gb:.1f}GB\n"
+                        summary_message += f"     • Used by vLLM: ~{max(0, vllm_only_gb):.1f}GB\n"
+                        summary_message += f"     • Baseline overhead: ~{baseline_gb:.1f}GB (RAG/vector DB)\n"
+                        summary_message += f"     • Total allocated: {actual_gb:.1f}GB\n"
+                        
+                        # Check if we have enough free memory
+                        if total_gpu_mb > 0:
+                            free_for_vllm_gb = (total_gpu_mb / 1024) - baseline_gb
+                            remaining_gb = total_gpu_gb - actual_gb
+                            if free_for_vllm_gb < 10:
+                                summary_message += f"     • ⚠️  Limited free memory: {remaining_gb:.1f}GB remaining\n"
+                            else:
+                                summary_message += f"     • Free memory: {remaining_gb:.1f}GB remaining\n"
+                    elif estimated_vram:
+                        # Remote deployment - compare with estimate
+                        expected_gb = float(estimated_vram)
+                        ratio = actual_gb / expected_gb
+                        diff_gb = actual_gb - expected_gb
+                        diff_pct = ((actual_gb - expected_gb) / expected_gb * 100) if expected_gb > 0 else 0
+                        
+                        # Get total GPU memory for context
+                        total_gpu_mb = debug_info["gpu_metrics"].get("attempt_1_pre_start", {}).get("total_mb", 0)
+                        total_gpu_gb = total_gpu_mb / 1024 if total_gpu_mb > 0 else 0
+                        
+                        if 0.8 <= ratio <= 1.2:
+                            summary_message += f"  ✅ GPU Memory Allocation (VM)\n"
+                            summary_message += f"     • Total GPU: {total_gpu_gb:.1f}GB\n"
+                            summary_message += f"     • Used by vLLM: {actual_gb:.1f}GB\n"
+                            summary_message += f"     • Expected: ~{expected_gb:.1f}GB\n"
+                            summary_message += f"     • Difference: {diff_gb:+.1f}GB ({diff_pct:+.1f}%)\n"
+                            if total_gpu_gb > 0:
+                                remaining_gb = total_gpu_gb - actual_gb
+                                summary_message += f"     • Free memory: {remaining_gb:.1f}GB remaining\n"
+                        elif ratio > 1.2:
+                            summary_message += f"  ⚠️  GPU Memory Higher Than Expected (VM)\n"
+                            summary_message += f"     • Used by vLLM: {actual_gb:.1f}GB\n"
+                            summary_message += f"     • Expected: ~{expected_gb:.1f}GB\n"
+                            summary_message += f"     • Difference: {diff_gb:+.1f}GB ({diff_pct:+.1f}%)\n"
+                        else:
+                            summary_message += f"  ℹ️  GPU Memory Lower Than Expected (VM)\n"
+                            summary_message += f"     • Used by vLLM: {actual_gb:.1f}GB\n"
+                            summary_message += f"     • Expected: ~{expected_gb:.1f}GB\n"
+                            summary_message += f"     • Difference: {diff_gb:+.1f}GB ({diff_pct:+.1f}%)\n"
                     else:
-                        summary_message += f"  ⚠️  GPU memory usage ({actual_gb:.1f}GB) differs from estimate ({expected_gb}GB)\n"
+                        # No estimate available
+                        total_gpu_mb = debug_info["gpu_metrics"].get("attempt_1_pre_start", {}).get("total_mb", 0)
+                        total_gpu_gb = total_gpu_mb / 1024 if total_gpu_mb > 0 else 0
+                        summary_message += f"  ℹ️  GPU Memory Allocation\n"
+                        summary_message += f"     • Used by vLLM: {actual_gb:.1f}GB\n"
+                        if total_gpu_gb > 0:
+                            summary_message += f"     • Total GPU: {total_gpu_gb:.1f}GB\n"
                 
                 summary_message += "\nNext Steps:\n"
-                summary_message += f"  • Test API: curl http://{host}:8000/v1/chat/completions\n"
+                summary_message += f"  • Test API: curl http://{host}:{actual_port}/v1/chat/completions\n"
                 summary_message += f"  • View Logs: ssh {username}@{host} 'tail -f /tmp/vllm.log'\n"
                 summary_message += f"  • Stop Server: ssh {username}@{host} 'pkill -f vllm'\n"
                 
                 yield send_progress(summary_message)
                 
                 yield send_success(
-                    "vLLM deployment successful",
+                    f"{deployment_label} vLLM deployment successful!",
                     {
-                        "endpoint": f"http://{host}:8000",
+                        "endpoint": f"http://{host}:{actual_port}",
                         "model": model,
-                        "health_endpoint": f"http://{host}:8000/health",
+                        "health_endpoint": f"http://{host}:{actual_port}/health",
                         "openai_compatible": True,
+                        "deployment_type": deployment_label.lower(),
                         "summary": summary_message
                     }
                 )
@@ -3034,8 +3437,8 @@ nohup bash -c 'source {venv_path}/bin/activate && \
             return
             
     except Exception as e:
-        logger.error(f"vLLM deployment failed: {e}", exc_info=True)
-        yield send_error("Deployment failed", str(e))
+        logger.error(f"[{deployment_label}] vLLM deployment FAILED: {e}", exc_info=True)
+        yield send_error(f"{deployment_label} deployment failed", str(e))
     finally:
         # Cleanup: Always try to stop vLLM even if deployment failed
         try:

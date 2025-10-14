@@ -43,8 +43,8 @@ fi
 if ! docker ps -a --format '{{.Names}}' | grep -q "^rag-server$"; then
     print_error "RAG server container not found"
     echo ""
-    print_info "Please start the application first:"
-    echo "  ./scripts/start_app.sh"
+    print_info "Please start the backend first:"
+    echo "  ./scripts/run_scripts/start_app.sh"
     echo ""
     exit 1
 fi

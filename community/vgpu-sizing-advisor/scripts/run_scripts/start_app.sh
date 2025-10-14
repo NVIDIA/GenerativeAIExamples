@@ -255,7 +255,7 @@ show_status() {
     echo ""
     echo -e "${BLUE}📚 Knowledge Base:${NC}"
     echo "  • Collection: vgpu_knowledge_base"
-    echo "  • Location:   $VGPU_DOCS_PATH"
+    echo "  • Location:   ./vgpu_docs"
     echo "  • Status:     Auto-loaded"
     echo ""
     echo -e "${GREEN}✨ Next Steps - Start the Frontend:${NC}"
@@ -268,10 +268,11 @@ show_status() {
     echo "  3. Then open your browser to: http://localhost:3000"
     echo ""
     echo -e "${BLUE}🔧 Management Commands:${NC}"
+    echo "  • Status:          ./scripts/run_scripts/status.sh"
     echo "  • Stop Backend:    ./scripts/run_scripts/stop_app.sh"
     echo "  • Restart Backend: ./scripts/run_scripts/restart_backend.sh"
     echo "  • Start Frontend:  ./scripts/run_scripts/start_frontend.sh"
-    echo "  • Logs:            docker logs rag-server"
+    echo "  • Logs:            docker logs -f rag-server"
     echo ""
 }
 
