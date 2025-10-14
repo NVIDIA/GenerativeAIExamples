@@ -49,6 +49,8 @@ It supports two configurations:
 - **WSL 2:** expose to Windows via loopback (`-p 8000:8000`)  
 - Enable TLS with mounted `ssl_key.pem` and `ssl_cert.pem`.
 
+- ![Video](gifs/RunningNIM.gif)
+
 ---
 
 #### **4) Verify with curl (from Windows)**
