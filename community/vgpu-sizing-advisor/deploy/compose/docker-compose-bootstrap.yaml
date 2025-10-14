@@ -2,8 +2,8 @@ services:
   vgpu-bootstrap:
     container_name: vgpu-bootstrap
     build:
-      context: ../../
-      dockerfile: src/initialization/Dockerfile
+      context: ../../src/initialization
+      dockerfile: Dockerfile
     environment:
       # Bootstrap configuration
       ENABLE_VGPU_BOOTSTRAP: ${ENABLE_VGPU_BOOTSTRAP:-true}
@@ -21,7 +21,7 @@ services:
     
     volumes:
       # Mount vGPU documentation directory
-      - "/home/userone/Desktop/test-3/rag/vgpu_docs:/app/vgpu_docs"
+      - ${VGPU_DOCS_VOLUME:-../../vgpu_docs}:/app/vgpu_docs
     # Removed depends_on since services are in different compose files
     # The bootstrap script itself waits for services to be ready
     

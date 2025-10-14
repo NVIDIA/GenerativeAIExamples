@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir \
     urllib3
 
 # Copy bootstrap script
-COPY src/initialization/bootstrap.py /app/bootstrap.py
+COPY bootstrap.py /app/bootstrap.py
 
 # Make it executable
 RUN chmod +x /app/bootstrap.py

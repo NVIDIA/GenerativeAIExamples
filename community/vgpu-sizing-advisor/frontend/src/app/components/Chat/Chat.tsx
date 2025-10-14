@@ -139,41 +139,46 @@ export default function Chat() {
         const vgpuConfig = JSON.parse(content.trim());
         // Return a preview card that opens the drawer
         return (
-          <div className="bg-neutral-800 border border-[#76b900]/30 rounded-lg p-4">
-            <div 
-              className="cursor-pointer hover:bg-neutral-750 transition-all duration-200 rounded-lg -m-4 p-4 mb-0"
+          <div className="bg-neutral-800 border border-[#76b900]/30 rounded-lg p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-5 h-5 text-[#76b900]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+              <h3 className="text-white font-semibold text-lg">vGPU Configuration Ready</h3>
+            </div>
+            
+            <p className="text-sm text-gray-300 mb-4">{vgpuConfig.description}</p>
+            
+            {(vgpuConfig.parameters.vgpu_profile || vgpuConfig.parameters.vGPU_profile) && (
+              <div className="flex items-center gap-4 text-sm mb-4">
+                <span className="text-gray-400">Profile:</span>
+                <span className="text-[#76b900] font-medium">{vgpuConfig.parameters.vgpu_profile || vgpuConfig.parameters.vGPU_profile}</span>
+                {vgpuConfig.parameters.gpu_memory_size && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-400">Memory:</span>
+                    <span className="text-[#76b900] font-medium">{vgpuConfig.parameters.gpu_memory_size} GB</span>
+                  </>
+                )}
+              </div>
+            )}
+            
+            {/* Configuration Details Button */}
+            <button
               onClick={() => {
                 setDrawerConfig(vgpuConfig);
                 setIsDrawerOpen(true);
               }}
+              className="w-full px-4 py-2.5 bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mb-3"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-[#76b900]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                  </svg>
-                  <h3 className="text-white font-semibold">vGPU Configuration Ready</h3>
-                </div>
-                <span className="text-xs text-gray-400">Click to view details →</span>
-              </div>
-              <p className="text-sm text-gray-300 mb-3">{vgpuConfig.description}</p>
-              {(vgpuConfig.parameters.vgpu_profile || vgpuConfig.parameters.vGPU_profile) && (
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="text-gray-400">Profile:</span>
-                  <span className="text-[#76b900] font-medium">{vgpuConfig.parameters.vgpu_profile || vgpuConfig.parameters.vGPU_profile}</span>
-                  {vgpuConfig.parameters.gpu_memory_size && (
-                    <>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-gray-400">Memory:</span>
-                      <span className="text-[#76b900] font-medium">{vgpuConfig.parameters.gpu_memory_size} GB</span>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Configuration Details
+            </button>
             
             {/* Verify Configuration Button */}
-            <div className="mt-4 pt-4 border-t border-neutral-700">
+            <div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();

@@ -49,6 +49,7 @@ export default function ApplyConfigurationForm({
   onClose,
   configuration,
 }: ApplyConfigurationFormProps) {
+  const [deploymentMode, setDeploymentMode] = useState<'local' | 'remote'>('remote');
   const [formData, setFormData] = useState<FormData>({
     vmIpAddress: "",
     username: "",
@@ -59,14 +60,63 @@ export default function ApplyConfigurationForm({
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showToken, setShowToken] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showLogs, setShowLogs] = useState(false);
-  const [configurationLogs, setConfigurationLogs] = useState<string[]>([]);
-  const [isConfigurationComplete, setIsConfigurationComplete] = useState(false);
-  const [showDebugLogs, setShowDebugLogs] = useState(false);
-  const [currentDisplayMessage, setCurrentDisplayMessage] = useState<string>("");
-  const [testMetrics, setTestMetrics] = useState<any>(null);
-  const [deploymentError, setDeploymentError] = useState<string | null>(null);
+  
+  // Separate state for local vs remote deployments
+  const [localState, setLocalState] = useState({
+    isSubmitting: false,
+    showLogs: false,
+    logs: [] as string[],
+    isComplete: false,
+    showDebugLogs: false,
+    displayMessage: "",
+    testMetrics: null as any,
+    error: null as string | null,
+  });
+  
+  const [remoteState, setRemoteState] = useState({
+    isSubmitting: false,
+    showLogs: false,
+    logs: [] as string[],
+    isComplete: false,
+    showDebugLogs: false,
+    displayMessage: "",
+    testMetrics: null as any,
+    error: null as string | null,
+  });
+
+  // Get current state based on deployment mode
+  const currentState = deploymentMode === 'local' ? localState : remoteState;
+  const setCurrentState = deploymentMode === 'local' ? setLocalState : setRemoteState;
+  
+  // Convenience accessors for current state
+  const isSubmitting = currentState.isSubmitting;
+  const showLogs = currentState.showLogs;
+  const configurationLogs = currentState.logs;
+  const isConfigurationComplete = currentState.isComplete;
+  const showDebugLogs = currentState.showDebugLogs;
+  const currentDisplayMessage = currentState.displayMessage;
+  const testMetrics = currentState.testMetrics;
+  const deploymentError = currentState.error;
+
+  // Helper functions to update current state
+  const updateCurrentState = (updates: Partial<typeof currentState>) => {
+    setCurrentState(prev => ({ ...prev, ...updates }));
+  };
+
+  const setIsSubmitting = (value: boolean) => updateCurrentState({ isSubmitting: value });
+  const setShowLogs = (value: boolean) => updateCurrentState({ showLogs: value });
+  const setConfigurationLogs = (logs: string[] | ((prev: string[]) => string[])) => {
+    if (typeof logs === 'function') {
+      setCurrentState(prev => ({ ...prev, logs: logs(prev.logs) }));
+    } else {
+      updateCurrentState({ logs });
+    }
+  };
+  const setIsConfigurationComplete = (value: boolean) => updateCurrentState({ isComplete: value });
+  const setShowDebugLogs = (value: boolean) => updateCurrentState({ showDebugLogs: value });
+  const setCurrentDisplayMessage = (value: string) => updateCurrentState({ displayMessage: value });
+  const setTestMetrics = (value: any) => updateCurrentState({ testMetrics: value });
+  const setDeploymentError = (value: string | null) => updateCurrentState({ error: value });
 
   // Validate IP address format
   const validateIpAddress = (ip: string): boolean => {
@@ -78,20 +128,24 @@ export default function ApplyConfigurationForm({
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.vmIpAddress) {
-      errors.vmIpAddress = "VM IP address is required";
-    } else if (!validateIpAddress(formData.vmIpAddress)) {
-      errors.vmIpAddress = "Invalid IP address format";
+    // Only validate VM fields if in remote mode
+    if (deploymentMode === 'remote') {
+      if (!formData.vmIpAddress) {
+        errors.vmIpAddress = "VM IP address is required";
+      } else if (!validateIpAddress(formData.vmIpAddress)) {
+        errors.vmIpAddress = "Invalid IP address format";
+      }
+
+      if (!formData.username) {
+        errors.username = "Username is required";
+      }
+
+      if (!formData.password) {
+        errors.password = "Password is required (used for automatic SSH key setup)";
+      }
     }
 
-    if (!formData.username) {
-      errors.username = "Username is required";
-    }
-
-    if (!formData.password) {
-      errors.password = "Password is required (used for automatic SSH key setup)";
-    }
-
+    // Always require Hugging Face token
     if (!formData.huggingFaceToken) {
       errors.huggingFaceToken = "Hugging Face token is required";
     }
@@ -110,17 +164,27 @@ export default function ApplyConfigurationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Debug: Check deployment mode at submission
+    console.log("=== HANDLE SUBMIT CALLED ===");
+    console.log("Current deploymentMode:", deploymentMode);
+    console.log("========================");
 
     if (!validateForm()) {
       return;
     }
 
-    setIsSubmitting(true);
-    setShowLogs(false); // Hide logs initially
-    setIsConfigurationComplete(false);
-    setTestMetrics(null); // Clear previous test metrics
-    setConfigurationLogs(["Starting configuration test..."]);
-    setCurrentDisplayMessage(""); // Initialize with empty string
+    // Update the appropriate state (local or remote)
+    setCurrentState(prev => ({
+      ...prev,
+      isSubmitting: true,
+      showLogs: false,
+      isComplete: false,
+      testMetrics: null,
+      logs: [deploymentMode === 'local' ? "Starting local deployment test..." : "Starting configuration test..."],
+      displayMessage: "",
+      error: null,
+    }));
 
     try {
       // Extract and normalize the configuration data
@@ -131,26 +195,89 @@ export default function ApplyConfigurationForm({
       } else if (configuration) {
         // Direct configuration object
         configData = configuration;
+      } else {
+        // Provide a minimal default configuration for testing
+        configData = {
+          vGPU_profile: "test",
+          model_name: "test-model"
+        };
       }
 
+      // Build payload based on deployment mode
+      // Extract model from configuration (could be model_tag, model_name, or in parameters)
+      const model = configData?.model_tag || 
+                   configData?.model_name || 
+                   configData?.parameters?.model_tag ||
+                   configData?.parameters?.model_name ||
+                   'Qwen/Qwen2.5-0.5B-Instruct';  // Default to an open-access model
+      
+      console.log("🔍 Model Selection Debug:");
+      console.log("  - configData:", configData);
+      console.log("  - configData.model_tag:", configData?.model_tag);
+      console.log("  - configData.model_name:", configData?.model_name);
+      console.log("  - configData.parameters?.model_tag:", configData?.parameters?.model_tag);
+      console.log("  - configData.parameters?.model_name:", configData?.parameters?.model_name);
+      console.log("  - Selected model:", model);
+      
+      const payload: any = {
+        deployment_mode: deploymentMode,
+        hf_token: formData.huggingFaceToken,
+        configuration: configData,
+        model_tag: model,
+        test_duration_seconds: 30,
+      };
+      
+      // Only include VM credentials for remote mode
+      if (deploymentMode === 'remote') {
+        payload.vm_ip = formData.vmIpAddress;
+        payload.username = formData.username;
+        payload.password = formData.password;
+      }
+      
+      console.log("=".repeat(80));
+      console.log("FRONTEND: Sending request with deployment_mode:", deploymentMode);
+      console.log("FRONTEND: Full payload:", JSON.stringify(payload, null, 2));
+      console.log("=".repeat(80));
+      
       const response = await fetch('/api/test-configuration', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          vm_ip: formData.vmIpAddress,
-          username: formData.username,
-          password: formData.password,
-          hf_token: formData.huggingFaceToken,
-          configuration: configData,
-          model_tag: configData?.model_tag || 'meta-llama/Llama-3.2-1B',
-          test_duration_seconds: 30,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get the error details from the response
+        let errorDetail = `HTTP error! status: ${response.status}`;
+        try {
+          const responseText = await response.text();
+          console.error("Backend error response body:", responseText);
+          
+          try {
+            const errorData = JSON.parse(responseText);
+            console.error("Backend error JSON:", errorData);
+            if (errorData.detail) {
+              if (Array.isArray(errorData.detail)) {
+                // Pydantic validation errors are arrays
+                const errors = errorData.detail.map((e: any) => 
+                  `${e.loc?.join('.')} - ${e.msg}`
+                ).join('; ');
+                errorDetail += ` - Validation errors: ${errors}`;
+              } else {
+                errorDetail += ` - ${JSON.stringify(errorData.detail)}`;
+              }
+            }
+          } catch (parseError) {
+            // Not JSON, just use the text
+            errorDetail += ` - ${responseText}`;
+          }
+        } catch (e) {
+          console.error("Error reading response:", e);
+          // If we can't parse the error, just use the status
+        }
+        console.error("Final error message:", errorDetail);
+        throw new Error(errorDetail);
       }
 
       // Read the streaming response
@@ -276,7 +403,7 @@ export default function ApplyConfigurationForm({
     // Form data is intentionally preserved
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
     // Reset form state
     setFormData({
       vmIpAddress: "",
@@ -287,14 +414,30 @@ export default function ApplyConfigurationForm({
     setFormErrors({});
     setShowPassword(false);
     setShowToken(false);
-    setIsSubmitting(false);
-    setShowLogs(false);
-    setConfigurationLogs([]);
-    setTestMetrics(null);
-    setIsConfigurationComplete(false);
-    setShowDebugLogs(false);
-    setCurrentDisplayMessage("");
-    setDeploymentError(null);
+    
+    // Reset both local and remote states
+    setLocalState({
+      isSubmitting: false,
+      showLogs: false,
+      logs: [],
+      isComplete: false,
+      showDebugLogs: false,
+      displayMessage: "",
+      testMetrics: null,
+      error: null,
+    });
+    
+    setRemoteState({
+      isSubmitting: false,
+      showLogs: false,
+      logs: [],
+      isComplete: false,
+      showDebugLogs: false,
+      displayMessage: "",
+      testMetrics: null,
+      error: null,
+    });
+    
     onClose();
   };
 
@@ -426,16 +569,25 @@ export default function ApplyConfigurationForm({
     const deploymentResults = getDeploymentResultsText();
     const debugLogs = getDebugLogsText();
     
-    // Add header information
-    const header = [
-      '=== vLLM Deployment Export ===',
-      `Date: ${new Date().toLocaleString()}`,
-      `VM IP: ${formData.vmIpAddress}`,
-      `Username: ${formData.username}`,
-      configuration?.parameters?.vGPU_profile ? `vGPU Profile: ${configuration.parameters.vGPU_profile}` : '',
-      configuration?.parameters?.model_name ? `Model: ${configuration.parameters.model_name}` : '',
-      '================================\n'
-    ].filter(Boolean).join('\n');
+    // Add header information based on deployment mode
+    const header = deploymentMode === 'local' 
+      ? [
+          '=== Local vLLM Deployment Export ===',
+          `Date: ${new Date().toLocaleString()}`,
+          `Machine: ${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}`,
+          configuration?.parameters?.vGPU_profile ? `vGPU Profile: ${configuration.parameters.vGPU_profile}` : '',
+          configuration?.parameters?.model_name ? `Model: ${configuration.parameters.model_name}` : '',
+          '================================\n'
+        ].filter(Boolean).join('\n')
+      : [
+          '=== Remote vLLM Deployment Export ===',
+          `Date: ${new Date().toLocaleString()}`,
+          `VM IP: ${formData.vmIpAddress}`,
+          `Username: ${formData.username}`,
+          configuration?.parameters?.vGPU_profile ? `vGPU Profile: ${configuration.parameters.vGPU_profile}` : '',
+          configuration?.parameters?.model_name ? `Model: ${configuration.parameters.model_name}` : '',
+          '================================\n'
+        ].filter(Boolean).join('\n');
     
     // Build content
     let fullContent = header + '\n';
@@ -481,7 +633,10 @@ export default function ApplyConfigurationForm({
             <div>
               <h2 className="text-xl font-semibold text-white">Deploy vLLM Server</h2>
               <p className="text-sm text-gray-400 mt-1">
-                Deploy vLLM inference server on remote VM with Hugging Face integration
+                {deploymentMode === 'local' 
+                  ? 'Deploy vLLM inference server locally on this machine'
+                  : 'Deploy vLLM inference server on remote VM with Hugging Face integration'
+                }
               </p>
             </div>
             <button
@@ -494,16 +649,51 @@ export default function ApplyConfigurationForm({
               </svg>
             </button>
           </div>
+
+          {/* Deployment Mode Tabs */}
+          <div className="flex gap-2 mt-4 border-b border-neutral-600">
+            <button
+              type="button"
+              onClick={() => setDeploymentMode('local')}
+              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+                deploymentMode === 'local'
+                  ? 'text-green-400'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              Local Machine
+              {deploymentMode === 'local' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-400"></div>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeploymentMode('remote')}
+              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+                deploymentMode === 'remote'
+                  ? 'text-green-400'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              Remote VM
+              {deploymentMode === 'remote' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-400"></div>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Form Content */}
         <div className="flex-1 overflow-y-auto p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* VM IP Address */}
-            <div>
-              <label htmlFor="vmIpAddress" className="block text-sm font-medium text-gray-300 mb-2">
-                VM IP Address
-              </label>
+            {/* Remote VM Fields - Only show when in remote mode */}
+            {deploymentMode === 'remote' && (
+              <>
+                {/* VM IP Address */}
+                <div>
+                  <label htmlFor="vmIpAddress" className="block text-sm font-medium text-gray-300 mb-2">
+                    VM IP Address
+                  </label>
               <input
                 id="vmIpAddress"
                 type="text"
@@ -596,9 +786,11 @@ export default function ApplyConfigurationForm({
               {formErrors.password && (
                 <p className="mt-1 text-sm text-red-500">{formErrors.password}</p>
               )}
-            </div>
+                </div>
+              </>
+            )}
 
-            {/* Hugging Face Token */}
+            {/* Hugging Face Token - Always visible for both local and remote */}
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <label htmlFor="huggingFaceToken" className="text-sm font-medium text-gray-300">
@@ -657,10 +849,10 @@ export default function ApplyConfigurationForm({
               }`}
             >
               {isSubmitting 
-                ? "Running Test..." 
+                ? (deploymentMode === 'local' ? "Testing Locally..." : "Running Test...") 
                 : isConfigurationComplete
-                ? "Run Test Again"
-                : "Deploy vLLM Server"}
+                ? (deploymentMode === 'local' ? "Test Locally Again" : "Run Test Again")
+                : (deploymentMode === 'local' ? "Test Locally" : "Test on Remote VM")}
             </button>
           </form>
 
@@ -671,7 +863,9 @@ export default function ApplyConfigurationForm({
                 <h3 className="text-lg font-medium text-white mb-4">Running Configuration Test</h3>
                 <Spinner />
                 <p className="text-sm text-gray-400 mt-4">
-                  Please wait while we test your VM configuration...
+                  {deploymentMode === 'local' 
+                    ? 'Please wait while we test locally on this machine...'
+                    : 'Please wait while we test your VM configuration...'}
                 </p>
                 <p className="text-xs text-gray-500 mt-2">
                   This test typically takes 30-60 seconds
@@ -688,6 +882,7 @@ export default function ApplyConfigurationForm({
                     {configurationLogs[configurationLogs.length - 1]}
                   </p>
                 )}
+                
               </div>
             </div>
           )}

@@ -5,9 +5,9 @@ services:
     container_name: rag-server
     image: nvcr.io/nvidia/blueprint/rag-server:${TAG:-2.1.0}
     build:
-      # Set context to repo's root directory
-      context: ../../
-      dockerfile: src/Dockerfile
+      # Set context to src directory
+      context: ../../src
+      dockerfile: Dockerfile
     # start the server on port 8081 with 8 workers for improved latency on concurrent requests.
     command: --port 8081 --host 0.0.0.0 --workers 8
 
@@ -52,7 +52,7 @@ services:
       ##===Reranking Model specific configurations===
       # url on which ranking model is hosted. If "", Nvidia hosted API is used
       APP_RANKING_SERVERURL: ${APP_RANKING_SERVERURL-""}
-      APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-nvidia/llama-3.2-nemoretriever-500m-rerank-v2}
+      APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-nv-rerank-qa-mistral-4b:1}
       ENABLE_RERANKER: ${ENABLE_RERANKER:-True}
 
       NVIDIA_API_KEY: ${NGC_API_KEY:?"NGC_API_KEY is required"}
@@ -119,6 +119,13 @@ services:
     shm_size: 5gb
     volumes:
       - ../../src:/workspace/src:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   # Sample UI container which interacts with APIs exposed by rag-server container
   rag-playground:
@@ -134,7 +141,7 @@ services:
         # Model name for embeddings
         NEXT_PUBLIC_EMBEDDING_MODEL: ${APP_EMBEDDINGS_MODELNAME:-nvidia/nv-embedqa-mistral-7b-v2}
         # Model name for reranking
-        NEXT_PUBLIC_RERANKER_MODEL: ${APP_RANKING_MODELNAME:-nvidia/llama-3.2-nemoretriever-500m-rerank-v2}
+        NEXT_PUBLIC_RERANKER_MODEL: ${APP_RANKING_MODELNAME:-nv-rerank-qa-mistral-4b:1}
         # URL for rag server container
         NEXT_PUBLIC_CHAT_BASE_URL: "http://rag-server:8081/v1"
         # URL for ingestor container
