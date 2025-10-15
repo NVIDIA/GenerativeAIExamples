@@ -7,7 +7,7 @@
 This guide explains how to securely connect **SQL Server 2025** (running on Windows) to **NVIDIA NIM** (running in Docker with GPU acceleration on Ubuntu), using **TLS certificates** for encryption and mutual trust.  
 It supports two configurations:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/_DwH29OQIfw" frameborder="0" allowfullscreen></iframe>
+[Watch the embedded YouTube video](https://www.youtube.com/embed/_DwH29OQIfw)
 
 1. **Ubuntu as a separate VM** with its own IP (e.g., `192.168.10.218`)  
 2. **Ubuntu as WSL 2 on the same Windows host**, reachable via `localhost`
