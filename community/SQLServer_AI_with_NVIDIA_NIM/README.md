@@ -9,6 +9,11 @@ It supports two configurations:
 
 [Watch the embedded YouTube video](https://www.youtube.com/embed/_DwH29OQIfw)
 
+
+[▶️ Watch Demo Video](https://drive.google.com/file/d/14wiMAB_tdsi7u08CM7p4G5pHeahBmkPY/view?usp=sharing)
+[![Watch the demo](https://img.shields.io/badge/Watch%20Demo-Video-blue?logo=google-drive)](https://drive.google.com/file/d/14wiMAB_tdsi7u08CM7p4G5pHeahBmkPY/view?usp=sharing)
+[![Demo Screenshot](path/to/screenshot.png)](https://drive.google.com/file/d/14wiMAB_tdsi7u08CM7p4G5pHeahBmkPY/view?usp=sharing)
+
 1. **Ubuntu as a separate VM** with its own IP (e.g., `192.168.10.218`)  
 2. **Ubuntu as WSL 2 on the same Windows host**, reachable via `localhost`
 
