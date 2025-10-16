@@ -17,7 +17,7 @@ This repository provides a sample code to demonstrate how you can use the log an
 - **Generate your API key** by following the steps in the link below:
   [Click here to view the steps for generating an API Key](https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html#generate-an-api-key)
 
-- **Store your API key** : You can securely store your API key by creating a `.env` file in the root directory of your project
+- **Configure your API key** : Following the [examples in the document above](https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html#export-the-api-key), place your API key in your shell initialization files. Alternatively, you can use environment variable managers like [direnv](https://direnv.net/).
 - **example.py** : The sample script showcases how to integrate log analysis into your workflow. It demonstrates how to pass your log data through the system, generate insights, and manage the output.
 
 # Components
