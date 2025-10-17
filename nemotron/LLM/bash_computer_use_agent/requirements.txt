@@ -1,0 +1,4 @@
+openai
+# The following are needed for the LangGraph version
+langchain-openai
+langgraph
