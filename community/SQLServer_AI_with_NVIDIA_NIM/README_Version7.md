@@ -111,10 +111,7 @@ Scenarios demonstrated:
     vi. Execute demo scripts to populate embeddings via NVIDIA NIM.
     vii. Verify using **Select_Embeddings.sql** again.
 
-[▶️ Watch Demo on YouTube](https://drive.google.com/file/d/14wiMAB_tdsi7u08CM7p4G5pHeahBmkPY/view?usp=sharing)
-[![Watch Demo on Screenshot](path/to/screenshot.png)](https://drive.google.com/file/d/14wiMAB_tdsi7u08CM7p4G5pHeahBmkPY/view?usp=sharing)
-
-
+[▶️ Watch Demo](https://drive.google.com/file/d/14wiMAB_tdsi7u08CM7p4G5pHeahBmkPY/view?usp=sharing)
 
 ---
 
