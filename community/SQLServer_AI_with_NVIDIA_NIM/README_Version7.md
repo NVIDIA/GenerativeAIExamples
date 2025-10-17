@@ -51,8 +51,8 @@ Below is the proposed architecture:
 - Serverless container orchestration (no infrastructure management like AKS)
 - Flexible manual/automatic scaling
 - Event-driven architecture (HTTPS requests)
-- Cost efficiency (pay only for compute time)
-- High developer productivity and simplicity. No extra development is required—just correct environment settings, parameters, certificates, and adherence to standards.
+- Cost efficiency (pay only for compute time and only for remote scenario)
+- High developer productivity and simplicity. No extra development is required—just correct environment settings, parameters, certificates, and adherence to standards. No external library installations required.
 - Managed, secure environment
 - Fast provisioning and updates from NVIDIA NIM repository
 - Multi-container support
