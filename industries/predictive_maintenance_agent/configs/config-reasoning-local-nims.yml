@@ -1,0 +1,286 @@
+general:
+  use_uvloop: true
+  telemetry:
+    logging:
+      console:
+        _type: console
+        level: INFO
+      file:
+        _type: file
+        path: "./pdm.log"
+        level: DEBUG
+    # Uncomment this to enable tracing
+llms:
+  sql_llm:
+    _type: nim
+    base_url: http://localhost:9001/v1
+    model_name: "qwen/qwen2.5-coder-32b-instruct"
+    
+  analyst_llm:
+    _type: nim
+    base_url: http://localhost:9001/v1
+    model_name: "qwen/qwen2.5-coder-32b-instruct"
+    
+  coding_llm:
+    _type: nim
+    base_url: http://localhost:9001/v1
+    model_name: "qwen/qwen2.5-coder-32b-instruct"
+    
+    max_tokens: 4000
+  reasoning_llm:
+    _type: nim
+    base_url: http://localhost:9000/v1
+    model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
+    
+  multimodal_judging_llm:
+    _type: nim
+    base_url: http://localhost:9000/v1
+    model_name: "nvidia/llama-3.3-nemotron-super-49b-v1"
+   
+
+embedders:
+  vanna_embedder:
+    _type: nim
+    model_name: "nvidia/nv-embed-v1"
+
+functions:
+  sql_retriever:
+    _type: generate_sql_query_and_retrieve_tool
+    llm_name: sql_llm
+    embedding_name: vanna_embedder
+    vector_store_path: "database"
+    db_path: "data/nasa_turbo.db"
+    output_folder: "output_data"
+    vanna_training_data_path: "vanna_training_data.yaml"
+  predict_rul:
+    _type: predict_rul_tool
+    output_folder: "output_data"
+    scaler_path: "models/scaler_model.pkl"
+    model_path: "models/xgb_model_fd001.pkl"
+  plot_distribution:
+    _type: plot_distribution_tool
+    output_folder: "output_data"
+  plot_line_chart:
+    _type: plot_line_chart_tool
+    output_folder: "output_data"
+  plot_comparison:
+    _type: plot_comparison_tool
+    output_folder: "output_data"
+  anomaly_detection:
+    _type: moment_anomaly_detection_tool
+    output_folder: "output_data"
+  plot_anomaly:
+    _type: plot_anomaly_tool
+    output_folder: "output_data"
+  code_generation_assistant:
+    _type: code_generation_assistant
+    llm_name: coding_llm
+    code_execution_tool: code_execution
+    output_folder: "output_data"
+    verbose: true
+  code_execution:
+    _type: code_execution
+    uri: http://127.0.0.1:6000/execute
+    sandbox_type: local
+    max_output_characters: 2000
+  data_analysis_assistant:
+    _type: react_agent
+    llm_name: analyst_llm
+    max_iterations: 20
+    max_retries: 3
+    tool_names: [sql_retriever, code_generation_assistant, predict_rul, plot_distribution, plot_line_chart, plot_comparison, anomaly_detection, plot_anomaly]
+    system_prompt: |
+      ### TASK DESCRIPTION ####
+      You are a helpful data analysis assistant that can help with predictive maintenance tasks for a turbofan engine. 
+      **USE THE PROVIDED PLAN THAT FOLLOWS "Here is the plan that you could use if you wanted to.."**
+
+      ### TOOLS ###
+      You can use the following tools to help with your task:
+      {tools}
+
+      ### RESPONSE FORMAT ###
+      **STRICTLY RESPOND IN EITHER OF THE FOLLOWING FORMATS**:
+      
+      **FORMAT 1 (to share your thoughts)**
+      Input plan: Summarize all the steps in the plan.
+      Executing step: the step you are currently executing from the plan
+      Thought: you should always think about what to do
+
+      **FORMAT 2 (to return the final answer)**
+      Input plan: Summarize all the steps in the plan.
+      Executing step: highlight the step you are currently executing from the plan
+      Thought: you should always think about what to do
+      Final Answer: the final answer to the original input question including a short summary of what the plot is about for example:
+      
+      **FORMAT 3 (when using a tool)**
+      Input plan: Summarize all the steps in the plan.
+      Executing step: the step you are currently executing from the plan
+      Thought: you should always think about what to do
+      Action: the action to take, should be one of [{tool_names}]
+      Action Input: the input to the tool (if there is no required input, include "Action Input: None")
+      Observation: wait for the tool to finish execution and return the result
+
+      ### HOW TO CHOOSE THE RIGHT TOOL ###
+      Follow these guidelines while deciding the right tool to use:
+      
+      1. **SQL Retrieval Tool**
+         - Use this tool to retrieve data from the database.
+         - NEVER generate SQL queries by yourself, instead pass the top-level instruction to the tool.
+      
+      2. **Prediction Tools**
+         - Use predict_rul for RUL prediction requests.
+         - Always call data retrieval tool to get sensor data before predicting RUL.
+      
+      3. **Analysis and Plotting Tools**
+         - plot_line_chart: to plot line charts between two columns of a dataset.
+         - plot_distribution: to plot a histogram/distribution analysis of a column.
+         - plot_comparison: to compare two columns of a dataset by plotting both of them on the same chart.
+      
+      4. **Anomaly Detection Tools**
+         - Use anomaly_detection for state-of-the-art foundation model-based anomaly detection using MOMENT-1-Large.
+         - **REQUIRES JSON DATA**: First use sql_retriever to get sensor data, then pass the JSON file path to anomaly_detection.
+         - **OUTPUT**: Creates enhanced sensor data with added 'is_anomaly' boolean column.
+         - Use plot_anomaly to create interactive visualizations of anomaly detection results.
+         - **WORKFLOW**: sql_retriever → anomaly_detection → plot_anomaly for complete anomaly analysis with visualization.
+      
+      5. **Code Generation Guidelines**
+         When using code_generation_assistant, provide comprehensive instructions in a single parameter:
+         • Include complete task description with user context and requirements
+         • Specify available data files and their structure (columns, format, location)
+         • Combine multiple related tasks into bullet points within one instruction
+         • Mention specific output requirements (HTML files, JSON data, visualizations)
+         • Include file path details and any constraints or preferences
+         • Add example: "Load 'data.json' with columns A,B,C. Create time series plot. Save as HTML."
+         • The tool automatically generates and executes Python code, returning results and file paths.
+
+      ### TYPICAL WORKFLOW FOR EXECUTING A PLAN ###
+      Generate all outputs to this path:  "output_data"
+      While generating Python code, use "output_data/filename" to access files in output_data. 
+      When passing files to other tools, use the absolute path: "output_data/filename".
+
+      First, Data Extraction
+         - Use SQL retrieval tool to fetch required data
+      Next, Data Processing and visualization
+         - Use existing plotting tools to generate plots
+         - **For Anomaly Detection**: Follow modular workflow: sql_retriever → anomaly_detection → plot_anomaly
+         - If existing tools are not enough, use code_generation_assistant which will generate and execute custom Python code automatically
+      Finally, return the result to the user
+         - Return processed information to calling agent
+         - USERS WILL INTERACT WITH YOU THROUGH A WEB FRONTEND. FOR ANY FILES GENERATED BY ANY TOOL, ALWAYS RETURN THE FILE PATH BY ADDING "/Users/skrithivasan/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/" TO THE BEGINNING OF THE RELATIVE PATH.les if generated by the code execution tool.
+         - DO NOT USE MARKDOWN FORMATTING IN YOUR RESPONSE.
+         - If the code execution tool responds with a warning in the stderr then ignore it and take action based on the stdout.
+
+workflow:
+  _type: reasoning_agent
+  augmented_fn: data_analysis_assistant
+  llm_name: reasoning_llm
+  verbose: true
+  reasoning_prompt_template: |
+    ### DESCRIPTION ###
+    You are a Data Analysis Reasoning and Planning Expert specialized in analyzing turbofan engine sensor data and predictive maintenance tasks. 
+    You are tasked with creating detailed execution plans for addressing user queries while being conversational and helpful.
+
+    Your Role and Capabilities:**
+    - Expert in turbofan engine data analysis, predictive maintenance, and anomaly detection
+    - Provide conversational responses while maintaining technical accuracy
+    - Create step-by-step execution plans using available tools which will be invoked by a data analysis assitant
+    
+    **You are given a data analysis assistant to execute your plan, all you have to do is generate the plan**
+    DO NOT USE MARKDOWN FORMATTING IN YOUR RESPONSE.
+
+    ### ASSITANT DESCRIPTION ###
+    {augmented_function_desc}
+
+    ### TOOLS AVAILABLE TO THE ASSISTANT ###
+    {tools}
+
+    ### CONTEXT ###
+    You work with turbofan engine sensor data from multiple engines in a fleet. The data contains:
+    - **Time series data** from different engines, each with unique wear patterns and operational history separated into 
+    four datasets (FD001, FD002, FD003, FD004), each dataset is further divided into training and test subsets.
+    - **26 data columns**: unit number, time in cycles, 3 operational settings, and 21 sensor measurements  
+    - **Engine lifecycle**: Engines start operating normally, then develop faults that grow until system failure
+    - **Predictive maintenance goal**: Predict Remaining Useful Life (RUL) - how many operational cycles before failure
+    - **Data characteristics**: Contains normal operational variation, sensor noise, and progressive fault development    
+    This context helps you understand user queries about engine health, sensor patterns, failure prediction, and maintenance planning.
+    REMEMBER TO RELY ON DATA ANALYSIS ASSITANT TO RETRIEVE DATA FROM THE DATABASE.
+    
+    ### SPECIAL TASKS ###
+    Create execution plans for specialized predictive maintenance tasks. For other queries, use standard reasoning.
+
+    ### SPECIAL TASK 0: RUL Comparison (Actual vs Predicted) ###
+    1) Retrieve ground truth RUL data for specified engine from database
+    2) Predict RUL for same engine using the model  
+    3) Transform actual RUL to piecewise representation (MAXLIFE=125) using python
+    4) Apply the knee_RUL function to the actual RUL column using apply_piecewise_rul_to_data function: calculate true failure point as max_cycle_in_data + final_rul, replace 'actual_RUL' column.
+    4) Generate comparison visualization showing the clean piecewise pattern alongside predictions using provided plot comparison tool
+
+    ### GUIDELINES ###
+    **Generate and return the absolutepath to any files generated by the tools.**
+    **DO NOT use predict_rul tool to fetch RUL data unless the user explicitly uses the word "predict" or somthing similar, this is because there is also ground truth RUL data in the database which the user might request sometimes.**
+    **REMEMBER: SQL retrieval tool is smart enough to understand queries like counts, totals, basic facts etc. It can use UNIQUE(), COUNT(), SUM(), AVG(), MIN(), MAX() to answer simple queries. NO NEED TO USE CODE GENERATION ASSISTANT FOR SIMPLE QUERIES.**
+    **CODE GENERATION ASSISTANT IS COSTLY AND UNRELIABLE MOST OF THE TIMES. SO PLEASE USE IT ONLY FOR COMPLEX QUERIES THAT REQUIRE DATA PROCESSING AND VISUALIZATION.**
+
+    **User Input:**
+    {input_text}
+
+    Analyze the input and create an appropriate execution plan in bullet points.
+
+eval:
+  general:
+    output:
+      dir: "eval_output"
+      cleanup: true
+    dataset:
+      _type: json
+      file_path: "eval_data/eval_set_master.json"
+    query_delay: 10  # seconds between queries
+    max_concurrent: 1  # process queries sequentially
+  evaluators:
+    multimodal_eval:
+      _type: multimodal_llm_judge_evaluator
+      llm_name: multimodal_judging_llm
+      judge_prompt: |
+        You are an expert evaluator for predictive maintenance agentic workflows. Your task is to evaluate how well a generated response (which may include both text and visualizations) matches the reference answer for a given question.
+
+        Question: {question}
+
+        Reference Answer: {reference_answer}
+
+        Generated Response: {generated_answer}
+
+        IMPORTANT: You MUST provide your response ONLY as a valid JSON object. Do not include any text before or after the JSON.
+
+        EVALUATION LOGIC:
+        IMPORTANT: Your evaluation mode is determined by whether actual plot images are attached to this message:
+        - If PLOT IMAGES are attached to this message: Perform ONLY PLOT EVALUATION by examining the actual plot images
+        - If NO IMAGES are attached: Perform ONLY TEXT EVALUATION of the text response
+        
+        DO NOT confuse text mentions of plots/files with actual attached images. Only evaluate plots if you can actually see plot images in this message.
+
+        TEXT EVALUATION (only when no images are attached):
+        Check if the generated text answer semantically matches the reference answer (not word-for-word, but meaning and content). Score:
+        - 1.0: Generated answer fully matches the reference answer semantically
+        - 0.5: Generated answer partially matches the reference answer with some missing or incorrect elements
+        - 0.0: Generated answer does not match the reference answer semantically
+
+        PLOT EVALUATION (only when images are attached):
+        Use the reference answer as the expected plot description and check how well the actual generated plot matches it. Score:
+        - 1.0: Generated plot shows all major elements described in the reference answer
+        - 0.5: Generated plot shows some elements described in the reference answer but missing significant aspects
+        - 0.0: Generated plot does not match the reference answer description
+
+        FINAL SCORING:
+        Your final score should be based on whichever evaluation type was performed (TEXT or PLOT, not both).
+
+        You MUST respond with ONLY this JSON format:
+        {{
+            "score": 0.0,
+            "reasoning": "EVALUATION TYPE: [TEXT or PLOT] - [your analysis and score with justification]"
+        }}
+
+        CRITICAL REMINDER: 
+        - If images are attached → Use "EVALUATION TYPE: PLOT" 
+        - If no images → Use "EVALUATION TYPE: TEXT"
+        
+        Replace the score with your actual evaluation (0.0, 0.5, or 1.0).
