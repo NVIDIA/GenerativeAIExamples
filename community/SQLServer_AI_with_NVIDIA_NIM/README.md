@@ -59,7 +59,7 @@ Below is the proposed architecture:
 
 ---
 
-## **Demo**
+# **Demo**
 
 This section explains how to use the proposed architecture for **SQL Server 2025 AI** functionality with **NVIDIA Retrieval QA using E5 Embedding v5**.
 
@@ -74,7 +74,7 @@ Scenarios demonstrated:
 - Linux or Linux VM, Azure Local with Linux VM, Docker, SQL Server 2025
 - Hybrid: Windows VM and Linux VM (current demo)
 
-**Goals:**
+## **Goals:**
 
 The demo is trying to generalize and simplify an approach presented by the Microsoft SQL Server team on NVIDIA GTC 2025 conference. [Build Secure and Scalable Gen AI Applications With Databases and NVIDIA AI [S71521]](https://www.nvidia.com/en-us/on-demand/session/gtc25-S71521/)
 
@@ -130,8 +130,9 @@ In general, I am trying to reach the same goals using the latest NVIDIA and Azur
 ## **References**
 
 - [NVIDIA NIM Documentation](https://docs.nvidia.com/nim/index.html)
-- [Microsoft SQL Server 2025 Docs](https://learn.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-2025)
+- [Microsoft SQL Server 2025](https://learn.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-2025)
 - [Azure Container Apps Documentation](https://learn.microsoft.com/en-us/azure/container-apps/)
+- [NVIDIA GTC 2025 conference. "Build Secure and Scalable Gen AI Applications With Databases and NVIDIA AI"](https://www.nvidia.com/en-us/on-demand/session/gtc25-S71521/)
 
 ---
 
