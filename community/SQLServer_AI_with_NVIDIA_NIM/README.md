@@ -48,13 +48,13 @@ Below is the proposed architecture:
 - Inference models can be changed by customers
 
 **Benefits:**
-- Serverless container orchestration (no infrastructure management like AKS)
+- Docker container orchestration (no infrastructure management)
 - Flexible manual/automatic scaling
-- Event-driven architecture (HTTPS requests)
+- Secure, Event-driven architecture (HTTPS requests)
 - Cost efficiency (pay only for compute time and only for remote scenario)
 - High developer productivity and simplicity. No extra development is required—just correct environment settings, parameters, certificates, and adherence to standards. No external library installations required.
-- Managed, secure environment
-- Fast provisioning and updates from NVIDIA NIM repository
+- Managed, secure, scalable environment
+- Simple provisioning and updates from NVIDIA NIM repository
 - Multi-container support
 
 ---
@@ -73,6 +73,18 @@ Scenarios demonstrated:
 - Azure Local with Windows VM, WSL 2, Docker Desktop, SQL Server 2025
 - Linux or Linux VM, Azure Local with Linux VM, Docker, SQL Server 2025
 - Hybrid: Windows VM and Linux VM (current demo)
+
+**Goals:**
+
+The demo is trying to generalize and simplify an approach presented by the Microsoft SQL Server team on NVIDIA GTC 2025 conference. [Build Secure and Scalable Gen AI Applications With Databases and NVIDIA AI [S71521]](https://www.nvidia.com/en-us/on-demand/session/gtc25-S71521/)
+
+In general, I am trying to reach the same goals using the latest NVIDIA and Azure technologies:
+
+- How to use AI functionality in SQL Server 2025 using NVIDIA Inference Microservices (NIM) containers.
+- The solution enables generating and storing AI model embeddings in SQL Server, making it possible to search for similar data using natural language prompts—even across multiple languages.
+- The demo shows how to deploy and configure both the AI model (in NIM containers) and SQL Server in Azure Cloud and On-premises.
+- It covers practical issues such as certificate management, REST API configuration, required payload parameters, etc.
+- Provided scripts and procedures allow you to generate and store embeddings in the AdventureWorks database with AI functionality.
 
 ---
 
