@@ -3,13 +3,17 @@
 ### **1. TLS Certificate Setup**
 - Create Root CA (`ca_cert.pem`) and server key (`ssl_key.pem`).
 - For Ubuntu VM: certificate SAN includes IP:192.168.10.218.
-- For WSL 2: certificate SAN includes DNS:localhost, IP:127.0.0.1.
+  <div style="background-color: #F6F8FA; padding: 6px 12px; border-radius: 5px; margin-left: 24px;">
+    <b>If WSL 2</b>: certificate SAN includes <code>DNS:localhost, IP:127.0.0.1</code>.
+  </div>
 
 ### **2. Import the CA Certificate to Windows**
 - **Ubuntu VM:** Copy via scp  
   `scp user@192.168.10.218:/home/user/nim_certs/ca_cert.pem C:\SQL2025\nim-ca.cer`
-- **WSL 2:** Copy directly  
-  `cp ~/nim_certs/ca_cert.pem /mnt/c/SQL2025/nim-ca.cer`
+  <div style="background-color: #F6F8FA; padding: 6px 12px; border-radius: 5px; margin-left: 24px;">
+    <b>If WSL 2</b>: Copy directly  
+    <br>`cp ~/nim_certs/ca_cert.pem /mnt/c/SQL2025/nim-ca.cer`
+  </div>
 - **Import and restart SQL Server:**  
   `certutil -f -addstore Root "C:\SQL2025\nim-ca.cer"`  
   `Get-Service SQL | ? {$_.Status -eq 'Running'} | Restart-Service`
@@ -19,15 +23,19 @@
   `docker pull nvcr.io/nim/nvidia/nv-embedqa-e5-v5:latest`
 - **Ubuntu VM:** Expose on all interfaces:  
   `-p 0.0.0.0:8000:8000`
-- **WSL 2:** Expose to Windows via loopback:  
-  `-p 8000:8000`
+  <div style="background-color: #F6F8FA; padding: 6px 12px; border-radius: 5px; margin-left: 24px;">
+    <b>If WSL 2</b>: Expose to Windows via loopback:  
+    <br>`-p 8000:8000`
+  </div>
 - Enable TLS with mounted ssl_key.pem and ssl_cert.pem.
 
 ### **4. Verify with curl (from Windows)**
 - **Ubuntu VM:**  
   `curl --ssl-no-revoke --cacert C:\SQL2025\nim-ca.cer https://192.168.10.218:8000/v1/models`
-- **WSL 2:**  
-  `curl --ssl-no-revoke --cacert C:\SQL2025\nim-ca.cer https://localhost:8000/v1/models`
+  <div style="background-color: #F6F8FA; padding: 6px 12px; border-radius: 5px; margin-left: 24px;">
+    <b>If WSL 2</b>:  
+    <br>`curl --ssl-no-revoke --cacert C:\SQL2025\nim-ca.cer https://localhost:8000/v1/models`
+  </div>
 
 ### **5. Enable REST Integration in SQL Server**
 Enable the built-in REST endpoint feature:  
