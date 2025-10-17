@@ -90,11 +90,11 @@ Scenarios demonstrated:
 
 ---
 
-## [Local Scenario](local.md)
+## [Local Demo Installation](local.md)
 
 ---
 
-## [Remote Scenario](remote.md)
+## [Remote Demo Installation](remote.md)
 
 ---
 
