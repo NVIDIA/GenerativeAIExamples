@@ -90,11 +90,11 @@ Scenarios demonstrated:
 
 ---
 
-## [**Local Scenario**](local.md)
+## [Local Scenario](local.md)
 
 ---
 
-## [**Remote Scenario**](remote.md)
+## [Remote Scenario](remote.md)
 
 ---
 
