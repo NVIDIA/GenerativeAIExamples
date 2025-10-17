@@ -1,4 +1,4 @@
-# **Running NVIDIA NIM with SQL Server 2025 AI on Azure Cloud and Azure Local**
+# **NVIDIA NIM with SQL Server 2025 AI on Azure Cloud and Azure Local**
 
 ---
 
