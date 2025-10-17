@@ -117,6 +117,6 @@ Scenarios demonstrated:
 
 ## **References**
 
-- [Microsoft SQL Server 2025 Docs](https://learn.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-2025)
 - [NVIDIA NIM Documentation](https://docs.nvidia.com/nim/index.html)
+- [Microsoft SQL Server 2025 Docs](https://learn.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-2025)
 - [Azure Container Apps Documentation](https://learn.microsoft.com/en-us/azure/container-apps/)
