@@ -118,5 +118,5 @@ Scenarios demonstrated:
 ## **References**
 
 - [Microsoft SQL Server 2025 Docs](https://learn.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-2025)
-- [NVIDIA NIM Documentation]([https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nim](https://developer.nvidia.com/nim?sortBy=developer_learning_library%2Fsort%2Ffeatured_in.nim%3Adesc%2Ctitle%3Aasc))
+- [NVIDIA NIM Documentation](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nim)
 - [Azure Container Apps Documentation](https://learn.microsoft.com/en-us/azure/container-apps/)
