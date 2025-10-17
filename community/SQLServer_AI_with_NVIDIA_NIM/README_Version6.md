@@ -28,7 +28,9 @@ This repository demonstrates a new approach using **NVIDIA NIM Microservices** t
 
 Below is the proposed architecture (Pic 1):
 
-*Pic.1: Architecture Diagram Placeholder*
+![Architecture Diagram](images/Slide1.JPG)
+
+*Pic.1: Architecture Diagram*
 
 **Key Points:**
 - New AI functionality is based on secure (HTTPS) communication with external endpoints to SQL Server, which could be in the cloud or on-premises.
@@ -150,6 +152,10 @@ Grant permission (if not sysadmin):
 ---
 
 ## **Remote Scenario**
+
+![Architecture Diagram](images/Slide2.JPG)
+
+*Pic.2: Execution Pipeline*
 
 ### **Prerequisites**
 1. **Local Installation of Windows:**
