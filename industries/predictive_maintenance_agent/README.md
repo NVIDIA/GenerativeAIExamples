@@ -2,7 +2,7 @@
 
 A comprehensive AI-powered predictive maintenance system built with NeMo Agent Toolkit for turbofan engine health monitoring and failure prediction.
 
-Work done by: Vineeth Kalluru, Janaki Vamaraju, Sugandha Sharma, Ze Yang, and Viraj Modak
+Work done by: Vineeth Kalluru, Janaki Vamaraju, Sugandha Sharma, Ze Yang, Viraj Modak and Sridurga Krithivasan
 
 ## Overview
 
@@ -296,6 +296,42 @@ Verify that the NVIDIA API key is set:
 ```bash
 echo $NVIDIA_API_KEY
 ```
+## Locally deployed NIMs
+
+For local deployment, you need to deploy **2 NIMs models** before starting the workflow server:
+
+1. **Llama 3.3 Nemotron Super 49B V1** - For reasoning and multimodal judging (Port 9000)
+2. **Qwen2.5 Coder 32B Instruct** - For SQL generation, analysis, and code generation (Port 9001)
+
+### Deploy Models Locally
+
+**Hardware Requirements:** This local deployment requires **8×H100 GPUs or similar** high-memory GPUs to run both models simultaneously:
+- **Llama 3.3 Nemotron Super 49B**: Uses 2 GPUs (GPUs 0,1) with FP8 precision
+- **Qwen2.5 Coder 32B**: Uses 4 GPUs (GPUs 2,3,4,5) with BF16 precision
+
+Ensure you have your NGC API key set:
+```bash
+export NGC_API_KEY=your_actual_api_key
+```
+
+```bash
+# Deploy Llama 3.3 Nemotron first (Port 9000)
+./deploy_llama_nemotron.sh
+
+# Then deploy Qwen2.5 Coder in another terminal (Port 9001) 
+./deploy_qwen_coder.sh
+```
+
+**Verify deployments:**
+```bash
+# Check Llama 3.3 Nemotron (Port 9000)
+curl http://localhost:9000/v1/models
+
+# Check Qwen2.5 Coder (Port 9001)
+curl http://localhost:9001/v1/models
+```
+
+Both models must be running before proceeding to the next step.
 
 ## Launch Server and UI
 
@@ -305,8 +341,14 @@ With other frameworks like LangGraph or CrewAI, users are expected to develop a 
 
 Start the server now:
 
+**For cloud NIMs (default):**
 ```bash
 nat serve --config_file=configs/config-reasoning.yml
+```
+
+**For locally deployed NIMs:**
+```bash
+nat serve --config_file=configs/config-reasoning-local-nims.yml
 ```
 
 You should see something like this, which indicates that the server started successfully:
