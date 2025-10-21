@@ -1,0 +1,60 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Docker & Compose
+deploy/compose/volumes/
+uploaded_files/
+
+# Node.js
+**/node_modules/
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Build outputs
+**/build/
+**/dist/
+
+# Helm
+**/helm-charts/*.tgz
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+temp.txt
+*.tmp
+*.temp
+*.swp
+*.bak
+*~
+
+# Test outputs
+test-results/
+coverage/
+
+# Generated configuration results
+src/vgpu_configuration_results.json
