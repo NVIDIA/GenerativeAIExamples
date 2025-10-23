@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: Copyright (c) 2024, NVIDIA CORPORATION & AFFILIATES.
+# All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  # NOTE: Prior to v0.86.0 use `logging` instead of `debug`.
+  zipkin:
+    endpoint: "http://zipkin:9411/api/v2/spans"
+  logging:
+    verbosity: detailed
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+processors:
+  batch:
+  tail_sampling:
+    policies: [
+      {
+        name: filter_http_url,
+        type: string_attribute,
+        string_attribute: {
+          key: http.route,
+          values: [ "/health/ready" ],
+          enabled_regex_matching: true,
+          invert_match: true
+        }
+      }
+    ]
+
+extensions:
+  health_check:
+  zpages:
+
+service:
+  extensions: [zpages, health_check]
+  telemetry:
+    logs:
+      level: "debug"
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, tail_sampling]
+      exporters: [zipkin, logging]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, logging]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging]

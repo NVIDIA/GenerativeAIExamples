@@ -1,0 +1,275 @@
+{
+  "comment": "NVIDIA vGPU Profile Specifications - Based on NVIDIA Official Documentation",
+  "documentation_sources": [
+    "NVIDIA vGPU Software Documentation",
+    "NVIDIA Virtual GPU Software User Guide",
+    "GPU-specific datasheets"
+  ],
+  "physical_gpus": {
+    "BSE": {
+      "full_name": "NVIDIA RTX Pro 6000 BSE (Blackwell)",
+      "memory_gb": 96,
+      "memory_type": "GDDR7 with ECC",
+      "fp16_tflops": 500,
+      "bandwidth_gbps": 1600,
+      "generation": "Blackwell",
+      "use_cases": ["Enterprise AI", "Scientific Computing", "Virtual Workstations"],
+      "profiles": [8, 12, 24, 48, 96]
+    },
+    "L40S": {
+      "full_name": "NVIDIA L40S",
+      "memory_gb": 48,
+      "memory_type": "GDDR6 with ECC",
+      "fp16_tflops": 366,
+      "bandwidth_gbps": 864,
+      "generation": "Ada Lovelace",
+      "use_cases": ["ML training", "ML inference", "Virtual workstations"],
+      "profiles": [8, 12, 24, 48]
+    },
+    "L40": {
+      "full_name": "NVIDIA L40",
+      "memory_gb": 48,
+      "memory_type": "GDDR6 with ECC",
+      "fp16_tflops": 362,
+      "bandwidth_gbps": 864,
+      "generation": "Ada Lovelace",
+      "use_cases": ["Virtual workstations", "Compute workloads"],
+      "profiles": [8, 12, 24, 48]
+    },
+    "A40": {
+      "full_name": "NVIDIA A40",
+      "memory_gb": 48,
+      "memory_type": "GDDR6 with ECC",
+      "fp16_tflops": 299,
+      "bandwidth_gbps": 696,
+      "generation": "Ampere",
+      "use_cases": ["3D design", "Mixed virtual workstation workloads"],
+      "profiles": [8, 12, 24, 48]
+    },
+    "L4": {
+      "full_name": "NVIDIA L4",
+      "memory_gb": 24,
+      "memory_type": "GDDR6 with ECC",
+      "fp16_tflops": 242,
+      "bandwidth_gbps": 300,
+      "generation": "Ada Lovelace",
+      "use_cases": ["AI inference", "Small model training", "3D graphics"],
+      "profiles": [4, 8, 12, 24]
+    }
+  },
+  "vgpu_profiles": [
+    {
+      "name": "BSE-8Q",
+      "physical_gpu": "BSE",
+      "memory_gb": 8,
+      "fp16_tflops": 500,
+      "bandwidth_gbps": 1600,
+      "description": "RTX 6000 BSE 8GB profile"
+    },
+    {
+      "name": "BSE-12Q",
+      "physical_gpu": "BSE",
+      "memory_gb": 12,
+      "fp16_tflops": 500,
+      "bandwidth_gbps": 1600,
+      "description": "RTX 6000 BSE 12GB profile"
+    },
+    {
+      "name": "BSE-24Q",
+      "physical_gpu": "BSE",
+      "memory_gb": 24,
+      "fp16_tflops": 500,
+      "bandwidth_gbps": 1600,
+      "description": "RTX 6000 BSE 24GB profile"
+    },
+    {
+      "name": "BSE-48Q",
+      "physical_gpu": "BSE",
+      "memory_gb": 48,
+      "fp16_tflops": 500,
+      "bandwidth_gbps": 1600,
+      "description": "RTX 6000 BSE 48GB profile"
+    },
+    {
+      "name": "BSE-96Q",
+      "physical_gpu": "BSE",
+      "memory_gb": 96,
+      "fp16_tflops": 500,
+      "bandwidth_gbps": 1600,
+      "description": "RTX 6000 BSE 96GB profile (full GPU)"
+    },
+    {
+      "name": "L40S-8Q",
+      "physical_gpu": "L40S",
+      "memory_gb": 8,
+      "fp16_tflops": 366,
+      "bandwidth_gbps": 864,
+      "description": "L40S 8GB profile"
+    },
+    {
+      "name": "L40S-12Q",
+      "physical_gpu": "L40S",
+      "memory_gb": 12,
+      "fp16_tflops": 366,
+      "bandwidth_gbps": 864,
+      "description": "L40S 12GB profile"
+    },
+    {
+      "name": "L40S-24Q",
+      "physical_gpu": "L40S",
+      "memory_gb": 24,
+      "fp16_tflops": 366,
+      "bandwidth_gbps": 864,
+      "description": "L40S 24GB profile"
+    },
+    {
+      "name": "L40S-48Q",
+      "physical_gpu": "L40S",
+      "memory_gb": 48,
+      "fp16_tflops": 366,
+      "bandwidth_gbps": 864,
+      "description": "L40S 48GB profile (full GPU)"
+    },
+    {
+      "name": "L40-8Q",
+      "physical_gpu": "L40",
+      "memory_gb": 8,
+      "fp16_tflops": 362,
+      "bandwidth_gbps": 864,
+      "description": "L40 8GB profile"
+    },
+    {
+      "name": "L40-12Q",
+      "physical_gpu": "L40",
+      "memory_gb": 12,
+      "fp16_tflops": 362,
+      "bandwidth_gbps": 864,
+      "description": "L40 12GB profile"
+    },
+    {
+      "name": "L40-24Q",
+      "physical_gpu": "L40",
+      "memory_gb": 24,
+      "fp16_tflops": 362,
+      "bandwidth_gbps": 864,
+      "description": "L40 24GB profile"
+    },
+    {
+      "name": "L40-48Q",
+      "physical_gpu": "L40",
+      "memory_gb": 48,
+      "fp16_tflops": 362,
+      "bandwidth_gbps": 864,
+      "description": "L40 48GB profile (full GPU)"
+    },
+    {
+      "name": "A40-8Q",
+      "physical_gpu": "A40",
+      "memory_gb": 8,
+      "fp16_tflops": 299,
+      "bandwidth_gbps": 696,
+      "description": "A40 8GB profile"
+    },
+    {
+      "name": "A40-12Q",
+      "physical_gpu": "A40",
+      "memory_gb": 12,
+      "fp16_tflops": 299,
+      "bandwidth_gbps": 696,
+      "description": "A40 12GB profile"
+    },
+    {
+      "name": "A40-24Q",
+      "physical_gpu": "A40",
+      "memory_gb": 24,
+      "fp16_tflops": 299,
+      "bandwidth_gbps": 696,
+      "description": "A40 24GB profile"
+    },
+    {
+      "name": "A40-48Q",
+      "physical_gpu": "A40",
+      "memory_gb": 48,
+      "fp16_tflops": 299,
+      "bandwidth_gbps": 696,
+      "description": "A40 48GB profile (full GPU)"
+    },
+    {
+      "name": "L4-4Q",
+      "physical_gpu": "L4",
+      "memory_gb": 4,
+      "fp16_tflops": 242,
+      "bandwidth_gbps": 300,
+      "description": "L4 4GB profile"
+    },
+    {
+      "name": "L4-8Q",
+      "physical_gpu": "L4",
+      "memory_gb": 8,
+      "fp16_tflops": 242,
+      "bandwidth_gbps": 300,
+      "description": "L4 8GB profile"
+    },
+    {
+      "name": "L4-12Q",
+      "physical_gpu": "L4",
+      "memory_gb": 12,
+      "fp16_tflops": 242,
+      "bandwidth_gbps": 300,
+      "description": "L4 12GB profile"
+    },
+    {
+      "name": "L4-24Q",
+      "physical_gpu": "L4",
+      "memory_gb": 24,
+      "fp16_tflops": 242,
+      "bandwidth_gbps": 300,
+      "description": "L4 24GB profile (full GPU)"
+    }
+  ],
+  "configuration": {
+    "hypervisor_reserve_gb": 3.0,
+    "safety_buffer_gb": 0.0,
+    "default_framework": "vllm",
+    "default_quantization": "fp16"
+  },
+  "workload_overheads": {
+    "inference": {
+      "multiplier": 1.10,
+      "description": "10% overhead for inference workloads (KV cache, activations)"
+    },
+    "rag": {
+      "base_overhead": 0.05,
+      "embedding_overhead": 0.03,
+      "vector_db_overhead": 0.05,
+      "reranker_overhead": 0.02,
+      "description": "Dynamic overhead based on RAG components used"
+    }
+  },
+  "framework_overheads": {
+    "vllm": {
+      "multiplier": 1.25,
+      "description": "vLLM with PagedAttention - Efficient memory management"
+    },
+    "trt-llm": {
+      "multiplier": 1.2,
+      "description": "TensorRT-LLM - Most efficient inference framework"
+    },
+    "tgi": {
+      "multiplier": 1.35,
+      "description": "Text Generation Inference - Standard Hugging Face framework"
+    },
+    "transformers": {
+      "multiplier": 1.5,
+      "description": "Hugging Face Transformers - Less optimized for production"
+    },
+    "sglang": {
+      "multiplier": 1.25,
+      "description": "SGLang - Similar efficiency to vLLM"
+    },
+    "llamacpp": {
+      "multiplier": 1.3,
+      "description": "llama.cpp - Efficient C++ implementation"
+    }
+  }
+}

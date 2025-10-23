@@ -1,0 +1,19 @@
+models:
+  - type: "content_safety"
+    engine: nim
+    parameters:
+      model_name: "llama-3.1-nemoguard-8b-content-safety"
+
+  - type: "topic_control"
+    engine: nim
+    parameters:
+      model_name: "llama-3.1-nemoguard-8b-topic-control"
+
+rails:
+  input:
+    flows:
+      - content safety check input $model=content_safety
+      - topic safety check input $model=topic_control
+  output:
+    flows:
+      - content safety check output $model=content_safety
