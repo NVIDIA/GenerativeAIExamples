@@ -180,6 +180,21 @@ Now install the PDM workflow:
 uv pip install -e .
 ```
 
+#### Installation Options
+
+**Base Installation** (default - includes ChromaDB + SQLite):
+```bash
+uv pip install -e .
+```
+
+**Optional Database Support:**
+- PostgreSQL: `uv pip install -e ".[postgres]"`
+- MySQL: `uv pip install -e ".[mysql]"`
+- All databases: `uv pip install -e ".[all-databases]"`
+
+**Optional Vector Store:**
+- Elasticsearch: `uv pip install -e ".[elasticsearch]"`
+
 ### [Optional] Verify if all prerequisite packages are installed
 ```bash
 uv pip list | grep -E "nvidia-nat|nvidia-nat-ragaai|nvidia-nat-phoenix|vanna|chromadb|xgboost|pytest|torch|matplotlib"
@@ -320,6 +335,31 @@ INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 
 During startup, you'll see Vanna training logs as the SQL agent automatically loads the domain knowledge from `vanna_training_data.yaml` (as described in Section 6).
 
+### Start Modern Web UI (Recommended)
+
+We now provide a **custom modern web interface** inspired by the NVIDIA AIQ Research Assistant design! This UI offers a superior experience compared to the generic NeMo-Agent-Toolkit-UI.
+
+**In a new terminal**, navigate to the frontend directory and start the UI:
+
+```bash
+cd frontend
+npm install  # First time only
+npm start
+```
+
+The UI will be available at `http://localhost:3000`
+
+**Features of the Modern UI:**
+- 🎨 Clean, professional NVIDIA-branded design
+- 📊 Embedded visualization display for plots and charts
+- 🎯 Quick-start example prompts for common queries
+- ⚙️ Configurable settings panel
+- 🌓 Dark/Light theme support
+- 📱 Fully responsive mobile design
+- 🔄 Real-time streaming responses
+
+See `frontend/README.md` for detailed documentation.
+
 ### Start Code Execution Sandbox
 
 The code generation assistant requires a standalone Python sandbox that can execute the generated code. This step starts that sandbox.
@@ -443,7 +483,9 @@ def your_custom_utility(file_path: str, param: int = 100) -> str:
 4. **Consistent Interface**: All utilities return descriptive success messages
 5. **Documentation**: Use `utils.show_utilities()` to discover available functions
 
-### Setup Web Interface
+### Alternative: Generic NeMo-Agent-Toolkit UI
+
+If you prefer the generic NeMo Agent Toolkit UI instead of our custom interface:
 
 ```bash
 git clone https://github.com/NVIDIA/NeMo-Agent-Toolkit-UI.git
@@ -458,6 +500,8 @@ The UI is available at `http://localhost:3000`
 - Set HTTP URL to `/chat/stream` (recommended)
 - Configure theme and WebSocket URL as needed
 - Check "Enable intermediate results" and "Enable intermediate results by default" if you prefer to see all agent calls while the workflow runs
+
+**Note:** The custom modern UI (described above) provides better visualization embedding, domain-specific examples, and a more polished experience tailored for predictive maintenance workflows.
 
 ## Example Prompts
 
@@ -487,7 +531,7 @@ Retrieve and detect anomalies in sensor 4 measurements for engine number 78 in t
 
 **Workspace Utilities Demo**
 ```
-Retrieve ground truth RUL values and time in cycles from FD001 train dataset. Apply piecewise RUL transformation with MAXLIFE=100. Finally, Plot a line chart of the transformed values across time.
+Retrieve RUL values and time in cycles for engine unit 24 from FD001 train dataset. Use the piece wise RUL transformation code utility to perform piecewise RUL transformation on the ground truth RUL values with MAXLIFE=100.Finally, Plot a comparison line chart with RUL values and its transformed values across time.
 ```
 
 *This example demonstrates how to discover and use workspace utilities directly. The system will show available utilities and then apply the RUL transformation using the pre-built, reliable utility functions.*
@@ -496,9 +540,9 @@ Retrieve ground truth RUL values and time in cycles from FD001 train dataset. Ap
 ```
 Perform the following steps:
 
-1.Retrieve the time in cycles, all sensor measurements, and ground truth RUL values for engine unit 24 from FD001 train dataset.
+1.Retrieve the time in cycles, all sensor measurements, and ground truth RUL values, partition by unit number for engine unit 24 from FD001 train dataset.
 2.Use the retrieved data to predict the Remaining Useful Life (RUL). 
-3.Use the piece wise RUL transformation code utility to apply piecewise RUL transformation only to the observed RUL column. 
+3.Use the piece wise RUL transformation code utility to apply piecewise RUL transformation only to the observed RUL column with MAXLIFE of 100.
 4.Generate a plot that compares the transformed RUL values and the predicted RUL values across time.
 ```
 ![Prediction Example](imgs/test_prompt_3.png)
