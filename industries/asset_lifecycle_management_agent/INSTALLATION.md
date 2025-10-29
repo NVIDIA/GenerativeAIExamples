@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide explains how to install the Predictive Maintenance Agent with different database and vector store options.
+This guide explains how to install the Asset Lifecycle Management Agent with different database and vector store options.
 
 ## Base Installation
 
@@ -186,7 +186,7 @@ sudo apt-get install unixodbc unixodbc-dev
 After installation, see:
 - **Configuration Guide:** `configs/README.md` - How to configure vector stores and databases
 - **Examples:** `config_examples.yaml` - Sample configurations
-- **Getting Started:** Run the predictive maintenance workflow
+- **Getting Started:** Run the Asset Lifecycle Management workflow
 
 ## Support
 

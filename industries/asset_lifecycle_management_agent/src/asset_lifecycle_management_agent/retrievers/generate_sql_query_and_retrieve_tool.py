@@ -16,6 +16,7 @@
 import json
 import logging
 import os
+from typing import Optional
 
 from pydantic import Field, BaseModel
 
@@ -42,11 +43,11 @@ class GenerateSqlQueryAndRetrieveToolConfig(FunctionBaseConfig, name="generate_s
         default="chromadb",
         description="Type of vector store: 'chromadb' or 'elasticsearch'"
     )
-    vector_store_path: str = Field(
+    vector_store_path: Optional[str] = Field(
         default=None,
         description="Path to ChromaDB vector store (required if vector_store_type='chromadb')"
     )
-    elasticsearch_url: str = Field(
+    elasticsearch_url: Optional[str] = Field(
         default=None,
         description="Elasticsearch URL (required if vector_store_type='elasticsearch', e.g., 'http://localhost:9200')"
     )
@@ -54,15 +55,15 @@ class GenerateSqlQueryAndRetrieveToolConfig(FunctionBaseConfig, name="generate_s
         default="vanna_vectors",
         description="Elasticsearch index name (used if vector_store_type='elasticsearch')"
     )
-    elasticsearch_username: str = Field(
+    elasticsearch_username: Optional[str] = Field(
         default=None,
         description="Elasticsearch username for basic auth (optional)"
     )
-    elasticsearch_password: str = Field(
+    elasticsearch_password: Optional[str] = Field(
         default=None,
         description="Elasticsearch password for basic auth (optional)"
     )
-    elasticsearch_api_key: str = Field(
+    elasticsearch_api_key: Optional[str] = Field(
         default=None,
         description="Elasticsearch API key for authentication (optional)"
     )

@@ -14,17 +14,16 @@
 # limitations under the License.
 
 """
-Retrievers package for predictive maintenance agent.
+Predictors package for Asset Lifecycle Management agent.
 
-This package contains components for data retrieval and SQL query generation
-for predictive maintenance workflows.
+This package contains components for prediction and anomaly detection
+in Asset Lifecycle Management workflows (Operation & Maintenance phase).
 """
 
-from .vanna_manager import VannaManager
-from .vanna_util import *
-from . import generate_sql_query_and_retrieve_tool
+from . import moment_anomaly_detection_tool
+from . import predict_rul_tool
 
 __all__ = [
-    "VannaManager",
-    "generate_sql_query_and_retrieve_tool",
+    "moment_anomaly_detection_tool",
+    "predict_rul_tool",
 ]

@@ -71,7 +71,7 @@ OUTPUT ONLY THE CODE. NO COMMENTS. NO DOCSTRINGS. NO EXPLANATIONS.
 Generate only the code needed. Your response must contain ONLY executable Python code which will be DIRECTLY EXECUTED IN A SANDBOX.
 
 **UTILITIES AVAILABLE:**
-A 'utils' folder contains a pre-built function for predictive maintenance tasks:
+A 'utils' folder contains pre-built functions for Asset Lifecycle Management tasks (especially predictive maintenance):
 - utils.apply_piecewise_rul_transformation
     - DESCRIPTION: Takes an input pandas DataFrame with time series data and create realistic "knee" patterns on the provided RUL column.
     - INPUTS:
@@ -261,7 +261,8 @@ CORRECTED CODE:"""
             # All retries failed
             response = f"Code generation failed after {max_retries + 1} attempts."
             if error_info:
-                response += f" Last error: {error_info.strip().replace('\n', ' ')}"
+                error_text = error_info.strip().replace('\n', ' ')
+                response += f" Last error: {error_text}"
             response += " Consider using alternative approaches."
             
             logger.error(response)
