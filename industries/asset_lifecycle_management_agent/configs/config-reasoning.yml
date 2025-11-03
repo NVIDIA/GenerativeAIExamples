@@ -19,21 +19,37 @@ general:
     logging:
       console:
         _type: console
+<<<<<<< HEAD:industries/asset_lifecycle_management_agent/configs/config-reasoning.yml
         level: DEBUG
     #     level: INFO
     #   file:
     #     _type: file
     #     path: "alm.log"
     #     level: DEBUG
+=======
+        level: INFO
+      file:
+        _type: file
+        path: "pdm.log"
+        level: DEBUG
+>>>>>>> fbde275 (Trying to rebase with main and commit the files again):industries/predictive_maintenance_agent/configs/config-reasoning.yml
     tracing:
       phoenix:
         _type: phoenix
         endpoint: http://localhost:6006/v1/traces
+<<<<<<< HEAD:industries/asset_lifecycle_management_agent/configs/config-reasoning.yml
         project: alm-agent
     #   catalyst:
     #     _type: catalyst
     #     project: "alm-agent"
     #     dataset: "alm-agent"
+=======
+        project: pdm-demo-day
+      catalyst:
+        _type: catalyst
+        project: "pdm-demo-day"
+        dataset: "pdm-demo-day"
+>>>>>>> fbde275 (Trying to rebase with main and commit the files again):industries/predictive_maintenance_agent/configs/config-reasoning.yml
 
 llms:
   # SQL query generation model
@@ -43,13 +59,11 @@ llms:
   
   # Data analysis and tool calling model
   analyst_llm:
-    _type: nim
-    model_name: "qwen/qwen2.5-coder-32b-instruct"
-    # _type: openai
-    # model_name: "gpt-4.1-mini"
+    _type: openai
+    model_name: "gpt-4.1-mini"
   
   # Python code generation model
-  coding_llm:
+  coding_llm: 
     _type: nim
     model_name: "qwen/qwen2.5-coder-32b-instruct"
   
@@ -67,15 +81,20 @@ embedders:
   # Text embedding model for vector database operations
   vanna_embedder:
     _type: nim
-    model_name: "nvidia/nv-embed-v1"
+    model_name: "nvidia/llama-3.2-nv-embedqa-1b-v2"
 
 functions:
   sql_retriever:
     _type: generate_sql_query_and_retrieve_tool
     llm_name: sql_llm
     embedding_name: vanna_embedder
+    # Vector store configuration
+    vector_store_type: chromadb  # Optional, chromadb is default
     vector_store_path: "database"
-    db_path: "database/nasa_turbo.db"
+    # Database configuration
+    db_type: sqlite  # Optional, sqlite is default
+    db_connection_string_or_path: "database/nasa_turbo.db"
+    # Output configuration
     output_folder: "output_data"
     vanna_training_data_path: "vanna_training_data.yaml"
 
@@ -129,8 +148,8 @@ functions:
       plot_line_chart, 
       plot_comparison, 
       anomaly_detection, 
-      plot_anomaly,
-      code_generation_assistant
+      plot_anomaly
+      # code_generation_assistant
     ]
     parse_agent_response_max_retries: 2
     system_prompt: |

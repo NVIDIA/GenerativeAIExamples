@@ -36,7 +36,7 @@ class CodeGenerationAssistantConfig(FunctionBaseConfig, name="code_generation_as
     code_execution_tool: FunctionRef = Field(description="The code execution tool to run generated code")
     output_folder: str = Field(description="The path to the output folder for generated files", default="/output_data")
     verbose: bool = Field(description="Enable verbose logging", default=True)
-    max_retries: int = Field(description="Maximum number of retries if code execution fails", default=3)
+    max_retries: int = Field(description="Maximum number of retries if code execution fails", default=0)
 
 
 @register_function(config_type=CodeGenerationAssistantConfig, framework_wrappers=[LLMFrameworkEnum.LANGCHAIN])
@@ -73,15 +73,14 @@ Generate only the code needed. Your response must contain ONLY executable Python
 **UTILITIES AVAILABLE:**
 A 'utils' folder contains pre-built functions for Asset Lifecycle Management tasks (especially predictive maintenance):
 - utils.apply_piecewise_rul_transformation
-   INPUTS:
-    - file_path: Path to JSON file with time series data
+    - DESCRIPTION: Takes an input pandas DataFrame with time series data and create realistic "knee" patterns on the provided RUL column.
+    - INPUTS:
+    - df: pandas DataFrame with time series data
     - maxlife: Maximum life threshold for the piecewise function (default: 100)
     - time_col: Name of the time/cycle column (default: 'time_in_cycles')
     - rul_col: Name of the RUL column to transform (default: 'RUL')
    OUTPUTS:
-    - pandas DataFrame with original data plus new 'transformed_RUL' column
-  * Transform RUL data with realistic knee pattern
-  * Returns a pandas DataFrame with original data plus new 'transformed_RUL' column
+    - df - a pandas DataFrame with original data plus new 'transformed_RUL' column
 
 - utils.show_utilities(): Show all available utilities if you need to see them
 
@@ -93,6 +92,15 @@ To use utilities, start your code with:
 import sys
 sys.path.append(".")
 import utils
+
+<insert your code here>
+<insert your code here>
+<insert your code here>
+
+# Saving files to the current working directory.)
+print("Original RUL column name: ", rul column name)
+print("Transformed RUL column name: ", 'transformed_RUL')
+print("File saved to: filename.json")
 ```
 
 **UTILITY USAGE GUIDELINES:**
@@ -217,8 +225,6 @@ GENERATE CODE ONLY. NO COMMENTS. NO EXPLANATIONS."""
                     
                     fix_prompt_text = f"""The previous code needs to be fixed. Please analyze the issue and generate corrected Python code.
 
-ORIGINAL INSTRUCTIONS: {instructions}
-
 PREVIOUS CODE:
 {code}
 
@@ -339,7 +345,6 @@ def _clean_generated_code(raw_code: str) -> str:
         clean_lines.append(line)
     
     return '\n'.join(clean_lines).strip()
-
 
 def _extract_file_paths(stdout: str, output_folder: str) -> list:
     """Extract generated file paths from execution output."""

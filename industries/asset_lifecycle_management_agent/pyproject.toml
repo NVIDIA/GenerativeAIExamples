@@ -11,6 +11,7 @@ dependencies = [
   "pydantic ~= 2.10.0, <2.11.0",
   "vanna==0.7.9",
   "chromadb",
+  "sqlalchemy>=2.0.0",
   "xgboost",
   "matplotlib",
   "torch",
@@ -22,6 +23,36 @@ description = "Asset Lifecycle Management workflow using NeMo Agent Toolkit for 
 classifiers = ["Programming Language :: Python"]
 authors = [{ name = "Vineeth Kalluru" }]
 maintainers = [{ name = "NVIDIA Corporation" }]
+
+[project.optional-dependencies]
+elasticsearch = [
+  "elasticsearch>=8.0.0"
+]
+postgres = [
+  "psycopg2-binary>=2.9.0"
+]
+mysql = [
+  "pymysql>=1.0.0"
+]
+sqlserver = [
+  "pyodbc>=4.0.0"
+]
+oracle = [
+  "cx_Oracle>=8.0.0"
+]
+all-databases = [
+  "psycopg2-binary>=2.9.0",
+  "pymysql>=1.0.0",
+  "pyodbc>=4.0.0",
+  "cx_Oracle>=8.0.0"
+]
+all = [
+  "elasticsearch>=8.0.0",
+  "psycopg2-binary>=2.9.0",
+  "pymysql>=1.0.0",
+  "pyodbc>=4.0.0",
+  "cx_Oracle>=8.0.0"
+]
 
 [project.entry-points.'nat.components']
 asset_lifecycle_management_agent = "asset_lifecycle_management_agent.register"

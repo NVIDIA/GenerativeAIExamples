@@ -175,6 +175,21 @@ Now install the ALM workflow:
 uv pip install -e .
 ```
 
+#### Installation Options
+
+**Base Installation** (default - includes ChromaDB + SQLite):
+```bash
+uv pip install -e .
+```
+
+**Optional Database Support:**
+- PostgreSQL: `uv pip install -e ".[postgres]"`
+- MySQL: `uv pip install -e ".[mysql]"`
+- All databases: `uv pip install -e ".[all-databases]"`
+
+**Optional Vector Store:**
+- Elasticsearch: `uv pip install -e ".[elasticsearch]"`
+
 ### [Optional] Verify if all prerequisite packages are installed
 ```bash
 uv pip list | grep -E "nvidia-nat|nvidia-nat-ragaai|nvidia-nat-phoenix|vanna|chromadb|xgboost|pytest|torch|matplotlib"
@@ -463,7 +478,9 @@ def your_custom_utility(file_path: str, param: int = 100) -> str:
 4. **Consistent Interface**: All utilities return descriptive success messages
 5. **Documentation**: Use `utils.show_utilities()` to discover available functions
 
-### Setup Web Interface
+### Alternative: Generic NeMo-Agent-Toolkit UI
+
+If you prefer the generic NeMo Agent Toolkit UI instead of our custom interface:
 
 ```bash
 git clone https://github.com/NVIDIA/NeMo-Agent-Toolkit-UI.git
@@ -509,7 +526,7 @@ Retrieve and detect anomalies in sensor 4 measurements for engine number 78 in t
 
 **Workspace Utilities Demo**
 ```
-Retrieve ground truth RUL values and time in cycles from FD001 train dataset. Apply piecewise RUL transformation with MAXLIFE=100. Finally, Plot a line chart of the transformed values across time.
+Retrieve RUL values and time in cycles for engine unit 24 from FD001 train dataset. Use the piece wise RUL transformation code utility to perform piecewise RUL transformation on the ground truth RUL values with MAXLIFE=100.Finally, Plot a comparison line chart with RUL values and its transformed values across time.
 ```
 
 *This example demonstrates how to discover and use workspace utilities directly. The system will show available utilities and then apply the RUL transformation using the pre-built, reliable utility functions.*
@@ -518,9 +535,9 @@ Retrieve ground truth RUL values and time in cycles from FD001 train dataset. Ap
 ```
 Perform the following steps:
 
-1.Retrieve the time in cycles, all sensor measurements, and ground truth RUL values for engine unit 24 from FD001 train dataset.
+1.Retrieve the time in cycles, all sensor measurements, and ground truth RUL values, partition by unit number for engine unit 24 from FD001 train dataset.
 2.Use the retrieved data to predict the Remaining Useful Life (RUL). 
-3.Use the piece wise RUL transformation code utility to apply piecewise RUL transformation only to the observed RUL column. 
+3.Use the piece wise RUL transformation code utility to apply piecewise RUL transformation only to the observed RUL column with MAXLIFE of 100.
 4.Generate a plot that compares the transformed RUL values and the predicted RUL values across time.
 ```
 ![Prediction Example](imgs/test_prompt_3.png)
