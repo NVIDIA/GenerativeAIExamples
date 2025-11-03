@@ -21,7 +21,7 @@ import logging
 import threading
 import hashlib
 from typing import Dict, Optional
-from .vanna_util import NIMVanna, initVanna, CustomEmbeddingFunction
+from .vanna_util import NIMVanna, ElasticNIMVanna, initVanna, NVIDIAEmbeddingFunction
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ class VannaManager:
     - Singleton pattern to ensure only one instance per configuration
     - Thread-safe operations
     - Simple instance management
+    - Support for multiple database types: SQLite, generic SQL, and PostgreSQL
     """
     
     _instances: Dict[str, 'VannaManager'] = {}
@@ -49,8 +50,31 @@ class VannaManager:
                 logger.debug(f"VannaManager: Returning existing singleton instance for config: {config_key}")
             return cls._instances[config_key]
     
-    def __init__(self, config_key: str, vanna_llm_config=None, vanna_embedder_config=None, vector_store_path: str = None, db_path: str = None, training_data_path: str = None):
-        """Initialize the VannaManager and create Vanna instance immediately if all config is provided"""
+    def __init__(self, config_key: str, vanna_llm_config=None, vanna_embedder_config=None, 
+                 vector_store_type: str = "chromadb", vector_store_path: str = None, 
+                 elasticsearch_url: str = None, elasticsearch_index_name: str = "vanna_vectors",
+                 elasticsearch_username: str = None, elasticsearch_password: str = None,
+                 elasticsearch_api_key: str = None,
+                 db_connection_string_or_path: str = None, db_type: str = "sqlite", 
+                 training_data_path: str = None, nvidia_api_key: str = None):
+        """Initialize the VannaManager and create Vanna instance immediately if all config is provided
+        
+        Args:
+            config_key: Unique key for this configuration
+            vanna_llm_config: LLM configuration object
+            vanna_embedder_config: Embedder configuration object
+            vector_store_type: Type of vector store - 'chromadb' or 'elasticsearch'
+            vector_store_path: Path to ChromaDB vector store (required if vector_store_type='chromadb')
+            elasticsearch_url: Elasticsearch URL (required if vector_store_type='elasticsearch')
+            elasticsearch_index_name: Elasticsearch index name
+            elasticsearch_username: Elasticsearch username for basic auth
+            elasticsearch_password: Elasticsearch password for basic auth
+            elasticsearch_api_key: Elasticsearch API key
+            db_connection_string_or_path: Database connection (path for SQLite, connection string for others)
+            db_type: Type of database - 'sqlite', 'postgres', or 'sql' (generic SQL with SQLAlchemy)
+            training_data_path: Path to YAML training data file
+            nvidia_api_key: NVIDIA API key (optional, can use NVIDIA_API_KEY env var)
+        """
         if hasattr(self, '_initialized') and self._initialized:
             return
             
@@ -60,17 +84,29 @@ class VannaManager:
         # Store configuration
         self.vanna_llm_config = vanna_llm_config
         self.vanna_embedder_config = vanna_embedder_config
+        self.vector_store_type = vector_store_type
         self.vector_store_path = vector_store_path
-        self.db_path = db_path
+        self.elasticsearch_url = elasticsearch_url
+        self.elasticsearch_index_name = elasticsearch_index_name
+        self.elasticsearch_username = elasticsearch_username
+        self.elasticsearch_password = elasticsearch_password
+        self.elasticsearch_api_key = elasticsearch_api_key
+        self.db_connection_string_or_path = db_connection_string_or_path
+        self.db_type = db_type
         self.training_data_path = training_data_path
+        self.nvidia_api_key = nvidia_api_key or os.getenv("NVIDIA_API_KEY")
         
         # Create and initialize Vanna instance immediately if all required config is provided
         self.vanna_instance = None
-        if all([vanna_llm_config, vanna_embedder_config, vector_store_path, db_path]):
+        has_vector_config = (
+            (vector_store_type == "chromadb" and vector_store_path) or
+            (vector_store_type == "elasticsearch" and elasticsearch_url)
+        )
+        if all([vanna_llm_config, vanna_embedder_config, has_vector_config, self.db_connection_string_or_path]):
             logger.debug(f"VannaManager: Initializing with immediate Vanna instance creation")
             self.vanna_instance = self._create_instance()
         else:
-            if any([vanna_llm_config, vanna_embedder_config, vector_store_path, db_path]):
+            if any([vanna_llm_config, vanna_embedder_config, vector_store_path, elasticsearch_url, self.db_connection_string_or_path]):
                 logger.debug(f"VannaManager: Partial configuration provided, Vanna instance will be created later")
             else:
                 logger.debug(f"VannaManager: No configuration provided, Vanna instance will be created later")
@@ -78,7 +114,11 @@ class VannaManager:
         self._initialized = True
         logger.debug(f"VannaManager initialized for config: {config_key}")
     
-    def get_instance(self, vanna_llm_config=None, vanna_embedder_config=None, vector_store_path: str = None, db_path: str = None, training_data_path: str = None) -> NIMVanna:
+    def get_instance(self, vanna_llm_config=None, vanna_embedder_config=None, 
+                     vector_store_type: str = None, vector_store_path: str = None,
+                     elasticsearch_url: str = None, 
+                     db_connection_string_or_path: str = None, db_type: str = None, 
+                     training_data_path: str = None, nvidia_api_key: str = None):
         """
         Get the Vanna instance. If not created during init, create it now with provided parameters.
         """
@@ -89,59 +129,125 @@ class VannaManager:
                 # Update configuration with provided parameters
                 self.vanna_llm_config = vanna_llm_config or self.vanna_llm_config
                 self.vanna_embedder_config = vanna_embedder_config or self.vanna_embedder_config
+                self.vector_store_type = vector_store_type or self.vector_store_type
                 self.vector_store_path = vector_store_path or self.vector_store_path
-                self.db_path = db_path or self.db_path
+                self.elasticsearch_url = elasticsearch_url or self.elasticsearch_url
+                self.db_connection_string_or_path = db_connection_string_or_path or self.db_connection_string_or_path
+                self.db_type = db_type or self.db_type
                 self.training_data_path = training_data_path or self.training_data_path
+                self.nvidia_api_key = nvidia_api_key or self.nvidia_api_key
                 
-                if all([self.vanna_llm_config, self.vanna_embedder_config, self.vector_store_path, self.db_path]):
+                # Check if we have required vector store config
+                has_vector_config = (
+                    (self.vector_store_type == "chromadb" and self.vector_store_path) or
+                    (self.vector_store_type == "elasticsearch" and self.elasticsearch_url)
+                )
+                
+                if all([self.vanna_llm_config, self.vanna_embedder_config, has_vector_config, self.db_connection_string_or_path]):
                     self.vanna_instance = self._create_instance()
                 else:
                     raise RuntimeError("VannaManager: Missing required configuration parameters")
             else:
                 logger.debug(f"VannaManager: Returning pre-initialized Vanna instance (ID: {id(self.vanna_instance)})")
+                logger.debug(f"VannaManager: Vector store type: {self.vector_store_type}")
                 
                 # Show vector store status for pre-initialized instances
                 try:
-                    if os.path.exists(self.vector_store_path):
-                        list_of_folders = [d for d in os.listdir(self.vector_store_path) 
-                                          if os.path.isdir(os.path.join(self.vector_store_path, d))]
-                        logger.debug(f"VannaManager: Vector store contains {len(list_of_folders)} collections/folders")
-                        if list_of_folders:
-                            logger.debug(f"VannaManager: Vector store folders: {list_of_folders}")
-                    else:
-                        logger.debug(f"VannaManager: Vector store directory does not exist")
+                    if self.vector_store_type == "chromadb" and self.vector_store_path:
+                        if os.path.exists(self.vector_store_path):
+                            list_of_folders = [d for d in os.listdir(self.vector_store_path) 
+                                              if os.path.isdir(os.path.join(self.vector_store_path, d))]
+                            logger.debug(f"VannaManager: ChromaDB contains {len(list_of_folders)} collections/folders")
+                            if list_of_folders:
+                                logger.debug(f"VannaManager: ChromaDB folders: {list_of_folders}")
+                        else:
+                            logger.debug(f"VannaManager: ChromaDB directory does not exist")
+                    elif self.vector_store_type == "elasticsearch":
+                        logger.debug(f"VannaManager: Using Elasticsearch at {self.elasticsearch_url}")
                 except Exception as e:
                     logger.warning(f"VannaManager: Could not check vector store status: {e}")
             
             return self.vanna_instance
     
-    def _create_instance(self) -> NIMVanna:
+    def _create_instance(self):
         """
         Create a new Vanna instance using the stored configuration.
+        Returns NIMVanna (ChromaDB) or ElasticNIMVanna (Elasticsearch) based on vector_store_type.
         """
         logger.info(f"VannaManager: Creating instance for {self.config_key}")
-        logger.debug(f"VannaManager: Vector store path: {self.vector_store_path}")
-        logger.debug(f"VannaManager: Database path: {self.db_path}")
+        logger.debug(f"VannaManager: Vector store type: {self.vector_store_type}")
+        logger.debug(f"VannaManager: Database connection: {self.db_connection_string_or_path}")
+        logger.debug(f"VannaManager: Database type: {self.db_type}")
         logger.debug(f"VannaManager: Training data path: {self.training_data_path}")
         
-        # Create instance
-        vn_instance = NIMVanna(
-            VectorConfig={
-                "client": "persistent",
-                "path": self.vector_store_path,
-                "embedding_function": CustomEmbeddingFunction(
-                    api_key=os.getenv("NVIDIA_API_KEY"), 
-                    model=self.vanna_embedder_config.model_name)
-            },
-            LLMConfig={
-                "api_key": os.getenv("NVIDIA_API_KEY"),
-                "model": self.vanna_llm_config.model_name
-            }
+        # Create embedding function (used by both ChromaDB and Elasticsearch)
+        embedding_function = NVIDIAEmbeddingFunction(
+            api_key=self.nvidia_api_key, 
+            model=self.vanna_embedder_config.model_name
         )
         
-        # Connect to database
-        logger.debug(f"VannaManager: Connecting to SQLite database...")
-        vn_instance.connect_to_sqlite(self.db_path)
+        # LLM configuration (common for both)
+        llm_config = {
+            "api_key": self.nvidia_api_key,
+            "model": self.vanna_llm_config.model_name
+        }
+        
+        # Create instance based on vector store type
+        if self.vector_store_type == "chromadb":
+            logger.debug(f"VannaManager: Creating NIMVanna with ChromaDB")
+            logger.debug(f"VannaManager: ChromaDB path: {self.vector_store_path}")
+            vn_instance = NIMVanna(
+                VectorConfig={
+                    "client": "persistent",
+                    "path": self.vector_store_path,
+                    "embedding_function": embedding_function
+                },
+                LLMConfig=llm_config
+            )
+        elif self.vector_store_type == "elasticsearch":
+            logger.debug(f"VannaManager: Creating ElasticNIMVanna with Elasticsearch")
+            logger.debug(f"VannaManager: Elasticsearch URL: {self.elasticsearch_url}")
+            logger.debug(f"VannaManager: Elasticsearch index: {self.elasticsearch_index_name}")
+            
+            # Build Elasticsearch vector config
+            es_config = {
+                "url": self.elasticsearch_url,
+                "index_name": self.elasticsearch_index_name,
+                "embedding_function": embedding_function
+            }
+            
+            # Add authentication if provided
+            if self.elasticsearch_api_key:
+                es_config["api_key"] = self.elasticsearch_api_key
+                logger.debug("VannaManager: Using Elasticsearch API key authentication")
+            elif self.elasticsearch_username and self.elasticsearch_password:
+                es_config["username"] = self.elasticsearch_username
+                es_config["password"] = self.elasticsearch_password
+                logger.debug("VannaManager: Using Elasticsearch basic authentication")
+            
+            vn_instance = ElasticNIMVanna(
+                VectorConfig=es_config,
+                LLMConfig=llm_config
+            )
+        else:
+            raise ValueError(
+                f"Unsupported vector store type: {self.vector_store_type}. "
+                "Supported types: 'chromadb', 'elasticsearch'"
+            )
+        
+        # Connect to database based on type
+        logger.debug(f"VannaManager: Connecting to {self.db_type} database...")
+        if self.db_type == "sqlite":
+            vn_instance.connect_to_sqlite(self.db_connection_string_or_path)
+        elif self.db_type == "postgres" or self.db_type == "postgresql":
+            self._connect_to_postgres(vn_instance, self.db_connection_string_or_path)
+        elif self.db_type == "sql":
+            self._connect_to_sql(vn_instance, self.db_connection_string_or_path)
+        else:
+            raise ValueError(
+                f"Unsupported database type: {self.db_type}. "
+                "Supported types: 'sqlite', 'postgres', 'sql'"
+            )
         
         # Set configuration - allow LLM to see data for database introspection
         vn_instance.allow_llm_to_see_data = True
@@ -163,29 +269,126 @@ class VannaManager:
         logger.info(f"VannaManager: Instance created successfully")
         return vn_instance
     
+    def _connect_to_postgres(self, vn_instance: NIMVanna, connection_string: str):
+        """
+        Connect to a PostgreSQL database.
+
+        Args:
+            vn_instance: The Vanna instance to connect
+            connection_string: PostgreSQL connection string in format:
+                postgresql://user:password@host:port/database
+        """
+        try:
+            import psycopg2
+            from psycopg2.pool import SimpleConnectionPool
+
+            logger.info("Connecting to PostgreSQL database...")
+
+            # Parse connection string if needed
+            if connection_string.startswith("postgresql://"):
+                # Use SQLAlchemy-style connection for Vanna
+                vn_instance.connect_to_postgres(url=connection_string)
+            else:
+                # Assume it's a psycopg2 connection string
+                vn_instance.connect_to_postgres(url=f"postgresql://{connection_string}")
+
+            logger.info("Successfully connected to PostgreSQL database")
+        except ImportError:
+            logger.error(
+                "psycopg2 is required for PostgreSQL connections. "
+                "Install it with: pip install psycopg2-binary"
+            )
+            raise
+        except Exception as e:
+            logger.error(f"Error connecting to PostgreSQL: {e}")
+            raise
+
+    def _connect_to_sql(self, vn_instance: NIMVanna, connection_string: str):
+        """
+        Connect to a generic SQL database using SQLAlchemy.
+
+        Args:
+            vn_instance: The Vanna instance to connect
+            connection_string: SQLAlchemy-compatible connection string, e.g.:
+                - MySQL: mysql+pymysql://user:password@host:port/database
+                - PostgreSQL: postgresql://user:password@host:port/database
+                - SQL Server: mssql+pyodbc://user:password@host:port/database?driver=ODBC+Driver+17+for+SQL+Server
+                - Oracle: oracle+cx_oracle://user:password@host:port/?service_name=service
+        """
+        try:
+            from sqlalchemy import create_engine
+
+            logger.info("Connecting to SQL database via SQLAlchemy...")
+
+            # Create SQLAlchemy engine
+            engine = create_engine(connection_string)
+
+            # Connect Vanna to the database using the engine
+            vn_instance.connect_to_sqlalchemy(engine)
+
+            logger.info("Successfully connected to SQL database")
+        except ImportError:
+            logger.error(
+                "SQLAlchemy is required for generic SQL connections. "
+                "Install it with: pip install sqlalchemy"
+            )
+            raise
+        except Exception as e:
+            logger.error(f"Error connecting to SQL database: {e}")
+            raise
+    
     def _needs_initialization(self) -> bool:
         """
         Check if the vector store needs initialization by checking if it's empty.
+        For ChromaDB: checks directory existence and contents
+        For Elasticsearch: checks if index exists and has data
         """
         logger.debug(f"VannaManager: Checking if vector store needs initialization...")
-        logger.debug(f"VannaManager: Vector store path: {self.vector_store_path}")
+        logger.debug(f"VannaManager: Vector store type: {self.vector_store_type}")
         
         try:
-            if not os.path.exists(self.vector_store_path):
-                logger.debug(f"VannaManager: Vector store directory does not exist -> needs initialization")
-                return True
-            
-            # Check if there are any subdirectories (ChromaDB creates subdirectories when data is stored)
-            list_of_folders = [d for d in os.listdir(self.vector_store_path) 
-                              if os.path.isdir(os.path.join(self.vector_store_path, d))]
-            
-            logger.debug(f"VannaManager: Found {len(list_of_folders)} folders in vector store")
-            if list_of_folders:
-                logger.debug(f"VannaManager: Vector store folders: {list_of_folders}")
-                logger.debug(f"VannaManager: Vector store is populated -> skipping initialization")
-                return False
+            if self.vector_store_type == "chromadb":
+                logger.debug(f"VannaManager: Checking ChromaDB at: {self.vector_store_path}")
+                
+                if not os.path.exists(self.vector_store_path):
+                    logger.debug(f"VannaManager: ChromaDB directory does not exist -> needs initialization")
+                    return True
+                
+                # Check if there are any subdirectories (ChromaDB creates subdirectories when data is stored)
+                list_of_folders = [d for d in os.listdir(self.vector_store_path) 
+                                  if os.path.isdir(os.path.join(self.vector_store_path, d))]
+                
+                logger.debug(f"VannaManager: Found {len(list_of_folders)} folders in ChromaDB")
+                if list_of_folders:
+                    logger.debug(f"VannaManager: ChromaDB folders: {list_of_folders}")
+                    logger.debug(f"VannaManager: ChromaDB is populated -> skipping initialization")
+                    return False
+                else:
+                    logger.debug(f"VannaManager: ChromaDB is empty -> needs initialization")
+                    return True
+                    
+            elif self.vector_store_type == "elasticsearch":
+                logger.debug(f"VannaManager: Checking Elasticsearch at: {self.elasticsearch_url}")
+                
+                # For Elasticsearch, check if training data is available in the instance
+                # This is a simplified check - we assume if we can connect, we should initialize if no training data exists
+                try:
+                    if hasattr(self.vanna_instance, 'get_training_data'):
+                        training_data = self.vanna_instance.get_training_data()
+                        if training_data and len(training_data) > 0:
+                            logger.debug(f"VannaManager: Elasticsearch has {len(training_data)} training data entries -> skipping initialization")
+                            return False
+                        else:
+                            logger.debug(f"VannaManager: Elasticsearch has no training data -> needs initialization")
+                            return True
+                    else:
+                        logger.debug(f"VannaManager: Cannot check Elasticsearch training data -> needs initialization")
+                        return True
+                except Exception as e:
+                    logger.debug(f"VannaManager: Error checking Elasticsearch data ({e}) -> needs initialization")
+                    return True
             else:
-                logger.debug(f"VannaManager: Vector store is empty -> needs initialization")
+                logger.warning(f"VannaManager: Unknown vector store type: {self.vector_store_type}")
                 return True
                 
         except Exception as e:
@@ -233,16 +436,42 @@ class VannaManager:
         return {
             "config_key": self.config_key,
             "instance_id": id(self.vanna_instance) if self.vanna_instance else None,
-            "has_instance": self.vanna_instance is not None
+            "has_instance": self.vanna_instance is not None,
+            "db_type": self.db_type,
         }
 
     @classmethod
-    def create_with_config(cls, vanna_llm_config, vanna_embedder_config, vector_store_path: str, db_path: str, training_data_path: str = None):
+    def create_with_config(cls, vanna_llm_config, vanna_embedder_config, 
+                          vector_store_type: str = "chromadb", vector_store_path: str = None,
+                          elasticsearch_url: str = None, elasticsearch_index_name: str = "vanna_vectors",
+                          elasticsearch_username: str = None, elasticsearch_password: str = None,
+                          elasticsearch_api_key: str = None,
+                          db_connection_string_or_path: str = None, db_type: str = "sqlite", 
+                          training_data_path: str = None, nvidia_api_key: str = None):
         """
         Class method to create a VannaManager with full configuration.
         Uses create_config_key to ensure singleton behavior based on configuration.
+        
+        Args:
+            vanna_llm_config: LLM configuration object
+            vanna_embedder_config: Embedder configuration object
+            vector_store_type: Type of vector store - 'chromadb' or 'elasticsearch'
+            vector_store_path: Path to ChromaDB vector store (required if vector_store_type='chromadb')
+            elasticsearch_url: Elasticsearch URL (required if vector_store_type='elasticsearch')
+            elasticsearch_index_name: Elasticsearch index name
+            elasticsearch_username: Elasticsearch username for basic auth
+            elasticsearch_password: Elasticsearch password for basic auth
+            elasticsearch_api_key: Elasticsearch API key
+            db_connection_string_or_path: Database connection (path for SQLite, connection string for others)
+            db_type: Type of database - 'sqlite', 'postgres', or 'sql'
+            training_data_path: Path to YAML training data file
+            nvidia_api_key: NVIDIA API key (optional)
         """
-        config_key = create_config_key(vanna_llm_config, vanna_embedder_config, vector_store_path, db_path)
+        config_key = create_config_key(
+            vanna_llm_config, vanna_embedder_config, 
+            vector_store_type, vector_store_path, elasticsearch_url,
+            db_connection_string_or_path, db_type
+        )
         
         # Create instance with just config_key (singleton pattern)
         instance = cls(config_key)
@@ -251,9 +480,17 @@ class VannaManager:
         if not hasattr(instance, 'vanna_llm_config') or instance.vanna_llm_config is None:
             instance.vanna_llm_config = vanna_llm_config
             instance.vanna_embedder_config = vanna_embedder_config
+            instance.vector_store_type = vector_store_type
             instance.vector_store_path = vector_store_path
-            instance.db_path = db_path
+            instance.elasticsearch_url = elasticsearch_url
+            instance.elasticsearch_index_name = elasticsearch_index_name
+            instance.elasticsearch_username = elasticsearch_username
+            instance.elasticsearch_password = elasticsearch_password
+            instance.elasticsearch_api_key = elasticsearch_api_key
+            instance.db_connection_string_or_path = db_connection_string_or_path
+            instance.db_type = db_type
             instance.training_data_path = training_data_path
+            instance.nvidia_api_key = nvidia_api_key
             
             # Create Vanna instance immediately if all config is available
             if instance.vanna_instance is None:
@@ -262,9 +499,24 @@ class VannaManager:
         
         return instance
 
-def create_config_key(vanna_llm_config, vanna_embedder_config, vector_store_path: str, db_path: str) -> str:
+def create_config_key(vanna_llm_config, vanna_embedder_config, 
+                     vector_store_type: str, vector_store_path: str, elasticsearch_url: str,
+                     db_connection_string_or_path: str, db_type: str = "sqlite") -> str:
     """
     Create a unique configuration key for the VannaManager singleton.
+    
+    Args:
+        vanna_llm_config: LLM configuration object
+        vanna_embedder_config: Embedder configuration object
+        vector_store_type: Type of vector store
+        vector_store_path: Path to ChromaDB vector store
+        elasticsearch_url: Elasticsearch URL
+        db_connection_string_or_path: Database connection (path for SQLite, connection string for others)
+        db_type: Type of database
+        
+    Returns:
+        str: Unique configuration key
     """
-    config_str = f"{vanna_llm_config.model_name}_{vanna_embedder_config.model_name}_{vector_store_path}_{db_path}"
+    vector_id = vector_store_path if vector_store_type == "chromadb" else elasticsearch_url
+    config_str = f"{vanna_llm_config.model_name}_{vanna_embedder_config.model_name}_{vector_store_type}_{vector_id}_{db_connection_string_or_path}_{db_type}"
     return hashlib.md5(config_str.encode()).hexdigest()[:12]
