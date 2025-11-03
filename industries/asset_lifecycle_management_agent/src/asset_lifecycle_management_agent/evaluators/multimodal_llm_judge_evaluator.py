@@ -17,7 +17,7 @@
 Multimodal LLM Judge Evaluator
 
 An enhanced evaluator that uses llama-3.2-90b-instruct to evaluate both text and visual outputs
-from agentic workflows. This evaluator is specifically designed for predictive maintenance 
+from agentic workflows. This evaluator is specifically designed for Asset Lifecycle Management 
 responses that may include plots and visualizations.
 """
 
@@ -162,7 +162,7 @@ class MultimodalLLMJudgeEvaluator(BaseEvaluator):
         # If we detect plot generation language but no existing files, 
         # try to find PNG files in the output_data directory that might be related
         if has_plot_indicator and not plot_paths:
-            output_dir = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data"
+            output_dir = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/asset_lifecycle_management_agent/output_data"
             if os.path.exists(output_dir):
                 png_files = [f for f in os.listdir(output_dir) if f.endswith('.png')]
                 # Add the most recently modified PNG files

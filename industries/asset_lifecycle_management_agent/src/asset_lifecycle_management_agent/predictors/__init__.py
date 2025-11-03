@@ -13,4 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "1.0.0"
+"""
+Predictors package for Asset Lifecycle Management agent.
+
+This package contains components for prediction and anomaly detection
+in Asset Lifecycle Management workflows (Operation & Maintenance phase).
+"""
+
+from . import moment_anomaly_detection_tool
+from . import predict_rul_tool
+
+__all__ = [
+    "moment_anomaly_detection_tool",
+    "predict_rul_tool",
+]
