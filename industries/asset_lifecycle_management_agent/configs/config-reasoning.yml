@@ -19,37 +19,21 @@ general:
     logging:
       console:
         _type: console
-<<<<<<< HEAD:industries/asset_lifecycle_management_agent/configs/config-reasoning.yml
         level: DEBUG
     #     level: INFO
     #   file:
     #     _type: file
     #     path: "alm.log"
     #     level: DEBUG
-=======
-        level: INFO
-      file:
-        _type: file
-        path: "pdm.log"
-        level: DEBUG
->>>>>>> fbde275 (Trying to rebase with main and commit the files again):industries/predictive_maintenance_agent/configs/config-reasoning.yml
     tracing:
       phoenix:
         _type: phoenix
         endpoint: http://localhost:6006/v1/traces
-<<<<<<< HEAD:industries/asset_lifecycle_management_agent/configs/config-reasoning.yml
         project: alm-agent
     #   catalyst:
     #     _type: catalyst
     #     project: "alm-agent"
     #     dataset: "alm-agent"
-=======
-        project: pdm-demo-day
-      catalyst:
-        _type: catalyst
-        project: "pdm-demo-day"
-        dataset: "pdm-demo-day"
->>>>>>> fbde275 (Trying to rebase with main and commit the files again):industries/predictive_maintenance_agent/configs/config-reasoning.yml
 
 llms:
   # SQL query generation model
