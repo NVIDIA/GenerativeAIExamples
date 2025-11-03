@@ -1,0 +1,203 @@
+# Example configurations for generate_sql_query_and_retrieve_tool
+# This shows how to configure the tool for different database types and vector stores
+
+# ============================================================================
+# Example 1A: SQLite Database with ChromaDB Vector Store (DEFAULT)
+# ============================================================================
+functions:
+  - name: sql_query_tool_sqlite_chromadb
+    type: generate_sql_query_and_retrieve_tool
+    llm_name: nim_llm
+    embedding_name: nim_embeddings
+    # Vector store configuration (ChromaDB)
+    vector_store_type: chromadb  # Default, can be omitted
+    vector_store_path: ./vanna_vector_store
+    # Database configuration
+    db_connection_string_or_path: ./database.db  # Path to SQLite database file
+    db_type: sqlite  # Database type
+    # Output configuration
+    output_folder: ./output
+    vanna_training_data_path: ./training_data.yaml
+
+# ============================================================================
+# Example 1B: SQLite Database with Elasticsearch Vector Store
+# ============================================================================
+functions:
+  - name: sql_query_tool_sqlite_elasticsearch
+    type: generate_sql_query_and_retrieve_tool
+    llm_name: nim_llm
+    embedding_name: nim_embeddings
+    # Vector store configuration (Elasticsearch)
+    vector_store_type: elasticsearch
+    elasticsearch_url: http://localhost:9200
+    elasticsearch_index_name: vanna_sql_vectors  # Optional, defaults to "vanna_vectors"
+    elasticsearch_username: elastic  # Optional, for basic auth
+    elasticsearch_password: changeme  # Optional, for basic auth
+    # elasticsearch_api_key: your-api-key-here  # Alternative to username/password
+    # Database configuration
+    db_connection_string_or_path: ./database.db
+    db_type: sqlite
+    # Output configuration
+    output_folder: ./output
+    vanna_training_data_path: ./training_data.yaml
+
+# ============================================================================
+# Example 2: PostgreSQL Database
+# ============================================================================
+functions:
+  - name: sql_query_tool_postgres
+    type: generate_sql_query_and_retrieve_tool
+    llm_name: nim_llm
+    embedding_name: nim_embeddings
+    vector_store_path: ./vanna_vector_store
+    db_connection_string_or_path: postgresql://username:password@localhost:5432/my_database
+    db_type: postgres  # Can also use 'postgresql'
+    output_folder: ./output
+    vanna_training_data_path: ./training_data.yaml
+
+# ============================================================================
+# Example 3: MySQL Database (using SQLAlchemy)
+# ============================================================================
+functions:
+  - name: sql_query_tool_mysql
+    type: generate_sql_query_and_retrieve_tool
+    llm_name: nim_llm
+    embedding_name: nim_embeddings
+    vector_store_path: ./vanna_vector_store
+    db_connection_string_or_path: mysql+pymysql://username:password@localhost:3306/my_database
+    db_type: sql  # Generic SQL using SQLAlchemy
+    output_folder: ./output
+    vanna_training_data_path: ./training_data.yaml
+
+# ============================================================================
+# Example 4: Microsoft SQL Server (using SQLAlchemy)
+# ============================================================================
+functions:
+  - name: sql_query_tool_mssql
+    type: generate_sql_query_and_retrieve_tool
+    llm_name: nim_llm
+    embedding_name: nim_embeddings
+    vector_store_path: ./vanna_vector_store
+    db_connection_string_or_path: mssql+pyodbc://username:password@localhost:1433/my_database?driver=ODBC+Driver+17+for+SQL+Server
+    db_type: sql  # Generic SQL using SQLAlchemy
+    output_folder: ./output
+    vanna_training_data_path: ./training_data.yaml
+
+# ============================================================================
+# Example 5: Oracle Database (using SQLAlchemy)
+# ============================================================================
+functions:
+  - name: sql_query_tool_oracle
+    type: generate_sql_query_and_retrieve_tool
+    llm_name: nim_llm
+    embedding_name: nim_embeddings
+    vector_store_path: ./vanna_vector_store
+    db_connection_string_or_path: oracle+cx_oracle://username:password@localhost:1521/?service_name=my_service
+    db_type: sql  # Generic SQL using SQLAlchemy
+    output_folder: ./output
+    vanna_training_data_path: ./training_data.yaml
+
+# ============================================================================
+# Connection String Format Guide
+# ============================================================================
+# 
+# SQLite:
+#   Format: /path/to/database.db
+#   Example: ./my_data/sales.db
+#
+# PostgreSQL:
+#   Format: postgresql://username:password@host:port/database
+#   Example: postgresql://myuser:mypass@db.example.com:5432/sales_db
+#
+# MySQL (requires pymysql):
+#   Format: mysql+pymysql://username:password@host:port/database
+#   Example: mysql+pymysql://root:secret@localhost:3306/inventory
+#
+# SQL Server (requires pyodbc):
+#   Format: mssql+pyodbc://username:password@host:port/database?driver=ODBC+Driver+XX+for+SQL+Server
+#   Example: mssql+pyodbc://sa:MyPass123@localhost:1433/sales?driver=ODBC+Driver+17+for+SQL+Server
+#
+# Oracle (requires cx_Oracle):
+#   Format: oracle+cx_oracle://username:password@host:port/?service_name=service
+#   Example: oracle+cx_oracle://admin:pass@localhost:1521/?service_name=ORCLPDB
+#
+# ============================================================================
+# Required Python Packages by Database Type
+# ============================================================================
+#
+# SQLite: (built-in, no additional packages needed)
+#
+# PostgreSQL:
+#   pip install psycopg2-binary
+#
+# MySQL:
+#   pip install pymysql
+#   pip install sqlalchemy
+#
+# SQL Server:
+#   pip install pyodbc
+#   pip install sqlalchemy
+#
+# Oracle:
+#   pip install cx_Oracle
+#   pip install sqlalchemy
+#
+# Generic SQL (all):
+#   pip install sqlalchemy
+#
+# ============================================================================
+# Vector Store Options
+# ============================================================================
+#
+# The tool supports two vector store backends for storing Vanna SQL training data:
+#
+# 1. ChromaDB (DEFAULT)
+#    - Local file-based vector database
+#    - No additional services required
+#    - Easy to set up and use
+#    - Configuration:
+#      vector_store_type: chromadb
+#      vector_store_path: ./path/to/chromadb/storage
+#    - Use case: Development, single-server deployments, local testing
+#
+# 2. Elasticsearch
+#    - Distributed search and analytics engine
+#    - Requires Elasticsearch service running
+#    - Supports clustering and high availability
+#    - Better for production environments
+#    - Configuration:
+#      vector_store_type: elasticsearch
+#      elasticsearch_url: http://localhost:9200
+#      elasticsearch_index_name: vanna_sql_vectors  # Optional
+#      # Authentication (choose one):
+#      elasticsearch_api_key: your-api-key  # Option 1: API key
+#      # OR
+#      elasticsearch_username: elastic      # Option 2: Basic auth
+#      elasticsearch_password: changeme
+#    - Requires: pip install elasticsearch
+#    - Use case: Production deployments, distributed systems, multiple users
+#
+# ============================================================================
+# Choosing Between ChromaDB and Elasticsearch
+# ============================================================================
+#
+# Use ChromaDB when:
+# - Getting started or prototyping
+# - Single-server deployment
+# - Local development
+# - Simple setup required
+# - No existing Elasticsearch infrastructure
+#
+# Use Elasticsearch when:
+# - Production environment
+# - Multiple instances/users accessing the same data
+# - Need high availability and clustering
+# - Already have Elasticsearch infrastructure
+# - Need advanced search capabilities
+# - Distributed deployment
+#
+# Both vector stores:
+# - Store the same training data (DDL, documentation, question-SQL pairs)
+# - Support the same NVIDIA embedding models
+# - Provide identical functionality
+# - Are managed automatically by VannaManager
