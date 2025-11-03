@@ -15,24 +15,25 @@
 
 general:
   use_uvloop: true
-  # telemetry:
-  #   logging:
-  #     console:
-  #       _type: console
-  #       level: INFO
-  #     file:
-  #       _type: file
-  #       path: "pdm.log"
-  #       level: DEBUG
-  #   tracing:
-  #     phoenix:
-  #       _type: phoenix
-  #       endpoint: http://localhost:6006/v1/traces
-  #       project: pdm-test
-  #     catalyst:
-  #       _type: catalyst
-  #       project: "pdm-test"
-  #       dataset: "pdm-dataset"
+  telemetry:
+    logging:
+      console:
+        _type: console
+        level: DEBUG
+    #     level: INFO
+    #   file:
+    #     _type: file
+    #     path: "alm.log"
+    #     level: DEBUG
+    tracing:
+      phoenix:
+        _type: phoenix
+        endpoint: http://localhost:6006/v1/traces
+        project: alm-agent
+    #   catalyst:
+    #     _type: catalyst
+    #     project: "alm-agent"
+    #     dataset: "alm-agent"
 
 llms:
   # SQL query generation model
@@ -134,7 +135,7 @@ functions:
     parse_agent_response_max_retries: 2
     system_prompt: |
       ### TASK DESCRIPTION ####
-      You are a helpful data analysis assistant that can help with predictive maintenance tasks for a turbofan engine. 
+      You are a helpful data analysis assistant specializing in Asset Lifecycle Management tasks, currently focused on predictive maintenance for turbofan engines. 
       **USE THE PROVIDED PLAN THAT FOLLOWS "Here is the plan that you could use if you wanted to.."**
 
       ### TOOLS ###
@@ -154,7 +155,7 @@ functions:
       Executing step: the step you are currently executing from the plan along with any instructions provided
       Thought: describe how you are going to execute the step
       Final Answer: the final answer to the original input question including the absolute file paths of the generated files with 
-      `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/` prepended to the filename.
+      `/Users/vikalluru/Documents/GenerativeAIExamples/industries/asset_lifecycle_management_agent/output_data/` prepended to the filename.
       
       **FORMAT 3 (when using a tool)**
       Input plan: Summarize all the steps in the plan.
@@ -216,11 +217,11 @@ workflow:
   verbose: true
   reasoning_prompt_template: |
     ### DESCRIPTION ###
-    You are a Data Analysis Reasoning and Planning Expert specialized in analyzing turbofan engine sensor data and predictive maintenance tasks. 
+    You are a Data Analysis Reasoning and Planning Expert specialized in Asset Lifecycle Management, with expertise in analyzing turbofan engine sensor data and predictive maintenance tasks. 
     You are tasked with creating detailed execution plans for addressing user queries while being conversational and helpful.
 
     Your Role and Capabilities:**
-    - Expert in turbofan engine data analysis, predictive maintenance, and anomaly detection
+    - Expert in Asset Lifecycle Management, turbofan engine data analysis, predictive maintenance, and anomaly detection
     - Provide conversational responses while maintaining technical accuracy
     - Create step-by-step execution plans using available tools which will be invoked by a data analysis assistant
     
@@ -239,13 +240,13 @@ workflow:
     four datasets (FD001, FD002, FD003, FD004), each dataset is further divided into training and test subsets.
     - **26 data columns**: unit number, time in cycles, 3 operational settings, and 21 sensor measurements  
     - **Engine lifecycle**: Engines start operating normally, then develop faults that grow until system failure
-    - **Predictive maintenance goal**: Predict Remaining Useful Life (RUL) - how many operational cycles before failure
+    - **Asset Lifecycle Management - Operation & Maintenance Phase**: Predict Remaining Useful Life (RUL) - how many operational cycles before failure
     - **Data characteristics**: Contains normal operational variation, sensor noise, and progressive fault development    
     This context helps you understand user queries about engine health, sensor patterns, failure prediction, and maintenance planning.
     REMEMBER TO RELY ON DATA ANALYSIS ASSITANT TO RETRIEVE DATA FROM THE DATABASE.
     
     ### SPECIAL CONSTRAINTS ###
-    Create execution plans for specialized predictive maintenance tasks. For other queries, use standard reasoning.
+    Create execution plans for Asset Lifecycle Management tasks (currently focused on predictive maintenance and sensor data analysis). For other queries, use standard reasoning.
     Apply piecewise RUL transformation to the actual RUL values when plotting it against predicted RUL values using the code generation assistant.
 
     ### GUIDELINES ###
@@ -274,7 +275,7 @@ eval:
       _type: multimodal_llm_judge_evaluator
       llm_name: multimodal_judging_llm
       judge_prompt: |
-        You are an expert evaluator for predictive maintenance agentic workflows. 
+        You are an expert evaluator for Asset Lifecycle Management agentic workflows, with expertise in predictive maintenance tasks. 
         Your task is to evaluate how well a generated response (which may include both text and visualizations) 
         matches the reference answer for a given question.
 

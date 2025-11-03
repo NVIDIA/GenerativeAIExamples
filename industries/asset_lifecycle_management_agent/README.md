@@ -1,19 +1,12 @@
-# Predictive Maintenance Agent
+# Asset Lifecycle Management Agent
 
-A comprehensive AI-powered predictive maintenance system built with NeMo Agent Toolkit for turbofan engine health monitoring and failure prediction.
+An AI-powered system for managing industrial assets throughout their lifecycle, built with NeMo Agent Toolkit. Currently focused on predictive maintenance for turbofan engines with plans to expand to full lifecycle management.
 
 Work done by: Vineeth Kalluru, Janaki Vamaraju, Sugandha Sharma, Ze Yang, and Viraj Modak
 
 ## Overview
 
-Predictive maintenance prevents costly downtime by identifying potential failures before they occur. This agent leverages AI to analyze sensor data from turbofan engines, predict remaining useful life (RUL), and provide actionable insights for maintenance teams.
-
-### Key Benefits
-- **Prevent Costly Downtime**: Identify failures before they occur
-- **Optimize Maintenance**: Perform maintenance only when needed
-- **Extend Equipment Life**: Monitor health to maximize efficiency
-- **Improve Safety**: Prevent catastrophic failures
-- **Reduce Costs**: Minimize emergency repairs and disruptions
+Asset Lifecycle Management (ALM) spans acquisition, operation, upgrades, and retirement of industrial assets. This project delivers an agentic workflow that applies ALM ideas to real data. Today it focuses on the operation and maintenance slice: using time‑series sensor data to predict remaining useful life (RUL), detect anomalies, and recommend next steps. We use the NASA C‑MAPSS turbofan dataset as a practical, well‑studied benchmark with realistic signals and run‑to‑failure trajectories. The system is modular and backed by SQL (SQLite by default, PostgreSQL/MySQL supported), so extending into planning, commissioning, optimization, and decommissioning is straightforward as additional tools and integrations are added.
 
 ## Dataset
 
@@ -25,13 +18,15 @@ Uses the **NASA Turbofan Engine Degradation Simulation Dataset (C-MAPSS)** with:
 
 ## Architecture
 
-Multi-agent architecture with:
-- **ReAct Agent Workflow**: Main orchestration using ReAct pattern
-- **SQL Retriever Tool**: Generates SQL queries using NIM LLM
-- **RUL Prediction Tool**: XGBoost model for remaining useful life prediction
-- **Anomaly Detection Tool**: Detects anomalies in sensor data using time series foundational model
-- **Plotting Agents**: Multi-tool agent for data visualization
-- **Vector Database**: ChromaDB for storing table schema, Vanna training queries, and documentation
+Multi-agent architecture designed for Asset Lifecycle Management with specialized tools for the Operation & Maintenance phase:
+- **ReAct Agent Workflow**: Main orchestration using ReAct pattern for intelligent decision-making
+- **SQL Retriever Tool**: Generates SQL queries using NIM LLM for asset data retrieval
+- **RUL Prediction Tool**: XGBoost model for remaining useful life prediction to optimize maintenance scheduling
+- **Anomaly Detection Tool**: Detects anomalies in sensor data using time series foundational model for early failure detection
+- **Plotting Agents**: Multi-tool agent for data visualization and asset performance reporting
+- **Vector Database**: ChromaDB for storing table schema, Vanna training queries, and asset documentation
+
+This architecture provides the foundation for comprehensive asset health monitoring, enabling data-driven maintenance decisions and extending asset operational life.
 
 #### Agentic workflow architecture diagram w/ reasoning
 ![Agentic workflow w/ reasoning](imgs/pdm_agentic_worklow_light.png)
@@ -84,8 +79,8 @@ Multi-agent architecture with:
 ### 1. Create Conda Environment
 
 ```bash
-conda create -n pdm python=3.11
-conda activate pdm
+conda create -n alm python=3.11
+conda activate alm
 ```
 
 ### 2. Install NVIDIA NeMo Agent Toolkit
@@ -118,17 +113,17 @@ conda activate pdm
    uv pip install -e '.[telemetry]'
    ```
 
-### 3. Install Predictive Maintenance Agent
+### 3. Install Asset Lifecycle Management Agent
 
-First, clone the GenerativeAIExamples repository inside the parent folder of NeMo-Agent-Toolkit and navigate to the Predictive Maintenance Agent folder:
+First, clone the GenerativeAIExamples repository inside the parent folder of NeMo-Agent-Toolkit and navigate to the Asset Lifecycle Management Agent folder:
 
 ```bash
 git clone https://github.com/NVIDIA/GenerativeAIExamples.git
-cd GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent
+cd GenerativeAIExamples/industries/manufacturing/asset_lifecycle_management_agent
 ```
 
-Clone the MOMENT library from GitHub inside this predictive maintenance agent folder. 
-This library is required to perform inference with MOMENT-1 time series foundational models for anomaly detection tasks. More about it [here](https://huggingface.co/AutonLab/MOMENT-1-small).
+Clone the MOMENT library from GitHub inside this Asset Lifecycle Management Agent folder. 
+This library is required to perform inference with MOMENT-1 time series foundational models for anomaly detection tasks during the Operation & Maintenance phase. More about it [here](https://huggingface.co/AutonLab/MOMENT-1-small).
 
 ```bash
 git clone https://github.com/moment-timeseries-foundation-model/moment.git
@@ -154,27 +149,27 @@ dependencies = [
 ...
 ```
 
-Go back to the predictive maintenance agent folder:
+Go back to the Asset Lifecycle Management Agent folder:
 
 ```bash
 cd ..
 ```
 
-Change the path to the cloned MOMENT library in `/path/to/predictive_maintenance_agent/pyproject.toml` if necessary.
+Change the path to the cloned MOMENT library in `/path/to/asset_lifecycle_management_agent/pyproject.toml` if necessary.
 
 Change it from:
 ```bash
 [tool.uv.sources]
-momentfm = { path = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/moment", editable = true }
+momentfm = { path = "/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/asset_lifecycle_management_agent/moment", editable = true }
 ```
 to:
 ```bash
 [tool.uv.sources]
-momentfm = { path = "/your/path/to/predictive_maintenance_agent/moment", editable = true }
+momentfm = { path = "/your/path/to/asset_lifecycle_management_agent/moment", editable = true }
 ```
 
 This ensures that the MOMENT library will be installed from our cloned version instead of the PyPI release. 
-Now install the PDM workflow:
+Now install the ALM workflow:
 
 ```bash
 uv pip install -e .
@@ -196,13 +191,13 @@ python setup_database.py
 
 ### 5. Configure Paths
 
-**Important**: You need to replace the absolute path `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/` with your preferred workspace path in the following files:
+**Important**: You need to replace the absolute path `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/asset_lifecycle_management_agent/` with your preferred workspace path in the following files:
 
 1. **`configs/config-reasoning.yml`** - Update the `db_path` and `output_folder` paths
 2. **`pyproject.toml`** - Update the MOMENT library path (if you changed it in step 3)
 
 For example, if your workspace is at `/home/user/my_workspace/`, you would replace:
-- `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/` 
+- `/Users/vikalluru/Documents/GenerativeAIExamples/industries/manufacturing/asset_lifecycle_management_agent/` 
 - with `/home/user/my_workspace/`
 
 **Note**: All other paths in the config file can be provided as relative paths from your workspace directory. Only the MOMENT library path in `pyproject.toml` needs to be an absolute path.
@@ -221,7 +216,7 @@ Create an empty folder for the output data and configure the `output_folder` pat
 output_folder: "output_data"
 ```
 - Path is relative to where you run the workflow
-- **Recommended**: Always run the workflow from the `predictive_maintenance_agent/` directory
+- **Recommended**: Always run the workflow from the `asset_lifecycle_management_agent/` directory
 - Creates `output_data/` folder in your project directory
 
 **Option 2: Absolute Path**
@@ -231,10 +226,10 @@ output_folder: "/absolute/path/to/your/output_data"
 - Works regardless of where you run the workflow from
 - Provides consistent output location
 
-**Best Practice**: We recommend using relative paths and always running the workflow from the `predictive_maintenance_agent/` directory:
+**Best Practice**: We recommend using relative paths and always running the workflow from the `asset_lifecycle_management_agent/` directory:
 
 ```bash
-cd /path/to/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/
+cd /path/to/GenerativeAIExamples/industries/manufacturing/asset_lifecycle_management_agent/
 # Run all workflow commands from here
 nat serve --config_file=configs/config-reasoning.yml
 ```
@@ -320,6 +315,31 @@ INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 
 During startup, you'll see Vanna training logs as the SQL agent automatically loads the domain knowledge from `vanna_training_data.yaml` (as described in Section 6).
 
+### Start Modern Web UI (Recommended)
+
+We now provide a **custom modern web interface** inspired by the NVIDIA AIQ Research Assistant design! This UI offers a superior experience for Asset Lifecycle Management workflows compared to the generic NeMo-Agent-Toolkit-UI.
+
+**In a new terminal**, navigate to the frontend directory and start the UI:
+
+```bash
+cd frontend
+npm install  # First time only
+npm start
+```
+
+The UI will be available at `http://localhost:3000`
+
+**Features of the Modern UI:**
+- 🎨 Clean, professional NVIDIA-branded design
+- 📊 Embedded visualization display for plots and charts
+- 🎯 Quick-start example prompts for common queries
+- ⚙️ Configurable settings panel
+- 🌓 Dark/Light theme support
+- 📱 Fully responsive mobile design
+- 🔄 Real-time streaming responses
+
+See `frontend/README.md` for detailed documentation.
+
 ### Start Code Execution Sandbox
 
 The code generation assistant requires a standalone Python sandbox that can execute the generated code. This step starts that sandbox.
@@ -341,7 +361,7 @@ Start the sandbox by running the script with your output folder path:
 For example:
 
 ```bash
-./local_sandbox/start_local_sandbox.sh local-sandbox /path-to/GenerativeAIExamples/industries/manufacturing/predictive_maintenance_agent/output_data/
+./local_sandbox/start_local_sandbox.sh local-sandbox /path-to/GenerativeAIExamples/industries/manufacturing/asset_lifecycle_management_agent/output_data/
 ```
 
 [Optional] Verify the sandbox is running correctly:
@@ -361,7 +381,7 @@ docker stop local-sandbox
 
 ## Workspace Utilities
 
-The predictive maintenance agent includes a powerful **workspace utilities system** that provides pre-built, reliable functions for common data processing tasks. This eliminates the need for the code generation assistant to implement complex algorithms from scratch, resulting in more reliable and consistent results.
+The Asset Lifecycle Management Agent includes a powerful **workspace utilities system** that provides pre-built, reliable functions for common data processing tasks. This eliminates the need for the code generation assistant to implement complex algorithms from scratch, resulting in more reliable and consistent results.
 
 ### How Workspace Utilities Work
 
@@ -459,6 +479,8 @@ The UI is available at `http://localhost:3000`
 - Configure theme and WebSocket URL as needed
 - Check "Enable intermediate results" and "Enable intermediate results by default" if you prefer to see all agent calls while the workflow runs
 
+**Note:** The custom modern UI (described above) provides better visualization embedding, domain-specific examples, and a more polished experience tailored for Asset Lifecycle Management workflows.
+
 ## Example Prompts
 
 Test the system with these prompts:
@@ -511,7 +533,7 @@ Perform the following steps:
 
 Ensure that Phoenix tracing-related information is present in the config file.
 
-Uncomment this portion of `prediction_maintenance_agent/configs/config-reasoning.yml` file:
+Uncomment this portion of `asset_lifecycle_management_agent/configs/config-reasoning.yml` file:
 
 ```yaml
 ...
@@ -520,7 +542,7 @@ Uncomment this portion of `prediction_maintenance_agent/configs/config-reasoning
     #   phoenix:
     #     _type: phoenix
     #     endpoint: http://localhost:6006/v1/traces
-    #     project: pdm-test # You can replace this with your preferred project name
+    #     project: alm-test # You can replace this with your preferred project name
 ...
 ```
 
@@ -546,7 +568,7 @@ CATALYST_SECRET_KEY="xxxxxxxxxxxxxxxxxxxxxxxx" # Change this to your RAGA AI Sec
 CATALYST_ENDPOINT=https://catalyst.raga.ai/api # Don't change this
 ```
 
-Uncomment this portion of `prediction_maintenance_agent/configs/config-reasoning.yml` file to enable Catalyst tracing:
+Uncomment this portion of `asset_lifecycle_management_agent/configs/config-reasoning.yml` file to enable Catalyst tracing:
 
 ```yaml
 ...
@@ -554,8 +576,8 @@ Uncomment this portion of `prediction_maintenance_agent/configs/config-reasoning
     # tracing:
     #   catalyst:
     #     _type: catalyst
-    #     project: "pdm-test" # You can replace this with your preferred project name
-    #     dataset: "pdm-dataset" # You can replace this with your preferred dataset name
+    #     project: "alm-test" # You can replace this with your preferred project name
+    #     dataset: "alm-dataset" # You can replace this with your preferred dataset name
 ...
 ```
 
@@ -565,18 +587,18 @@ You should see Catalyst initialization-related information in the terminal when 
 
 NeMo Agent Toolkit provides the flexibility to run workflows not just through terminal commands (`nat serve`) but also programmatically in Python which helps in seamless CI/CD pipeline integration. 
 
-You can test the workflow by running the `test_pdm_workflow.py` file using pytest instead of starting the server, which provides a Pythonic way of building and running the workflow programmatically. This approach is particularly valuable for continuous integration and deployment systems, allowing automated validation of workflow components and streamlined deployment processes.
+You can test the workflow by running the `test_alm_workflow.py` file using pytest instead of starting the server, which provides a Pythonic way of building and running the workflow programmatically. This approach is particularly valuable for continuous integration and deployment systems, allowing automated validation of workflow components and streamlined deployment processes.
 
 Ensure that you have set the `$NVIDIA_API_KEY` environment variable before running:
 
 ```bash
-pytest test_pdm_workflow.py -m e2e -v
+pytest test_alm_workflow.py -m e2e -v
 ```
 
 To run individual tests in the file:
 
 ```bash
-pytest test_pdm_workflow.py -k "<test_name>" -v
+pytest test_alm_workflow.py -k "<test_name>" -v
 ```
 
 ## Evaluation
@@ -585,7 +607,7 @@ This example comes with 25 curated queries and reference answers that form our e
 
 ### Multimodal Evaluation with Vision-Language Models
 
-We have implemented an innovative **Multimodal LLM Judge Evaluator** for agentic workflow evaluation, specifically designed for predictive maintenance tasks that generate both text and visual outputs.
+We have implemented an innovative **Multimodal LLM Judge Evaluator** for agentic workflow evaluation, specifically designed for Asset Lifecycle Management tasks that generate both text and visual outputs.
 
 **Why Custom Multimodal Evaluation?**
 
@@ -593,7 +615,7 @@ The built-in evaluators in NeMo Agent Toolkit have significant limitations:
 - **Text-Only Evaluation**: Cannot assess visual outputs like plots and charts
 - **Rigid String Matching**: Uses LangChain's `TrajectoryEvalChain` which only looks for exact patterns
 - **No Visual Understanding**: Cannot evaluate whether generated plots match expected visualizations
-- **Generic Prompts**: Not tailored for predictive maintenance domain
+- **Generic Prompts**: Not tailored for asset management and maintenance domain
 
 **Our Innovative Multimodal Approach:**
 
@@ -609,7 +631,7 @@ The built-in evaluators in NeMo Agent Toolkit have significant limitations:
 - ✅ **Intelligent Mode Switching**: Automatically detects whether to evaluate text or plots
 - ✅ **Visual Understanding**: Can assess if generated plots show correct data patterns, axis labels, trends
 - ✅ **Simple Scoring**: Supports only three scores from 0.0 (fully incorrect), 0.5 (partially correct) to 1.0 (fully correct)
-- ✅ **Domain-Specific**: Tailored prompts for predictive maintenance visualization patterns
+- ✅ **Domain-Specific**: Tailored prompts for Asset Lifecycle Management and maintenance visualization patterns
 
 We have created a smaller version of this dataset in `eval_data/eval_set_test.json` to help with quick checks before running the larger evaluation workflow.
 
@@ -617,7 +639,7 @@ We have created a smaller version of this dataset in `eval_data/eval_set_test.js
 
 Update the config file with the path to the evaluation set.
 
-In `predictive_maintenance_agent/configs/config-reasoning.yml`:
+In `asset_lifecycle_management_agent/configs/config-reasoning.yml`:
 ```yaml
 eval:
   general:
@@ -665,14 +687,25 @@ analyst_llm:
 
 ## Next Steps
 
-The agent provides a foundation for industrial AI applications. Planned enhancements include:
-- Memory layer for context retention
+The Asset Lifecycle Management Agent provides a foundation for comprehensive industrial asset management. Planned enhancements include:
+
+**Operation & Maintenance Phase:**
+- Memory layer for context retention across maintenance sessions
 - Parallel tool execution for faster responses
-- Action recommendation agent
+- Action recommendation agent for maintenance prioritization
 - Real-time fault detection agent
-- Integration with NVIDIA's NV-Tesseract foundation models for improved accuracy
-- Integration with NeMo Retriever for data source context
-- Expansion of evaluation dataset with complex queries that involve creating advanced SQL queries like CTEs, etc.
+- Integration with NVIDIA's NV-Tesseract foundation models for improved time-series accuracy
+- Integration with NeMo Retriever for enhanced data source context
+
+**Expanded ALM Capabilities:**
+- **Planning & Acquisition**: Tools for asset specification analysis, vendor comparison, and TCO (Total Cost of Ownership) calculation
+- **Deployment & Commissioning**: Integration with commissioning checklists, validation protocols, and asset registration systems
+- **Upgrades & Optimization**: Performance benchmarking tools, upgrade recommendation engines, and ROI analysis
+- **Decommissioning & Disposal**: End-of-life planning tools, environmental compliance tracking, and asset value recovery optimization
+
+**Evaluation & Quality:**
+- Expansion of evaluation dataset with complex queries involving advanced SQL queries like CTEs
+- Additional evaluation metrics for ALM-specific tasks
 ---
 
 **Resources:**

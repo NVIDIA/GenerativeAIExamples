@@ -21,7 +21,7 @@
 
 training_config:
   # Basic metadata about this training configuration
-  description: "Training data for NASA Turbofan Engine predictive maintenance SQL generation"
+  description: "Training data for NASA Turbofan Engine Asset Lifecycle Management (predictive maintenance) SQL generation"
   version: "1.0"
   # You should update these fields to describe your specific domain and use case
 

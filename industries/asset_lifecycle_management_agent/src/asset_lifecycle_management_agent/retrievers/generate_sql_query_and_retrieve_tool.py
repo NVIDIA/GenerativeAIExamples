@@ -16,6 +16,7 @@
 import json
 import logging
 import os
+from typing import Optional
 
 from pydantic import Field, BaseModel
 
@@ -34,8 +35,52 @@ class GenerateSqlQueryAndRetrieveToolConfig(FunctionBaseConfig, name="generate_s
     # Runtime configuration parameters
     llm_name: str = Field(description="The name of the LLM to use for the function.")
     embedding_name: str = Field(description="The name of the embedding to use for the function.")
-    vector_store_path: str = Field(description="The path to the vector store to use for the function.")
-    db_path: str = Field(description="The path to the SQL database to use for the function.")
+    
+    # Vector store configuration
+    vector_store_type: str = Field(
+        default="chromadb",
+        description="Type of vector store: 'chromadb' or 'elasticsearch'"
+    )
+    vector_store_path: Optional[str] = Field(
+        default=None,
+        description="Path to ChromaDB vector store (required if vector_store_type='chromadb')"
+    )
+    elasticsearch_url: Optional[str] = Field(
+        default=None,
+        description="Elasticsearch URL (required if vector_store_type='elasticsearch', e.g., 'http://localhost:9200')"
+    )
+    elasticsearch_index_name: str = Field(
+        default="vanna_vectors",
+        description="Elasticsearch index name (used if vector_store_type='elasticsearch')"
+    )
+    elasticsearch_username: Optional[str] = Field(
+        default=None,
+        description="Elasticsearch username for basic auth (optional)"
+    )
+    elasticsearch_password: Optional[str] = Field(
+        default=None,
+        description="Elasticsearch password for basic auth (optional)"
+    )
+    elasticsearch_api_key: Optional[str] = Field(
+        default=None,
+        description="Elasticsearch API key for authentication (optional)"
+    )
+    
+    # Database configuration
+    db_connection_string_or_path: str = Field(
+        description=(
+            "Database connection (path for SQLite, connection string for others). Format depends on db_type:\n"
+            "- sqlite: Path to .db file (e.g., './database.db')\n"
+            "- postgres: Connection string (e.g., 'postgresql://user:pass@host:port/db')\n"
+            "- sql: SQLAlchemy connection string (e.g., 'mysql+pymysql://user:pass@host/db')"
+        )
+    )
+    db_type: str = Field(
+        default="sqlite",
+        description="Type of database: 'sqlite', 'postgres', or 'sql' (generic SQL via SQLAlchemy)"
+    )
+    
+    # Output configuration
     output_folder: str = Field(description="The path to the output folder to use for the function.")
     vanna_training_data_path: str = Field(description="The path to the YAML file containing Vanna training data.")
 
