@@ -1,5 +1,6 @@
 # Misc
 config_examples.yml
+config_examples.yaml
 env.sh
 frontend/
 prompts.md
