@@ -254,6 +254,41 @@ This ensures that:
 - Output files are organized within your project
 - Configuration remains portable across different machines
 
+#### Setting Up Workspace Utilities
+
+**IMPORTANT**: The code generation assistant requires a `utils` folder inside your `output_data` directory for RUL transformation tasks.
+
+**Setup Instructions:**
+
+1. Create the output_data directory (if it doesn't exist):
+```bash
+mkdir -p output_data
+```
+
+2. Copy the pre-built utility functions from the template:
+```bash
+cp -r utils_template output_data/utils
+```
+
+3. Verify the setup:
+```bash
+ls output_data/utils/
+# You should see: __init__.py  rul_utils.py
+```
+
+**What's included:**
+- `apply_piecewise_rul_transformation(df, maxlife=100)` - Transforms RUL data to create realistic "knee" patterns
+- `show_utilities()` - Display available utility functions
+
+These utilities are automatically available to the code generation assistant when running in the Docker sandbox (mapped as `/workspace/utils/`). The system will only import these utilities when specifically needed for RUL transformations, preventing unnecessary module loading errors (`ModuleNotFoundError: No module named 'utils'` will not occur).
+
+**How It Works:**
+- When you start the sandbox with `output_data/` as the mount point, the `utils/` folder becomes accessible at `/workspace/utils/`
+- The code generation assistant only imports utils when performing RUL transformations
+- For regular tasks (data retrieval, plotting, etc.), utils are not imported, avoiding module errors
+
+**Note**: If you move your `output_data` folder, make sure the `utils` subfolder comes with it, or copy it from `utils_template` again.
+
 ### 6. Vanna SQL Agent Training (Automatic)
 
 **Important**: The Vanna SQL agent training happens automatically when you start the workflow server. The `vanna_training_data.yaml` file contains pre-configured domain-specific knowledge that will be loaded automatically during server startup.

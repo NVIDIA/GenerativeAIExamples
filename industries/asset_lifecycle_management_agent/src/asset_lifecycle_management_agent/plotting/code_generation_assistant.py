@@ -70,45 +70,26 @@ async def code_generation_assistant(
 OUTPUT ONLY THE CODE. NO COMMENTS. NO DOCSTRINGS. NO EXPLANATIONS.
 Generate only the code needed. Your response must contain ONLY executable Python code which will be DIRECTLY EXECUTED IN A SANDBOX.
 
-**UTILITIES AVAILABLE:**
-A 'utils' folder contains pre-built functions for Asset Lifecycle Management tasks (especially predictive maintenance):
-- utils.apply_piecewise_rul_transformation
-    - DESCRIPTION: Takes an input pandas DataFrame with time series data and create realistic "knee" patterns on the provided RUL column.
-    - INPUTS:
-    - df: pandas DataFrame with time series data
-    - maxlife: Maximum life threshold for the piecewise function (default: 100)
-    - time_col: Name of the time/cycle column (default: 'time_in_cycles')
-    - rul_col: Name of the RUL column to transform (default: 'RUL')
-   OUTPUTS:
-    - df - a pandas DataFrame with original data plus new 'transformed_RUL' column
+**DATABASE PATH:**
+For SQLite operations, the database file is located at: '/workspace/database/nasa_turbo.db'
+ALWAYS use this exact path when connecting to the database.
 
-- utils.show_utilities(): Show all available utilities if you need to see them
+**UTILITIES (OPTIONAL - ONLY FOR RUL TRANSFORMATIONS):**
+ONLY IF the task involves piecewise RUL transformation, you may use:
+- utils.apply_piecewise_rul_transformation(df, maxlife=100, time_col='time_in_cycles', rul_col='RUL')
+  Takes a pandas DataFrame and returns it with an added 'transformed_RUL' column using piecewise transformation.
 
-**CRITICAL REQUIREMENT: ALWAYS USE UTILITIES when available instead of writing custom implementations.**
-This ensures reliable, tested functionality and consistent results.
-
-To use utilities, start your code with:
+To use utilities (ONLY if needed for RUL transformation):
 ```python
 import sys
-sys.path.append(".")
+sys.path.append("/workspace")
 import utils
 
-<insert your code here>
-<insert your code here>
-<insert your code here>
-
-# Saving files to the current working directory.)
-print("Original RUL column name: ", rul column name)
-print("Transformed RUL column name: ", 'transformed_RUL')
-print("File saved to: filename.json")
+# Your code using the utility
+df_transformed = utils.apply_piecewise_rul_transformation(df, maxlife=100)
 ```
 
-**UTILITY USAGE GUIDELINES:**
-- Check if your task can be accomplished using the utility function
-- For RUL transformations: ALWAYS use utils.apply_piecewise_rul_transformation() instead of custom logic
-- The utility handles all error checking and provides detailed success messages
-- Use maxlife parameter to control the knee threshold (default: 100)
-- Capture the DataFrame returned by the utility function for further processing
+DO NOT import utils unless specifically needed for RUL transformation tasks.
 
 **CODE REQUIREMENTS:**
 1. Generate COMPLETE, SYNTACTICALLY CORRECT Python code
@@ -117,6 +98,7 @@ print("File saved to: filename.json")
 4. NO comments, NO docstrings, NO explanations
 5. Use minimal variable names (df, fig, data, etc.)
 6. **CRITICAL FILE PATH RULE**: Use ONLY the filename directly (e.g., "filename.json"), NOT "output_data/filename.json"
+7. **DATABASE PATH RULE**: Use '/workspace/database/nasa_turbo.db' for SQLite connections
 8. **IF YOU STILL NEED TO SAVE FILES, THEN PRINT FILE NAMES TO STDOUT. (eg: print("Saved file to: filename.json"))**
 
 GENERATE CODE ONLY. NO COMMENTS. NO EXPLANATIONS."""
@@ -225,6 +207,8 @@ GENERATE CODE ONLY. NO COMMENTS. NO EXPLANATIONS."""
                     
                     fix_prompt_text = f"""The previous code needs to be fixed. Please analyze the issue and generate corrected Python code.
 
+ORIGINAL INSTRUCTIONS: {instructions}
+
 PREVIOUS CODE:
 {code}
 
@@ -232,10 +216,11 @@ ISSUE TO FIX:
 {error_info}
 
 Please generate corrected Python code that fixes the problem. Follow all requirements:
-- Use utilities when available
+- Use '/workspace/database/nasa_turbo.db' for database connections
+- Only import utils if doing RUL transformations (use sys.path.append("/workspace"))
 - Generate only executable Python code
 - No comments or explanations
-- Handle file paths correctly
+- Handle file paths correctly (use only filename, not paths)
 - Complete all code blocks properly
 - Ensure the code is complete and not truncated
 
