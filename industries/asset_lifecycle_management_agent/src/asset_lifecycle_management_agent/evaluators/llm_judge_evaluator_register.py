@@ -27,7 +27,7 @@ class LLMJudgeEvaluatorConfig(EvaluatorBaseConfig, name="llm_judge"):
     llm_name: str = Field(description="Name of the LLM to use as judge")
     judge_prompt: str = Field(
         description="Prompt template for the judge LLM. Should include {question}, {reference_answer}, and {generated_answer} placeholders",
-        default="""You are an expert evaluator for predictive maintenance systems. Your task is to evaluate how well a generated answer matches the reference answer for a given question.
+        default="""You are an expert evaluator for Asset Lifecycle Management systems. Your task is to evaluate how well a generated answer matches the reference answer for a given question.
 
 Question: {question}
 
@@ -38,7 +38,7 @@ Generated Answer: {generated_answer}
 Please evaluate the generated answer against the reference answer considering:
 1. Factual accuracy and correctness
 2. Completeness of the response
-3. Technical accuracy for predictive maintenance context
+3. Technical accuracy for Asset Lifecycle Management context
 4. Relevance to the question asked
 
 Provide your evaluation as a JSON object with the following format:
@@ -77,5 +77,5 @@ async def register_llm_judge_evaluator(config: LLMJudgeEvaluatorConfig, builder:
     yield EvaluatorInfo(
         config=config, 
         evaluate_fn=evaluator.evaluate, 
-        description="LLM-as-a-Judge Evaluator for Predictive Maintenance"
+        description="LLM-as-a-Judge Evaluator for Asset Lifecycle Management"
     ) 

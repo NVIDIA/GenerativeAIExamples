@@ -18,7 +18,7 @@
 NASA Turbofan Engine Dataset to SQLite Database Converter
 
 This script converts the NASA Turbofan Engine Degradation Simulation Dataset (C-MAPSS)
-from text files into a structured SQLite database for use with the predictive maintenance agent.
+from text files into a structured SQLite database for use with the Asset Lifecycle Management agent.
 
 The NASA dataset contains:
 - Training data: Engine run-to-failure trajectories

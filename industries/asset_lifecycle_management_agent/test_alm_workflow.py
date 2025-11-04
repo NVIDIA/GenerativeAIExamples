@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 
 import pytest
-from predictive_maintenance_agent import register
+from asset_lifecycle_management_agent import register
 
 from nat.runtime.loader import load_workflow
 

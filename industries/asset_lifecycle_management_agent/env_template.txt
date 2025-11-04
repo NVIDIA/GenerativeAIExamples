@@ -1,4 +1,4 @@
-# Environment Variables for Predictive Maintenance Agent
+# Environment Variables for Asset Lifecycle Management Agent
 # 
 # Copy this file to .env and replace the placeholder values with your actual API keys
 # To use: cp env_template.txt .env && source .env

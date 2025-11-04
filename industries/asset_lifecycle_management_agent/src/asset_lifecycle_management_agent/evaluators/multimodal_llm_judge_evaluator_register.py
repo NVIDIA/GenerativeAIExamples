@@ -27,7 +27,7 @@ class MultimodalLLMJudgeEvaluatorConfig(EvaluatorBaseConfig, name="multimodal_ll
     llm_name: str = Field(description="Name of the LLM to use as judge (should support vision for multimodal evaluation)")
     judge_prompt: str = Field(
         description="Prompt template for the judge LLM. Should include {question}, {reference_answer}, and {generated_answer} placeholders. This prompt works for both text-only and multimodal evaluation.",
-        default="""You are an expert evaluator for predictive maintenance agentic workflows. Your task is to evaluate how well a generated response (which may include both text and visualizations) matches the reference answer for a given question.
+        default="""You are an expert evaluator for Asset Lifecycle Management agentic workflows. Your task is to evaluate how well a generated response (which may include both text and visualizations) matches the reference answer for a given question.
 
 Question: {question}
 
@@ -40,15 +40,15 @@ Please evaluate the complete response considering:
 TEXT EVALUATION:
 1. Factual accuracy and correctness of technical information
 2. Completeness of the response (does it answer all parts of the question?)
-3. Technical accuracy for predictive maintenance context (RUL predictions, sensor data analysis, etc.)
-4. Appropriate use of predictive maintenance terminology and concepts
+3. Technical accuracy for Asset Lifecycle Management context (RUL predictions, sensor data analysis, etc.)
+4. Appropriate use of Asset Lifecycle Management and predictive maintenance terminology and concepts
 
 VISUAL EVALUATION (if plots/charts are present):
 1. Does the visualization show the correct data/variables as specified in the reference?
 2. Are the axes labeled correctly and with appropriate ranges?
 3. Does the plot type (line chart, bar chart, distribution, etc.) match what was requested?
 4. Are the data values, trends, and patterns approximately correct?
-5. Is the visualization clear and appropriate for predictive maintenance analysis?
+5. Is the visualization clear and appropriate for Asset Lifecycle Management analysis?
 6. Does the plot help answer the original question effectively?
 
 COMBINED EVALUATION:
@@ -56,7 +56,7 @@ COMBINED EVALUATION:
 2. Does the overall response provide a complete answer?
 3. Is the combination more helpful than text or visuals alone would be?
 
-For predictive maintenance context, pay special attention to:
+For Asset Lifecycle Management context, pay special attention to:
 - RUL (Remaining Useful Life) predictions and trends
 - Sensor data patterns and operational settings
 - Time-series data representation
@@ -96,5 +96,5 @@ async def register_multimodal_llm_judge_evaluator(config: MultimodalLLMJudgeEval
     yield EvaluatorInfo(
         config=config, 
         evaluate_fn=evaluator.evaluate, 
-        description="Multimodal LLM Judge Evaluator with Text and Visual Evaluation Capabilities for Predictive Maintenance"
+        description="Multimodal LLM Judge Evaluator with Text and Visual Evaluation Capabilities for Asset Lifecycle Management"
     )
