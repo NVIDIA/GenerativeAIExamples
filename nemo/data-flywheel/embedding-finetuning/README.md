@@ -17,7 +17,7 @@ Fine-tuning adapts embedding models to your data (whether scientific literature,
   <p><strong>Figure 1:</strong> End-to-end workflow for fine-tuning embedding models using NeMo Microservices</p>
 </div>
 
-The diagram below shows the embedding fine-tuning workflow that NeMo Microservices orchestrates:
+The diagram above shows the embedding fine-tuning workflow that NeMo Microservices orchestrates:
 
 1. **Data Preparation**: Download and format raw data locally into query-document triplets, then upload to the NeMo Data Store.
 2. **Fine-tuning**: The NeMo Customizer service orchestrates training by launching a dedicated job that retrieves the base model and training data, performs supervised fine-tuning on GPU(s), and saves the fine-tuned weights to the Entity Store (model registry).
