@@ -6,9 +6,9 @@
 # Basic RAG Using LangChain
 
 # What driver is “missing”?
--You need the NVIDIA proprietary GPU driver on the host with CUDA 12.x support, plus the NVIDIA Container Toolkit.
--Recommended driver branch: R550+ (or at least R535+) so it’s compatible with CUDA 12.x images used by Milvus GPU and NIM.
--Also required: nvidia-container-toolkit configured with Docker so the nvidia runtime is available.
+1. You need the NVIDIA proprietary GPU driver on the host with CUDA 12.x support, plus the NVIDIA Container Toolkit.
+2. Recommended driver branch: R550+ (or at least R535+) so it’s compatible with CUDA 12.x images used by Milvus GPU and NIM.
+3. Also required: nvidia-container-toolkit configured with Docker so the nvidia runtime is available.
 If you’re on WSL2/Windows: install the Windows NVIDIA driver with WSL2 GPU support and enable GPU for Docker Desktop/WSL. The error “WSL environment detected but no adapters were found” means no GPU is exposed to WSL/Docker.
 
 # How to run without a local GPU (CPU-only path)
