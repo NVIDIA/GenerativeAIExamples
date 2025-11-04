@@ -619,7 +619,7 @@ export default function ApplyConfigurationForm({
         <div className="p-6 border-b border-neutral-700">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-white">Apply Configuration</h2>
+              <h2 className="text-xl font-semibold text-white">Deploy Locally</h2>
               <p className="text-sm text-gray-400 mt-1">
                 Deploy vLLM locally using Docker with your recommended configuration
               </p>
@@ -715,8 +715,8 @@ export default function ApplyConfigurationForm({
                 : isSubmitting 
                 ? "Deploying..." 
                 : isConfigurationComplete
-                ? "Apply Configuration Again"
-                : "Apply Configuration"}
+                ? "Deploy Locally Again"
+                : "Deploy Locally"}
             </button>
           </form>
 
