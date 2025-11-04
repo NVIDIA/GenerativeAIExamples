@@ -47,6 +47,20 @@ Refer to the [platform prerequisites and installation guide](https://docs.nvidia
 
 > **NOTE:** Fine-tuning for embedding models is supported starting with NeMo Microservices version 25.8.0. Please ensure you deploy NeMo Microservices Helm chart version 25.8.0 or later to use these notebooks.
 
+### Register the Base Model
+
+After deploying NeMo Microservices, register the `llama-3.2-nv-embedqa-1b-v2` base model with NeMo Customizer:
+
+```bash
+helm upgrade nemo nmp/nemo-microservices-helm-chart --namespace default --reuse-values \
+  --set customizer.customizationTargets.overrideExistingTargets=false \
+  --set 'customizer.customizationTargets.targets.nvidia/llama-3\.2-nv-embedqa-1b@v2.enabled=true' && \
+kubectl delete pod -n default -l app.kubernetes.io/name=nemo-customizer && \
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=nemo-customizer -n default --timeout=5m
+```
+
+This restarts the customizer to register the model (~2-3 minutes). The base checkpoint downloads from NGC on first use.
+
 ### Client-Side Requirements
 
 Ensure you have access to:
