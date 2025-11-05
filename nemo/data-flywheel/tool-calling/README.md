@@ -35,6 +35,117 @@ To effectively perform function calling, an LLM must:
 - Extract and populate the appropriate parameters for each chosen tool from a user's natural language query.
 - In multi-turn (interact with users back-and-forth), and multi-step (break its response into smaller parts) use cases, the LLM may need to plan, and have the capability to chain multiple actions together.
 
+#### Example of tool calling request failing to select the tool 
+
+REQUEST 
+
+```bash
+curl "$NEMO_URL/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma-3.2-1b",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What will the weather be in Berlin on November 7, 2025?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get the weather for a given location and date.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": { "type": "string" },
+              "date": { "type": "string" }
+            },
+            "required": ["location", "date"]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto"
+  }' | jq
+```
+
+RESPONSE
+ 
+```bash
+"choices": [
+    {
+      "index": 0,
+      "message": {
+        "content": "{\"name\": \"get_weather\", \"parameters\": {}}",
+        "role": "assistant",
+        "reasoning_content": null
+      },
+      "finish_reason": "stop"
+    }
+  ],
+```
+
+#### Example of LoRA fine-tuned tool calling example 
+
+REQUEST 
+
+```bash
+curl "$NEMO_URL/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma-3.2-1b-lora-sft@v1",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What will the weather be in Berlin on November 7, 2025?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get the weather for a given location and date.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": { "type": "string" },
+              "date": { "type": "string" }
+            },
+            "required": ["location", "date"]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto"
+  }' | jq
+```
+
+RESPONSE
+ 
+```bash
+choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "arguments": "{\"location\": \"Berlin\", \"date\": \"2025-11-07\"}"
+            }
+          }
+        ]
+      },
+      "finish_reason": "tool_calls",
+    }
+```
+
 As the number of tools and their complexity increases, customization becomes critical for maintaining accuracy and efficiency. Also, smaller models can achieve comparable performance to larger ones through parameter-efficient techniques like [Low-Rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685). LoRA is compute- and data-efficient, which involves a smaller one-time investment to train the LoRA adapter, allowing you to reap inference-time benefits with a more efficient "bespoke" model.
 
 ### About the xLAM dataset
