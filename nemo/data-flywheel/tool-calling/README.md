@@ -1,12 +1,30 @@
-# Tool Calling Fine-tuning, Inference, and Evaluation with NVIDIA NeMo Microservices and NIM
+# Fine-tuning, Inference, and Evaluation for LLM tool calling with NVIDIA NeMo Microservices 
 
 ## Introduction
 
 Tool calling enables Large Language Models (LLMs) to interact with external systems, execute programs, and access real-time information unavailable in their training data. This capability allows LLMs to process natural language queries, map them to specific functions or APIs, and populate required parameters from user inputs. It's essential for building AI agents capable of tasks like checking inventory, retrieving weather data, managing workflows, and more. It imbues generally improved decision making in agents in the presence of real-time information.
 
+### How LLM Tool Calling Works
+
+- Tools 
+
+A **function** or a **tool** refers to a external functionality provided by the user to the model. As the model generates a reponse to the prompt, it may be decide or can be told to use this functionality provided by a tool to respond to the prompt. In a real world use case, the user can provide a list of tools to get weather for a location, access account details for give nuser id or issue refunds for lost orders etc. Note that these are scenarios where the LLM needs to respond with real-time information outside the pretrained knowledge alone.
+
+- Tool calls 
+
+A **function call** or a **tool call** refers to a model's response when it decides or has been told that it needs to call one of the tools that were made available to it. From the above examples to real-world tools made availabel to a model, if a user sends a prompt like "What's the weather in Paris?", the model will respond to that prompt with a tool call for the **get_weather** tool with **Paris** as the **location** argument. 
+
+- Tool call outputs 
+
+A **function call output** or **tool call output** refers to the response a tool generates using the input from a models's tool call. The tool call outputs can be a structured JSON or plain text. In reference to the real world use cases discussed above, in response to a prompt like "Whats the weather in Paris?", the model returns a tool call that contains the **location** argument with a value of Paris. The tool call output might return a JSON object (e.g., {"temperature": "25", "unit": "C"}, indicating a current temperature of 25 degrees). The model then receives original prompt, tool definition, model's tool call, and the tool call output to generate a text response like:
+
+```bash
+The weather in Paris today is 25C.
+```
+
 <div style="text-align: center;">
 <img src="./img/tool-use.png" alt="Example of a single-turn function call" width="60%" />
-<p><strong>Figure 1:</strong> Example of a single-turn function call</p>
+<p><strong>Figure 1:</strong> Example of a single-turn function call. User prompts the model to get the weather in Santa Clara on 15th March 2025. The model has also recieved a function description called get_weather() with location and date as arguments. The model outputs a function call by extracting the location (Santa Clara) and date(15 March) from user's prompt. The application then receives the function call and generates the function call output. Note that in addition to the illustrated blocks, the model also receives the function call output along with the original prompt to generate the final text response. </p>
 </div>
 
 ### Customizing LLMs for Function Calling
