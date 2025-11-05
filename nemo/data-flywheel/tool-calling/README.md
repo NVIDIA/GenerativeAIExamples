@@ -95,7 +95,7 @@ REQUEST
 curl "$NEMO_URL/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "gemma-3.2-1b-lora-sft@v1",
+    "model": "gemma-3-1b-lora-sft@v1",
     "messages": [
       {
         "role": "user",
