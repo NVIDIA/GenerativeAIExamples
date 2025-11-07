@@ -22,6 +22,8 @@ A **function call output** or **tool call output** refers to the response a tool
 The weather in Paris today is 25C.
 ```
 
+**Note:** Common failure patterns include malformed formats which then end up in the model response instead of the actual tool call outputs.
+
 <div style="text-align: center;">
 <img src="./img/tool-use.png" alt="Example of a single-turn function call" width="60%" />
 <p><strong>Figure 1:</strong> Example of a single-turn function call. User prompts the model to get the weather in Santa Clara on 15th March 2025. The model has also recieved a function description called get_weather() with location and date as arguments. The model outputs a function call by extracting the location (Santa Clara) and date(15 March) from user's prompt. The application then receives the function call and generates the function call output. Note that in addition to the illustrated blocks, the model also receives the function call output along with the original prompt to generate the final text response. </p>
@@ -87,6 +89,8 @@ RESPONSE
   ],
 ```
 
+**Note:** Response is missing the required function arguments, namely **location** and **date**. 
+
 #### Tool calling with LoRA fine-tuning
 
 REQUEST 
@@ -145,6 +149,8 @@ choices": [
       "finish_reason": "tool_calls",
     }
 ```
+
+**Note:**: Tool calls are not part of the response content, but have a separate field called **tool_calls**. The model generates the function arguments,  **location** and **date** and name, **get_weather** based on the user query and tool.  
 
 As the number of tools and their complexity increases, customization becomes critical for maintaining accuracy and efficiency. Also, smaller models can achieve comparable performance to larger ones through parameter-efficient techniques like [Low-Rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685). LoRA is compute- and data-efficient, which involves a smaller one-time investment to train the LoRA adapter, allowing you to reap inference-time benefits with a more efficient "bespoke" model.
 
