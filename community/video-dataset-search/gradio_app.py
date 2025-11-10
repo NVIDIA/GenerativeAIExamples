@@ -73,7 +73,7 @@ def load_selected_video(video_choice: str, results_text: str) -> Optional[str]:
 
 def create_interface():
     with gr.Blocks(title="Video Search System", theme=gr.themes.Glass()) as demo:
-        gr.Markdown("# 🎥 Multimodal Video Search System")
+        gr.Markdown("# 🎥 Multimodal Video Search")
         gr.Markdown("Search your video dataset using text descriptions, images, or videos.")
         
         with gr.Row():
