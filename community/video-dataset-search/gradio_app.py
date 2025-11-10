@@ -150,9 +150,6 @@ def create_interface():
             inputs=[video_dropdown, hidden_results],
             outputs=video_player
         )
-        
-        gr.Markdown("---")
-        gr.Markdown("*Powered by NVIDIA Cosmos Embed1 and Qdrant*")
     
     return demo
 
