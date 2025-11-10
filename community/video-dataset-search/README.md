@@ -81,4 +81,4 @@ TEXT_WEIGHT = 0.4   # Higher = prioritize semantic similarity
 
 Dataset paths can also be configured in `config.py`:
 - `DATASET_LOCAL_PATH`, `DATA_DIR`, and `METADATA_FILE` control where videos and metadata are loaded from.
-- By default, the tool expects per-video text to be stored in a `metadata.csv` file in the dataset directory.
+- By default, the tool expects the metadata/captions to be stored in a `metadata.csv` file in the dataset directory.

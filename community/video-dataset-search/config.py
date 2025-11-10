@@ -15,8 +15,8 @@
 
 from pathlib import Path
 
-# Dataset paths
-DATASET_LOCAL_PATH = Path(__file__).parent / "PhysicalAI-Robotics-GR00T-GR1"
+# Dataset paths - change this to the path to your dataset
+DATASET_LOCAL_PATH = Path(__file__).parent / "PhysicalAI-Robotics-GR00T-GR1" 
 METADATA_FILE = DATASET_LOCAL_PATH / "metadata.csv"
 DATA_DIR = DATASET_LOCAL_PATH / "gr1"
 
