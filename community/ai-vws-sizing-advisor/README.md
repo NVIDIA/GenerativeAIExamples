@@ -1,8 +1,8 @@
-# vGPU Sizing Advisor for AI vWS
+# AI vWS Sizing Advisor
 
 ## Overview
 
-vGPU Sizing Advisor is a RAG-powered tool that helps you determine the optimal NVIDIA vGPU configuration for AI workloads on NVIDIA AI Virtual Workstation (AI vWS). Using NVIDIA vGPU documentation and best practices, it provides tailored recommendations for optimal performance and resource efficiency.
+AI vWS Sizing Advisor is a RAG-powered tool that helps you determine the optimal NVIDIA vGPU sizing configuration for AI workloads on NVIDIA AI Virtual Workstation (AI vWS). Using NVIDIA vGPU documentation and best practices, it provides tailored recommendations for optimal performance and resource efficiency.
 
 Enter your workload requirements and receive validated recommendations including:
 
@@ -52,7 +52,7 @@ docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
 **1. Clone and navigate:**
 ```bash
 git clone https://github.com/NVIDIA/GenerativeAIExamples.git
-cd GenerativeAIExamples/community/vgpu-sizing-advisor
+cd GenerativeAIExamples/community/ai-vws-sizing-advisor
 ```
 
 **2. Set NGC API key:**
@@ -145,6 +145,6 @@ Models governed by [NVIDIA AI Foundation Models Community License](https://docs.
 
 ---
 
-**Version:** 2.3.0 (October 2025) - See [CHANGELOG.md](./CHANGELOG.md)
+**Version:** 2.2 (November 2025) - See [CHANGELOG.md](./CHANGELOG.md)
 
 **Support:** [GitHub Issues](https://github.com/NVIDIA/GenerativeAIExamples/issues) | [NVIDIA Forums](https://forums.developer.nvidia.com/)
