@@ -14,10 +14,20 @@
  limitations under the License.
  */
 
-CREATE OR ALTER PROCEDURE dbo.CreateExternalModel
+/****** Object:  StoredProcedure [dbo].[CreateExternalModel]    Script Date: 11/7/2025 12:20:24 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER   PROCEDURE [dbo].[CreateExternalModel]
     @Location NVARCHAR(512),  -- The endpoint URL for the external model
     @Model NVARCHAR(255),     -- The name of the model to use
-    @Name SYSNAME             -- The name of the external model to create
+    @Name SYSNAME,             -- The name of the external model to create
+    @SchemaName   SYSNAME       = N'dbo',   -- Schema for the external model
+    @ApiFormat    NVARCHAR(50)  = N'OpenAI',-- API_FORMAT
+    @ModelType    NVARCHAR(32)  = N'EMBEDDINGS', -- MODEL_TYPE (EMBEDDINGS for /embeddings)
+    @Parameters   NVARCHAR(MAX) = N'{"input_type":"query","dimensions":1024}' -- extra POST fields
+
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -38,10 +48,11 @@ BEGIN
     DECLARE @CreateSql NVARCHAR(MAX);
     SET @CreateSql = N'CREATE EXTERNAL MODEL ' + @QuotedName + N'
     WITH (
-        LOCATION = ''' + REPLACE(@Location, '''', '''''') + N''',
-        API_FORMAT = ''OpenAI'',
-        MODEL_TYPE = EMBEDDINGS,
-        MODEL = ''' + REPLACE(@Model, '''', '''''') + N'''
+        LOCATION    = N''' + REPLACE(@Location,  '''', '''''') + N''',
+        API_FORMAT  = '''  + REPLACE(@ApiFormat, '''', '''''') + N''',
+        MODEL_TYPE  = '    + @ModelType + N',
+        MODEL       = N''' + REPLACE(@Model,     '''', '''''') + N''',
+        PARAMETERS  = N''' + REPLACE(COALESCE(@Parameters, N'{}'), '''', '''''') + N'''
     );';
 
     -- Execute the dynamic SQL to create the external model
@@ -50,5 +61,3 @@ BEGIN
     -- Return a success message
     PRINT 'External model [' + @Name + '] has been created successfully.';
 END;
-
-GO

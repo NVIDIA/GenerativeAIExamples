@@ -14,42 +14,136 @@
  limitations under the License.
  */
 
+SET ANSI_NULLS ON;
+GO
+SET QUOTED_IDENTIFIER ON;
+GO
+
 CREATE OR ALTER PROCEDURE dbo.nvidia_run_ai_embedding
-    @ModelName NVARCHAR(255),                      -- Pass the model name dynamically, e.g., 'EmbedE5_OpenAI'
-    @TopN INT = 10                                 -- Limit how many rows to process
+    @ModelName   NVARCHAR(255),                  -- e.g., 'EmbedE5_OpenAI'
+    @TopN        INT            = 10,            -- one-shot batch count (ignored if @ProcessAll=1)
+    @Prompt      NVARCHAR(MAX)  = NULL,          -- query mode when provided
+    @OutVector   VECTOR(1024)   OUTPUT,          -- returns embedding in query mode
+    @ProcessAll  BIT            = 0,             -- set 1 to sweep entire table
+    @BatchSize   INT            = 1000           -- chunk size when sweeping
 WITH EXECUTE AS OWNER
 AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    ---------------------------------------------------------------------
-    -- Step 2: Choose target ProductDescriptionIDs to process in this run
-    ---------------------------------------------------------------------
-    IF OBJECT_ID('tempdb..#TargetIds') IS NOT NULL DROP TABLE #TargetIds;
-    CREATE TABLE #TargetIds (ProductDescriptionID INT PRIMARY KEY);
+    DECLARE @sql NVARCHAR(MAX);          -- declare ONCE and reuse
+    DECLARE @rows INT;
 
-    INSERT INTO #TargetIds (ProductDescriptionID)
+    ---------------------------------------------------------------------
+    -- MODE A: Single-query embedding (acts like get_embedding)
+    -- Ensure external model has PARAMETERS: {"input_type":"query","dimensions":1024}
+    ---------------------------------------------------------------------
+    IF @Prompt IS NOT NULL
+    BEGIN
+        DECLARE @emb VECTOR(1024);
+
+        SET @sql = N'
+            SELECT @embOut = AI_GENERATE_EMBEDDINGS(@p USE MODEL ' + QUOTENAME(@ModelName) + N');
+        ';
+
+        EXEC sp_executesql
+             @sql,
+             N'@p NVARCHAR(MAX), @embOut VECTOR(1024) OUTPUT',
+             @p = @Prompt,
+             @embOut = @emb OUTPUT;
+
+        IF @emb IS NULL RETURN 1;
+
+        SET @OutVector = @emb;
+        RETURN 0; -- do NOT touch the table when prompt mode
+    END;
+
+    ---------------------------------------------------------------------
+    -- MODE B1: Sweep entire table in batches
+    ---------------------------------------------------------------------
+    IF @ProcessAll = 1
+    BEGIN
+        SET @rows = 1;
+
+        WHILE (@rows > 0)
+        BEGIN
+            -- unique temp tables for this branch
+            IF OBJECT_ID('tempdb..#TargetIdsAll') IS NOT NULL DROP TABLE #TargetIdsAll;
+            CREATE TABLE #TargetIdsAll (ProductDescriptionID INT PRIMARY KEY);
+
+            INSERT INTO #TargetIdsAll (ProductDescriptionID)
+            SELECT TOP (@BatchSize) pde.ProductDescriptionID
+            FROM Production.ProductDescriptionEmbeddings AS pde
+            WHERE pde.Embedding IS NULL
+            GROUP BY pde.ProductDescriptionID
+            ORDER BY pde.ProductDescriptionID;
+
+            IF NOT EXISTS (SELECT 1 FROM #TargetIdsAll) BREAK;
+
+            IF OBJECT_ID('tempdb..#TouchedAll') IS NOT NULL DROP TABLE #TouchedAll;
+            CREATE TABLE #TouchedAll (ProductDescriptionID INT);
+
+            SET @sql = N'
+            ;WITH NullRows AS (
+                SELECT  pde.ProductDescriptionID,
+                        pd.Description
+                FROM Production.ProductDescriptionEmbeddings AS pde
+                JOIN #TargetIdsAll AS t
+                  ON t.ProductDescriptionID = pde.ProductDescriptionID
+                JOIN Production.ProductDescription AS pd
+                  ON pd.ProductDescriptionID = pde.ProductDescriptionID
+                WHERE pde.Embedding IS NULL
+            ),
+            NewVecs AS (
+                SELECT
+                    n.ProductDescriptionID,
+                    AI_GENERATE_EMBEDDINGS(n.Description USE MODEL ' + QUOTENAME(@ModelName) + N') AS NewEmbedding
+                FROM NullRows AS n
+            )
+            UPDATE pde
+               SET pde.Embedding    = nv.NewEmbedding,
+                   pde.ModifiedDate = GETDATE()
+               OUTPUT inserted.ProductDescriptionID INTO #TouchedAll(ProductDescriptionID)
+            FROM Production.ProductDescriptionEmbeddings AS pde
+            JOIN NewVecs AS nv
+              ON nv.ProductDescriptionID = pde.ProductDescriptionID
+            WHERE pde.Embedding IS NULL
+              AND nv.NewEmbedding IS NOT NULL
+            OPTION (MAXDOP 1);';
+
+            EXEC sp_executesql @sql;
+
+            SELECT @rows = COUNT(*) FROM #TouchedAll;
+        END;
+
+        SELECT 'ProcessedAll' AS Mode, @BatchSize AS BatchSize;
+        RETURN 0;
+    END;
+
+    ---------------------------------------------------------------------
+    -- MODE B2: One-shot batch (TOP @TopN)
+    ---------------------------------------------------------------------
+    -- unique temp tables for this branch
+    IF OBJECT_ID('tempdb..#TargetIdsOnce') IS NOT NULL DROP TABLE #TargetIdsOnce;
+    CREATE TABLE #TargetIdsOnce (ProductDescriptionID INT PRIMARY KEY);
+
+    INSERT INTO #TargetIdsOnce (ProductDescriptionID)
     SELECT TOP (@TopN) pde.ProductDescriptionID
     FROM Production.ProductDescriptionEmbeddings AS pde
     WHERE pde.Embedding IS NULL
     GROUP BY pde.ProductDescriptionID
     ORDER BY pde.ProductDescriptionID;
 
-    ---------------------------------------------------------------------
-    -- Step 3: Compute embeddings using AI_GENERATE_EMBEDDINGS and update
-    ---------------------------------------------------------------------
-    IF OBJECT_ID('tempdb..#Touched') IS NOT NULL DROP TABLE #Touched;
-    CREATE TABLE #Touched (ProductDescriptionID INT);
+    IF OBJECT_ID('tempdb..#TouchedOnce') IS NOT NULL DROP TABLE #TouchedOnce;
+    CREATE TABLE #TouchedOnce (ProductDescriptionID INT);
 
-    -- Build dynamic SQL for embedding generation
-    DECLARE @DynamicSQL NVARCHAR(MAX);
-    SET @DynamicSQL = N'
+    SET @sql = N'
     ;WITH NullRows AS (
         SELECT  pde.ProductDescriptionID,
                 pd.Description
         FROM Production.ProductDescriptionEmbeddings AS pde
-        JOIN #TargetIds AS t
+        JOIN #TargetIdsOnce AS t
           ON t.ProductDescriptionID = pde.ProductDescriptionID
         JOIN Production.ProductDescription AS pd
           ON pd.ProductDescriptionID = pde.ProductDescriptionID
@@ -64,7 +158,7 @@ BEGIN
     UPDATE pde
        SET pde.Embedding    = nv.NewEmbedding,
            pde.ModifiedDate = GETDATE()
-       OUTPUT inserted.ProductDescriptionID INTO #Touched(ProductDescriptionID)
+       OUTPUT inserted.ProductDescriptionID INTO #TouchedOnce(ProductDescriptionID)
     FROM Production.ProductDescriptionEmbeddings AS pde
     JOIN NewVecs AS nv
       ON nv.ProductDescriptionID = pde.ProductDescriptionID
@@ -72,11 +166,11 @@ BEGIN
       AND nv.NewEmbedding IS NOT NULL
     OPTION (MAXDOP 1);';
 
-    -- Execute the dynamic SQL
-    EXEC sp_executesql @DynamicSQL;
+    EXEC sp_executesql @sql;
 
-    -- Step 4: Return the IDs of the rows that were updated
-    SELECT DISTINCT ProductDescriptionID FROM #Touched;
+    SELECT DISTINCT ProductDescriptionID FROM #TouchedOnce;
+    RETURN 0;
 END;
-
 GO
+
+
