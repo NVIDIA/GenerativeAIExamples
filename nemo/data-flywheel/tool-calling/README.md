@@ -1,12 +1,32 @@
-# Tool Calling Fine-tuning, Inference, and Evaluation with NVIDIA NeMo Microservices and NIM
+# Fine-tuning, Inference, and Evaluation for LLM tool calling with NVIDIA NeMo Microservices 
 
 ## Introduction
 
 Tool calling enables Large Language Models (LLMs) to interact with external systems, execute programs, and access real-time information unavailable in their training data. This capability allows LLMs to process natural language queries, map them to specific functions or APIs, and populate required parameters from user inputs. It's essential for building AI agents capable of tasks like checking inventory, retrieving weather data, managing workflows, and more. It imbues generally improved decision making in agents in the presence of real-time information.
 
+### How LLM Tool Calling Works
+
+- Tools 
+
+A **function** or a **tool** refers to a external functionality provided by the user to the model. As the model generates a reponse to the prompt, it may be decide or can be told to use this functionality provided by a tool to respond to the prompt. In a real world use case, the user can provide a list of tools to get weather for a location, access account details for give nuser id or issue refunds for lost orders etc. Note that these are scenarios where the LLM needs to respond with real-time information outside the pretrained knowledge alone.
+
+- Tool calls 
+
+A **function call** or a **tool call** refers to a model's response when it decides or has been told that it needs to call one of the tools that were made available to it. From the above examples to real-world tools made availabel to a model, if a user sends a prompt like "What's the weather in Paris?", the model will respond to that prompt with a tool call for the **get_weather** tool with **Paris** as the **location** argument. 
+
+- Tool call outputs 
+
+A **function call output** or **tool call output** refers to the response a tool generates using the input from a models's tool call. The tool call outputs can be a structured JSON or plain text. In reference to the real world use cases discussed above, in response to a prompt like "Whats the weather in Paris?", the model returns a tool call that contains the **location** argument with a value of Paris. The tool call output might return a JSON object (e.g., {"temperature": "25", "unit": "C"}, indicating a current temperature of 25 degrees). The model then receives original prompt, tool definition, model's tool call, and the tool call output to generate a text response like:
+
+```bash
+The weather in Paris today is 25C.
+```
+
+**Note:** Common failure patterns include malformed formats which then end up in the model response instead of the actual tool call outputs.
+
 <div style="text-align: center;">
 <img src="./img/tool-use.png" alt="Example of a single-turn function call" width="60%" />
-<p><strong>Figure 1:</strong> Example of a single-turn function call</p>
+<p><strong>Figure 1:</strong> Example of a single-turn function call. User prompts the model to get the weather in Santa Clara on 15th March 2025. The model has also recieved a function description called get_weather() with location and date as arguments. The model outputs a function call by extracting the location (Santa Clara) and date(15 March) from user's prompt. The application then receives the function call and generates the function call output. Note that in addition to the illustrated blocks, the model also receives the function call output along with the original prompt to generate the final text response. </p>
 </div>
 
 ### Customizing LLMs for Function Calling
@@ -17,6 +37,121 @@ To effectively perform function calling, an LLM must:
 - Extract and populate the appropriate parameters for each chosen tool from a user's natural language query.
 - In multi-turn (interact with users back-and-forth), and multi-step (break its response into smaller parts) use cases, the LLM may need to plan, and have the capability to chain multiple actions together.
 
+#### Tool calling with base model
+
+REQUEST 
+
+```bash
+curl "$NEMO_URL/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma-3.2-1b",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What will the weather be in Berlin on November 7, 2025?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get the weather for a given location and date.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": { "type": "string" },
+              "date": { "type": "string" }
+            },
+            "required": ["location", "date"]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto"
+  }' | jq
+```
+
+RESPONSE
+ 
+```bash
+"choices": [
+    {
+      "index": 0,
+      "message": {
+        "content": "{\"name\": \"get_weather\", \"parameters\": {}}",
+        "role": "assistant",
+        "reasoning_content": null
+      },
+      "finish_reason": "stop"
+    }
+  ],
+```
+
+**Note:** Response is missing the required function arguments, namely **location** and **date**. 
+
+#### Tool calling with LoRA fine-tuning
+
+REQUEST 
+
+```bash
+curl "$NEMO_URL/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma-3-1b-lora-sft@v1",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What will the weather be in Berlin on November 7, 2025?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Get the weather for a given location and date.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": { "type": "string" },
+              "date": { "type": "string" }
+            },
+            "required": ["location", "date"]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto"
+  }' | jq
+```
+
+RESPONSE
+ 
+```bash
+choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "arguments": "{\"location\": \"Berlin\", \"date\": \"2025-11-07\"}"
+            }
+          }
+        ]
+      },
+      "finish_reason": "tool_calls",
+    }
+```
+
+**Note:**: Tool calls are not part of the response content, but have a separate field called **tool_calls**. The model generates the function arguments,  **location** and **date** and name, **get_weather** based on the user query and tool.  
+
 As the number of tools and their complexity increases, customization becomes critical for maintaining accuracy and efficiency. Also, smaller models can achieve comparable performance to larger ones through parameter-efficient techniques like [Low-Rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685). LoRA is compute- and data-efficient, which involves a smaller one-time investment to train the LoRA adapter, allowing you to reap inference-time benefits with a more efficient "bespoke" model.
 
 ### About the xLAM dataset
@@ -25,7 +160,9 @@ The Salesforce [xLAM](https://huggingface.co/datasets/Salesforce/xlam-function-c
 
 ### About NVIDIA NeMo Microservices
 
-The NVIDIA NeMo microservices platform provides a flexible foundation for building AI workflows such as fine-tuning, evaluation, running inference, or applying guardrails to AI models on your Kubernetes cluster on-premises or in cloud. Refer to [documentation](https://docs.nvidia.com/nemo/microservices/latest/about/index.html) for further information.
+NVIDIA NeMo is a modular, enterprise-ready software suite for managing the AI agent lifecycle, enabling enterprises to build, deploy, and optimize agentic systems.
+
+NVIDIA NeMo microservices, part of the [NVIDIA NeMo software suite](https://www.nvidia.com/en-us/ai-data-science/products/nemo/), are an API-first modular set of tools that you can use to customize, evaluate, and secure large language models (LLMs) and embedding models while optimizing AI applications across on-premises or cloud-based Kubernetes clusters.
 
 ## Objectives
 
@@ -53,9 +190,6 @@ To follow this tutorial, you will need at least two NVIDIA GPUs, which will be a
 
 - **Fine-tuning:** One GPU for fine-tuning the `llama-3.2-1b-instruct` model using NeMo Customizer.
 - **Inference:** One GPU for deploying the `llama-3.2-1b-instruct` NIM for inference.
-
-
-`NOTE`: Notebook [4_adding_safety_guardrails](./4_adding_safety_guardrails.ipynb) asks the user to use one GPU for deploying the `llama-3.1-nemoguard-8b-content-safety` NIM to add content safety guardrails to user input. This will re-use the GPU that was previously used for finetuning in notebook 2.
 
 Refer to the [platform prerequisites and installation guide](https://docs.nvidia.com/nemo/microservices/latest/get-started/platform-prereq.html) to deploy NeMo Microservices.
 
@@ -93,7 +227,9 @@ The NIM deployment described above should take approximately 10 minutes to go li
 
 ### Managing GPU Resources for Model Deployment (If Applicable)
 
-If you previously deployed the `meta/llama-3.1-8b-instruct` NIM during the [Beginner Tutorial](https://docs.nvidia.com/nemo/microservices/latest/get-started/platform-prereq.html), and are running on a cluster with at most two NVIDIA GPUs, you will need to delete the previous `meta/llama-3.1-8b-instruct` deployment to free up resources. This ensures sufficient GPU availability to run the `meta/llama-3.2-1b-instruct` model while keeping one GPU available for fine-tuning, and another for the content safety NIM.
+If you previously deployed the `meta/llama-3.1-8b-instruct` NIM during the [Beginner Tutorial](https://docs.nvidia.com/nemo/microservices/latest/get-started/platform-prereq.html), and are running on a cluster with at most two NVIDIA GPUs, you will need to delete the previous `meta/llama-3.1-8b-instruct` deployment to free up resources. This ensures sufficient GPU availability to run the `meta/llama-3.2-1b-instruct` model while keeping one GPU available for fine-tuning.
+
+Note that you can use the content safety NIM via [build.nvidia.com](https://build.nvidia.com/) (using the `integrate.api.nvidia.com` API endpoint). In this case, you do not need to deploy that model within your cluster. Refer to [docs](https://docs.nvidia.com/nemo/microservices/latest/set-up/deploy-as-microservices/guardrails.html) for more information.
 
 ```bash
 export NEMO_URL="http://nemo.test"

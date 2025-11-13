@@ -1,0 +1,1153 @@
+/* SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright (c) 2023-2025, NVIDIA CORPORATION.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License. */
+ 
+
+.App {
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f0f2f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 2rem 20px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.App-header h1 {
+  margin: 0;
+  color: white;
+}
+
+.server-ip-input {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.75rem 1.25rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  max-width: 500px;
+  width: 100%;
+}
+
+.server-ip-input:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.server-ip-input label {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.ip-input-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 0.5rem;
+}
+
+.server-ip-input input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  min-width: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.server-ip-input input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.server-ip-input input:focus {
+  outline: none;
+  border-color: #76B900;
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(118, 185, 0, 0.25);
+}
+
+.server-ip-input input:hover:not(:focus) {
+  border-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.toggle-ip-visibility {
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.toggle-ip-visibility:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.toggle-ip-visibility:focus {
+  outline: none;
+  border-color: #76B900;
+  box-shadow: 0 0 0 2px rgba(118, 185, 0, 0.25);
+}
+
+.controls {
+  margin: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  max-width: 800px;
+  width: 100%;
+}
+
+/* RAG Toggle Switch */
+.rag-toggle {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0 12px;
+  border-radius: 4px;
+  height: 40px;
+  min-width: 140px;
+  transition: background-color 0.2s ease;
+}
+
+.rag-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.toggle-label {
+  margin-left: 10px;
+  font-size: 14px;
+  color: white;
+  white-space: nowrap;
+  line-height: 40px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+  margin: 8px 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #76B900;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #76B900;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 24px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.controls button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #61dafb;
+  color: #282c34;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.controls button:hover {
+  background-color: #4fa8c7;
+  transform: translateY(-1px);
+}
+
+.controls button:active {
+  transform: translateY(0);
+}
+
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  max-width: 1200px;
+  width: calc(100% - 2rem);
+  margin: 0 auto;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.summary-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.summary-container details {
+  cursor: pointer;
+}
+
+.summary-container summary {
+  font-weight: 500;
+  color: #282c34;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  scroll-behavior: smooth;
+}
+
+.message {
+  max-width: 80%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  position: relative;
+  text-align: left;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message.user {
+  align-self: flex-end;
+  background-color: #5B2E8C; /* NVIDIA purple */
+  color: white;
+}
+
+.message.assistant {
+  align-self: flex-start;
+  background-color: #e9ecef;
+  color: #212529;
+}
+
+.message p {
+  margin: 1rem;
+  line-height: 1.5;
+}
+
+.message li {
+  margin: 1rem;
+  line-height: 1.5;
+}
+
+.message details {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.message details summary {
+  cursor: pointer;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.message details p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.95em;
+  line-height: 1.5;
+  color: #333;
+}
+
+.input-form {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
+  align-items: center;
+  transition: box-shadow 0.2s ease;
+}
+
+.input-form:focus-within {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.input-form input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  height: 40px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.input-form input:focus {
+  outline: none;
+  border-color: #5B2E8C;
+  box-shadow: 0 0 0 2px rgba(91, 46, 140, 0.25);
+}
+
+.input-form button {
+  padding: 0 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: #76B900;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 40px;
+  font-size: 14px;
+  white-space: nowrap;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.input-form button:hover:not(:disabled) {
+  background-color: #8ed600;
+  transform: translateY(-1px);
+}
+
+.input-form button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.input-form button:disabled {
+  background-color: #a8d65c;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background-color: #e9ecef;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  background-color: #6c757d;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { 
+    transform: scale(0);
+  } 
+  40% { 
+    transform: scale(1.0);
+  }
+}
+
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    gap: 15px;
+    padding: 0 15px;
+    width: 100%;
+    max-width: 330px;
+    margin: 0 auto;
+    align-items: stretch;
+  }
+
+  .server-ip-input {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .server-ip-input label {
+    text-align: left;
+    margin-bottom: 0.25rem;
+  }
+
+  .server-ip-input input {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .ip-input-container {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .toggle-ip-visibility {
+    min-width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .rag-toggle {
+    width: 100%;
+    height: 40px;
+    justify-content: center;
+    min-width: unset;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+  }
+
+  .switch {
+    margin: 0;
+  }
+
+  .toggle-label {
+    line-height: 40px;
+    margin: 0 0 0 10px;
+  }
+
+  .button-group {
+    width: 100%;
+    flex-direction: column;
+    gap: 15px;
+    min-width: unset;
+    margin: 0;
+  }
+
+  .button-group button {
+    width: 100%;
+    height: 40px !important;
+    min-width: unset;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    white-space: nowrap;
+    flex: none;
+    margin: 0;
+  }
+
+  .App-header h1 {
+    font-size: 1.25rem;
+    margin: 0 0 15px 0;
+  }
+
+  .App-header button {
+    height: 40px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+
+  .chat-container {
+    padding: 0.5rem;
+    width: calc(100% - 1rem);
+  }
+
+  .messages {
+    padding: 0.5rem;
+  }
+
+  .message {
+    max-width: 90%;
+  }
+
+  .input-form {
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .input-form input {
+    padding: 0.5rem;
+  }
+
+  .input-form button {
+    padding: 0.5rem 1rem;
+    min-width: 80px;
+  }
+}
+
+.message .markdown-body {
+  font-size: 1rem;
+  line-height: 1.8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  margin-bottom: 1rem;
+}
+
+/* Base spacing for all text elements */
+.message .markdown-body p,
+.message .markdown-body li,
+.message .markdown-body blockquote,
+.message .markdown-body pre,
+.message .markdown-body table {
+  margin: 2rem 0;
+  line-height: 1.8;
+}
+
+/* Remove margins from first and last elements */
+.message .markdown-body p:first-child,
+.message .markdown-body li:first-child,
+.message .markdown-body blockquote:first-child,
+.message .markdown-body pre:first-child,
+.message .markdown-body table:first-child {
+  margin-top: 0;
+}
+
+.message .markdown-body p:last-child,
+.message .markdown-body li:last-child,
+.message .markdown-body blockquote:last-child,
+.message .markdown-body pre:last-child,
+.message .markdown-body table:last-child {
+  margin-bottom: 0;
+}
+
+/* Headers with consistent spacing */
+.message .markdown-body h1,
+.message .markdown-body h2,
+.message .markdown-body h3,
+.message .markdown-body h4 {
+  margin: 3rem 0 2rem 0;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.message .markdown-body h1 {
+  font-size: 1.8rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 0.8rem;
+}
+
+.message .markdown-body h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 0.6rem;
+}
+
+.message .markdown-body h3 {
+  font-size: 1.3rem;
+}
+
+.message .markdown-body h4 {
+  font-size: 1.1rem;
+}
+
+/* List specific spacing */
+.message .markdown-body ul,
+.message .markdown-body ol {
+  margin: 2rem 0;
+  padding-left: 2.5rem;
+}
+
+.message .markdown-body li {
+  margin: 1rem 0;
+  line-height: 1.8;
+}
+
+.message .markdown-body li > p {
+  margin: 1rem 0;
+}
+
+.message .markdown-body li > p:first-child {
+  margin-top: 0;
+}
+
+.message .markdown-body li > p:last-child {
+  margin-bottom: 0;
+}
+
+.message .markdown-body li > ul,
+.message .markdown-body li > ol {
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+
+/* Blockquote specific spacing */
+.message .markdown-body blockquote {
+  padding: 1.5rem 2rem;
+  border-left: 4px solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 0 4px 4px 0;
+}
+
+.message .markdown-body blockquote p {
+  margin: 1rem 0;
+}
+
+.message .markdown-body blockquote p:first-child {
+  margin-top: 0;
+}
+
+.message .markdown-body blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.message .markdown-body code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+  color: #e83e8c;
+}
+
+.message .markdown-body pre {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.message .markdown-body pre code {
+  padding: 0;
+  background-color: transparent;
+  color: inherit;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.message .markdown-body table {
+  margin: 1rem 0;
+  border-collapse: collapse;
+  width: 100%;
+  background-color: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.message .markdown-body th,
+.message .markdown-body td {
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: left;
+}
+
+.message .markdown-body th {
+  background-color: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+}
+
+.message .markdown-body tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+.message .markdown-body hr {
+  margin: 1.5rem 0;
+  border: none;
+  border-top: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.message .markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 1rem 0;
+}
+
+.message .markdown-body a {
+  color: #5B2E8C;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(91, 46, 140, 0.2);
+  transition: border-color 0.2s;
+}
+
+.message .markdown-body a:hover {
+  border-color: #5B2E8C;
+}
+
+/* User message specific styles */
+.message.user .markdown-body {
+  color: white;
+}
+
+.message.user .markdown-body h1,
+.message.user .markdown-body h2,
+.message.user .markdown-body h3,
+.message.user .markdown-body h4 {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.message.user .markdown-body blockquote {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left-color: rgba(255, 255, 255, 0.3);
+}
+
+.message.user .markdown-body code {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffb6c1;
+}
+
+.message.user .markdown-body pre {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.message.user .markdown-body table {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.message.user .markdown-body th {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.message.user .markdown-body tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.message.user .markdown-body hr {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.message.user .markdown-body a {
+  color: #ffb6c1;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.message.user .markdown-body a:hover {
+  border-color: #ffb6c1;
+}
+
+.thinking-process,
+.references {
+  margin: 1.5rem 0 1rem 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  background-color: #f5f6f7;
+  overflow: hidden;
+}
+
+.thinking-process:first-child {
+  margin-top: 1rem;
+}
+
+.references:first-child {
+  margin-top: 1rem;
+}
+
+.thinking-process + .references {
+  margin-top: 1.5rem;
+}
+
+.thinking-process summary,
+.references summary {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-weight: 500;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f5f6f7;
+}
+
+.thinking-process[open] summary,
+.references[open] summary {
+  background-color: #d8d9db;
+  color: #333;
+}
+
+.thinking-process summary:hover,
+.references summary:hover {
+  background-color: #e8e9eb;
+  color: #333;
+}
+
+.thinking-process summary::after,
+.references summary::after {
+  content: '▼';
+  font-size: 0.8em;
+  transition: transform 0.2s ease;
+}
+
+.thinking-process[open] summary::after,
+.references[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.thinking-content,
+.references-content {
+  padding: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: #f5f6f7;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.message.assistant .thinking-content,
+.message.assistant .references-content {
+  background-color: #f5f6f7;
+}
+
+.message.user .thinking-content,
+.message.user .references-content {
+  background-color: #f5f6f7;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.reference-item {
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.2s ease;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.reference-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.reference-item:last-child {
+  margin-bottom: 0;
+}
+
+.reference-score {
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.reference-document {
+  font-size: 0.9em;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.document-link {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: #5B2E8C;
+  text-decoration: none;
+  border: 1px solid #5B2E8C;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  transition: all 0.2s ease;
+  background-color: white;
+  z-index: 2;
+}
+
+.document-link:hover {
+  background-color: #5B2E8C;
+  color: white;
+  border-color: #4a2570;
+}
+
+.reference-text {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  min-height: 60px;
+  position: relative;
+  cursor: pointer;
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+}
+
+.reference-text.truncated {
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.reference-text.truncated::after {
+  content: '▼';
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 0.8em;
+  color: #5B2E8C;
+  background-color: rgba(91, 46, 140, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.reference-text.expanded {
+  max-height: none;
+}
+
+.reference-text.expanded::after {
+  content: '▲';
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 0.8em;
+  color: #5B2E8C;
+  background-color: rgba(91, 46, 140, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hide the arrow for non-truncated text */
+.reference-text:not(.truncated):not(.expanded)::after {
+  display: none;
+}
+
+/* Add hover effect to the entire reference text */
+.reference-text.truncated:hover,
+.reference-text.expanded:hover {
+  background-color: rgba(91, 46, 140, 0.05);
+}
+
+/* Add hover effect to the arrow indicator */
+.reference-text.truncated:hover::after,
+.reference-text.expanded:hover::after {
+  background-color: rgba(91, 46, 140, 0.2);
+}
+
+.reference-text .expand-button {
+  display: none; /* Hide the text button since we're using the arrow indicator */
+}
+
+.button-group {
+  display: flex;
+  gap: 20px;
+  min-width: auto;
+}
+
+.button-group button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  height: 40px;
+  font-size: 14px;
+  white-space: nowrap;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.button-group button:hover {
+  background-color: #76B900;
+}
+
+.error-message {
+  background-color: #fff3f3;
+  color: #d32f2f;
+  padding: 12px 35px 12px 20px;
+  border-radius: 4px;
+  margin: 10px 0;
+  border: 1px solid #ffcdd2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+  font-size: 0.9rem;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.error-message::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #d32f2f;
+  animation: progress 5s linear forwards;
+}
+
+.error-icon {
+  font-size: 1.1rem;
+}
+
+.error-message .close-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #d32f2f;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 1.1rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.error-message .close-button:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.error-message.fade-out {
+  animation: fadeOut 0.3s ease-out forwards;
+}

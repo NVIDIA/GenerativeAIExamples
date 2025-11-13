@@ -1,0 +1,171 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36" version="28.0.7">
+  <diagram id="pdm-arch-1" name="Page-1">
+    <mxGraphModel dx="1851" dy="1253" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="user" value="User" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#1A73E8;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="20" y="120" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="tts" value="NVIDIA TTS NIM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#34A853;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="130" y="130" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="prompt" value="Prompt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5F6368;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="300" y="130" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="guardrails" value="NVIDIA NeMo Guardrails" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#8E24AA;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="410" y="130" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="reasoning" value="NVIDIA LLAMA‑Nemotron Reasoning NIM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#34A853;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="560" y="120" width="260" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="plan" value="Plan" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F6BF26;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="840" y="130" width="80" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="reactContainer" value="ReAct Orchestrator" style="swimlane;rounded=1;whiteSpace=wrap;html=1;horizontal=1;childLayout=stackLayout;startSize=24;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;fillColor=#FFFFFF;strokeColor=#5F6368;" parent="1" vertex="1">
+          <mxGeometry x="950" y="40" width="300" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="reactLlm" value="NVIDIA Qwen 2.5 Coder NIM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#34A853;fontSize=12;" parent="reactContainer" vertex="1">
+          <mxGeometry x="20" y="40" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rPlan" value="Plan" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5F6368;fontSize=11;" parent="reactContainer" vertex="1">
+          <mxGeometry x="20" y="100" width="200" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="rRoute" value="Route" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5F6368;fontSize=11;" parent="reactContainer" vertex="1">
+          <mxGeometry x="20" y="135" width="200" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="rExecute" value="Execute" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5F6368;fontSize=11;" parent="reactContainer" vertex="1">
+          <mxGeometry x="20" y="170" width="200" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="rObserve" value="Observe" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5F6368;fontSize=11;" parent="reactContainer" vertex="1">
+          <mxGeometry x="20" y="205" width="200" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="ra1" style="endArrow=block;strokeColor=#5F6368;" parent="reactContainer" source="rPlan" target="rRoute" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ra2" style="endArrow=block;strokeColor=#5F6368;" parent="reactContainer" source="rRoute" target="rExecute" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ra3" style="endArrow=block;strokeColor=#5F6368;" parent="reactContainer" source="rExecute" target="rObserve" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ra4" style="endArrow=block;dashed=1;strokeColor=#5F6368;" parent="reactContainer" source="rObserve" target="rPlan" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="user" target="tts" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="tts" target="prompt" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="prompt" target="guardrails" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="guardrails" target="reasoning" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="reasoning" target="plan" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="plan" target="reactContainer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="draContainer" value="Data Retrieval Agent" style="swimlane;rounded=1;whiteSpace=wrap;html=1;horizontal=1;startSize=24;fillColor=#FFFFFF;strokeColor=#5F6368;" parent="1" vertex="1">
+          <mxGeometry x="820" y="340" width="420" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="vannaContainer" value="VANNA.AI" style="swimlane;rounded=1;whiteSpace=wrap;html=1;horizontal=1;startSize=22;fillColor=#FFF3E0;strokeColor=#FB8C00;" parent="draContainer" vertex="1">
+          <mxGeometry x="20" y="40" width="380" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="logs" value="Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FB8C00;fontSize=11;" parent="vannaContainer" vertex="1">
+          <mxGeometry x="10" y="40" width="80" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="context" value="Context" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FB8C00;fontSize=11;" parent="vannaContainer" vertex="1">
+          <mxGeometry x="10" y="85" width="80" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="analysis" value="Analysis details" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FB8C00;fontSize=11;" parent="vannaContainer" vertex="1">
+          <mxGeometry x="10" y="130" width="110" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="sqlDb" value="SQL Database" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#FCE8E6;strokeColor=#EA4335;fontSize=12;" parent="vannaContainer" vertex="1">
+          <mxGeometry x="150" y="70" width="110" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sqlGen" value="NVIDIA SQL Generator NIM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#34A853;fontSize=12;" parent="vannaContainer" vertex="1">
+          <mxGeometry x="280" y="90" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="v1" style="endArrow=block;strokeColor=#FB8C00;" parent="vannaContainer" source="logs" target="sqlDb" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v2" style="endArrow=block;strokeColor=#FB8C00;" parent="vannaContainer" source="context" target="sqlDb" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v3" style="endArrow=block;strokeColor=#FB8C00;" parent="vannaContainer" source="analysis" target="sqlDb" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v4" style="endArrow=block;strokeColor=#EA4335;" parent="vannaContainer" source="sqlDb" target="sqlGen" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cgaContainer" value="Code Generation Agent (includes Code Execution)" style="swimlane;rounded=1;whiteSpace=wrap;html=1;horizontal=1;startSize=24;fillColor=#FFFFFF;strokeColor=#5F6368;" parent="1" vertex="1">
+          <mxGeometry x="1280" y="340" width="420" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="cgNode" value="Code Generation Agent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5F6368;fontSize=12;" parent="cgaContainer" vertex="1">
+          <mxGeometry x="20" y="40" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cgLlm" value="NVIDIA Qwen2.5 32B NIM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#34A853;fontSize=12;" parent="cgaContainer" vertex="1">
+          <mxGeometry x="20" y="90" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rcaModel" value="Root Cause Analysis model" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5F6368;fontSize=12;" parent="cgaContainer" vertex="1">
+          <mxGeometry x="20" y="140" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sandbox" value="Sandbox (execution runtime)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#8E24AA;fontSize=12;" parent="cgaContainer" vertex="1">
+          <mxGeometry x="240" y="140" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rulContainer" value="RUL Prediction Agent" style="swimlane;rounded=1;whiteSpace=wrap;html=1;horizontal=1;startSize=24;fillColor=#FFFFFF;strokeColor=#5F6368;" parent="1" vertex="1">
+          <mxGeometry x="360" y="560" width="420" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="rulXgb" value="Trained XGBoost Model" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#34A853;fontSize=12;" parent="rulContainer" vertex="1">
+          <mxGeometry x="20" y="60" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="plotContainer" value="Plotting Agent" style="swimlane;rounded=1;whiteSpace=wrap;html=1;horizontal=1;startSize=24;fillColor=#FFFFFF;strokeColor=#5F6368;" parent="1" vertex="1">
+          <mxGeometry x="1280" y="580" width="420" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="plotLine" value="plot_line_chart" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F6BF26;fontSize=12;" parent="plotContainer" vertex="1">
+          <mxGeometry x="20" y="50" width="160" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="plotDist" value="plot_distribution" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F6BF26;fontSize=12;" parent="plotContainer" vertex="1">
+          <mxGeometry x="200" y="50" width="180" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="plotComp" value="plot_comparison" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F6BF26;fontSize=12;" parent="plotContainer" vertex="1">
+          <mxGeometry x="20" y="100" width="180" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="plotAnom" value="plot_anomaly" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F6BF26;fontSize=12;" parent="plotContainer" vertex="1">
+          <mxGeometry x="220" y="100" width="160" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="adaContainer" value="Anomaly Detection Agent" style="swimlane;rounded=1;whiteSpace=wrap;html=1;horizontal=1;startSize=24;fillColor=#FFFFFF;strokeColor=#5F6368;" parent="1" vertex="1">
+          <mxGeometry x="360" y="340" width="420" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="adaNode" value="Anomaly Detection Agent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5F6368;fontSize=12;" parent="adaContainer" vertex="1">
+          <mxGeometry x="20" y="40" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tsfm" value="Time‑Series Foundation Model (e.g., MOMENT‑1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#34A853;fontSize=12;" parent="adaContainer" vertex="1">
+          <mxGeometry x="20" y="90" width="360" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fan1" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="reactContainer" target="draContainer" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="960" y="280" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fan2" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="reactContainer" target="cgaContainer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fan3" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="reactContainer" target="adaContainer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fan4" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="reactContainer" target="rulContainer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fan5" style="endArrow=block;strokeColor=#5F6368;" parent="1" source="reactContainer" target="plotContainer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

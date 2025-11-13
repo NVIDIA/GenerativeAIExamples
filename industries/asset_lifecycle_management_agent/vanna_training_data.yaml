@@ -1,0 +1,189 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Vanna SQL Agent Training Configuration
+# =====================================
+# This YAML file contains all the training data needed to configure a Vanna SQL generation agent
+# for your specific database and domain. Each section serves a different purpose in training
+# the agent to understand your database structure and generate appropriate SQL queries.
+
+training_config:
+  # Basic metadata about this training configuration
+  description: "Training data for NASA Turbofan Engine Asset Lifecycle Management (predictive maintenance) SQL generation"
+  version: "1.0"
+  # You should update these fields to describe your specific domain and use case
+
+# SYNTHETIC DDL STATEMENTS
+# ========================
+# Purpose: Define table structures that may not be fully captured in the actual database schema
+# When to use: 
+#   - When you have tables that aren't in the main database but need to be referenced
+#   - When you want to ensure the agent knows about specific table structures
+#   - When you need to supplement incomplete schema information from sqlite_master
+# How to populate:
+#   - Include CREATE TABLE statements for any tables the agent should know about
+#   - Focus on tables that are central to your domain but might be missing from auto-discovery
+#   - Use exact DDL syntax as if you were creating the tables manually
+#   - Include all columns with proper data types to help the agent understand structure
+synthetic_ddl:
+  - "CREATE TABLE IF NOT EXISTS RUL_FD001 (\"unit_number\" INTEGER, \"RUL\" INTEGER)"
+  - "CREATE TABLE IF NOT EXISTS RUL_FD002 (\"unit_number\" INTEGER, \"RUL\" INTEGER)"
+  - "CREATE TABLE IF NOT EXISTS RUL_FD003 (\"unit_number\" INTEGER, \"RUL\" INTEGER)"
+  - "CREATE TABLE IF NOT EXISTS RUL_FD004 (\"unit_number\" INTEGER, \"RUL\" INTEGER)"
+  - "CREATE TABLE IF NOT EXISTS train_FD001 (\"unit_number\" INTEGER, \"time_in_cycles\" INTEGER, \"operational_setting_1\" REAL, \"operational_setting_2\" REAL, \"operational_setting_3\" REAL, \"sensor_measurement_1\" REAL, \"sensor_measurement_2\" REAL, \"sensor_measurement_3\" REAL, \"sensor_measurement_4\" REAL, \"sensor_measurement_5\" REAL, \"sensor_measurement_6\" REAL, \"sensor_measurement_7\" REAL, \"sensor_measurement_8\" REAL, \"sensor_measurement_9\" REAL, \"sensor_measurement_10\" REAL, \"sensor_measurement_11\" REAL, \"sensor_measurement_12\" REAL, \"sensor_measurement_13\" REAL, \"sensor_measurement_14\" REAL, \"sensor_measurement_15\" REAL, \"sensor_measurement_16\" REAL, \"sensor_measurement_17\" INTEGER, \"sensor_measurement_18\" INTEGER, \"sensor_measurement_19\" REAL, \"sensor_measurement_20\" REAL, \"sensor_measurement_21\" REAL)"
+  - "CREATE TABLE IF NOT EXISTS test_FD001 (\"unit_number\" INTEGER, \"time_in_cycles\" INTEGER, \"operational_setting_1\" REAL, \"operational_setting_2\" REAL, \"operational_setting_3\" REAL, \"sensor_measurement_1\" REAL, \"sensor_measurement_2\" REAL, \"sensor_measurement_3\" REAL, \"sensor_measurement_4\" REAL, \"sensor_measurement_5\" REAL, \"sensor_measurement_6\" REAL, \"sensor_measurement_7\" REAL, \"sensor_measurement_8\" REAL, \"sensor_measurement_9\" REAL, \"sensor_measurement_10\" REAL, \"sensor_measurement_11\" REAL, \"sensor_measurement_12\" REAL, \"sensor_measurement_13\" REAL, \"sensor_measurement_14\" REAL, \"sensor_measurement_15\" REAL, \"sensor_measurement_16\" REAL, \"sensor_measurement_17\" INTEGER, \"sensor_measurement_18\" INTEGER, \"sensor_measurement_19\" REAL, \"sensor_measurement_20\" REAL, \"sensor_measurement_21\" REAL)"
+  - "CREATE TABLE IF NOT EXISTS train_FD002 (\"unit_number\" INTEGER, \"time_in_cycles\" INTEGER, \"operational_setting_1\" REAL, \"operational_setting_2\" REAL, \"operational_setting_3\" REAL, \"sensor_measurement_1\" REAL, \"sensor_measurement_2\" REAL, \"sensor_measurement_3\" REAL, \"sensor_measurement_4\" REAL, \"sensor_measurement_5\" REAL, \"sensor_measurement_6\" REAL, \"sensor_measurement_7\" REAL, \"sensor_measurement_8\" REAL, \"sensor_measurement_9\" REAL, \"sensor_measurement_10\" REAL, \"sensor_measurement_11\" REAL, \"sensor_measurement_12\" REAL, \"sensor_measurement_13\" REAL, \"sensor_measurement_14\" REAL, \"sensor_measurement_15\" REAL, \"sensor_measurement_16\" REAL, \"sensor_measurement_17\" INTEGER, \"sensor_measurement_18\" INTEGER, \"sensor_measurement_19\" REAL, \"sensor_measurement_20\" REAL, \"sensor_measurement_21\" REAL)"
+  - "CREATE TABLE IF NOT EXISTS test_FD002 (\"unit_number\" INTEGER, \"time_in_cycles\" INTEGER, \"operational_setting_1\" REAL, \"operational_setting_2\" REAL, \"operational_setting_3\" REAL, \"sensor_measurement_1\" REAL, \"sensor_measurement_2\" REAL, \"sensor_measurement_3\" REAL, \"sensor_measurement_4\" REAL, \"sensor_measurement_5\" REAL, \"sensor_measurement_6\" REAL, \"sensor_measurement_7\" REAL, \"sensor_measurement_8\" REAL, \"sensor_measurement_9\" REAL, \"sensor_measurement_10\" REAL, \"sensor_measurement_11\" REAL, \"sensor_measurement_12\" REAL, \"sensor_measurement_13\" REAL, \"sensor_measurement_14\" REAL, \"sensor_measurement_15\" REAL, \"sensor_measurement_16\" REAL, \"sensor_measurement_17\" INTEGER, \"sensor_measurement_18\" INTEGER, \"sensor_measurement_19\" REAL, \"sensor_measurement_20\" REAL, \"sensor_measurement_21\" REAL)"
+  - "CREATE TABLE IF NOT EXISTS train_FD003 (\"unit_number\" INTEGER, \"time_in_cycles\" INTEGER, \"operational_setting_1\" REAL, \"operational_setting_2\" REAL, \"operational_setting_3\" REAL, \"sensor_measurement_1\" REAL, \"sensor_measurement_2\" REAL, \"sensor_measurement_3\" REAL, \"sensor_measurement_4\" REAL, \"sensor_measurement_5\" REAL, \"sensor_measurement_6\" REAL, \"sensor_measurement_7\" REAL, \"sensor_measurement_8\" REAL, \"sensor_measurement_9\" REAL, \"sensor_measurement_10\" REAL, \"sensor_measurement_11\" REAL, \"sensor_measurement_12\" REAL, \"sensor_measurement_13\" REAL, \"sensor_measurement_14\" REAL, \"sensor_measurement_15\" REAL, \"sensor_measurement_16\" REAL, \"sensor_measurement_17\" INTEGER, \"sensor_measurement_18\" INTEGER, \"sensor_measurement_19\" REAL, \"sensor_measurement_20\" REAL, \"sensor_measurement_21\" REAL)"
+  - "CREATE TABLE IF NOT EXISTS test_FD003 (\"unit_number\" INTEGER, \"time_in_cycles\" INTEGER, \"operational_setting_1\" REAL, \"operational_setting_2\" REAL, \"operational_setting_3\" REAL, \"sensor_measurement_1\" REAL, \"sensor_measurement_2\" REAL, \"sensor_measurement_3\" REAL, \"sensor_measurement_4\" REAL, \"sensor_measurement_5\" REAL, \"sensor_measurement_6\" REAL, \"sensor_measurement_7\" REAL, \"sensor_measurement_8\" REAL, \"sensor_measurement_9\" REAL, \"sensor_measurement_10\" REAL, \"sensor_measurement_11\" REAL, \"sensor_measurement_12\" REAL, \"sensor_measurement_13\" REAL, \"sensor_measurement_14\" REAL, \"sensor_measurement_15\" REAL, \"sensor_measurement_16\" REAL, \"sensor_measurement_17\" INTEGER, \"sensor_measurement_18\" INTEGER, \"sensor_measurement_19\" REAL, \"sensor_measurement_20\" REAL, \"sensor_measurement_21\" REAL)"
+  - "CREATE TABLE IF NOT EXISTS train_FD004 (\"unit_number\" INTEGER, \"time_in_cycles\" INTEGER, \"operational_setting_1\" REAL, \"operational_setting_2\" REAL, \"operational_setting_3\" REAL, \"sensor_measurement_1\" REAL, \"sensor_measurement_2\" REAL, \"sensor_measurement_3\" REAL, \"sensor_measurement_4\" REAL, \"sensor_measurement_5\" REAL, \"sensor_measurement_6\" REAL, \"sensor_measurement_7\" REAL, \"sensor_measurement_8\" REAL, \"sensor_measurement_9\" REAL, \"sensor_measurement_10\" REAL, \"sensor_measurement_11\" REAL, \"sensor_measurement_12\" REAL, \"sensor_measurement_13\" REAL, \"sensor_measurement_14\" REAL, \"sensor_measurement_15\" REAL, \"sensor_measurement_16\" REAL, \"sensor_measurement_17\" INTEGER, \"sensor_measurement_18\" INTEGER, \"sensor_measurement_19\" REAL, \"sensor_measurement_20\" REAL, \"sensor_measurement_21\" REAL)"
+  - "CREATE TABLE IF NOT EXISTS test_FD004 (\"unit_number\" INTEGER, \"time_in_cycles\" INTEGER, \"operational_setting_1\" REAL, \"operational_setting_2\" REAL, \"operational_setting_3\" REAL, \"sensor_measurement_1\" REAL, \"sensor_measurement_2\" REAL, \"sensor_measurement_3\" REAL, \"sensor_measurement_4\" REAL, \"sensor_measurement_5\" REAL, \"sensor_measurement_6\" REAL, \"sensor_measurement_7\" REAL, \"sensor_measurement_8\" REAL, \"sensor_measurement_9\" REAL, \"sensor_measurement_10\" REAL, \"sensor_measurement_11\" REAL, \"sensor_measurement_12\" REAL, \"sensor_measurement_13\" REAL, \"sensor_measurement_14\" REAL, \"sensor_measurement_15\" REAL, \"sensor_measurement_16\" REAL, \"sensor_measurement_17\" INTEGER, \"sensor_measurement_18\" INTEGER, \"sensor_measurement_19\" REAL, \"sensor_measurement_20\" REAL, \"sensor_measurement_21\" REAL)"
+
+# DOMAIN DOCUMENTATION
+# ====================
+# Purpose: Provide context about your database structure, business rules, and query patterns
+# When to use: Always - this is crucial for helping the agent understand your domain
+# How to populate:
+#   - Use second-person language ("You are working with...", "When you see...")
+#   - Explain the business context and what the data represents
+#   - Define important query patterns and conventions specific to your domain
+#   - Include any business rules or logical distinctions the agent should understand
+#   - Explain column meanings, especially if they're not self-evident
+#   - Provide guidance on default behaviors when queries are ambiguous
+#   - Think of this as training documentation for a new team member who needs to understand your database
+documentation: |
+  You are working with a SQL database containing train and test splits of four different datasets: FD001, FD002, FD003, FD004. 
+  Each dataset consists of multiple multivariate time series from different engines of the same type.
+
+  DATABASE STRUCTURE YOU'LL WORK WITH:
+  The data is organized into separate tables for each dataset that you'll need to query:
+
+  Training Tables: train_FD001, train_FD002, train_FD003, train_FD004
+  Test Tables: test_FD001, test_FD002, test_FD003, test_FD004
+  RUL Tables: RUL_FD001, RUL_FD002, RUL_FD003, RUL_FD004
+
+  When you query training and test tables, you'll find 26 columns with identical structure:
+  - unit_number: INTEGER - Identifier for each engine unit
+  - time_in_cycles: INTEGER - Time step in operational cycles
+  - operational_setting_1: REAL - First operational setting affecting performance
+  - operational_setting_2: REAL - Second operational setting affecting performance
+  - operational_setting_3: REAL - Third operational setting affecting performance
+  - sensor_measurement_1 through sensor_measurement_21: REAL/INTEGER - Twenty-one sensor measurements
+
+  When you query RUL tables, you'll find 2 columns:
+  - unit_number: INTEGER - Engine unit identifier
+  - RUL: INTEGER - Remaining Useful Life value for that test unit
+
+  QUERY PATTERNS YOU SHOULD USE:
+
+  Table References:
+  - When you see "train_FD001" or "dataset train_FD001" → Use table train_FD001
+  - When you see "test_FD002" or "dataset test_FD002" → Use table test_FD002
+  - When you see "FD003" (without train/test prefix) → Determine from context whether to use train_FD003 or test_FD003
+  - For RUL queries: Use the specific RUL table (RUL_FD001, RUL_FD002, RUL_FD003, or RUL_FD004)
+
+  Counting Patterns You Should Follow:
+  - When asked "How many units" → Use COUNT(DISTINCT unit_number) to count unique engines
+  - When asked "How many records/data points/measurements/entries/rows" → Use COUNT(*) to count all records
+
+  RUL Handling (CRITICAL - YOU MUST DISTINGUISH):
+
+  1. GROUND TRUTH RUL (for test data):
+     - Use when you see requests for "actual RUL", "true RUL", "ground truth", or "what is the RUL"
+     - You should query the specific RUL table: SELECT RUL FROM RUL_FD001 WHERE unit_number=N
+     - For time-series with ground truth: ((SELECT MAX(time_in_cycles) FROM test_FDxxx WHERE unit_number=N) + (SELECT RUL FROM RUL_FDxxx WHERE unit_number=N) - time_in_cycles)
+
+  2. PREDICTED/CALCULATED RUL (for training data or prediction requests):
+     - Use when you see requests to "predict RUL", "calculate RUL", "estimate RUL", or "find RUL" for training data
+     - For training data: You should calculate as remaining cycles until failure = (MAX(time_in_cycles) - current_time_in_cycles + 1)
+     - Your training RUL query should be: SELECT unit_number, time_in_cycles, (MAX(time_in_cycles) OVER (PARTITION BY unit_number) - time_in_cycles + 1) AS predicted_RUL FROM train_FDxxx
+
+  DEFAULT BEHAVIOR YOU SHOULD FOLLOW: If unclear, assume the user wants PREDICTION (since this is more common)
+
+  Column Names You'll Use (consistent across all training and test tables):
+  - unit_number: Engine identifier
+  - time_in_cycles: Time step
+  - operational_setting_1, operational_setting_2, operational_setting_3: Operational settings
+  - sensor_measurement_1, sensor_measurement_2, ..., sensor_measurement_21: Sensor readings
+
+  IMPORTANT NOTES FOR YOUR QUERIES:
+  - Each dataset (FD001, FD002, FD003, FD004) has its own separate RUL table
+  - RUL tables do NOT have a 'dataset' column - they are dataset-specific by table name
+  - Training tables contain data until engine failure
+  - Test tables contain data that stops before failure
+  - RUL tables provide the actual remaining cycles for test units
+
+  ENGINE OPERATION CONTEXT FOR YOUR UNDERSTANDING:
+  You are working with engine data where each engine starts with different degrees of initial wear and manufacturing variation. 
+  The engine operates normally at the start of each time series and develops a fault at some point during the series. 
+  In the training set, the fault grows in magnitude until system failure. 
+  In the test set, the time series ends some time prior to system failure.
+  Your objective is to help predict the number of remaining operational cycles before failure in the test set.
+
+# EXAMPLE QUERIES
+# ===============
+# Purpose: Teach the agent common SQL patterns and query structures for your domain
+# When to use: Include 3-7 diverse examples that cover the main query patterns you expect
+# How to populate:
+#   - Choose queries that represent different SQL concepts (JOINs, aggregations, window functions, etc.)
+#   - Focus on domain-specific patterns that are unique to your use case
+#   - Include complex queries that demonstrate proper table relationships
+#   - Add a description to explain what pattern each query demonstrates
+#   - Prioritize quality over quantity - better to have 5 great examples than 20 mediocre ones
+example_queries:
+  - description: "JOIN pattern between training and RUL tables"
+    sql: "SELECT t.unit_number, t.time_in_cycles, t.operational_setting_1, r.RUL FROM train_FD001 AS t JOIN RUL_FD001 AS r ON t.unit_number = r.unit_number WHERE t.unit_number = 1 ORDER BY t.time_in_cycles"
+  
+  - description: "Aggregation with multiple statistical functions"
+    sql: "SELECT unit_number, AVG(sensor_measurement_1) AS avg_sensor1, MAX(sensor_measurement_2) AS max_sensor2, MIN(sensor_measurement_3) AS min_sensor3 FROM train_FD002 GROUP BY unit_number"
+  
+  - description: "Test table filtering with time-based conditions"
+    sql: "SELECT * FROM test_FD003 WHERE time_in_cycles > 50 AND sensor_measurement_1 > 500 ORDER BY unit_number, time_in_cycles"
+  
+  - description: "Window function for predicted RUL calculation on training data"
+    sql: "SELECT unit_number, time_in_cycles, (MAX(time_in_cycles) OVER (PARTITION BY unit_number) - time_in_cycles + 1) AS predicted_RUL FROM train_FD004 WHERE unit_number <= 3 ORDER BY unit_number, time_in_cycles"
+  
+  - description: "Direct RUL table query with filtering"
+    sql: "SELECT unit_number, RUL FROM RUL_FD001 WHERE RUL > 100 ORDER BY RUL DESC"
+
+# QUESTION-SQL PAIRS
+# ==================
+# Purpose: Train the agent to map natural language questions to specific SQL queries
+# When to use: Include 5-10 pairs that cover the most common user questions in your domain
+# How to populate:
+#   - Use realistic questions that your users would actually ask
+#   - Cover edge cases and domain-specific terminology
+#   - Include both simple and complex question patterns
+#   - Focus on questions that demonstrate important business logic distinctions
+#   - Include variations of similar questions to improve robustness
+#   - Make sure questions cover different table types and query patterns
+question_sql_pairs:
+  - question: "Get time cycles and operational setting 1 for unit 1 from test FD001"
+    sql: "SELECT time_in_cycles, operational_setting_1 FROM test_FD001 WHERE unit_number = 1"
+  
+  - question: "What is the actual remaining useful life for unit 1 in test dataset FD001"
+    sql: "SELECT RUL FROM RUL_FD001 WHERE unit_number = 1"
+  
+  - question: "Predict the remaining useful life for each time cycle of unit 1 in training dataset FD001"
+    sql: "SELECT unit_number, time_in_cycles, (MAX(time_in_cycles) OVER (PARTITION BY unit_number) - time_in_cycles + 1) AS predicted_RUL FROM train_FD001 WHERE unit_number = 1 ORDER BY time_in_cycles"
+  
+  - question: "How many units are in the training data for FD002"
+    sql: "SELECT COUNT(DISTINCT unit_number) FROM train_FD002"
+  
+  - question: "Calculate RUL for training data in FD003"
+    sql: "SELECT unit_number, time_in_cycles, (MAX(time_in_cycles) OVER (PARTITION BY unit_number) - time_in_cycles + 1) AS predicted_RUL FROM train_FD003 ORDER BY unit_number, time_in_cycles"
+  
+  - question: "Get ground truth RUL values for all units in test FD002"
+    sql: "SELECT unit_number, RUL FROM RUL_FD002 ORDER BY unit_number" 

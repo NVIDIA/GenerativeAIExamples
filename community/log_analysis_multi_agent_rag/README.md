@@ -48,7 +48,7 @@ This repository provides a sample code to demonstrate how you can use the log an
 
 # Software Components
 NVIDIA NIM Microservices
-- NIM of meta/llama-3.1-70b-instruct
+- NIM of nvidia/llama-3.3-nemotron-super-49b-v1.5
 - Retriever Models
 - NIM of nvidia/llama-3_2-nv-embedqa-1b-v2
 - NIM of nvidia/llama-3_2-nv-rerankqa-1b-v2
