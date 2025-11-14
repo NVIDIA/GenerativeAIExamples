@@ -138,6 +138,8 @@ In general, I am trying to reach the same goals using the latest NVIDIA and Azur
 
 [![▶️ Watch Demo](https://img.youtube.com/vi/go8qzo6Qw0g/0.jpg)](https://www.youtube.com/watch?v=go8qzo6Qw0g)
 
+**Click the image above to play the demo.**
+
 ---
 
 ## **References**
