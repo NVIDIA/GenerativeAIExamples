@@ -9,7 +9,7 @@
 
 ## **Abstract**
 
-Unlock newly announced AI features in **Microsoft SQL Server 2025** using **NVIDIA NIM Microservices** for accelerated AI inference on both Azure Cloud and Azure Local.
+Unlock newly announced AI features in **Microsoft SQL Server 2025** using **NVIDIA NIM microservices** for accelerated AI inference on both Azure Cloud and Azure Local.
 
 This guide demonstrates efficient and secure integration of Microsoft SQL Server 2025 with **llama-nemotron-embed-1b-v2**, running in the cloud via Azure Container Apps and on-premises using Azure Local with Windows, WSL 2, and/or Ubuntu.
 
@@ -22,7 +22,7 @@ The guide provides an enterprise-level architecture and a demo implementation le
 Microsoft SQL Server 2025 introduces several new features. One of the most notable is **AI Integration**, which includes:
 
 - **AI-Enhanced Analytics:** Improved support for embedding and leveraging AI models, including new system stored procedures for scoring and prediction.
-- **External REST Endpoints:** New T-SQL commands to invoke REST APIs (including AI services) directly from SQL Server, such as `sp_invoke_external_rest_endpoint`.
+- **External REST Endpoints:** New T-SQL commands to invoke REST APIs (including AI services) directly from SQL Server.
 
 Implementation of these features is mostly based on integration with Azure OpenAI.  
 This repository demonstrates a new approach using **NVIDIA NIM microservices** to perform enterprise-level, secure, GPU-accelerated, Docker-based SQL Server inference with custom models on Azure Cloud and/or Azure Local.
@@ -44,8 +44,8 @@ Below is the proposed architecture:
 - External services must provide secure, fast, standard responses using custom inference models, for both cloud and on-premises scenarios.
 - Meets SQL Server requirements for security, performance, and ease of deployment.
 
-**Highlights of proposed approach**
-- **NVIDIA NIMs** provide optimized inference models running on GPU.
+**Highlights of the Proposed Approach**
+- **NVIDIA NIM** provide optimized inference models running on GPU.
 - NIMs use docker containers, simplifying deployment and ensuring compatibility across cloud and local Windows/Linux environments with NVIDIA GPU.
 - **NVIDIA NIM** supports OpenAI standards.
 - It provides secure, direct communication (TLS certificates for encryption and mutual trust) for on-premises deployment.
@@ -136,7 +136,9 @@ In general, I am trying to reach the same goals using the latest NVIDIA and Azur
 <p>&nbsp;</p>
 
 
-[▶️ Watch Demo](https://drive.google.com/file/d/1VnyfHsL_rWfZvcHfKxx1NZXd5XvL8RcK/view?usp=sharing)
+[![▶️ Watch Demo](https://img.youtube.com/vi/go8qzo6Qw0g/0.jpg)](https://www.youtube.com/watch?v=go8qzo6Qw0g)
+
+**Click the image above to play the demo.**
 
 ---
 
