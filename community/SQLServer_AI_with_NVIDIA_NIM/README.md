@@ -22,7 +22,7 @@ The guide provides an enterprise-level architecture and a demo implementation le
 Microsoft SQL Server 2025 introduces several new features. One of the most notable is **AI Integration**, which includes:
 
 - **AI-Enhanced Analytics:** Improved support for embedding and leveraging AI models, including new system stored procedures for scoring and prediction.
-- **External REST Endpoints:** New T-SQL commands to invoke REST APIs (including AI services) directly from SQL Server, such as `sp_invoke_external_rest_endpoint`.
+- **External REST Endpoints:** New T-SQL commands to invoke REST APIs (including AI services) directly from SQL Server.
 
 Implementation of these features is mostly based on integration with Azure OpenAI.  
 This repository demonstrates a new approach using **NVIDIA NIM microservices** to perform enterprise-level, secure, GPU-accelerated, Docker-based SQL Server inference with custom models on Azure Cloud and/or Azure Local.
@@ -136,7 +136,7 @@ In general, I am trying to reach the same goals using the latest NVIDIA and Azur
 <p>&nbsp;</p>
 
 
-[▶️ Watch Demo](https://drive.google.com/file/d/1VnyfHsL_rWfZvcHfKxx1NZXd5XvL8RcK/view?usp=sharing)
+[![▶️ Watch Demo](https://img.youtube.com/vi/go8qzo6Qw0g/0.jpg)](https://www.youtube.com/watch?v=go8qzo6Qw0g)
 
 ---
 
