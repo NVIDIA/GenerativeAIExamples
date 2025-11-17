@@ -33,6 +33,8 @@ This architecture provides the foundation for comprehensive asset health monitor
 
 ## Setup and Installation
 
+> 📖 **For detailed installation instructions including database setup (PostgreSQL, MySQL, SQLite) and vector store configuration (ChromaDB, Elasticsearch), see [INSTALLATION.md](INSTALLATION.md)**
+
 ### Prerequisites
 - Python 3.11+ (< 3.13)
 - Conda or Miniconda

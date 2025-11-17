@@ -238,7 +238,37 @@ class VannaManager:
         # Connect to database based on type
         logger.debug(f"VannaManager: Connecting to {self.db_type} database...")
         if self.db_type == "sqlite":
-            vn_instance.connect_to_sqlite(self.db_connection_string_or_path)
+            # Vanna's connect_to_sqlite has broken URL detection in 0.7.9
+            # It tries to download everything with requests.get()
+            # For local files, use direct SQLite connection
+            import os
+            db_path = self.db_connection_string_or_path
+            
+            # Convert relative paths to absolute
+            if not os.path.isabs(db_path):
+                db_path = os.path.abspath(db_path)
+            
+            # For local files, use sqlite3 directly
+            if os.path.exists(db_path):
+                import sqlite3
+                import pandas as pd
+                
+                def run_sql_sqlite(sql: str):
+                    """Execute SQL on local SQLite database."""
+                    conn = sqlite3.connect(db_path)
+                    try:
+                        df = pd.read_sql_query(sql, conn)
+                        return df
+                    finally:
+                        conn.close()
+                
+                vn_instance.run_sql = run_sql_sqlite
+                vn_instance.run_sql_is_set = True
+                logger.debug(f"VannaManager: Connected to local SQLite database: {db_path}")
+            else:
+                # If file doesn't exist, let Vanna try (maybe it's a URL)
+                logger.warning(f"VannaManager: Database file not found: {db_path}")
+                vn_instance.connect_to_sqlite(self.db_connection_string_or_path)
         elif self.db_type == "postgres" or self.db_type == "postgresql":
             self._connect_to_postgres(vn_instance, self.db_connection_string_or_path)
         elif self.db_type == "sql":
