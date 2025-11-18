@@ -25,11 +25,11 @@ general:
     #     _type: file
     #     path: "alm.log"
     #     level: DEBUG
-    tracing:
-      phoenix:
-        _type: phoenix
-        endpoint: http://localhost:6006/v1/traces
-        project: alm-agent
+    # tracing:
+    #   phoenix:
+    #     _type: phoenix
+    #     endpoint: http://localhost:6006/v1/traces
+    #     project: alm-agent
     #   catalyst:
     #     _type: catalyst
     #     project: "alm-agent"
@@ -45,8 +45,6 @@ llms:
   analyst_llm:
     _type: nim
     model_name: "qwen/qwen2.5-coder-32b-instruct"
-    # _type: openai
-    # model_name: "gpt-4.1-mini"
   
   # Python code generation model
   coding_llm:
@@ -61,21 +59,26 @@ llms:
   # Multimodal evaluation model (Vision-Language Model)
   multimodal_judging_llm:
     _type: nim
-    model_name: nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+    model_name: nvidia/llama-3.1-nemotron-nano-vl-8b-v1   
 
 embedders:
   # Text embedding model for vector database operations
   vanna_embedder:
     _type: nim
-    model_name: "nvidia/nv-embed-v1"
+    model_name: "nvidia/llama-3_2-nv-embedqa-1b-v2"
 
 functions:
   sql_retriever:
     _type: generate_sql_query_and_retrieve_tool
-    llm_name: sql_llm
-    embedding_name: vanna_embedder
+    llm_name: "sql_llm"
+    embedding_name: "vanna_embedder"
+    # Vector store configuration
+    vector_store_type: "chromadb"  # Optional, chromadb is default
     vector_store_path: "database"
-    db_path: "database/nasa_turbo.db"
+    # Database configuration
+    db_type: "sqlite"  # Optional, sqlite is default
+    db_connection_string_or_path: "database/nasa_turbo.db"
+    # Output configuration
     output_folder: "output_data"
     vanna_training_data_path: "vanna_training_data.yaml"
 
@@ -107,30 +110,30 @@ functions:
 
   code_generation_assistant:
     _type: code_generation_assistant
-    llm_name: coding_llm
-    code_execution_tool: code_execution
+    llm_name: "coding_llm"
+    code_execution_tool: "code_execution"
     verbose: true
   
   code_execution:
     _type: code_execution
     uri: http://127.0.0.1:6000/execute
-    sandbox_type: local
+    sandbox_type: "local"
     max_output_characters: 2000
 
   data_analysis_assistant:
     _type: react_agent
-    llm_name: analyst_llm
+    llm_name: "analyst_llm"
     max_iterations: 20
     max_retries: 2
     tool_names: [
-      sql_retriever, 
-      predict_rul, 
-      plot_distribution, 
-      plot_line_chart, 
-      plot_comparison, 
-      anomaly_detection, 
-      plot_anomaly,
-      code_generation_assistant
+      "sql_retriever", 
+      "predict_rul", 
+      "plot_distribution", 
+      "plot_line_chart", 
+      "plot_comparison", 
+      "anomaly_detection", 
+      "plot_anomaly",
+      "code_generation_assistant"
     ]
     parse_agent_response_max_retries: 2
     system_prompt: |
@@ -212,8 +215,8 @@ functions:
 
 workflow:
   _type: reasoning_agent
-  augmented_fn: data_analysis_assistant
-  llm_name: reasoning_llm
+  augmented_fn: "data_analysis_assistant"
+  llm_name: "reasoning_llm"
   verbose: true
   reasoning_prompt_template: |
     ### DESCRIPTION ###
@@ -273,7 +276,7 @@ eval:
   evaluators:
     multimodal_eval:
       _type: multimodal_llm_judge_evaluator
-      llm_name: multimodal_judging_llm
+      llm_name: "multimodal_judging_llm"
       judge_prompt: |
         You are an expert evaluator for Asset Lifecycle Management agentic workflows, with expertise in predictive maintenance tasks. 
         Your task is to evaluate how well a generated response (which may include both text and visualizations) 

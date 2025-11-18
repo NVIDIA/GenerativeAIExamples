@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 class NASADatasetProcessor:
     """Processes NASA Turbofan Engine Dataset and creates SQLite database."""
     
-    def __init__(self, data_dir: str = "data", db_path: str = "PredM_db/nasa_turbo.db"):
+    def __init__(self, data_dir: str = "data", db_path: str = "database/nasa_turbo.db"):
         """
         Initialize the processor.
         
@@ -125,27 +125,20 @@ class NASADatasetProcessor:
             'train_FD001.txt', 'train_FD002.txt', 'train_FD003.txt', 'train_FD004.txt'
         ]
         
-        all_training_data = []
-        
         for file_name in training_files:
             file_path = self.data_dir / file_name
             if file_path.exists():
                 df = self.read_data_file(file_path)
                 if not df.empty:
-                    # Add dataset identifier
-                    df['dataset'] = file_name.replace('train_', '').replace('.txt', '')
-                    
                     # Calculate RUL for training data (max cycle - current cycle)
                     df['RUL'] = df.groupby('unit_number')['time_in_cycles'].transform('max') - df['time_in_cycles']
                     
-                    all_training_data.append(df)
+                    # Create separate table for each dataset (e.g., train_FD001)
+                    table_name = file_name.replace('.txt', '')
+                    df.to_sql(table_name, conn, if_exists='replace', index=False)
+                    logger.info(f"Created {table_name} table with {len(df)} records")
             else:
                 logger.warning(f"Training file not found: {file_path}")
-        
-        if all_training_data:
-            training_df = pd.concat(all_training_data, ignore_index=True)
-            training_df.to_sql('training_data', conn, if_exists='replace', index=False)
-            logger.info(f"Created training_data table with {len(training_df)} records")
 
     def process_test_data(self, conn: sqlite3.Connection):
         """Process test data files and create database tables."""
@@ -155,23 +148,17 @@ class NASADatasetProcessor:
             'test_FD001.txt', 'test_FD002.txt', 'test_FD003.txt', 'test_FD004.txt'
         ]
         
-        all_test_data = []
-        
         for file_name in test_files:
             file_path = self.data_dir / file_name
             if file_path.exists():
                 df = self.read_data_file(file_path)
                 if not df.empty:
-                    # Add dataset identifier
-                    df['dataset'] = file_name.replace('test_', '').replace('.txt', '')
-                    all_test_data.append(df)
+                    # Create separate table for each dataset (e.g., test_FD001)
+                    table_name = file_name.replace('.txt', '')
+                    df.to_sql(table_name, conn, if_exists='replace', index=False)
+                    logger.info(f"Created {table_name} table with {len(df)} records")
             else:
                 logger.warning(f"Test file not found: {file_path}")
-        
-        if all_test_data:
-            test_df = pd.concat(all_test_data, ignore_index=True)
-            test_df.to_sql('test_data', conn, if_exists='replace', index=False)
-            logger.info(f"Created test_data table with {len(test_df)} records")
 
     def process_rul_data(self, conn: sqlite3.Connection):
         """Process RUL (Remaining Useful Life) data files."""
@@ -181,8 +168,6 @@ class NASADatasetProcessor:
             'RUL_FD001.txt', 'RUL_FD002.txt', 'RUL_FD003.txt', 'RUL_FD004.txt'
         ]
         
-        all_rul_data = []
-        
         for file_name in rul_files:
             file_path = self.data_dir / file_name
             if file_path.exists():
@@ -190,18 +175,15 @@ class NASADatasetProcessor:
                     # RUL files contain one RUL value per line for each test engine
                     rul_values = pd.read_csv(file_path, header=None, names=['RUL'])
                     rul_values['unit_number'] = range(1, len(rul_values) + 1)
-                    rul_values['dataset'] = file_name.replace('RUL_', '').replace('.txt', '')
-                    all_rul_data.append(rul_values[['unit_number', 'dataset', 'RUL']])
-                    logger.info(f"Loaded {len(rul_values)} RUL values from {file_name}")
+                    
+                    # Create separate table for each dataset (e.g., RUL_FD001)
+                    table_name = file_name.replace('.txt', '')
+                    rul_values[['unit_number', 'RUL']].to_sql(table_name, conn, if_exists='replace', index=False)
+                    logger.info(f"Created {table_name} table with {len(rul_values)} records")
                 except Exception as e:
                     logger.error(f"Error reading RUL file {file_path}: {e}")
             else:
                 logger.warning(f"RUL file not found: {file_path}")
-        
-        if all_rul_data:
-            rul_df = pd.concat(all_rul_data, ignore_index=True)
-            rul_df.to_sql('rul_data', conn, if_exists='replace', index=False)
-            logger.info(f"Created rul_data table with {len(rul_df)} records")
 
     def create_metadata_tables(self, conn: sqlite3.Connection):
         """Create metadata tables with sensor descriptions and dataset information."""
@@ -229,18 +211,24 @@ class NASADatasetProcessor:
         """Create database indexes for better query performance."""
         logger.info("Creating database indexes...")
         
-        indexes = [
-            "CREATE INDEX IF NOT EXISTS idx_training_unit ON training_data(unit_number)",
-            "CREATE INDEX IF NOT EXISTS idx_training_dataset ON training_data(dataset)",
-            "CREATE INDEX IF NOT EXISTS idx_training_cycle ON training_data(time_in_cycles)",
-            "CREATE INDEX IF NOT EXISTS idx_test_unit ON test_data(unit_number)",
-            "CREATE INDEX IF NOT EXISTS idx_test_dataset ON test_data(dataset)",
-            "CREATE INDEX IF NOT EXISTS idx_test_cycle ON test_data(time_in_cycles)",
-            "CREATE INDEX IF NOT EXISTS idx_rul_unit ON rul_data(unit_number, dataset)"
-        ]
+        datasets = ['FD001', 'FD002', 'FD003', 'FD004']
+        indexes = []
+        
+        # Create indexes for each dataset's tables
+        for dataset in datasets:
+            indexes.extend([
+                f"CREATE INDEX IF NOT EXISTS idx_train_{dataset}_unit ON train_{dataset}(unit_number)",
+                f"CREATE INDEX IF NOT EXISTS idx_train_{dataset}_cycle ON train_{dataset}(time_in_cycles)",
+                f"CREATE INDEX IF NOT EXISTS idx_test_{dataset}_unit ON test_{dataset}(unit_number)",
+                f"CREATE INDEX IF NOT EXISTS idx_test_{dataset}_cycle ON test_{dataset}(time_in_cycles)",
+                f"CREATE INDEX IF NOT EXISTS idx_RUL_{dataset}_unit ON RUL_{dataset}(unit_number)"
+            ])
         
         for index_sql in indexes:
-            conn.execute(index_sql)
+            try:
+                conn.execute(index_sql)
+            except Exception as e:
+                logger.warning(f"Failed to create index: {e}")
         
         conn.commit()
         logger.info("Created database indexes")
@@ -345,7 +333,7 @@ def main():
     parser = argparse.ArgumentParser(description="Convert NASA Turbofan Dataset to SQLite")
     parser.add_argument("--data-dir", default="data", 
                        help="Directory containing NASA dataset text files")
-    parser.add_argument("--db-path", default="PredM_db/nasa_turbo.db",
+    parser.add_argument("--db-path", default="database/nasa_turbo.db",
                        help="Path for output SQLite database")
     
     args = parser.parse_args()
