@@ -23,6 +23,10 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
 ## Inventory
 
+* [DGX Spark Demo](./dgx-spark-demo/)
+
+  This demo showcases NVIDIA's Nemotron Nano 9B v2 model running locally via NIM (NVIDIA Inference Microservice) on DGX Spark, with OpenWebUI as the frontend interface.
+
 * [Smart Health Agent](./smart-health-agent/)
 
   This example demonstrates a comprehensive multi-agent workflow for health data analysis and personalized recommendations. It integrates real-time health metrics, weather data, and Retrieval Augmented Generation (RAG) to process multimodal health documents. The system uses LangGraph for agent orchestration and Ollama with Gemma 3 models for intelligent health insights. Features include multimodal document processing, weather-aware exercise recommendations, and personalized health guidance through an interactive chat interface.
