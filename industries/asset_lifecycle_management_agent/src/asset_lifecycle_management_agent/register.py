@@ -26,5 +26,6 @@ from .plotting import plot_line_chart_tool
 from .plotting import plot_anomaly_tool
 from .plotting import code_generation_assistant
 from .predictors import moment_anomaly_detection_tool
+from .predictors import nv_tesseract_anomaly_detection_tool
 from .evaluators import llm_judge_evaluator_register
 from .evaluators import multimodal_llm_judge_evaluator_register

@@ -581,6 +581,54 @@ Perform the following steps:
 
 *Note: This example automatically uses the workspace `apply_piecewise_rul_transformation` utility to create realistic knee-pattern RUL data for comparison, resulting in much cleaner and more meaningful visualizations.*
 
+## Anomaly Detection using NV-Tesseract (Optional)
+
+[NV-Tesseract](https://developer.nvidia.com/blog/advancing-anomaly-detection-for-industry-applications-with-nvidia-nv-tesseract-ad/) is NVIDIA's state-of-the-art foundation model for time-series anomaly detection, powered by diffusion modeling and adaptive thresholding. This integration provides production-grade anomaly detection capabilities for predictive maintenance workflows.
+
+**Note:** Access to the NV-Tesseract NIM container requires approval. Contact your NVIDIA representative or request access through the [NVIDIA NGC Catalog](https://catalog.ngc.nvidia.com/).
+
+### Prerequisites
+- NVIDIA GPU (A100, H100, or L40S recommended)
+- Docker with NVIDIA Container Runtime
+- NGC API key with NV-Tesseract access
+
+### Deploy NV-Tesseract NIM
+
+Set your NGC API key:
+```bash
+export NGC_API_KEY='your-ngc-api-key'
+```
+
+Deploy the NV-Tesseract NIM container:
+```bash
+docker run -d \
+  --name nv-tesseract-nim \
+  --gpus '"device=1"' \
+  -p 8001:8000 \
+  -e NGC_API_KEY=$NGC_API_KEY \
+  --restart unless-stopped \
+  nvcr.io/nim/nvidia/nv-tesseract:2.0.0
+```
+
+Verify the deployment:
+```bash
+# Check container logs
+docker logs -f nv-tesseract-nim
+
+# Health check
+curl http://localhost:8001/v1/health/ready
+```
+
+### Run with Tesseract Configuration
+
+Once the NIM is running and healthy, start the ALM workflow with the Tesseract-enabled configuration:
+
+```bash
+nat serve --config_file=configs/config-reasoning-tesseract.yaml
+```
+
+Once the application is ready, continue with subsequent testing/development as you have before
+
 ## Observability (Optional)
 
 ### Monitor Your System with Phoenix

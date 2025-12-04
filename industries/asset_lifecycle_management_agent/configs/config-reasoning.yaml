@@ -158,7 +158,7 @@ functions:
       Executing step: the step you are currently executing from the plan along with any instructions provided
       Thought: describe how you are going to execute the step
       Final Answer: the final answer to the original input question including the absolute file paths of the generated files with 
-      `/Users/vikalluru/Documents/GenerativeAIExamples/industries/asset_lifecycle_management_agent/output_data/` prepended to the filename.
+      `./output_data/` prepended to the filename.
       
       **FORMAT 3 (when using a tool)**
       Input plan: Summarize all the steps in the plan.
