@@ -6,7 +6,7 @@ requires = ["setuptools >= 64"]
 name = "asset_lifecycle_management_agent"
 dynamic = ["version"]
 dependencies = [
-  "nvidia-nat[profiling, langchain, telemetry]==1.3.0",
+  "nvidia-nat[profiling, langchain, telemetry]==1.2.1",
   "momentfm",
   "vanna==0.7.9",
   "chromadb",

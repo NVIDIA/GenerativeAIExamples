@@ -44,7 +44,7 @@ llms:
   # Data analysis and tool calling model
   analyst_llm:
     _type: nim
-    model_name: "qwen/qwen2.5-coder-32b-instruct"
+    model_name: "qwen/qwen3-coder-480b-a35b-instruct"
   
   # Python code generation model
   coding_llm:
@@ -88,9 +88,19 @@ functions:
     scaler_path: "models/scaler_model.pkl"
     model_path: "models/xgb_model_fd001.pkl"
   
+  # Anomaly Detection Tool Configuration
+  # Default: NV-Tesseract (NVIDIA Foundation Model via NIM)
   anomaly_detection:
-    _type: moment_anomaly_detection_tool
+    _type: nv_tesseract_anomaly_detection_tool
+    nim_endpoint: "http://localhost:8001"
+    timeout: 120
     output_folder: "output_data"
+    # custom_threshold: 3.0  # Optional: Lower threshold to catch gradual degradation (default: None for NIM auto-threshold)
+  
+  # Alternative: MOMENT Foundation Model (Comment out NV-Tesseract above and uncomment below to use MOMENT)
+  # anomaly_detection:
+  #   _type: moment_anomaly_detection_tool
+  #   output_folder: "output_data"
 
   plot_distribution:
     _type: plot_distribution_tool
@@ -158,7 +168,7 @@ functions:
       Executing step: the step you are currently executing from the plan along with any instructions provided
       Thought: describe how you are going to execute the step
       Final Answer: the final answer to the original input question including the absolute file paths of the generated files with 
-      `/Users/vikalluru/Documents/GenerativeAIExamples/industries/asset_lifecycle_management_agent/output_data/` prepended to the filename.
+      `./output_data/` prepended to the filename.
       
       **FORMAT 3 (when using a tool)**
       Input plan: Summarize all the steps in the plan.
@@ -170,6 +180,7 @@ functions:
 
       ### HOW TO CHOOSE THE RIGHT TOOL ###
       Follow these guidelines while deciding the right tool to use:
+      **CRITICAL: When writing Action: tool_name, use PLAIN TEXT ONLY. Do NOT use markdown formatting like **tool_name**. Just write the tool name directly.**
       **Ensure that tool calls do not use single quotes or double quotes within the key-value pairs.**
       
       1. **SQL Retrieval Tool**
@@ -186,7 +197,7 @@ functions:
          - plot_comparison: to compare two columns of a dataset by plotting both of them on the same chart.
       
       4. **Anomaly Detection Tools**
-         - Use anomaly_detection tool for state-of-the-art foundation model-based anomaly detection using MOMENT-1-Large.
+         - Use anomaly_detection tool for production-grade anomaly detection using NV Tesseract foundation model via NVIDIA NIM.
          - **REQUIRES JSON DATA**: First use sql_retriever to get sensor data, then pass the JSON file path to anomaly_detection.
          - **OUTPUT**: Creates enhanced sensor data with added 'is_anomaly' boolean column.
          - Use plot_anomaly to create interactive visualizations of anomaly detection results.
