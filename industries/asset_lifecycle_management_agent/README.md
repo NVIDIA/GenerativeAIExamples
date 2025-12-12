@@ -22,7 +22,7 @@ Multi-agent architecture designed for Asset Lifecycle Management with specialize
 - **ReAct Agent Workflow**: Main orchestration using ReAct pattern for intelligent decision-making
 - **SQL Retriever Tool**: Generates SQL queries using NIM LLM for asset data retrieval
 - **RUL Prediction Tool**: XGBoost model for remaining useful life prediction to optimize maintenance scheduling
-- **Anomaly Detection Tool**: Detects anomalies in sensor data using time series foundational model for early failure detection
+- **Anomaly Detection Tool**: Detects anomalies in sensor data using NV-Tesseract foundation model (NVIDIA NIM) for early failure detection, with MOMENT as an alternative
 - **Plotting Agents**: Multi-tool agent for data visualization and asset performance reporting
 - **Vector Database**: ChromaDB for storing table schema, Vanna training queries, and asset documentation
 
@@ -554,12 +554,44 @@ Retrieve real RUL of each unit in the FD001 test dataset. Then plot a distributi
 ![Visualization Example](imgs/test_prompt_2.png)
 
 
-**Anomaly Detection**
+**Anomaly Detection with NV-Tesseract**
+
+The workflow uses [NV-Tesseract](https://developer.nvidia.com/blog/advancing-anomaly-detection-for-industry-applications-with-nvidia-nv-tesseract-ad/), NVIDIA's foundation model for time-series anomaly detection, as the default anomaly detection engine. NV-Tesseract is a foundational model where accuracy is highly data-dependent. However, the objective here is to demonstrate integration functionality. Its performance can be significantly improved through fine-tuning on domain-specific data—a capability currently on NVIDIA's NV-Tesseract roadmap.
+
 ```
 Retrieve and detect anomalies in sensor 4 measurements for engine number 78 in train FD001 dataset.
 ```
 
+**Sample Output:**
+```
+NV TESSERACT NIM ANOMALY DETECTION COMPLETED SUCCESSFULLY
+
+Analysis Details:
+   • Engine Unit: 78
+   • Sensor Analyzed: sensor_measurement_4
+   • Model: NV Tesseract (NVIDIA Foundation Model)
+
+Anomaly Detection Results:
+   • Total Timesteps Analyzed: 231
+   • Anomalous Timesteps Detected: 12
+   • Anomaly Rate: 5.19%
+
+Output Files Generated:
+   • Enhanced Data with is_anomaly Column: retrieve_sensor_measurement_4__results.json
+   • Interactive HTML plot: anomaly_plot_sensor_measurement_4_engine78.html
+   • Static PNG image: anomaly_plot_sensor_measurement_4_engine78.png
+```
+
 ![Anomaly Detection Example](imgs/test_prompt_4.png)
+
+**Switching to MOMENT Foundation Model:**
+
+To use the MOMENT foundation model instead of NV-Tesseract, edit `configs/config-reasoning.yaml`:
+1. Comment out the `nv_tesseract_anomaly_detection_tool` configuration
+2. Uncomment the `moment_anomaly_detection_tool` configuration
+3. Restart the workflow server
+
+Both models provide state-of-the-art anomaly detection capabilities for time-series data.
 
 **Workspace Utilities Demo**
 ```
@@ -581,9 +613,9 @@ Perform the following steps:
 
 *Note: This example automatically uses the workspace `apply_piecewise_rul_transformation` utility to create realistic knee-pattern RUL data for comparison, resulting in much cleaner and more meaningful visualizations.*
 
-## Anomaly Detection using NV-Tesseract (Optional)
+## Deploying NV-Tesseract NIM (Required for Anomaly Detection)
 
-[NV-Tesseract](https://developer.nvidia.com/blog/advancing-anomaly-detection-for-industry-applications-with-nvidia-nv-tesseract-ad/) is NVIDIA's state-of-the-art foundation model for time-series anomaly detection, powered by diffusion modeling and adaptive thresholding. This integration provides production-grade anomaly detection capabilities for predictive maintenance workflows.
+Since NV-Tesseract is the default anomaly detection engine, you'll need to deploy the NV-Tesseract NIM container for anomaly detection capabilities.
 
 **Note:** Access to the NV-Tesseract NIM container requires approval. Contact your NVIDIA representative or request access through the [NVIDIA NGC Catalog](https://catalog.ngc.nvidia.com/).
 
@@ -619,15 +651,7 @@ docker logs -f nv-tesseract-nim
 curl http://localhost:8001/v1/health/ready
 ```
 
-### Run with Tesseract Configuration
-
-Once the NIM is running and healthy, start the ALM workflow with the Tesseract-enabled configuration:
-
-```bash
-nat serve --config_file=configs/config-reasoning-tesseract.yaml
-```
-
-Once the application is ready, continue with subsequent testing/development as you have before
+**Note:** If you prefer to use the MOMENT foundation model instead (which doesn't require a NIM deployment), follow the instructions in the "Switching to MOMENT Foundation Model" section under Anomaly Detection above.
 
 ## Observability (Optional)
 
