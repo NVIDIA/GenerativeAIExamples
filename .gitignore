@@ -9,6 +9,10 @@
 RAG/examples/**/volumes
 uploaded_files/
 
+
+# Mac OS exclusions
+.DS_Store
+
 # Visual Studio Code
 .vscode
 
@@ -32,3 +36,15 @@ RAG/notebooks/langchain/data/save_embedding
 
 # IntelliJ's project specific settings file
 .idea
+
+# Environment variables
+.env
+
+# egg-info directories
+**/egg-info
+
+# uv exclusion
+uv.lock
+
+# data designer exclusion
+data-designer-tutorial-output/

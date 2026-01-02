@@ -67,6 +67,6 @@ class Nodeoutputs:
 
 # Access the API key from environment variables
 api_key = os.getenv('API_KEY')
-model = "meta/llama-3.1-70b-instruct"
+model = "nvidia/llama-3.3-nemotron-super-49b-v1.5"
 prompts_file = "prompt.json"
 automation = Nodeoutputs(api_key, model, prompts_file)
