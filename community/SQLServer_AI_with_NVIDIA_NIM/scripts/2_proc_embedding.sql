@@ -14,7 +14,14 @@
  limitations under the License.
  */
 
-CREATE OR ALTER PROCEDURE dbo.nvidia_run_proc_embedding
+USE [AdventureWorks]
+GO
+/****** Object:  StoredProcedure [dbo].[nvidia_run_proc_embedding]    Script Date: 11/11/2025 2:13:02 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER   PROCEDURE [dbo].[nvidia_run_proc_embedding]
     @ModelName         NVARCHAR(255),
     @VectorSize        INT,
     @VectorColumnName  SYSNAME,      -- e.g., N'Embed_E5_ACA'
@@ -92,7 +99,8 @@ BEGIN
         SET @Payload = N'{
             "input": [' + @Escaped + N'],
             "model": "' + @ModelName + N'",
-            "input_type": "query"
+            "input_type": "query",
+            "dimensions": 1024
         }';
 
         ---------------------------------------------------------------------------------
@@ -135,5 +143,3 @@ BEGIN
     END
     CLOSE cur; DEALLOCATE cur;
 END
-GO
-

@@ -1,5 +1,4 @@
-#   NeMo Safe Synthesizer Example Notebooks
-
+# NeMo Safe Synthesizer Example Notebooks
 
 This directory contains the tutorial notebooks for getting started with NeMo Safe Synthesizer.
 
@@ -12,16 +11,14 @@ Install the sdk as follows:
 ```bash
 uv venv
 source .venv/bin/activate
-uv pip install nemo-microservices[safe-synthesizer]
+uv pip install nemo-microservices[safe-synthesizer] rich
 ```
-
 
 Be sure to select this virtual environment as your kernel when running the notebooks.
 
 ## 🚀 Deploying the NeMo Safe Synthesizer Microservice
 
 To run these notebooks, you'll need access to a deployment of the  NeMo Safe Synthesizer microservice. You have two deployment options:
-
 
 ### 🐳 Deploy the NeMo Safe Synthesizer Microservice Locally
 

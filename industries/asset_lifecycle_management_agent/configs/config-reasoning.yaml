@@ -25,11 +25,11 @@ general:
     #     _type: file
     #     path: "alm.log"
     #     level: DEBUG
-    tracing:
-      phoenix:
-        _type: phoenix
-        endpoint: http://localhost:6006/v1/traces
-        project: alm-agent
+    # tracing:
+    #   phoenix:
+    #     _type: phoenix
+    #     endpoint: http://localhost:6006/v1/traces
+    #     project: alm-agent
     #   catalyst:
     #     _type: catalyst
     #     project: "alm-agent"
@@ -44,9 +44,7 @@ llms:
   # Data analysis and tool calling model
   analyst_llm:
     _type: nim
-    model_name: "qwen/qwen2.5-coder-32b-instruct"
-    # _type: openai
-    # model_name: "gpt-4.1-mini"
+    model_name: "qwen/qwen3-coder-480b-a35b-instruct"
   
   # Python code generation model
   coding_llm:
@@ -61,21 +59,26 @@ llms:
   # Multimodal evaluation model (Vision-Language Model)
   multimodal_judging_llm:
     _type: nim
-    model_name: nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+    model_name: nvidia/llama-3.1-nemotron-nano-vl-8b-v1   
 
 embedders:
   # Text embedding model for vector database operations
   vanna_embedder:
     _type: nim
-    model_name: "nvidia/nv-embed-v1"
+    model_name: "nvidia/llama-3_2-nv-embedqa-1b-v2"
 
 functions:
   sql_retriever:
     _type: generate_sql_query_and_retrieve_tool
-    llm_name: sql_llm
-    embedding_name: vanna_embedder
+    llm_name: "sql_llm"
+    embedding_name: "vanna_embedder"
+    # Vector store configuration
+    vector_store_type: "chromadb"  # Optional, chromadb is default
     vector_store_path: "database"
-    db_path: "database/nasa_turbo.db"
+    # Database configuration
+    db_type: "sqlite"  # Optional, sqlite is default
+    db_connection_string_or_path: "database/nasa_turbo.db"
+    # Output configuration
     output_folder: "output_data"
     vanna_training_data_path: "vanna_training_data.yaml"
 
@@ -85,9 +88,19 @@ functions:
     scaler_path: "models/scaler_model.pkl"
     model_path: "models/xgb_model_fd001.pkl"
   
+  # Anomaly Detection Tool Configuration
+  # Default: NV-Tesseract (NVIDIA Foundation Model via NIM)
   anomaly_detection:
-    _type: moment_anomaly_detection_tool
+    _type: nv_tesseract_anomaly_detection_tool
+    nim_endpoint: "http://localhost:8001"
+    timeout: 120
     output_folder: "output_data"
+    # custom_threshold: 3.0  # Optional: Lower threshold to catch gradual degradation (default: None for NIM auto-threshold)
+  
+  # Alternative: MOMENT Foundation Model (Comment out NV-Tesseract above and uncomment below to use MOMENT)
+  # anomaly_detection:
+  #   _type: moment_anomaly_detection_tool
+  #   output_folder: "output_data"
 
   plot_distribution:
     _type: plot_distribution_tool
@@ -107,30 +120,30 @@ functions:
 
   code_generation_assistant:
     _type: code_generation_assistant
-    llm_name: coding_llm
-    code_execution_tool: code_execution
+    llm_name: "coding_llm"
+    code_execution_tool: "code_execution"
     verbose: true
   
   code_execution:
     _type: code_execution
     uri: http://127.0.0.1:6000/execute
-    sandbox_type: local
+    sandbox_type: "local"
     max_output_characters: 2000
 
   data_analysis_assistant:
     _type: react_agent
-    llm_name: analyst_llm
+    llm_name: "analyst_llm"
     max_iterations: 20
     max_retries: 2
     tool_names: [
-      sql_retriever, 
-      predict_rul, 
-      plot_distribution, 
-      plot_line_chart, 
-      plot_comparison, 
-      anomaly_detection, 
-      plot_anomaly,
-      code_generation_assistant
+      "sql_retriever", 
+      "predict_rul", 
+      "plot_distribution", 
+      "plot_line_chart", 
+      "plot_comparison", 
+      "anomaly_detection", 
+      "plot_anomaly",
+      "code_generation_assistant"
     ]
     parse_agent_response_max_retries: 2
     system_prompt: |
@@ -155,7 +168,7 @@ functions:
       Executing step: the step you are currently executing from the plan along with any instructions provided
       Thought: describe how you are going to execute the step
       Final Answer: the final answer to the original input question including the absolute file paths of the generated files with 
-      `/Users/vikalluru/Documents/GenerativeAIExamples/industries/asset_lifecycle_management_agent/output_data/` prepended to the filename.
+      `./output_data/` prepended to the filename.
       
       **FORMAT 3 (when using a tool)**
       Input plan: Summarize all the steps in the plan.
@@ -167,6 +180,7 @@ functions:
 
       ### HOW TO CHOOSE THE RIGHT TOOL ###
       Follow these guidelines while deciding the right tool to use:
+      **CRITICAL: When writing Action: tool_name, use PLAIN TEXT ONLY. Do NOT use markdown formatting like **tool_name**. Just write the tool name directly.**
       **Ensure that tool calls do not use single quotes or double quotes within the key-value pairs.**
       
       1. **SQL Retrieval Tool**
@@ -183,7 +197,7 @@ functions:
          - plot_comparison: to compare two columns of a dataset by plotting both of them on the same chart.
       
       4. **Anomaly Detection Tools**
-         - Use anomaly_detection tool for state-of-the-art foundation model-based anomaly detection using MOMENT-1-Large.
+         - Use anomaly_detection tool for production-grade anomaly detection using NV Tesseract foundation model via NVIDIA NIM.
          - **REQUIRES JSON DATA**: First use sql_retriever to get sensor data, then pass the JSON file path to anomaly_detection.
          - **OUTPUT**: Creates enhanced sensor data with added 'is_anomaly' boolean column.
          - Use plot_anomaly to create interactive visualizations of anomaly detection results.
@@ -212,8 +226,8 @@ functions:
 
 workflow:
   _type: reasoning_agent
-  augmented_fn: data_analysis_assistant
-  llm_name: reasoning_llm
+  augmented_fn: "data_analysis_assistant"
+  llm_name: "reasoning_llm"
   verbose: true
   reasoning_prompt_template: |
     ### DESCRIPTION ###
@@ -273,7 +287,7 @@ eval:
   evaluators:
     multimodal_eval:
       _type: multimodal_llm_judge_evaluator
-      llm_name: multimodal_judging_llm
+      llm_name: "multimodal_judging_llm"
       judge_prompt: |
         You are an expert evaluator for Asset Lifecycle Management agentic workflows, with expertise in predictive maintenance tasks. 
         Your task is to evaluate how well a generated response (which may include both text and visualizations) 

@@ -6,6 +6,9 @@
 # NVIDIA NIM API key - Replace with your actual key from build.nvidia.com
 NVIDIA_API_KEY="your-actual-nvidia-api-key"
 
+# OPENAI API KEY - Replace with your openai api key if you are using the openai endpoint
+OPENAI_API_KEY="your-openai-api-key"
+
 # Optional: Catalyst observability credentials (for monitoring with RAGA AI)
 # Uncomment and set these if you want to use Catalyst tracing
 # CATALYST_ACCESS_KEY="your-actual-catalyst-access-key"

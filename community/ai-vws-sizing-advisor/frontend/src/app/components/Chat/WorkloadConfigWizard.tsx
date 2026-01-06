@@ -476,7 +476,7 @@ export default function WorkloadConfigWizard({
         <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-6 rounded-t-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold">AI Workload Configuration Wizard</h2>
+              <h2 className="text-xl font-bold">AI vWS Sizing Advisor Wizard</h2>
               <p className="text-green-100 text-sm mt-1">
                 Configure your AI workload to get personalized vGPU recommendations
               </p>
@@ -510,7 +510,7 @@ export default function WorkloadConfigWizard({
           {currentStep === 1 && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">What type of AI workload do you need?</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">What type of AI workload are you running?</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {workloadTypes.map((type) => (
                     <button

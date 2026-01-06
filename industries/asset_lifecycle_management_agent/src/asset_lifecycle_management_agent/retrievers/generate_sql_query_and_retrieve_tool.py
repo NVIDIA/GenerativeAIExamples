@@ -16,6 +16,7 @@
 import json
 import logging
 import os
+from typing import Optional
 
 from pydantic import Field, BaseModel
 
@@ -30,12 +31,58 @@ logger = logging.getLogger(__name__)
 class GenerateSqlQueryAndRetrieveToolConfig(FunctionBaseConfig, name="generate_sql_query_and_retrieve_tool"):
     """
     NeMo Agent Toolkit function to generate SQL queries and retrieve data.
+    
+    Supports multiple database types through flexible connection configuration.
     """
     # Runtime configuration parameters
     llm_name: str = Field(description="The name of the LLM to use for the function.")
     embedding_name: str = Field(description="The name of the embedding to use for the function.")
-    vector_store_path: str = Field(description="The path to the vector store to use for the function.")
-    db_path: str = Field(description="The path to the SQL database to use for the function.")
+    
+    # Vector store configuration
+    vector_store_type: str = Field(
+        default="chromadb",
+        description="Type of vector store: 'chromadb' or 'elasticsearch'"
+    )
+    vector_store_path: Optional[str] = Field(
+        default=None,
+        description="Path to ChromaDB vector store (required if vector_store_type='chromadb')"
+    )
+    elasticsearch_url: Optional[str] = Field(
+        default=None,
+        description="Elasticsearch URL (required if vector_store_type='elasticsearch', e.g., 'http://localhost:9200')"
+    )
+    elasticsearch_index_name: str = Field(
+        default="vanna_vectors",
+        description="Elasticsearch index name (used if vector_store_type='elasticsearch')"
+    )
+    elasticsearch_username: Optional[str] = Field(
+        default=None,
+        description="Elasticsearch username for basic auth (optional)"
+    )
+    elasticsearch_password: Optional[str] = Field(
+        default=None,
+        description="Elasticsearch password for basic auth (optional)"
+    )
+    elasticsearch_api_key: Optional[str] = Field(
+        default=None,
+        description="Elasticsearch API key for authentication (optional)"
+    )
+    
+    # Database configuration
+    db_connection_string_or_path: str = Field(
+        description=(
+            "Database connection (path for SQLite, connection string for others). Format depends on db_type:\n"
+            "- sqlite: Path to .db file (e.g., './database.db')\n"
+            "- postgres: Connection string (e.g., 'postgresql://user:pass@host:port/db')\n"
+            "- sql: SQLAlchemy connection string (e.g., 'mysql+pymysql://user:pass@host/db')"
+        )
+    )
+    db_type: str = Field(
+        default="sqlite",
+        description="Type of database: 'sqlite', 'postgres', or 'sql' (generic SQL via SQLAlchemy)"
+    )
+    
+    # Output configuration
     output_folder: str = Field(description="The path to the output folder to use for the function.")
     vanna_training_data_path: str = Field(description="The path to the YAML file containing Vanna training data.")
 
@@ -106,8 +153,15 @@ async def generate_sql_query_and_retrieve_tool(
     vanna_manager = VannaManager.create_with_config(
         vanna_llm_config=vanna_llm_config,
         vanna_embedder_config=vanna_embedder_config,
+        vector_store_type=config.vector_store_type,
         vector_store_path=config.vector_store_path,
-        db_path=config.db_path,
+        elasticsearch_url=config.elasticsearch_url,
+        elasticsearch_index_name=config.elasticsearch_index_name,
+        elasticsearch_username=config.elasticsearch_username,
+        elasticsearch_password=config.elasticsearch_password,
+        elasticsearch_api_key=config.elasticsearch_api_key,
+        db_connection_string_or_path=config.db_connection_string_or_path,
+        db_type=config.db_type,
         training_data_path=config.vanna_training_data_path
     )
     
@@ -173,27 +227,27 @@ async def generate_sql_query_and_retrieve_tool(
             import re
             llm_response = re.sub(r',\[object Object\],?', '', llm_response)
 
-            if "save" in llm_response.lower():
-                # Clean the question for filename
-                clean_question = re.sub(r'[^\w\s-]', '', input_question_in_english.lower())
-                clean_question = re.sub(r'\s+', '_', clean_question.strip())[:30]
-                suggested_filename = f"{clean_question}_results.json"
+            # if "save" in llm_response.lower():
+            # Clean the question for filename
+            clean_question = re.sub(r'[^\w\s-]', '', input_question_in_english.lower())
+            clean_question = re.sub(r'\s+', '_', clean_question.strip())[:30]
+            suggested_filename = f"{clean_question}_results.json"
 
-                sql_output_path = os.path.join(config.output_folder, suggested_filename)
+            sql_output_path = os.path.join(config.output_folder, suggested_filename)
 
-                # Save the data to JSON file
-                os.makedirs(config.output_folder, exist_ok=True)
-                json_result = df.to_json(orient="records")
-                with open(sql_output_path, 'w') as f:
-                    json.dump(json.loads(json_result), f, indent=4)
+            # Save the data to JSON file
+            os.makedirs(config.output_folder, exist_ok=True)
+            json_result = df.to_json(orient="records")
+            with open(sql_output_path, 'w') as f:
+                json.dump(json.loads(json_result), f, indent=4)
 
-                logger.info(f"Data saved to {sql_output_path}")
+            logger.info(f"Data saved to {sql_output_path}")
 
-                llm_response += f"\n\nData has been saved to file: {suggested_filename}"
-
-                return llm_response
+            llm_response += f"\n\nData has been saved to file: {suggested_filename}"
 
             return llm_response
+
+            # return llm_response
             
         except Exception as e:
             return f"Error running SQL query '{sql}': {e}"

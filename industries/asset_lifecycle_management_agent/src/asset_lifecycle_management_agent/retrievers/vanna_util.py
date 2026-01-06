@@ -13,12 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from vanna.chromadb import ChromaDB_VectorStore
-from vanna.base import VannaBase
-from langchain_nvidia import ChatNVIDIA
+"""Vanna utilities for SQL generation using NVIDIA NIM services."""
+
+import logging
+
+from langchain_nvidia import ChatNVIDIA, NVIDIAEmbeddings
 from tqdm import tqdm
+from vanna.base import VannaBase
+from vanna.chromadb import ChromaDB_VectorStore
+
+logger = logging.getLogger(__name__)
 
 class NIMCustomLLM(VannaBase):
+    """Custom LLM implementation for Vanna using NVIDIA NIM."""
+
     def __init__(self, config=None):
         VannaBase.__init__(self, config=config)
 
@@ -27,10 +35,10 @@ class NIMCustomLLM(VannaBase):
 
         # default parameters - can be overrided using config
         self.temperature = 0.7
-        
+
         if "temperature" in config:
             self.temperature = config["temperature"]
-        
+
         # If only config is passed
         if "api_key" not in config:
             raise ValueError("config must contain a NIM api_key")
@@ -40,7 +48,7 @@ class NIMCustomLLM(VannaBase):
 
         api_key = config["api_key"]
         model = config["model"]
-        
+
         # Initialize ChatNVIDIA client
         self.client = ChatNVIDIA(
             api_key=api_key,
@@ -49,16 +57,23 @@ class NIMCustomLLM(VannaBase):
         )
         self.model = model
 
-    def system_message(self, message: str) -> any:
-        return {"role": "system", "content": message+"\n DO NOT PRODUCE MARKDOWN, ONLY RESPOND IN PLAIN TEXT"}
+    def system_message(self, message: str) -> dict:
+        """Create a system message."""
+        return {
+            "role": "system",
+            "content": message + "\n DO NOT PRODUCE MARKDOWN, ONLY RESPOND IN PLAIN TEXT",
+        }
 
-    def user_message(self, message: str) -> any:
+    def user_message(self, message: str) -> dict:
+        """Create a user message."""
         return {"role": "user", "content": message}
 
-    def assistant_message(self, message: str) -> any:
+    def assistant_message(self, message: str) -> dict:
+        """Create an assistant message."""
         return {"role": "assistant", "content": message}
 
     def submit_prompt(self, prompt, **kwargs) -> str:
+        """Submit a prompt to the LLM."""
         if prompt is None:
             raise Exception("Prompt is None")
 
@@ -70,42 +85,518 @@ class NIMCustomLLM(VannaBase):
         num_tokens = 0
         for message in prompt:
             num_tokens += len(message["content"]) / 4
-        print(f"Using model {self.model} for {num_tokens} tokens (approx)")
-        
-        response = self.client.invoke(prompt)
-        return response.content
+        logger.debug(f"Using model {self.model} for {num_tokens} tokens (approx)")
+
+        logger.debug(f"Submitting prompt with {len(prompt)} messages")
+        logger.debug(f"Prompt content preview: {str(prompt)[:500]}...")
+
+        try:
+            response = self.client.invoke(prompt)
+            logger.debug(f"Response type: {type(response)}")
+            logger.debug(f"Response content type: {type(response.content)}")
+            logger.debug(
+                f"Response content length: {len(response.content) if response.content else 0}"
+            )
+            logger.debug(
+                f"Response content preview: {response.content[:200] if response.content else 'None'}..."
+            )
+            return response.content
+        except Exception as e:
+            logger.error(f"Error in submit_prompt: {e}")
+            logger.error(f"Error type: {type(e)}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            raise
     
 class NIMVanna(ChromaDB_VectorStore, NIMCustomLLM):
-    def __init__(self, VectorConfig = None, LLMConfig = None):
+    """Vanna implementation using NVIDIA NIM for LLM and ChromaDB for vector storage."""
+
+    def __init__(self, VectorConfig=None, LLMConfig=None):
         ChromaDB_VectorStore.__init__(self, config=VectorConfig)
         NIMCustomLLM.__init__(self, config=LLMConfig)
+
+
+class ElasticVectorStore(VannaBase):
+    """
+    Elasticsearch-based vector store for Vanna.
     
-class CustomEmbeddingFunction:
+    This class provides vector storage and retrieval capabilities using Elasticsearch's
+    dense_vector field type and kNN search functionality.
+    
+    Configuration:
+        config: Dictionary with the following keys:
+            - url: Elasticsearch connection URL (e.g., "http://localhost:9200")
+            - index_name: Name of the Elasticsearch index to use (default: "vanna_vectors")
+            - api_key: Optional API key for authentication
+            - username: Optional username for basic auth
+            - password: Optional password for basic auth
+            - embedding_function: Function to generate embeddings (required)
+    """
+
+    def __init__(self, config=None):
+        VannaBase.__init__(self, config=config)
+        
+        if not config:
+            raise ValueError("config must be passed for ElasticVectorStore")
+        
+        # Elasticsearch connection parameters
+        self.url = config.get("url", "http://localhost:9200")
+        self.index_name = config.get("index_name", "vanna_vectors")
+        self.api_key = config.get("api_key")
+        self.username = config.get("username")
+        self.password = config.get("password")
+        
+        # Embedding function (required)
+        if "embedding_function" not in config:
+            raise ValueError("embedding_function must be provided in config")
+        self.embedding_function = config["embedding_function"]
+        
+        # Initialize Elasticsearch client
+        self._init_elasticsearch_client()
+        
+        # Create index if it doesn't exist
+        self._create_index_if_not_exists()
+        
+        logger.info(f"ElasticVectorStore initialized with index: {self.index_name}")
+    
+    def _init_elasticsearch_client(self):
+        """Initialize the Elasticsearch client with authentication."""
+        try:
+            from elasticsearch import Elasticsearch
+        except ImportError:
+            raise ImportError(
+                "elasticsearch package is required for ElasticVectorStore. "
+                "Install it with: pip install elasticsearch"
+            )
+        
+        # Build client kwargs
+        client_kwargs = {}
+        
+        if self.api_key:
+            client_kwargs["api_key"] = self.api_key
+        elif self.username and self.password:
+            client_kwargs["basic_auth"] = (self.username, self.password)
+        
+        self.es_client = Elasticsearch(self.url, **client_kwargs)
+        
+        # Test connection (try but don't fail if ping doesn't work)
+        try:
+            if self.es_client.ping():
+                logger.info(f"Successfully connected to Elasticsearch at {self.url}")
+            else:
+                logger.warning(f"Elasticsearch ping failed, but will try to proceed at {self.url}")
+        except Exception as e:
+            logger.warning(f"Elasticsearch ping check failed ({e}), but will try to proceed")
+    
+    def _create_index_if_not_exists(self):
+        """Create the Elasticsearch index with appropriate mappings if it doesn't exist."""
+        if self.es_client.indices.exists(index=self.index_name):
+            logger.debug(f"Index {self.index_name} already exists")
+            return
+        
+        # Get embedding dimension by creating a test embedding
+        test_embedding = self._generate_embedding("test")
+        embedding_dim = len(test_embedding)
+        
+        # Index mapping with dense_vector field for embeddings
+        index_mapping = {
+            "mappings": {
+                "properties": {
+                    "id": {"type": "keyword"},
+                    "text": {"type": "text"},
+                    "embedding": {
+                        "type": "dense_vector",
+                        "dims": embedding_dim,
+                        "index": True,
+                        "similarity": "cosine"
+                    },
+                    "metadata": {"type": "object", "enabled": True},
+                    "type": {"type": "keyword"},  # ddl, documentation, sql
+                    "created_at": {"type": "date"}
+                }
+            }
+        }
+        
+        self.es_client.indices.create(index=self.index_name, body=index_mapping)
+        logger.info(f"Created Elasticsearch index: {self.index_name}")
+    
+    def _generate_embedding(self, text: str) -> list[float]:
+        """Generate embedding for a given text using the configured embedding function."""
+        if hasattr(self.embedding_function, 'embed_query'):
+            # NVIDIA embedding function returns [[embedding]]
+            result = self.embedding_function.embed_query(text)
+            if isinstance(result, list) and len(result) > 0:
+                if isinstance(result[0], list):
+                    return result[0]  # Extract the inner list
+                return result  # type: ignore[return-value]
+            return result  # type: ignore[return-value]
+        elif callable(self.embedding_function):
+            # Generic callable
+            result = self.embedding_function(text)
+            if isinstance(result, list) and len(result) > 0:
+                if isinstance(result[0], list):
+                    return result[0]
+                return result  # type: ignore[return-value]
+            return result  # type: ignore[return-value]
+        else:
+            raise ValueError("embedding_function must be callable or have embed_query method")
+    
+    def add_ddl(self, ddl: str, **kwargs) -> str:
+        """
+        Add a DDL statement to the vector store.
+        
+        Args:
+            ddl: The DDL statement to store
+            **kwargs: Additional metadata
+            
+        Returns:
+            Document ID
+        """
+        import hashlib
+        from datetime import datetime
+        
+        # Generate document ID
+        doc_id = hashlib.md5(ddl.encode()).hexdigest()
+        
+        # Generate embedding
+        embedding = self._generate_embedding(ddl)
+        
+        # Create document
+        doc = {
+            "id": doc_id,
+            "text": ddl,
+            "embedding": embedding,
+            "type": "ddl",
+            "metadata": kwargs,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        # Index document
+        self.es_client.index(index=self.index_name, id=doc_id, document=doc)
+        logger.debug(f"Added DDL to Elasticsearch: {doc_id}")
+        
+        return doc_id
+    
+    def add_documentation(self, documentation: str, **kwargs) -> str:
+        """
+        Add documentation to the vector store.
+        
+        Args:
+            documentation: The documentation text to store
+            **kwargs: Additional metadata
+            
+        Returns:
+            Document ID
+        """
+        import hashlib
+        from datetime import datetime
+        
+        doc_id = hashlib.md5(documentation.encode()).hexdigest()
+        embedding = self._generate_embedding(documentation)
+        
+        doc = {
+            "id": doc_id,
+            "text": documentation,
+            "embedding": embedding,
+            "type": "documentation",
+            "metadata": kwargs,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        self.es_client.index(index=self.index_name, id=doc_id, document=doc)
+        logger.debug(f"Added documentation to Elasticsearch: {doc_id}")
+        
+        return doc_id
+    
+    def add_question_sql(self, question: str, sql: str, **kwargs) -> str:
+        """
+        Add a question-SQL pair to the vector store.
+        
+        Args:
+            question: The natural language question
+            sql: The corresponding SQL query
+            **kwargs: Additional metadata
+            
+        Returns:
+            Document ID
+        """
+        import hashlib
+        from datetime import datetime
+        
+        # Combine question and SQL for embedding
+        combined_text = f"Question: {question}\nSQL: {sql}"
+        doc_id = hashlib.md5(combined_text.encode()).hexdigest()
+        embedding = self._generate_embedding(question)
+        
+        doc = {
+            "id": doc_id,
+            "text": combined_text,
+            "embedding": embedding,
+            "type": "sql",
+            "metadata": {
+                "question": question,
+                "sql": sql,
+                **kwargs
+            },
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        self.es_client.index(index=self.index_name, id=doc_id, document=doc)
+        logger.debug(f"Added question-SQL pair to Elasticsearch: {doc_id}")
+        
+        return doc_id
+    
+    def get_similar_question_sql(self, question: str, **kwargs) -> list:
+        """
+        Retrieve similar question-SQL pairs using vector similarity search.
+        
+        Args:
+            question: The question to find similar examples for
+            **kwargs: Additional parameters (e.g., top_k)
+            
+        Returns:
+            List of similar documents
+        """
+        top_k = kwargs.get("top_k", 10)
+        
+        # Generate query embedding
+        query_embedding = self._generate_embedding(question)
+        
+        # Build kNN search query
+        search_query = {
+            "knn": {
+                "field": "embedding",
+                "query_vector": query_embedding,
+                "k": top_k,
+                "num_candidates": top_k * 2,
+                "filter": {"term": {"type": "sql"}}
+            },
+            "_source": ["text", "metadata", "type"]
+        }
+        
+        # Execute search
+        response = self.es_client.search(index=self.index_name, body=search_query)
+        
+        # Extract results
+        results = []
+        for hit in response["hits"]["hits"]:
+            source = hit["_source"]
+            results.append({
+                "question": source["metadata"].get("question", ""),
+                "sql": source["metadata"].get("sql", ""),
+                "score": hit["_score"]
+            })
+        
+        logger.debug(f"Found {len(results)} similar question-SQL pairs")
+        return results
+    
+    def get_related_ddl(self, question: str, **kwargs) -> list:
+        """
+        Retrieve related DDL statements using vector similarity search.
+        
+        Args:
+            question: The question to find related DDL for
+            **kwargs: Additional parameters (e.g., top_k)
+            
+        Returns:
+            List of related DDL statements
+        """
+        top_k = kwargs.get("top_k", 10)
+        query_embedding = self._generate_embedding(question)
+        
+        search_query = {
+            "knn": {
+                "field": "embedding",
+                "query_vector": query_embedding,
+                "k": top_k,
+                "num_candidates": top_k * 2,
+                "filter": {"term": {"type": "ddl"}}
+            },
+            "_source": ["text"]
+        }
+        
+        response = self.es_client.search(index=self.index_name, body=search_query)
+        
+        results = [hit["_source"]["text"] for hit in response["hits"]["hits"]]
+        logger.debug(f"Found {len(results)} related DDL statements")
+        return results
+    
+    def get_related_documentation(self, question: str, **kwargs) -> list:
+        """
+        Retrieve related documentation using vector similarity search.
+        
+        Args:
+            question: The question to find related documentation for
+            **kwargs: Additional parameters (e.g., top_k)
+            
+        Returns:
+            List of related documentation
+        """
+        top_k = kwargs.get("top_k", 10)
+        query_embedding = self._generate_embedding(question)
+        
+        search_query = {
+            "knn": {
+                "field": "embedding",
+                "query_vector": query_embedding,
+                "k": top_k,
+                "num_candidates": top_k * 2,
+                "filter": {"term": {"type": "documentation"}}
+            },
+            "_source": ["text"]
+        }
+        
+        response = self.es_client.search(index=self.index_name, body=search_query)
+        
+        results = [hit["_source"]["text"] for hit in response["hits"]["hits"]]
+        logger.debug(f"Found {len(results)} related documentation entries")
+        return results
+    
+    def remove_training_data(self, id: str, **kwargs) -> bool:
+        """
+        Remove a training data entry by ID.
+        
+        Args:
+            id: The document ID to remove
+            **kwargs: Additional parameters
+            
+        Returns:
+            True if successful
+        """
+        try:
+            self.es_client.delete(index=self.index_name, id=id)
+            logger.debug(f"Removed training data: {id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error removing training data {id}: {e}")
+            return False
+    
+    def generate_embedding(self, data: str, **kwargs) -> list[float]:
+        """
+        Generate embedding for given data (required by Vanna base class).
+        
+        Args:
+            data: Text to generate embedding for
+            **kwargs: Additional parameters
+            
+        Returns:
+            Embedding vector
+        """
+        return self._generate_embedding(data)
+    
+    def get_training_data(self, **kwargs) -> list:
+        """
+        Get all training data from the vector store (required by Vanna base class).
+        
+        Args:
+            **kwargs: Additional parameters
+            
+        Returns:
+            List of training data entries
+        """
+        try:
+            # Query all documents
+            query = {
+                "query": {"match_all": {}},
+                "size": 10000  # Adjust based on expected data size
+            }
+            
+            response = self.es_client.search(index=self.index_name, body=query)
+            
+            training_data = []
+            for hit in response["hits"]["hits"]:
+                source = hit["_source"]
+                training_data.append({
+                    "id": hit["_id"],
+                    "type": source.get("type"),
+                    "text": source.get("text"),
+                    "metadata": source.get("metadata", {})
+                })
+            
+            return training_data
+        except Exception as e:
+            logger.error(f"Error getting training data: {e}")
+            return []
+
+
+class ElasticNIMVanna(ElasticVectorStore, NIMCustomLLM):
+    """
+    Vanna implementation using NVIDIA NIM for LLM and Elasticsearch for vector storage.
+    
+    This class combines ElasticVectorStore for vector operations with NIMCustomLLM
+    for SQL generation, providing an alternative to ChromaDB-based storage.
+    
+    Example:
+        >>> vanna = ElasticNIMVanna(
+        ...     VectorConfig={
+        ...         "url": "http://localhost:9200",
+        ...         "index_name": "my_sql_vectors",
+        ...         "username": "elastic",
+        ...         "password": "changeme",
+        ...         "embedding_function": NVIDIAEmbeddingFunction(
+        ...             api_key="your-api-key",
+        ...             model="nvidia/llama-3.2-nv-embedqa-1b-v2"
+        ...         )
+        ...     },
+        ...     LLMConfig={
+        ...         "api_key": "your-api-key",
+        ...         "model": "meta/llama-3.1-70b-instruct"
+        ...     }
+        ... )
+    """
+
+    def __init__(self, VectorConfig=None, LLMConfig=None):
+        ElasticVectorStore.__init__(self, config=VectorConfig)
+        NIMCustomLLM.__init__(self, config=LLMConfig)
+
+
+class NVIDIAEmbeddingFunction:
     """
     A class that can be used as a replacement for chroma's DefaultEmbeddingFunction.
     It takes in input (text or list of texts) and returns embeddings using NVIDIA's API.
+
+    This class fixes two major interface compatibility issues between ChromaDB and NVIDIA embeddings:
+
+    1. INPUT FORMAT MISMATCH:
+       - ChromaDB passes ['query text'] (list) to embed_query()
+       - But langchain_nvidia's embed_query() expects 'query text' (string)
+       - When list is passed, langchain does [text] internally → [['query text']] → API 500 error
+       - FIX: Detect list input and extract string before calling langchain
+
+    2. OUTPUT FORMAT MISMATCH:
+       - ChromaDB expects embed_query() to return [[embedding_vector]] (list of embeddings)
+       - But langchain returns [embedding_vector] (single embedding vector)
+       - This causes: TypeError: 'float' object cannot be converted to 'Sequence'
+       - FIX: Wrap single embedding in list: return [embeddings]
     """
 
-    def __init__(self, api_key, model="nvidia/nv-embedqa-e5-v5"):
+    def __init__(self, api_key, model="nvidia/llama-3.2-nv-embedqa-1b-v2"):
         """
         Initialize the embedding function with the API key and model name.
 
         Parameters:
         - api_key (str): The API key for authentication.
-        - model (str): The model name to use for embeddings (default is "nvidia/nv-embedqa-e5-v5").
+        - model (str): The model name to use for embeddings.
+                      Default: nvidia/llama-3.2-nv-embedqa-1b-v2 (tested and working)
         """
-        from langchain_nvidia import NVIDIAEmbeddings
-        
+        self.api_key = api_key
+        self.model = model
+
+        logger.info(f"Initializing NVIDIA embeddings with model: {model}")
+        logger.debug(f"API key length: {len(api_key) if api_key else 0}")
+
         self.embeddings = NVIDIAEmbeddings(
-            api_key=api_key,
-            model_name=model,
-            input_type="query",
-            truncate="NONE"
+            api_key=api_key, model_name=model, input_type="query", truncate="NONE"
         )
+        logger.info("Successfully initialized NVIDIA embeddings")
 
     def __call__(self, input):
         """
         Call method to make the object callable, as required by chroma's EmbeddingFunction interface.
+
+        NOTE: This method is used by ChromaDB for batch embedding operations.
+        The embed_query() method above handles the single query case with the critical fixes.
 
         Parameters:
         - input (str or list): The input data for which embeddings need to be generated.
@@ -113,17 +604,28 @@ class CustomEmbeddingFunction:
         Returns:
         - embedding (list): The embedding vector(s) for the input data.
         """
-        # Ensure input is a list, as required by the API
-        input_data = [input] if isinstance(input, str) else input
-        
-        # Generate embeddings
+        logger.debug(f"__call__ method called with input type: {type(input)}")
+        logger.debug(f"__call__ input: {input}")
+
+        # Ensure input is a list, as required by ChromaDB
+        if isinstance(input, str):
+            input_data = [input]
+        else:
+            input_data = input
+
+        logger.debug(f"Processing {len(input_data)} texts for embedding")
+
+        # Generate embeddings for each text
         embeddings = []
-        for text in input_data:
+        for i, text in enumerate(input_data):
+            logger.debug(f"Embedding text {i+1}/{len(input_data)}: {text[:50]}...")
             embedding = self.embeddings.embed_query(text)
             embeddings.append(embedding)
-        
-        return embeddings[0] if len(embeddings) == 1 and isinstance(input, str) else embeddings
-    
+
+        logger.debug(f"Generated {len(embeddings)} embeddings")
+        # Always return a list of embeddings for ChromaDB
+        return embeddings
+
     def name(self):
         """
         Returns a custom name for the embedding function.
@@ -132,192 +634,78 @@ class CustomEmbeddingFunction:
             str: The name of the embedding function.
         """
         return "NVIDIA Embedding Function"
-    
-def initVannaBackup(vn):
-    """
-    Backup initialization function for Vanna with hardcoded NASA Turbofan Engine training data.
-    
-    This function provides the original hardcoded training approach for NASA Turbofan Engine
-    predictive maintenance queries. Use this as a fallback if the JSON-based training fails.
-    
-    Args:
-        vn: Vanna instance to be trained and configured
-        
-    Returns:
-        None: Modifies the Vanna instance in-place
-        
-    Example:
-        >>> from vanna.chromadb import ChromaDB_VectorStore
-        >>> vn = NIMCustomLLM(config) & ChromaDB_VectorStore()
-        >>> vn.connect_to_sqlite("path/to/nasa_turbo.db")
-        >>> initVannaBackup(vn)
-        >>> # Vanna is now ready with hardcoded NASA Turbofan training
-    """
-    import json
-    import os
-    
-    # Get and train DDL from sqlite_master
-    df_ddl = vn.run_sql("SELECT type, sql FROM sqlite_master WHERE sql is not null")
-    for ddl in df_ddl['sql'].to_list():
-        vn.train(ddl=ddl)
 
-    # Fallback to default NASA Turbofan training
-    fd_datasets = ["FD001", "FD002", "FD003", "FD004"]
-    for fd in fd_datasets:
-        vn.train(ddl=f"""
-            CREATE TABLE IF NOT EXISTS RUL_{fd} (
-                "unit_number" INTEGER,
-                "RUL" INTEGER
+    def embed_query(self, input: str) -> list[list[float]]:
+        """
+        Generate embeddings for a single query.
+
+        ChromaDB calls this method with ['query text'] (list) but langchain_nvidia expects 'query text' (string).
+        We must extract the string from the list to prevent API 500 errors.
+
+        ChromaDB expects this method to return [[embedding_vector]] (list of embeddings)
+        but langchain returns [embedding_vector] (single embedding). We wrap it in a list.
+        """
+        logger.debug(f"Embedding query: {input}")
+        logger.debug(f"Input type: {type(input)}")
+        logger.debug(f"Using model: {self.model}")
+
+        # Handle ChromaDB's list input format
+        # ChromaDB sometimes passes a list instead of a string
+        # Extract the string from the list if needed
+        if isinstance(input, list):
+            if len(input) == 1:
+                query_text = input[0]
+                logger.debug(f"Extracted string from list: {query_text}")
+            else:
+                logger.error(f"Unexpected list length: {len(input)}")
+                raise ValueError(
+                    f"Expected single string or list with one element, got list with {len(input)} elements"
+                )
+        else:
+            query_text = input
+
+        try:
+            # Call langchain_nvidia with the extracted string
+            embeddings = self.embeddings.embed_query(query_text)
+            logger.debug(
+                f"Successfully generated embeddings of length: {len(embeddings) if embeddings else 0}"
             )
-        """)
 
-    sensor_columns = """
-        "unit_number" INTEGER,
-        "time_in_cycles" INTEGER,
-        "operational_setting_1" REAL,
-        "operational_setting_2" REAL,
-        "operational_setting_3" REAL,
-        "sensor_measurement_1" REAL,
-        "sensor_measurement_2" REAL,
-        "sensor_measurement_3" REAL,
-        "sensor_measurement_4" REAL,
-        "sensor_measurement_5" REAL,
-        "sensor_measurement_6" REAL,
-        "sensor_measurement_7" REAL,
-        "sensor_measurement_8" REAL,
-        "sensor_measurement_9" REAL,
-        "sensor_measurement_10" REAL,
-        "sensor_measurement_11" REAL,
-        "sensor_measurement_12" REAL,
-        "sensor_measurement_13" REAL,
-        "sensor_measurement_14" REAL,
-        "sensor_measurement_15" REAL,
-        "sensor_measurement_16" REAL,
-        "sensor_measurement_17" INTEGER,
-        "sensor_measurement_18" INTEGER,
-        "sensor_measurement_19" REAL,
-        "sensor_measurement_20" REAL,
-        "sensor_measurement_21" REAL
-    """
+            # Wrap single embedding in list for ChromaDB compatibility
+            # ChromaDB expects a list of embeddings, even for a single query
+            return [embeddings]
+        except Exception as e:
+            logger.error(f"Error generating embeddings for query: {e}")
+            logger.error(f"Error type: {type(e)}")
+            logger.error(f"Query text: {query_text}")
+            import traceback
 
-    for fd in fd_datasets:
-        vn.train(ddl=f"CREATE TABLE IF NOT EXISTS train_{fd} ({sensor_columns})")
-        vn.train(ddl=f"CREATE TABLE IF NOT EXISTS test_{fd} ({sensor_columns})")
-        
-    # Default documentation for NASA Turbofan
-    dataset_documentation = """
-    This SQL database contains train and test splits of four different datasets: FD001, FD002, FD003, FD004. 
-    Each dataset consists of multiple multivariate time series from different engines of the same type.
-    
-    DATABASE STRUCTURE:
-    The data is organized into separate tables for each dataset:
-    
-    Training Tables: train_FD001, train_FD002, train_FD003, train_FD004
-    Test Tables: test_FD001, test_FD002, test_FD003, test_FD004  
-    RUL Tables: RUL_FD001, RUL_FD002, RUL_FD003, RUL_FD004
-    
-    Each training and test table contains 26 columns with identical structure:
-    - unit_number: INTEGER - Identifier for each engine unit
-    - time_in_cycles: INTEGER - Time step in operational cycles
-    - operational_setting_1: REAL - First operational setting affecting performance
-    - operational_setting_2: REAL - Second operational setting affecting performance
-    - operational_setting_3: REAL - Third operational setting affecting performance
-    - sensor_measurement_1 through sensor_measurement_21: REAL/INTEGER - Twenty-one sensor measurements
-    
-    Each RUL table contains 2 columns:
-    - unit_number: INTEGER - Engine unit identifier
-    - RUL: INTEGER - Remaining Useful Life value for that test unit
-    
-    QUERY PATTERNS:
-    
-    Table References:
-    - "train_FD001" or "dataset train_FD001" → Use table train_FD001
-    - "test_FD002" or "dataset test_FD002" → Use table test_FD002
-    - "FD003" (without train/test prefix) → Determine from context whether to use train_FD003 or test_FD003
-    - For RUL queries: Use specific RUL table (RUL_FD001, RUL_FD002, RUL_FD003, or RUL_FD004)
-    
-    Counting Patterns:
-    - "How many units" → Use COUNT(DISTINCT unit_number) to count unique engines
-    - "How many records/data points/measurements/entries/rows" → Use COUNT(*) to count all records
-    
-    RUL Handling (CRITICAL DISTINCTION):
-    
-    1. GROUND TRUTH RUL (for test data):
-       - Use when query asks for "actual RUL", "true RUL", "ground truth", or "what is the RUL"
-       - Query specific RUL table: SELECT RUL FROM RUL_FD001 WHERE unit_number=N
-       - For time-series with ground truth: ((SELECT MAX(time_in_cycles) FROM test_FDxxx WHERE unit_number=N) + (SELECT RUL FROM RUL_FDxxx WHERE unit_number=N) - time_in_cycles)
-    
-    2. PREDICTED/CALCULATED RUL (for training data or prediction requests):
-       - Use when query asks to "predict RUL", "calculate RUL", "estimate RUL", or "find RUL" for training data
-       - For training data: Calculate as remaining cycles until failure = (MAX(time_in_cycles) - current_time_in_cycles + 1)
-       - Training RUL query: SELECT unit_number, time_in_cycles, (MAX(time_in_cycles) OVER (PARTITION BY unit_number) - time_in_cycles + 1) AS predicted_RUL FROM train_FDxxx
-    
-    DEFAULT BEHAVIOR: If unclear, assume user wants PREDICTION (since this is more common)
-    
-    Column Names (consistent across all training and test tables):
-    - unit_number: Engine identifier
-    - time_in_cycles: Time step
-    - operational_setting_1, operational_setting_2, operational_setting_3: Operational settings
-    - sensor_measurement_1, sensor_measurement_2, ..., sensor_measurement_21: Sensor readings
-    
-    IMPORTANT NOTES:
-    - Each dataset (FD001, FD002, FD003, FD004) has its own separate RUL table
-    - RUL tables do NOT have a 'dataset' column - they are dataset-specific by table name
-    - Training tables contain data until engine failure
-    - Test tables contain data that stops before failure
-    - RUL tables provide the actual remaining cycles for test units
-    
-    ENGINE OPERATION CONTEXT:
-    Each engine starts with different degrees of initial wear and manufacturing variation. 
-    The engine operates normally at the start of each time series and develops a fault at some point during the series. 
-    In the training set, the fault grows in magnitude until system failure. 
-    In the test set, the time series ends some time prior to system failure.
-    The objective is to predict the number of remaining operational cycles before failure in the test set.
-    """
-    vn.train(documentation=dataset_documentation)
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            raise
 
-    # Default training for NASA Turbofan
-    queries = [
-        # 1. JOIN pattern between training and RUL tables
-        "SELECT t.unit_number, t.time_in_cycles, t.operational_setting_1, r.RUL FROM train_FD001 AS t JOIN RUL_FD001 AS r ON t.unit_number = r.unit_number WHERE t.unit_number = 1 ORDER BY t.time_in_cycles",
-        
-        # 2. Aggregation with multiple statistical functions
-        "SELECT unit_number, AVG(sensor_measurement_1) AS avg_sensor1, MAX(sensor_measurement_2) AS max_sensor2, MIN(sensor_measurement_3) AS min_sensor3 FROM train_FD002 GROUP BY unit_number",
-        
-        # 3. Test table filtering with time-based conditions
-        "SELECT * FROM test_FD003 WHERE time_in_cycles > 50 AND sensor_measurement_1 > 500 ORDER BY unit_number, time_in_cycles",
-        
-        # 4. Window function for predicted RUL calculation on training data
-        "SELECT unit_number, time_in_cycles, (MAX(time_in_cycles) OVER (PARTITION BY unit_number) - time_in_cycles + 1) AS predicted_RUL FROM train_FD004 WHERE unit_number <= 3 ORDER BY unit_number, time_in_cycles",
-        
-        # 5. Direct RUL table query with filtering
-        "SELECT unit_number, RUL FROM RUL_FD001 WHERE RUL > 100 ORDER BY RUL DESC"
-    ]
+    def embed_documents(self, input: list[str]) -> list[list[float]]:
+        """
+        Generate embeddings for multiple documents.
 
-    for query in tqdm(queries, desc="Training NIMVanna"):
-        vn.train(sql=query)
+        This function expects a list of strings. If it's a list of lists of strings, flatten it to handle cases
+        where the input is unexpectedly nested.
+        """
+        logger.debug(f"Embedding {len(input)} documents...")
+        logger.debug(f"Using model: {self.model}")
 
-    # Essential question-SQL training pairs (covering key RUL distinction)
-    vn.train(question="Get time cycles and operational setting 1 for unit 1 from test FD001", 
-             sql="SELECT time_in_cycles, operational_setting_1 FROM test_FD001 WHERE unit_number = 1")
-    
-    # Ground Truth RUL (from RUL tables)
-    vn.train(question="What is the actual remaining useful life for unit 1 in test dataset FD001", 
-             sql="SELECT RUL FROM RUL_FD001 WHERE unit_number = 1")
-    
-    # Predicted RUL (calculated for training data)
-    vn.train(question="Predict the remaining useful life for each time cycle of unit 1 in training dataset FD001", 
-             sql="SELECT unit_number, time_in_cycles, (MAX(time_in_cycles) OVER (PARTITION BY unit_number) - time_in_cycles + 1) AS predicted_RUL FROM train_FD001 WHERE unit_number = 1 ORDER BY time_in_cycles")
-    
-    vn.train(question="How many units are in the training data for FD002", 
-             sql="SELECT COUNT(DISTINCT unit_number) FROM train_FD002")
-    
-    # Additional RUL distinction training
-    vn.train(question="Calculate RUL for training data in FD003", 
-             sql="SELECT unit_number, time_in_cycles, (MAX(time_in_cycles) OVER (PARTITION BY unit_number) - time_in_cycles + 1) AS predicted_RUL FROM train_FD003 ORDER BY unit_number, time_in_cycles")
-    
-    vn.train(question="Get ground truth RUL values for all units in test FD002", 
-             sql="SELECT unit_number, RUL FROM RUL_FD002 ORDER BY unit_number")
+        try:
+            embeddings = self.embeddings.embed_documents(input)
+            logger.debug("Successfully generated document embeddings")
+            return embeddings
+        except Exception as e:
+            logger.error(f"Error generating document embeddings: {e}")
+            logger.error(f"Error type: {type(e)}")
+            logger.error(f"Input documents count: {len(input)}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            raise
+
 
 def chunk_documentation(text: str, max_chars: int = 1500) -> list:
     """

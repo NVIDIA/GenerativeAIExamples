@@ -22,7 +22,7 @@ Multi-agent architecture designed for Asset Lifecycle Management with specialize
 - **ReAct Agent Workflow**: Main orchestration using ReAct pattern for intelligent decision-making
 - **SQL Retriever Tool**: Generates SQL queries using NIM LLM for asset data retrieval
 - **RUL Prediction Tool**: XGBoost model for remaining useful life prediction to optimize maintenance scheduling
-- **Anomaly Detection Tool**: Detects anomalies in sensor data using time series foundational model for early failure detection
+- **Anomaly Detection Tool**: Detects anomalies in sensor data using NV-Tesseract foundation model (NVIDIA NIM) for early failure detection, with MOMENT as an alternative
 - **Plotting Agents**: Multi-tool agent for data visualization and asset performance reporting
 - **Vector Database**: ChromaDB for storing table schema, Vanna training queries, and asset documentation
 
@@ -32,6 +32,8 @@ This architecture provides the foundation for comprehensive asset health monitor
 ![Agentic workflow w/ reasoning](imgs/pdm_agentic_worklow_light.png)
 
 ## Setup and Installation
+
+> 📖 **For detailed installation instructions including database setup (PostgreSQL, MySQL, SQLite) and vector store configuration (ChromaDB, Elasticsearch), see [INSTALLATION.md](INSTALLATION.md)**
 
 ### Prerequisites
 - Python 3.11+ (< 3.13)
@@ -175,6 +177,21 @@ Now install the ALM workflow:
 uv pip install -e .
 ```
 
+#### Installation Options
+
+**Base Installation** (default - includes ChromaDB + SQLite):
+```bash
+uv pip install -e .
+```
+
+**Optional Database Support:**
+- PostgreSQL: `uv pip install -e ".[postgres]"`
+- MySQL: `uv pip install -e ".[mysql]"`
+- All databases: `uv pip install -e ".[all-databases]"`
+
+**Optional Vector Store:**
+- Elasticsearch: `uv pip install -e ".[elasticsearch]"`
+
 ### [Optional] Verify if all prerequisite packages are installed
 ```bash
 uv pip list | grep -E "nvidia-nat|nvidia-nat-ragaai|nvidia-nat-phoenix|vanna|chromadb|xgboost|pytest|torch|matplotlib"
@@ -238,6 +255,41 @@ This ensures that:
 - All relative paths work correctly
 - Output files are organized within your project
 - Configuration remains portable across different machines
+
+#### Setting Up Workspace Utilities
+
+**IMPORTANT**: The code generation assistant requires a `utils` folder inside your `output_data` directory for RUL transformation tasks.
+
+**Setup Instructions:**
+
+1. Create the output_data directory (if it doesn't exist):
+```bash
+mkdir -p output_data
+```
+
+2. Copy the pre-built utility functions from the template:
+```bash
+cp -r utils_template output_data/utils
+```
+
+3. Verify the setup:
+```bash
+ls output_data/utils/
+# You should see: __init__.py  rul_utils.py
+```
+
+**What's included:**
+- `apply_piecewise_rul_transformation(df, maxlife=100)` - Transforms RUL data to create realistic "knee" patterns
+- `show_utilities()` - Display available utility functions
+
+These utilities are automatically available to the code generation assistant when running in the Docker sandbox (mapped as `/workspace/utils/`). The system will only import these utilities when specifically needed for RUL transformations, preventing unnecessary module loading errors (`ModuleNotFoundError: No module named 'utils'` will not occur).
+
+**How It Works:**
+- When you start the sandbox with `output_data/` as the mount point, the `utils/` folder becomes accessible at `/workspace/utils/`
+- The code generation assistant only imports utils when performing RUL transformations
+- For regular tasks (data retrieval, plotting, etc.), utils are not imported, avoiding module errors
+
+**Note**: If you move your `output_data` folder, make sure the `utils` subfolder comes with it, or copy it from `utils_template` again.
 
 ### 6. Vanna SQL Agent Training (Automatic)
 
@@ -463,7 +515,9 @@ def your_custom_utility(file_path: str, param: int = 100) -> str:
 4. **Consistent Interface**: All utilities return descriptive success messages
 5. **Documentation**: Use `utils.show_utilities()` to discover available functions
 
-### Setup Web Interface
+### Alternative: Generic NeMo-Agent-Toolkit UI
+
+If you prefer the generic NeMo Agent Toolkit UI instead of our custom interface:
 
 ```bash
 git clone https://github.com/NVIDIA/NeMo-Agent-Toolkit-UI.git
@@ -500,16 +554,48 @@ Retrieve real RUL of each unit in the FD001 test dataset. Then plot a distributi
 ![Visualization Example](imgs/test_prompt_2.png)
 
 
-**Anomaly Detection**
+**Anomaly Detection with NV-Tesseract**
+
+The workflow uses [NV-Tesseract](https://developer.nvidia.com/blog/advancing-anomaly-detection-for-industry-applications-with-nvidia-nv-tesseract-ad/), NVIDIA's foundation model for time-series anomaly detection, as the default anomaly detection engine. NV-Tesseract is a foundational model where accuracy is highly data-dependent. However, the objective here is to demonstrate integration functionality. Its performance can be significantly improved through fine-tuning on domain-specific data—a capability currently on NVIDIA's NV-Tesseract roadmap.
+
 ```
 Retrieve and detect anomalies in sensor 4 measurements for engine number 78 in train FD001 dataset.
 ```
 
+**Sample Output:**
+```
+NV TESSERACT NIM ANOMALY DETECTION COMPLETED SUCCESSFULLY
+
+Analysis Details:
+   • Engine Unit: 78
+   • Sensor Analyzed: sensor_measurement_4
+   • Model: NV Tesseract (NVIDIA Foundation Model)
+
+Anomaly Detection Results:
+   • Total Timesteps Analyzed: 231
+   • Anomalous Timesteps Detected: 12
+   • Anomaly Rate: 5.19%
+
+Output Files Generated:
+   • Enhanced Data with is_anomaly Column: retrieve_sensor_measurement_4__results.json
+   • Interactive HTML plot: anomaly_plot_sensor_measurement_4_engine78.html
+   • Static PNG image: anomaly_plot_sensor_measurement_4_engine78.png
+```
+
 ![Anomaly Detection Example](imgs/test_prompt_4.png)
+
+**Switching to MOMENT Foundation Model:**
+
+To use the MOMENT foundation model instead of NV-Tesseract, edit `configs/config-reasoning.yaml`:
+1. Comment out the `nv_tesseract_anomaly_detection_tool` configuration
+2. Uncomment the `moment_anomaly_detection_tool` configuration
+3. Restart the workflow server
+
+Both models provide state-of-the-art anomaly detection capabilities for time-series data.
 
 **Workspace Utilities Demo**
 ```
-Retrieve ground truth RUL values and time in cycles from FD001 train dataset. Apply piecewise RUL transformation with MAXLIFE=100. Finally, Plot a line chart of the transformed values across time.
+Retrieve RUL values and time in cycles for engine unit 24 from FD001 train dataset. Use the piece wise RUL transformation code utility to perform piecewise RUL transformation on the ground truth RUL values with MAXLIFE=100.Finally, Plot a comparison line chart with RUL values and its transformed values across time.
 ```
 
 *This example demonstrates how to discover and use workspace utilities directly. The system will show available utilities and then apply the RUL transformation using the pre-built, reliable utility functions.*
@@ -518,14 +604,54 @@ Retrieve ground truth RUL values and time in cycles from FD001 train dataset. Ap
 ```
 Perform the following steps:
 
-1.Retrieve the time in cycles, all sensor measurements, and ground truth RUL values for engine unit 24 from FD001 train dataset.
+1.Retrieve the time in cycles, all sensor measurements, and ground truth RUL values, partition by unit number for engine unit 24 from FD001 train dataset.
 2.Use the retrieved data to predict the Remaining Useful Life (RUL). 
-3.Use the piece wise RUL transformation code utility to apply piecewise RUL transformation only to the observed RUL column. 
+3.Use the piece wise RUL transformation code utility to apply piecewise RUL transformation only to the observed RUL column with MAXLIFE of 100.
 4.Generate a plot that compares the transformed RUL values and the predicted RUL values across time.
 ```
 ![Prediction Example](imgs/test_prompt_3.png)
 
 *Note: This example automatically uses the workspace `apply_piecewise_rul_transformation` utility to create realistic knee-pattern RUL data for comparison, resulting in much cleaner and more meaningful visualizations.*
+
+## Deploying NV-Tesseract NIM (Required for Anomaly Detection)
+
+Since NV-Tesseract is the default anomaly detection engine, you'll need to deploy the NV-Tesseract NIM container for anomaly detection capabilities.
+
+**Note:** Access to the NV-Tesseract NIM container requires approval. Contact your NVIDIA representative or request access through the [NVIDIA NGC Catalog](https://catalog.ngc.nvidia.com/).
+
+### Prerequisites
+- NVIDIA GPU (A100, H100, or L40S recommended)
+- Docker with NVIDIA Container Runtime
+- NGC API key with NV-Tesseract access
+
+### Deploy NV-Tesseract NIM
+
+Set your NGC API key:
+```bash
+export NGC_API_KEY='your-ngc-api-key'
+```
+
+Deploy the NV-Tesseract NIM container:
+```bash
+docker run -d \
+  --name nv-tesseract-nim \
+  --gpus '"device=1"' \
+  -p 8001:8000 \
+  -e NGC_API_KEY=$NGC_API_KEY \
+  --restart unless-stopped \
+  nvcr.io/nim/nvidia/nv-tesseract:2.0.0
+```
+
+Verify the deployment:
+```bash
+# Check container logs
+docker logs -f nv-tesseract-nim
+
+# Health check
+curl http://localhost:8001/v1/health/ready
+```
+
+**Note:** If you prefer to use the MOMENT foundation model instead (which doesn't require a NIM deployment), follow the instructions in the "Switching to MOMENT Foundation Model" section under Anomaly Detection above.
 
 ## Observability (Optional)
 

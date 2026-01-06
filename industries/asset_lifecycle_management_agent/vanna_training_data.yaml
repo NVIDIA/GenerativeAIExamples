@@ -98,6 +98,12 @@ documentation: |
   - When asked "How many units" → Use COUNT(DISTINCT unit_number) to count unique engines
   - When asked "How many records/data points/measurements/entries/rows" → Use COUNT(*) to count all records
 
+  Sensor Data Retrieval Pattern (CRITICAL FOR ANOMALY DETECTION):
+  - When retrieving sensor measurements, ALWAYS include: unit_number, time_in_cycles, and the requested sensor column(s)
+  - Example: For "Retrieve sensor_measurement_4 for unit 78" → SELECT unit_number, time_in_cycles, sensor_measurement_4 FROM train_FD001 WHERE unit_number = 78 ORDER BY time_in_cycles
+  - These columns are required for downstream time-series analysis and visualization tools
+  - NEVER retrieve only the sensor measurement column without unit_number and time_in_cycles
+
   RUL Handling (CRITICAL - YOU MUST DISTINGUISH):
 
   1. GROUND TRUTH RUL (for test data):
@@ -187,3 +193,6 @@ question_sql_pairs:
   
   - question: "Get ground truth RUL values for all units in test FD002"
     sql: "SELECT unit_number, RUL FROM RUL_FD002 ORDER BY unit_number" 
+  
+  - question: "Retrieve sensor_measurement_4 data for engine unit 78 from FD001 training dataset"
+    sql: "SELECT unit_number, time_in_cycles, sensor_measurement_4 FROM train_FD001 WHERE unit_number = 78 ORDER BY time_in_cycles" 

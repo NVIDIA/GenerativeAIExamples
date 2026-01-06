@@ -1,46 +1,123 @@
-# macOS system files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Database and vector store files
-database/
-*.db
-*.sqlite3
-
-# Output and generated files
-output_data/
-moment/
-readmes/
-*.html
-*.csv
-*.npy
-
-# Python package metadata
-src/**/*.egg-info/
-*.egg-info/
-
-# Environment files (if they contain secrets)
+# Misc
+config_examples.yml
+config_examples.yaml
 env.sh
+frontend/
+prompts.md
 
-# Model files (if large/binary)
-models/*.pkl
-models/*.joblib
-models/*.model
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+pip-wheel-metadata/
+.DS_Store
 
-# Logs
-*.log
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# Output and Data Directories
+output_data/
+eval_output/
+example_eval_output/
+output/
+results/
 logs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+database/*.db
+database/*.sqlite
+
+# Vector store data (ChromaDB)
+database/
+chroma_db/
+vector_store/
+vanna_vector_store/
+
+# Model files (large binary files)
+models/*.pkl
+models/*.h5
+models/*.pt
+models/*.pth
+models/*.ckpt
+*.pkl
+*.h5
+*.pt
+*.pth
+moment/
+
+# Data files (CSV, JSON, etc. - be selective)
+*.csv
+*.json
+!training_data.json
+!vanna_training_data.yaml
+!config*.json
+!config*.yaml
+!config*.yml
+!pyproject.toml
+!package.json
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.secret
+secrets/
+credentials/
 
 # Temporary files
 *.tmp
 *.temp
-.pytest_cache/
-__pycache__/ 
+*.log
+*.cache
 
-# dot env
-mydot.env
+# OS specific
+Thumbs.db
+Desktop.ini
+
+# Experiment tracking
+mlruns/
+wandb/
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+site/

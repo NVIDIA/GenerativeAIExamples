@@ -20,7 +20,7 @@
 
 ### **3. Run NIM Container**
 - Login to nvcr.io using NGC API key and pull:  
-  `docker pull nvcr.io/nim/nvidia/nv-embedqa-e5-v5:latest`
+  `docker pull nvcr.io/nim/nvidia/llama-3.2-nv-embedqa-1b-v2:latest`
 - **Ubuntu VM:** Expose on all interfaces:  
   `-p 0.0.0.0:8000:8000`
   <div style="background-color: #F6F8FA; padding: 6px 12px; border-radius: 5px; margin-left: 24px;">
@@ -28,6 +28,8 @@
     <br>`-p 8000:8000`
   </div>
 - Enable TLS with mounted ssl_key.pem and ssl_cert.pem.
+- Run docker:
+`docker run -it --rm --gpus all --shm-size=16GB -e NGC_API_KEY -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" -u $(id -u) -p 8000:8000 -v $HOST_CERT_DIR:$NIM_CERT_DIR -e NIM_SSL_MODE="tls" -e NIM_SSL_KEY_PATH="$NIM_CERT_DIR/ssl_key.pem" -e NIM_SSL_CERT_PATH="$NIM_CERT_DIR/ssl_cert.pem" nvcr.io/nim/nvidia/llama-3.2-nv-embedqa-1b-v2:latest`
 
 ### **4. Verify with curl (from Windows)**
 - **Ubuntu VM:**  

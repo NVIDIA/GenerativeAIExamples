@@ -19,7 +19,7 @@
     - Set ACA container name (e.g., ngc-test).
     - Image source: Docker HUB and other registries.
     - Image type: Private, Registry login: nvcr.io.
-    - Image and tag: e.g., nim/nvidia/nv-embedqa-e5-v5:latest.
+    - Image and tag: e.g., nim/nvidia/llama-3.2-nv-embedqa-1b-v2:latest or nim/nvidia/nv-embedqa-e5-v5:latest.
 4. **Set Environment Variables:**
     - NGC_API_KEY: Application API key for NGC (nvcr.io).
     - OPENSSL_FORCE_FIPS_MODE: Set value to 0 (ACA does not support OpenSSL FIPS).
