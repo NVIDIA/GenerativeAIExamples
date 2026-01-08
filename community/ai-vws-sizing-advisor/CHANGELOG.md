@@ -3,6 +3,46 @@ All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
 
+## [2.3] - 2026-01-08
+
+This release focuses on improved sizing recommendations, enhanced Nemotron model integration, and comprehensive documentation updates.
+
+### Added
+- **Demo Screenshots** — Added visual examples showcasing the Configuration Wizard, RAG-powered sizing recommendations, and Local Deployment verification
+- **Official Documentation Link** — Added link to [NVIDIA vGPU Docs Hub](https://docs.nvidia.com/vgpu/toolkits/sizing-advisor/latest/intro.html) in README
+
+### Changed
+- **README Overhaul** — Reorganized documentation to highlight NVIDIA Nemotron models
+  - Llama-3.3-Nemotron-Super-49B powers the RAG backend
+  - Nemotron-3 Nano 30B (FP8) as default for workload sizing
+  - New Demo section with screenshots demonstrating key features
+
+- **Sizing Recommendation Improvements**
+  - Enhanced 95% usable capacity rule for profile selection (5% reserved for system overhead)
+  - Improved profile selection logic: picks smallest profile where (profile × 0.95) >= workload
+  - Better handling of edge cases near profile boundaries
+
+- **GPU Passthrough Logic**
+  - Automatic passthrough recommendation when workload exceeds max single vGPU profile
+  - Clearer passthrough examples in RAG context (e.g., 92GB on BSE → 2× BSE GPU passthrough)
+  - Calculator now returns `vgpu_profile: null` with multi-GPU passthrough recommendation
+
+- **vLLM Local Deployment**
+  - Updated to vLLM v0.12.0 for proper NemotronH (hybrid Mamba-Transformer) architecture support
+  - Improved GPU memory utilization calculations for local testing
+  - Better max-model-len auto-detection (only set when explicitly specified)
+
+- **Chat Improvements**
+  - Enhanced conversational mode with vGPU configuration context
+  - Better model extraction from sizing responses for follow-up questions
+  - Improved context handling for RAG vs inference workload discussions
+
+### Improved
+- **Nemotron Model Integration**
+  - Default model changed to Nemotron-3 Nano 30B FP8 in configuration wizard
+  - Nemotron thinking prompt support for enhanced reasoning
+  - Better model matching for Nemotron variants in calculator
+
 ## [2.2] - 2025-11-04
 
 ### Changed

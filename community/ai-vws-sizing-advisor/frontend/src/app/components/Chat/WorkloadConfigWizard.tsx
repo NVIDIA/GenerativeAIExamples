@@ -52,14 +52,14 @@ export default function WorkloadConfigWizard({
 }: WorkloadConfigWizardProps) {
   const [config, setConfig] = useState<WorkloadConfig>({
     workloadType: "",
-    specificModel: "",
+    specificModel: "nemotron-30b-fp8",
     modelSize: "",
     batchSize: "",
     promptSize: "1024",
     responseSize: "256",
     embeddingModel: "nvidia/nvolveqa-embed-large-1B",
-    gpuInventory: { "DC": 1 },
-    precision: "fp16",
+    gpuInventory: { "BSE": 1 },
+    precision: "fp8",
     vectorDimension: "1024",  // Default to 1024 (matches default embedding model)
     numberOfVectors: "10000", // Default to 10,000
     advancedConfig: {
@@ -89,23 +89,34 @@ export default function WorkloadConfigWizard({
           const data = await response.json();
           if (data.models && data.models.length > 0) {
             // Use modelTag as value to ensure uniqueness (full model ID like "org/model-name")
-            const formattedModels = data.models.map((model: any) => ({
-              value: model.modelTag.toLowerCase().replace(/\//g, '-').replace(/\./g, '-'),
-              label: model.label,
-              modelTag: model.modelTag
-            }));
-            setDynamicModels(formattedModels);
-            console.log(`✓ Successfully loaded ${formattedModels.length} models from HuggingFace`);
+            const formattedModels = data.models
+              .filter((model: any) => model && model.modelTag) // Filter out invalid models
+              .map((model: any) => ({
+                value: (model.modelTag || '').toLowerCase().replace(/\//g, '-').replace(/\./g, '-'),
+                label: model.label || model.modelTag || 'Unknown Model',
+                modelTag: model.modelTag
+              }));
+            // Always prepend Nemotron as the first/default option
+            const nemotronModel = {
+              value: "nemotron-30b-fp8",
+              label: "NVIDIA Nemotron-3 Nano 30B",
+              modelTag: "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8"
+            };
+            setDynamicModels([nemotronModel, ...formattedModels]);
+            console.log(`✓ Successfully loaded ${formattedModels.length + 1} models (including Nemotron)`);
           } else {
-            console.warn('No models returned from API');
+            console.warn('No models returned from API, using fallback');
+            setIsLoadingModels(false);
           }
         } else {
           console.warn('API returned non-OK status:', response.status);
+          setIsLoadingModels(false);
         }
       } catch (error) {
         console.error('Failed to fetch dynamic models:', error);
         console.log('Using fallback model list');
         // Fallback to hardcoded models will be used
+        setIsLoadingModels(false);
       } finally {
         setIsLoadingModels(false);
       }
@@ -146,15 +157,16 @@ export default function WorkloadConfigWizard({
   ];
 
   const availableGPUInventory = [
-    { value: "DC", label: "NVIDIA RTX Pro 6000 BSE", desc: "96GB GDDR7 with ECC, Blackwell, passive‑cooled dual‑slot PCIe Gen5 – Enterprise AI/graphics, scientific computing & virtual workstations" },
-    { value: "l40s", label: "NVIDIA L40S", desc: "48GB GDDR6 with ECC, Ada Lovelace, 350W - ML training & inference + virtual workstations" },
-    { value: "l40", label: "NVIDIA L40", desc: "48GB GDDR6 with ECC, Ada Lovelace - Virtual workstations & compute workloads" },
-    { value: "l4", label: "NVIDIA L4", desc: "24GB GDDR6 with ECC, Ada Lovelace, 72W - AI inference, small model training & 3D graphics" },
-    { value: "a40", label: "NVIDIA A40", desc: "48GB GDDR6 with ECC, Ampere, 300W - 3D design & mixed virtual workstation workloads" },
+    { value: "BSE", label: "NVIDIA RTX Pro 6000 BSE", desc: "96GB GDDR7 with ECC, Blackwell, passive‑cooled dual‑slot PCIe Gen5 – Enterprise AI/graphics, scientific computing & virtual workstations" },
+    { value: "L40S", label: "NVIDIA L40S", desc: "48GB GDDR6 with ECC, Ada Lovelace, 350W - ML training & inference + virtual workstations" },
+    { value: "L40", label: "NVIDIA L40", desc: "48GB GDDR6 with ECC, Ada Lovelace - Virtual workstations & compute workloads" },
+    { value: "L4", label: "NVIDIA L4", desc: "24GB GDDR6 with ECC, Ada Lovelace, 72W - AI inference, small model training & 3D graphics" },
+    { value: "A40", label: "NVIDIA A40", desc: "48GB GDDR6 with ECC, Ampere, 300W - 3D design & mixed virtual workstation workloads" },
   ];
 
   // Fallback hardcoded models in case dynamic fetch fails
   const fallbackModels = [
+    { value: "nemotron-30b-fp8", label: "NVIDIA Nemotron-3 Nano 30B", modelTag: "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8" },
     { value: "llama-3-8b", label: "Llama-3-8B", modelTag: "meta-llama/Meta-Llama-3-8B-Instruct" },
     { value: "llama-3-70b", label: "Llama-3-70B", modelTag: "meta-llama/Meta-Llama-3-70B-Instruct" },
     { value: "llama-3.1-8b", label: "Llama-3.1-8B", modelTag: "meta-llama/Llama-3.1-8B-Instruct" },
@@ -170,8 +182,8 @@ export default function WorkloadConfigWizard({
   const specificModels = dynamicModels.length > 0 ? dynamicModels : fallbackModels;
 
   const precisionOptions = [
-    { value: "fp16", label: "FP16", desc: "Half precision - Recommended balance of performance and accuracy" },
-    { value: "fp8", label: "FP8", desc: "8-bit floating point - Higher performance with good accuracy" },
+    { value: "fp8", label: "FP8", desc: "8-bit floating point - Recommended for best performance with good accuracy" },
+    { value: "fp16", label: "FP16", desc: "Half precision - Higher accuracy, more memory usage" },
     { value: "fp4", label: "FP4", desc: "4-bit floating point - Maximum performance, lower accuracy" },
   ];
 
@@ -358,7 +370,7 @@ export default function WorkloadConfigWizard({
       parts.push(`with ${precisionLabel} precision`);
     } else {
       // Recommended precision
-      parts.push(`with FP16 precision`);
+      parts.push(`with FP8 precision`);
     }
     
     // Add retrieval configuration for RAG workloads
@@ -382,7 +394,20 @@ export default function WorkloadConfigWizard({
     // Determine the model tag to use
     let modelTagToUse = null;
     if (config.specificModel && config.specificModel !== 'unknown') {
+      // First try to find in dynamic/fallback models
       modelTagToUse = specificModels.find(m => m.value === config.specificModel)?.modelTag || null;
+      
+      // Hardcoded fallback for common models if lookup fails
+      if (!modelTagToUse) {
+        const modelTagFallbacks: Record<string, string> = {
+          'nemotron-30b-fp8': 'nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8',
+          'llama-3-8b': 'meta-llama/Meta-Llama-3-8B-Instruct',
+          'llama-3-70b': 'meta-llama/Meta-Llama-3-70B-Instruct',
+          'llama-3.1-8b': 'meta-llama/Llama-3.1-8B-Instruct',
+          'llama-3.1-70b': 'meta-llama/Llama-3.3-70B-Instruct',
+        };
+        modelTagToUse = modelTagFallbacks[config.specificModel] || config.specificModel;
+      }
     } else if (config.specificModel === 'unknown' && config.modelSize) {
       // Use default model for the size category
       modelTagToUse = getDefaultModelForSize(config.modelSize).modelTag;
@@ -398,14 +423,14 @@ export default function WorkloadConfigWizard({
       responseSize: config.responseSize ? parseInt(config.responseSize) : 256,
       embeddingModel: config.workloadType === 'rag' ? (config.embeddingModel || getRecommendedEmbeddingModel()) : null,
       gpuInventory: config.gpuInventory,
-      precision: config.precision || 'fp16',
+      precision: config.precision || 'fp8',
       // Add retrieval config for RAG
       ...(config.workloadType === 'rag' && {
         vectorDimension: config.vectorDimension ? parseInt(config.vectorDimension) : null,
         numberOfVectors: config.numberOfVectors ? parseInt(config.numberOfVectors) : null,
       }),
       // Add computed values for easier backend processing
-      selectedGPU: Object.keys(config.gpuInventory)[0] || 'DC',
+      selectedGPU: Object.keys(config.gpuInventory)[0] || 'BSE',
       gpuCount: Object.values(config.gpuInventory)[0] as number || 1,
       // Include advanced configuration
       advancedConfig: config.advancedConfig,
@@ -419,17 +444,17 @@ export default function WorkloadConfigWizard({
     const query = generateQuery();
     onSubmit(query);
     onClose();
-    // Reset form
+    // Reset form - use same defaults as initial state
     setConfig({
       workloadType: "",
-      specificModel: "",
+      specificModel: "nemotron-30b-fp8",  // Default to Nemotron model
       modelSize: "",
       batchSize: "",
       promptSize: "1024",
       responseSize: "256",
       embeddingModel: "nvidia/nvolveqa-embed-large-1B",
-      gpuInventory: { "DC": 1 },
-      precision: "fp16",
+      gpuInventory: { "BSE": 1 },
+      precision: "fp8",
       vectorDimension: "1024",  // Default to 1024 (matches default embedding model)
       numberOfVectors: "10000", // Default to 10,000
       advancedConfig: {
@@ -548,13 +573,10 @@ export default function WorkloadConfigWizard({
                       className="w-full p-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white mb-4"
                       disabled={isLoadingModels}
                     >
-                      <option value="" disabled>
-                        {isLoadingModels ? "Loading models from HuggingFace..." : "Select a specific model"}
-                      </option>
-                      <option value="unknown">Unknown / Not Sure</option>
                       {specificModels.map((model) => (
                         <option key={model.value} value={model.value}>{model.label}</option>
                       ))}
+                      <option value="unknown">Unknown / Not Sure</option>
                     </select>
                     {!isLoadingModels && dynamicModels.length > 0 && (
                       <p className="text-xs text-green-500 mb-2">✓ {dynamicModels.length} models loaded from HuggingFace</p>
@@ -705,12 +727,12 @@ export default function WorkloadConfigWizard({
                 <h4 className="text-sm font-medium text-white mb-2">GPU Selection</h4>
                 
                 <select
-                  value={Object.keys(config.gpuInventory)[0] || "DC"}
+                  value={Object.keys(config.gpuInventory)[0] || "BSE"}
                   onChange={(e) => {
                     // Clear existing inventory and set the new one
                     setConfig(prev => ({
                       ...prev,
-                      gpuInventory: e.target.value ? { [e.target.value]: 1 } : { "DC": 1 }
+                      gpuInventory: e.target.value ? { [e.target.value]: 1 } : { "BSE": 1 }
                     }));
                   }}
                   className="w-full px-3 py-2 rounded-md bg-neutral-800 border border-neutral-700 text-white text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"

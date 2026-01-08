@@ -112,7 +112,11 @@ def calculate_gpu_memory_utilization(
         return 0.9
     
     # Use recommended workload size if provided, otherwise extract from profile
+    # IMPORTANT: Add KV cache to workload - the calculator provides model memory only
     workload_memory_gb = recommended_workload_gb
+    if workload_memory_gb and kv_cache_gb:
+        workload_memory_gb = recommended_workload_gb + kv_cache_gb
+        logger.info(f"  Total workload = {recommended_workload_gb}GB (model) + {kv_cache_gb:.2f}GB (KV cache) = {workload_memory_gb:.2f}GB")
     
     if not workload_memory_gb:
         # Extract profile memory size from vGPU profile name (e.g., "DC-12Q" → 12)
@@ -753,6 +757,7 @@ async def deploy_vllm_local(config_request) -> AsyncGenerator[str, None]:
         
         # Build docker command - only include max-model-len if specified
         # Note: gpu_util may exceed 0.90 intentionally - vLLM will adapt KV cache to available memory
+        # Use vLLM v0.12.0+ for proper NemotronH (hybrid Mamba-Transformer) architecture support
         docker_cmd_parts = [
             "docker run -d --runtime nvidia --gpus all",
             f"--name {container_name}",
@@ -760,9 +765,10 @@ async def deploy_vllm_local(config_request) -> AsyncGenerator[str, None]:
             f'-e "HUGGING_FACE_HUB_TOKEN={hf_token}"',
             "-p 8000:8000",
             "--ipc=host",
-            "vllm/vllm-openai:latest",
+            "vllm/vllm-openai:v0.12.0",
             f"--model {model}",
-            f"--gpu-memory-utilization {gpu_util:.2f}"
+            f"--gpu-memory-utilization {gpu_util:.2f}",
+            "--trust-remote-code"
         ]
         
         # Only add max-model-len if explicitly specified (let vLLM auto-detect otherwise)
