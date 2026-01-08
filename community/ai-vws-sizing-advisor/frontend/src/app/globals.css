@@ -20,6 +20,30 @@ body {
   }
 }
 
+/* Green scrollbar only for chat messages area */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: #252525;
+  border-radius: 5px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: #76b900;
+  border-radius: 5px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #5a8c00;
+}
+
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #76b900 #252525;
+}
+
 @keyframes typing {
   0% {
     content: "";

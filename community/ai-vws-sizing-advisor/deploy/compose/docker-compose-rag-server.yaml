@@ -1,3 +1,14 @@
+# ============================================================================
+# CENTRALIZED MODEL CONFIGURATION
+# Change these values to use different models throughout the application
+# ============================================================================
+x-model-config:
+  # Chat/LLM Model Configuration
+  llm-model: &llm-model "nvidia/llama-3.3-nemotron-super-49b-v1"
+  
+  # Embedding Model Configuration
+  embedding-model: &embedding-model "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1"
+
 services:
 
   # Main orchestrator server which stiches together all calls to different services to fulfill the user request
@@ -35,25 +46,16 @@ services:
       VECTOR_DB_TOPK: ${VECTOR_DB_TOPK:-100}
 
       ##===LLM Model specific configurations===
-      APP_LLM_MODELNAME: ${APP_LLM_MODELNAME:-"meta/llama-3.1-8b-instruct"}
+      # Model name - pulls from centralized config at top of file (can be overridden by env var)
+      APP_LLM_MODELNAME: *llm-model
       # url on which llm model is hosted. If "", Nvidia hosted API is used
-      APP_LLM_SERVERURL: ${APP_LLM_SERVERURL-""}
-
-      ##===Query Rewriter Model specific configurations===
-      APP_QUERYREWRITER_MODELNAME: ${APP_QUERYREWRITER_MODELNAME:-"meta/llama-3.1-8b-instruct"}
-      # url on which query rewriter model is hosted. If "", Nvidia hosted API is used
-      APP_QUERYREWRITER_SERVERURL: ${APP_QUERYREWRITER_SERVERURL-"nim-llm-llama-8b-ms:8000"}
+      APP_LLM_SERVERURL: ${APP_LLM_SERVERURL:-""}
 
       ##===Embedding Model specific configurations===
+      # Model name - pulls from centralized config at top of file (can be overridden by env var)
+      APP_EMBEDDINGS_MODELNAME: *embedding-model
       # url on which embedding model is hosted. If "", Nvidia hosted API is used
-      APP_EMBEDDINGS_SERVERURL: ${APP_EMBEDDINGS_SERVERURL-""}
-      APP_EMBEDDINGS_MODELNAME: ${APP_EMBEDDINGS_MODELNAME:-nvidia/nv-embedqa-mistral-7b-v2}
-
-      ##===Reranking Model specific configurations===
-      # url on which ranking model is hosted. If "", Nvidia hosted API is used
-      APP_RANKING_SERVERURL: ${APP_RANKING_SERVERURL-""}
-      APP_RANKING_MODELNAME: ${APP_RANKING_MODELNAME:-nv-rerank-qa-mistral-4b:1}
-      ENABLE_RERANKER: ${ENABLE_RERANKER:-True}
+      APP_EMBEDDINGS_SERVERURL: ${APP_EMBEDDINGS_SERVERURL:-""}
 
       NVIDIA_API_KEY: ${NGC_API_KEY:?"NGC_API_KEY is required"}
 
@@ -65,7 +67,7 @@ services:
 
       # enable multi-turn conversation in the rag chain - this controls conversation history usage
       # while doing query rewriting and in LLM prompt
-      ENABLE_MULTITURN: ${ENABLE_MULTITURN:-False}
+      ENABLE_MULTITURN: ${ENABLE_MULTITURN:-True}
 
       # enable query rewriting for multiturn conversation in the rag chain.
       # This will improve accuracy of the retrieiver pipeline but increase latency due to an additional LLM call
@@ -139,10 +141,10 @@ services:
       context: ../../frontend
       dockerfile: ./Dockerfile
       args:
-        # Model name for LLM
-        NEXT_PUBLIC_MODEL_NAME: ${APP_LLM_MODELNAME:-meta/llama-3.1-8b-instruct}
-        # Model name for embeddings
-        NEXT_PUBLIC_EMBEDDING_MODEL: ${APP_EMBEDDINGS_MODELNAME:-nvidia/nv-embedqa-mistral-7b-v2}
+        # Model name for LLM - pulls from centralized config at top of file
+        NEXT_PUBLIC_MODEL_NAME: *llm-model
+        # Model name for embeddings - pulls from centralized config at top of file
+        NEXT_PUBLIC_EMBEDDING_MODEL: *embedding-model
         # Model name for reranking
         NEXT_PUBLIC_RERANKER_MODEL: ${APP_RANKING_MODELNAME:-nv-rerank-qa-mistral-4b:1}
         # URL for rag server container

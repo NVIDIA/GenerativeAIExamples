@@ -378,6 +378,8 @@ class VGPUCalculator:
             ModelSpec(name="Falcon-40B", params_billion=40, d_model=8192, n_layers=60),
             ModelSpec(name="Falcon-180B", params_billion=180, d_model=14848, n_layers=80),
             ModelSpec(name="Qwen-14B", params_billion=14, d_model=5120, n_layers=40),
+            # NVIDIA Nemotron model - 30B parameters
+            ModelSpec(name="nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8", params_billion=30, d_model=8192, n_layers=48),
         ]
         
         # Try to dynamically fetch popular models from HuggingFace
@@ -566,9 +568,23 @@ class VGPUCalculator:
     
     def _find_model(self, model_name: str) -> Optional[ModelSpec]:
         """Find model specification by name, fetching from HuggingFace if not found"""
-        # First, try to find in existing specs
+        # First, try exact match in existing specs
         for model in self.model_specs:
             if model.name == model_name or model.name.lower() == model_name.lower():
+                return model
+        
+        # Try partial match for common patterns
+        lower_name = model_name.lower()
+        for model in self.model_specs:
+            lower_model_name = model.name.lower()
+            # Check if model name appears in query OR query appears in model name
+            # e.g., "nemotron-30b-fp8" in "nvidia/nvidia-nemotron-3-nano-30b-a3b-fp8" OR vice versa
+            if lower_model_name in lower_name or lower_name in lower_model_name:
+                logging.info(f"Partial match found: '{model.name}' matches '{model_name}'")
+                return model
+            # Check for Nemotron patterns specifically (handles "nemotron-30b-fp8" -> "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8")
+            if 'nemotron' in lower_name and 'nemotron' in lower_model_name:
+                logging.info(f"Nemotron match found: '{model.name}' for '{model_name}'")
                 return model
         
         # If not found, try to create it dynamically from HuggingFace
@@ -594,7 +610,32 @@ class VGPUCalculator:
         except Exception as e:
             logging.warning(f"Could not extract model from '{model_name}': {e}")
         
-        return None
+        # Final fallback: Try to create a model spec from the name using parameter extraction
+        # This handles cases like "Llama-3-70B-Custom" where we can extract "70B"
+        params_billion = extract_model_params_from_name(model_name)
+        if params_billion:
+            logging.info(f"Creating dynamic model spec for '{model_name}' with {params_billion}B params")
+            estimated = estimate_model_spec_from_params(params_billion, model_name)
+            fallback_spec = ModelSpec(
+                name=model_name,
+                params_billion=params_billion,
+                n_layers=estimated.get('n_layers', 32),
+                d_model=estimated.get('d_model', 4096),
+                max_context_length=32768
+            )
+            self.model_specs.append(fallback_spec)
+            return fallback_spec
+        
+        # Absolute last resort: Use a default 8B model spec
+        logging.warning(f"Could not determine model specs for '{model_name}', using default 8B model")
+        default_spec = ModelSpec(
+            name=model_name,
+            params_billion=8.0,
+            n_layers=32,
+            d_model=4096,
+            max_context_length=32768
+        )
+        return default_spec
     
     def _find_gpu(self, gpu_name: str) -> Optional[GPUSpec]:
         """Find GPU specification by name"""
@@ -649,65 +690,57 @@ class VGPUCalculator:
     def _recommend_vgpu_profile(self, total_memory_needed: float, gpu_family: str, 
                                 safety_buffer_gb: float = 0.0) -> Dict[str, Any]:
         """
-        Recommend vGPU profile based on total memory needed with 5% headroom.
+        Recommend vGPU profile based on total memory needed with 5% headroom reserve.
         
-        CRITICAL RULE: Pick the SMALLEST profile where (profile × 0.95) >= total_memory_needed
-        This reserves 5% headroom to avoid running at 100% capacity.
+        CRITICAL RULE: Use vGPU profiles ONLY when workload fits in a SINGLE profile.
+        If workload exceeds max single profile capacity, use GPU passthrough.
         
         Logic:
-        - If total > (max_profile × 0.95): recommend passthrough
-        - Otherwise: find smallest profile where (profile × 0.95) >= total_memory_needed
+        1. If workload fits in single profile (workload ≤ profile × 0.95): use smallest fitting profile
+        2. If workload > max_profile × 0.95: recommend passthrough with N GPUs
         """
+        import math
         physical_memory = self._get_physical_gpu_memory(gpu_family)
         available_profiles = self._get_available_profiles(gpu_family)
         
         # Get max profile for this GPU family
         max_profile = max(available_profiles) if available_profiles else physical_memory
-        max_profile_usable = max_profile * 0.95  # 95% usable capacity
+        max_profile_usable = max_profile * 0.95  # 95% usable capacity (5% reserved)
+        usable_physical = physical_memory * 0.95  # 95% usable physical GPU memory
         
-        # Check if we need passthrough (exceeds max vGPU profile with 5% headroom)
-        if total_memory_needed > max_profile_usable:
-            # Calculate GPUs needed for passthrough
-            # Even with passthrough, reserve ~5% for driver/OS overhead to avoid running at 100%
-            import math
-            usable_per_gpu = physical_memory * 0.95  # 95% usable capacity per GPU
-            num_gpus_needed = math.ceil(total_memory_needed / usable_per_gpu)
-            return {
-                "type": "passthrough",
-                "profile": None,
-                "gpu_count": num_gpus_needed,
-                "profile_memory_gb": physical_memory,
-                "total_memory_available": physical_memory * num_gpus_needed,
-                "recommendation": f"{num_gpus_needed}x {gpu_family} passthrough (no vGPU profile)",
-                "reason": f"Workload requires {total_memory_needed:.1f}GB but max vGPU profile usable capacity is {max_profile_usable:.1f}GB ({max_profile}GB × 0.95). GPU passthrough provides ~95% usable capacity ({usable_per_gpu:.1f}GB per {physical_memory}GB GPU)."
-            }
-        
-        # Find smallest profile where (profile × 0.95) >= total_memory_needed
+        # Try to find smallest single profile that fits
         recommended_profile = None
-        
         for profile_size in sorted(available_profiles):
-            usable_capacity = profile_size * 0.95  # 5% headroom
+            usable_capacity = profile_size * 0.95  # 5% headroom reserved
             if usable_capacity >= total_memory_needed:
                 recommended_profile = profile_size
                 break
         
-        # If no profile found (shouldn't happen), use largest
-        if recommended_profile is None:
-            recommended_profile = max(available_profiles)
-            warning = f"Warning: No profile with enough capacity for {total_memory_needed:.1f}GB, using largest ({recommended_profile}GB)"
-        else:
-            warning = None
+        # If single profile found, use it
+        if recommended_profile is not None:
+            usable_capacity = recommended_profile * 0.95
+            return {
+                "type": "vgpu",
+                "profile": f"{gpu_family}-{recommended_profile}Q",
+                "gpu_count": 1,
+                "profile_memory_gb": recommended_profile,
+                "total_memory_available": recommended_profile,
+                "recommendation": f"1x {gpu_family}-{recommended_profile}Q vGPU profile",
+                "reason": f"Workload needs {total_memory_needed:.1f}GB, selected profile: {recommended_profile}GB (usable: {usable_capacity:.1f}GB with 5% reserved for system overhead)",
+                "warning": None
+            }
         
-        usable_capacity = recommended_profile * 0.95
+        # No single profile fits - use GPU passthrough
+        # Calculate GPUs needed based on physical GPU memory
+        num_gpus_needed = math.ceil(total_memory_needed / usable_physical)
         return {
-            "type": "vgpu",
-            "profile": f"{gpu_family}-{recommended_profile}Q",
-            "gpu_count": 1,
-            "profile_memory_gb": recommended_profile,
-            "total_memory_available": recommended_profile,
-            "recommendation": f"1x {gpu_family}-{recommended_profile}Q vGPU profile",
-            "reason": f"Workload needs {total_memory_needed:.1f}GB, selected profile: {recommended_profile}GB (usable: {usable_capacity:.1f}GB with 5% headroom)",
-            "warning": warning
+            "type": "passthrough",
+            "profile": None,
+            "gpu_count": num_gpus_needed,
+            "profile_memory_gb": physical_memory,
+            "total_memory_available": physical_memory * num_gpus_needed,
+            "recommendation": f"{num_gpus_needed}x {gpu_family} GPU passthrough",
+            "reason": f"Workload requires {total_memory_needed:.1f}GB which exceeds max vGPU profile capacity ({max_profile_usable:.1f}GB usable from {max_profile}GB profile). GPU passthrough with {num_gpus_needed} GPUs provides {physical_memory * num_gpus_needed}GB total capacity."
         }
 
 
@@ -892,9 +925,11 @@ class VGPUCalculator:
         config = request.advanced_config if request.advanced_config else AdvancedCalculatorConfig()
         
         # Find model
+        logging.info(f"Looking up model: '{request.model_name}'")
         model = self._find_model(request.model_name)
         if not model:
             raise ValueError(f"Model '{request.model_name}' not found. Available: {self.get_available_models()}")
+        logging.info(f"Found model: '{model.name}' with {model.params_billion}B params")
         
         # Get GPU family from vgpu_profile
         gpu = self._find_gpu(request.vgpu_profile)

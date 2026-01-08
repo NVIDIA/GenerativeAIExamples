@@ -244,6 +244,10 @@ class Prompt(BaseModel):
         description="Enable or disable citations as part of response.",
         default=os.getenv("ENABLE_CITATIONS", "True").lower() in ["true", "True"],
     )
+    conversational_mode: bool = Field(
+        description="Enable conversational mode for plain text responses instead of structured JSON output.",
+        default=False,
+    )
     model: str = Field(
         description="Name of NIM LLM model to be used for inference.",
         default=os.getenv("APP_LLM_MODELNAME", "").strip('"'),
@@ -905,14 +909,31 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
 
         # Helper function to escape JSON-like structures in content
         def escape_json_content(content: str) -> str:
-            """Escape curly braces in content to avoid JSON parsing issues"""
-            return content.replace("{", "{{").replace("}", "}}")
+            """Escape curly braces in content to avoid JSON parsing issues.
+            IMPORTANT: Preserve <!--VGPU_CONFIG:...--> embedded config as-is (don't escape)."""
+            import re
+            # Extract any embedded config first
+            config_match = re.search(r'<!--VGPU_CONFIG:(.+?)-->', content, re.DOTALL)
+            if config_match:
+                # Preserve the embedded config, escape the rest
+                before = content[:config_match.start()]
+                config_section = config_match.group(0)  # The entire <!--VGPU_CONFIG:...-->
+                after = content[config_match.end():]
+                escaped_before = before.replace("{", "{{").replace("}", "}}")
+                escaped_after = after.replace("{", "{{").replace("}", "}}")
+                return escaped_before + config_section + escaped_after
+            else:
+                return content.replace("{", "{{").replace("}", "}}")
 
         # The last user message will be the query for the rag or llm chain
         last_user_message = next((message.content for message in reversed(chat_history) if message.role == 'user'),
                                 None)
+        # DEBUG: Log raw message before escape
+        logger.info(f"[RAW MESSAGE DEBUG] Raw last_user_message (first 500 chars): {last_user_message[:500] if last_user_message else 'None'}")
+        logger.info(f"[RAW MESSAGE DEBUG] Contains VGPU_CONFIG: {'<!--VGPU_CONFIG:' in (last_user_message or '')}")
         if last_user_message:
             last_user_message = escape_json_content(last_user_message)
+        logger.info(f"[ESCAPED MESSAGE DEBUG] After escape (first 500 chars): {last_user_message[:500] if last_user_message else 'None'}")
 
         # Process chat history and escape JSON-like structures
         processed_chat_history = []
@@ -970,6 +991,11 @@ async def generate_answer(request: Request, prompt: Prompt) -> StreamingResponse
                         # Try to parse chunk as JSON (structured output)
                         try:
                             structured_data = json.loads(chunk)
+                            
+                            # Only process as structured JSON if it's a dict with expected keys
+                            if not isinstance(structured_data, dict) or not structured_data.get("title"):
+                                # Not a structured vGPU config response - treat as plain text
+                                raise json.JSONDecodeError("Not a structured JSON object", chunk, 0)
                             
                             # Log vGPU configuration metadata for debugging/monitoring
                             if structured_data.get("title"):
@@ -1210,8 +1236,21 @@ async def generate_structured_answer(request: Request, prompt: Prompt) -> JSONRe
 
         # Helper function to escape JSON-like structures in content
         def escape_json_content(content: str) -> str:
-            """Escape curly braces in content to avoid JSON parsing issues"""
-            return content.replace("{", "{{").replace("}", "}}")
+            """Escape curly braces in content to avoid JSON parsing issues.
+            IMPORTANT: Preserve <!--VGPU_CONFIG:...--> embedded config as-is (don't escape)."""
+            import re
+            # Extract any embedded config first
+            config_match = re.search(r'<!--VGPU_CONFIG:(.+?)-->', content, re.DOTALL)
+            if config_match:
+                # Preserve the embedded config, escape the rest
+                before = content[:config_match.start()]
+                config_section = config_match.group(0)  # The entire <!--VGPU_CONFIG:...-->
+                after = content[config_match.end():]
+                escaped_before = before.replace("{", "{{").replace("}", "}}")
+                escaped_after = after.replace("{", "{{").replace("}", "}}")
+                return escaped_before + config_section + escaped_after
+            else:
+                return content.replace("{", "{{").replace("}", "}}")
 
         # The last user message will be the query for the rag or llm chain
         last_user_message = next((message.content for message in reversed(chat_history) if message.role == 'user'),

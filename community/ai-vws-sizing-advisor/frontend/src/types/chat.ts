@@ -62,4 +62,5 @@ export interface GenerateRequest {
   reranker_model?: string;
   reranker_endpoint?: string;
   stop?: string[];
+  conversational_mode?: boolean;
 }

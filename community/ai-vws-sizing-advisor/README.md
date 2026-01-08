@@ -1,17 +1,66 @@
 # AI vWS Sizing Advisor
 
+<p align="center">
+  <img src="deployment_examples/example_rag_config.png" alt="AI vWS Sizing Advisor" width="800">
+</p>
+
+<p align="center">
+  <strong>RAG-powered vGPU sizing recommendations for AI Virtual Workstations</strong><br>
+  Powered by NVIDIA NeMo™ and Nemotron models
+</p>
+
+<p align="center">
+  <a href="https://docs.nvidia.com/vgpu/toolkits/sizing-advisor/latest/intro.html">Official Documentation</a> •
+  <a href="#demo">Demo</a> •
+  <a href="#deployment">Quick Start</a> •
+  <a href="./CHANGELOG.md">Changelog</a>
+</p>
+
+---
+
 ## Overview
 
 AI vWS Sizing Advisor is a RAG-powered tool that helps you determine the optimal NVIDIA vGPU sizing configuration for AI workloads on NVIDIA AI Virtual Workstation (AI vWS). Using NVIDIA vGPU documentation and best practices, it provides tailored recommendations for optimal performance and resource efficiency.
 
+### Powered by NVIDIA Nemotron
+
+This tool leverages **NVIDIA Nemotron models** for intelligent sizing recommendations:
+
+- **[Llama-3.3-Nemotron-Super-49B](https://build.nvidia.com/nvidia/llama-3_3-nemotron-super-49b-v1)** — Powers the RAG backend for intelligent conversational sizing guidance
+- **[Nemotron-3 Nano 30B](https://build.nvidia.com/nvidia/nvidia-nemotron-3-nano-30b-a3b-fp8)** — Default model for workload sizing calculations (FP8 optimized)
+
+### Key Capabilities
+
 Enter your workload requirements and receive validated recommendations including:
 
-- **vGPU Profile** - Recommended profile (e.g., L40S-24Q) based on your workload
-- **Resource Requirements** - vCPUs, GPU memory, system RAM needed
-- **Performance Estimates** - Expected latency, throughput, and time to first token
-- **Live Testing** - Instantly deploy and validate your configuration locally using vLLM containers
+- **vGPU Profile** — Recommended profile (e.g., L40S-24Q) based on your workload
+- **Resource Requirements** — vCPUs, GPU memory, system RAM needed
+- **Performance Estimates** — Expected latency, throughput, and time to first token
+- **Live Testing** — Instantly deploy and validate your configuration locally using vLLM containers
 
 The tool differentiates between RAG and inference workloads by accounting for embedding vectors and database overhead. It intelligently suggests GPU passthrough when jobs exceed standard vGPU profile limits.
+
+---
+
+## Demo
+
+### Configuration Wizard
+
+Configure your workload parameters including model selection, GPU type, quantization, and token sizes:
+
+<p align="center">
+  <img src="deployment_examples/configuration_wizard.png" alt="Configuration Wizard" width="700">
+</p>
+
+### Local Deployment Verification
+
+Validate your configuration by deploying a vLLM container locally and comparing actual GPU memory usage against estimates:
+
+<p align="center">
+  <img src="deployment_examples/local_deployment.png" alt="Local Deployment" width="700">
+</p>
+
+---
 
 ## Prerequisites
 
@@ -44,8 +93,10 @@ docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
 > **Note:** Docker must be at `/usr/bin/docker` (verified in `deploy/compose/docker-compose-rag-server.yaml`). User must be in docker group or have socket permissions.
 
 ### API Keys
-- **NVIDIA Build API Key** (Required) - [Get your key](https://build.nvidia.com/settings/api-keys)
-- **HuggingFace Token** (Optional) - [Create token](https://huggingface.co/settings/tokens) for gated models
+- **NVIDIA Build API Key** (Required) — [Get your key](https://build.nvidia.com/settings/api-keys)
+- **HuggingFace Token** (Optional) — [Create token](https://huggingface.co/settings/tokens) for gated models
+
+---
 
 ## Deployment
 
@@ -74,27 +125,31 @@ npm install
 npm run dev
 ```
 
+---
+
 ## Usage
 
-2. **Select Workload Type:** RAG or Inference
+1. **Select Workload Type:** RAG or Inference
 
-3. **Enter Parameters:**
-   - Model name (e.g., `meta-llama/Llama-2-7b-chat-hf`)
+2. **Enter Parameters:**
+   - Model name (default: **Nemotron-3 Nano 30B FP8**)
    - GPU type
    - Prompt size (input tokens)
    - Response size (output tokens)
-   - Quantization (FP16, INT8, INT4)
+   - Quantization (FP16, FP8, INT8, INT4)
    - For RAG: Embedding model and vector dimensions
 
-4. **View Recommendations:**
+3. **View Recommendations:**
    - Recommended vGPU profiles
    - Resource requirements (vCPUs, RAM, GPU memory)
    - Performance estimates
 
-5. **Test Locally** (optional):
+4. **Test Locally** (optional):
    - Run local inference with a containerized vLLM server
    - View performance metrics
    - Compare actual results versus suggested profile configuration
+
+---
 
 ## Management Commands
 
@@ -120,6 +175,8 @@ The stop script automatically performs Docker cleanup operations:
 - Optionally removes dangling images (`--cleanup-images`)
 - Optionally removes all data volumes (`--volumes`)
 
+---
+
 ## Adding Documents to RAG Context
 
 The tool includes NVIDIA vGPU documentation by default. To add your own:
@@ -134,8 +191,7 @@ curl -X POST -F "file=@./vgpu_docs/your-document.pdf" http://localhost:8082/v1/i
 
 **Supported formats:** PDF, TXT, DOCX, HTML, PPTX
 
-
-
+---
 
 ## License
 
@@ -145,6 +201,6 @@ Models governed by [NVIDIA AI Foundation Models Community License](https://docs.
 
 ---
 
-**Version:** 2.2 (November 2025) - See [CHANGELOG.md](./CHANGELOG.md)
+**Version:** 2.3 (January 2026) — See [CHANGELOG.md](./CHANGELOG.md)
 
-**Support:** [GitHub Issues](https://github.com/NVIDIA/GenerativeAIExamples/issues) | [NVIDIA Forums](https://forums.developer.nvidia.com/)
+**Support:** [GitHub Issues](https://github.com/NVIDIA/GenerativeAIExamples/issues) | [NVIDIA Forums](https://forums.developer.nvidia.com/) | [Official Docs](https://docs.nvidia.com/vgpu/toolkits/sizing-advisor/latest/intro.html)

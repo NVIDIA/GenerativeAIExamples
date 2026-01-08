@@ -90,6 +90,14 @@ docker_login() {
 setup_environment() {
     print_info "Setting up environment..."
     
+    # Source centralized model configuration first (highest priority)
+    if [ -f "$COMPOSE_DIR/model_config.env" ]; then
+        set -a
+        source "$COMPOSE_DIR/model_config.env"
+        set +a
+        print_status "Loaded centralized model configuration"
+    fi
+    
     # Source .env file
     if [ -f "$COMPOSE_DIR/.env" ]; then
         set -a
@@ -253,6 +261,11 @@ show_status() {
     echo "  • Ingestor API: http://localhost:8082"
     echo "  • Milvus:       http://localhost:9011"
     echo ""
+    echo -e "${BLUE}🤖 AI Models:${NC}"
+    echo "  • Chat/LLM:     ${APP_LLM_MODELNAME:-nvidia/llama-3.3-nemotron-super-49b-v1}"
+    echo "  • Embedding:    ${APP_EMBEDDINGS_MODELNAME:-nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1}"
+    echo "  • Config File:  deploy/compose/model_config.env"
+    echo ""
     echo -e "${BLUE}📚 Knowledge Base:${NC}"
     echo "  • Collection: vgpu_knowledge_base"
     echo "  • Location:   ./vgpu_docs"
@@ -274,6 +287,7 @@ show_status() {
     echo "  • Stop Backend:    ./scripts/stop_app.sh"
     echo "  • Restart App:     ./scripts/restart_app.sh"
     echo "  • Logs:            docker logs -f rag-server"
+    echo "  • Change Models:   Edit deploy/compose/model_config.env"
     echo ""
 }
 
