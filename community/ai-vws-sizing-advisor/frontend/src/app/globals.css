@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --nv-green: #76b900;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
+
+/* Green scrollbar only for chat messages area */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: #252525;
+  border-radius: 5px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: #76b900;
+  border-radius: 5px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #5a8c00;
+}
+
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #76b900 #252525;
+}
+
+@keyframes typing {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+}
+
+.typing-dots::after {
+  content: "";
+  display: inline-block;
+  animation: typing 1.5s infinite;
+}
