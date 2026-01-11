@@ -1,6 +1,0 @@
-.env
-.venv/
-__pycache__/
-*.txt
-!requirements.txt
-.DS_Store
