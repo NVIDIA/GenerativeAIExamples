@@ -1,6 +1,6 @@
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from binary_score_models import GradeAnswer,GradeDocuments,GradeHallucinations
 import os
 from dotenv import load_dotenv
@@ -41,7 +41,7 @@ class Nodeoutputs:
                 ("human", self.prompts["grade_human"]),
             ]
         )
-        self.retrieval_grader = grade_prompt | self.llm.with_structured_output(GradeDocuments)
+        self.retrieval_grader = grade_prompt | self.llm | StrOutputParser() | (lambda text: text.split("</think>")[-1] if "</think>" in text else text) | JsonOutputParser()
 
         hallucination_prompt = ChatPromptTemplate.from_messages(
             [
@@ -49,7 +49,7 @@ class Nodeoutputs:
                 ("human", self.prompts["hallucination_human"]),
             ]
         )
-        self.hallucination_grader = hallucination_prompt | self.llm.with_structured_output(GradeHallucinations)
+        self.hallucination_grader = hallucination_prompt | self.llm | StrOutputParser() | (lambda text: text.split("</think>")[-1] if "</think>" in text else text) | JsonOutputParser()
 
         answer_prompt = ChatPromptTemplate.from_messages(
             [
@@ -57,7 +57,7 @@ class Nodeoutputs:
                 ("human", self.prompts["answer_human"]),
             ]
         )
-        self.answer_grader = answer_prompt | self.llm.with_structured_output(GradeAnswer)
+        self.answer_grader = answer_prompt | self.llm | StrOutputParser() | (lambda text: text.split("</think>")[-1] if "</think>" in text else text) | JsonOutputParser()
 
     def format_docs(self, docs):
         return "\n\n".join(doc.page_content for doc in docs)
