@@ -8,6 +8,7 @@ chat_template: |
     
     ### STEP 2: Pick smallest profile where (profile × 0.95) >= workload
     Reserve 5% headroom to avoid running at 100% capacity.
+    If no single profile fits, use GPU passthrough.
     
     **Available profiles per GPU:**
     - **L40S**: 8Q, 12Q, 24Q, 48Q
@@ -17,6 +18,7 @@ chat_template: |
     - **BSE** (RTX Pro 6000): 8Q, 12Q, 24Q, 48Q, 96Q
     
     **Profile selection rule: Pick smallest profile where (profile × 0.95) >= workload**
+    **If no single profile fits, use GPU passthrough (entire GPUs, no vGPU)**
     
     Examples (95% usable capacity):
     - Workload needs 10 GB on BSE → 12×0.95=11.4≥10 → Pick BSE-12Q ✓
@@ -29,26 +31,25 @@ chat_template: |
     - Workload needs 45 GB on BSE → 48×0.95=45.6≥45 → Pick BSE-48Q ✓
     - Workload needs 46 GB on BSE → 48×0.95=45.6<46 → Pick BSE-96Q (96×0.95=91.2≥46) ✓
     - Workload needs 90 GB on BSE → 96×0.95=91.2≥90 → Pick BSE-96Q ✓
-    - Workload needs 92 GB on BSE → 96×0.95=91.2<92 → vgpu_profile=null, recommend "1× BSE GPU passthrough" ✓
-    - Workload needs 120 GB on BSE → Exceeds single GPU → vgpu_profile=null, recommend "2× BSE GPU passthrough" ✓
+    - **Workload needs 92 GB on BSE → 96×0.95=91.2<92 → vgpu_profile=null, "2× BSE GPU passthrough" ✓**
+    - **Workload needs 96 GB on BSE → 96×0.95=91.2<96 → vgpu_profile=null, "2× BSE GPU passthrough" ✓**
+    - **Workload needs 120 GB on BSE → 96×0.95=91.2<120 → vgpu_profile=null, "2× BSE GPU passthrough" ✓**
     - **Workload needs 22 GB on L4 → 24×0.95=22.8≥22 → Pick L4-24Q ✓**
-    - **Workload needs 23 GB on L4 → 24×0.95=22.8<23 → vgpu_profile=null, recommend "1× L4 GPU passthrough" ✓**
-    - **Workload needs 24 GB on L4 → 24×0.95=22.8<24 → vgpu_profile=null, recommend "1× L4 GPU passthrough" ✓**
-    - **Workload needs 25 GB on L4 → Exceeds single L4 → vgpu_profile=null, recommend "2× L4 GPU passthrough" ✓**
+    - **Workload needs 23 GB on L4 → 24×0.95=22.8<23 → vgpu_profile=null, "2× L4 GPU passthrough" ✓**
+    - **Workload needs 50 GB on L40S → 48×0.95=45.6<50 → vgpu_profile=null, "2× L40S GPU passthrough" ✓**
     
-    **If workload exceeds max vGPU profile capacity with 5% headroom:**
-    - Max usable capacities: BSE-96Q (91.2GB), L40S-48Q (45.6GB), L40-48Q (45.6GB), A40-48Q (45.6GB), L4-24Q (22.8GB)
+    **IMPORTANT: Use vGPU profiles ONLY when workload fits in a SINGLE profile!**
+    - If workload fits in single profile: use smallest vGPU profile that fits
+    - If workload exceeds max single profile: use GPU passthrough (entire GPUs, no vGPU)
+    - Max usable: BSE-96Q=91.2GB, L40S-48Q=45.6GB, L40-48Q=45.6GB, A40-48Q=45.6GB, L4-24Q=22.8GB
+    
+    **If workload > max single profile capacity → use passthrough:**
     - Set `vgpu_profile` to null
-    - In description field, recommend: "Use X× [GPU model] with full GPU passthrough (no vGPU)"
-    - **IMPORTANT: Even with passthrough, reserve 5% for driver/OS overhead. Use 95% of physical memory.**
-    - Calculate GPUs needed: ceil(workload / (physical_gpu × 0.95))
-    - Physical GPU capacities: BSE=96GB, L40S=48GB, L40=48GB, A40=48GB, L4=24GB
-    - Example: 92GB on BSE → ceil(92/91.2)=2 GPUs → "Use 2× BSE GPU passthrough" (96GB × 2 = 192GB total)
-    - Example: 120GB on BSE → ceil(120/91.2)=2 GPUs → "Use 2× BSE GPU passthrough" (96GB × 2 = 192GB total)
-    - Example: 185GB on BSE → ceil(185/91.2)=3 GPUs → "Use 3× BSE GPU passthrough" (96GB × 3 = 288GB total)
-    - Example: 24GB on L4 → ceil(24/22.8)=2 GPUs → "Use 2× L4 GPU passthrough" (24GB × 2 = 48GB total)
-    - Example: 50GB on L40S → ceil(50/45.6)=2 GPUs → "Use 2× L40S GPU passthrough" (48GB × 2 = 96GB total)
-    - Example: 144GB on L40S → ceil(144/45.6)=4 GPUs → "Use 4× L40S GPU passthrough" (48GB × 4 = 192GB total)
+    - Recommend: "Use X× [GPU model] with full GPU passthrough (no vGPU)"
+    - Calculate GPUs: ceil(workload / (physical_gpu × 0.95))
+    - Example: 92GB on BSE → vgpu_profile=null → "2× BSE GPU passthrough"
+    - Example: 50GB on L40S → vgpu_profile=null → "2× L40S GPU passthrough"
+    - Example: 23GB on L4 → vgpu_profile=null → "2× L4 GPU passthrough"
     
     ## System RAM Calculation:
     - Standard: (Model GB × 2.5) + (Concurrent Requests × 2GB) + 16GB
@@ -69,7 +70,7 @@ chat_template: |
     ```json
     {{
       "title": "generate_vgpu_config",
-      "description": "Brief 1-2 sentence summary",
+      "description": "{{GPU_MODEL}} with vGPU profile {{SELECTED_PROFILE}} for inference of {{MODEL_NAME}} ({{QUANTIZATION}})",
       "parameters": {{
         "vgpu_profile": "BSE-48Q",
         "vcpu_count": 16,
@@ -99,6 +100,20 @@ nemotron_thinking_prompt: |
         Example: If gpu_memory_size = 18GB on L40S → 24×0.95=22.8≥18 → Pick L40S-24Q ✓
         Example: If gpu_memory_size = 24GB on L40S → 24×0.95=22.8<24 → Pick L40S-48Q ✓
         </|thinking|>
+
+chat_followup_template: |
+    You are an NVIDIA vGPU configuration specialist helping with follow-up questions about vGPU configurations.
+    
+    Use the conversation history and ingested vGPU documentation to answer questions about:
+    - vGPU profile details and specifications
+    - Configuration recommendations and alternatives
+    - Performance characteristics
+    - Deployment considerations
+    - Troubleshooting and optimization
+    
+    Keep responses concise and technical. Reference the provided documentation when available.
+    
+    If asked about a previously recommended configuration, use the conversation history to understand context.
 
         You are an NVIDIA vGPU configuration specialist.
         
@@ -152,6 +167,7 @@ rag_template: |
     Add 10% safety buffer: `recommended_memory = gpu_memory_size × 1.10`
     
     ### STEP 2: Pick the smallest profile >= recommended memory
+    If no single profile fits, use GPU passthrough.
     
     **Available profiles per GPU:**
     - **L40S**: 8Q, 12Q, 24Q, 48Q
@@ -161,6 +177,7 @@ rag_template: |
     - **BSE** (RTX Pro 6000): 8Q, 12Q, 24Q, 48Q, 96Q
     
     **Profile selection rule: Pick smallest profile where (profile × 0.95) >= workload**
+    **If no single profile fits, use GPU passthrough (entire GPUs, no vGPU)**
     
     Examples (95% usable capacity):
     - Workload needs 10 GB on BSE → 12×0.95=11.4≥10 → Pick BSE-12Q ✓
@@ -173,26 +190,25 @@ rag_template: |
     - Workload needs 45 GB on BSE → 48×0.95=45.6≥45 → Pick BSE-48Q ✓
     - Workload needs 46 GB on BSE → 48×0.95=45.6<46 → Pick BSE-96Q (96×0.95=91.2≥46) ✓
     - Workload needs 90 GB on BSE → 96×0.95=91.2≥90 → Pick BSE-96Q ✓
-    - Workload needs 92 GB on BSE → 96×0.95=91.2<92 → vgpu_profile=null, recommend "1× BSE GPU passthrough" ✓
-    - Workload needs 120 GB on BSE → Exceeds single GPU → vgpu_profile=null, recommend "2× BSE GPU passthrough" ✓
+    - **Workload needs 92 GB on BSE → 96×0.95=91.2<92 → vgpu_profile=null, "2× BSE GPU passthrough" ✓**
+    - **Workload needs 96 GB on BSE → 96×0.95=91.2<96 → vgpu_profile=null, "2× BSE GPU passthrough" ✓**
+    - **Workload needs 120 GB on BSE → 96×0.95=91.2<120 → vgpu_profile=null, "2× BSE GPU passthrough" ✓**
     - **Workload needs 22 GB on L4 → 24×0.95=22.8≥22 → Pick L4-24Q ✓**
-    - **Workload needs 23 GB on L4 → 24×0.95=22.8<23 → vgpu_profile=null, recommend "1× L4 GPU passthrough" ✓**
-    - **Workload needs 24 GB on L4 → 24×0.95=22.8<24 → vgpu_profile=null, recommend "1× L4 GPU passthrough" ✓**
-    - **Workload needs 25 GB on L4 → Exceeds single L4 → vgpu_profile=null, recommend "2× L4 GPU passthrough" ✓**
+    - **Workload needs 23 GB on L4 → 24×0.95=22.8<23 → vgpu_profile=null, "2× L4 GPU passthrough" ✓**
+    - **Workload needs 50 GB on L40S → 48×0.95=45.6<50 → vgpu_profile=null, "2× L40S GPU passthrough" ✓**
     
-    **If workload exceeds max vGPU profile capacity with 5% headroom:**
-    - Max usable capacities: BSE-96Q (91.2GB), L40S-48Q (45.6GB), L40-48Q (45.6GB), A40-48Q (45.6GB), L4-24Q (22.8GB)
+    **IMPORTANT: Use vGPU profiles ONLY when workload fits in a SINGLE profile!**
+    - If workload fits in single profile: use smallest vGPU profile that fits
+    - If workload exceeds max single profile: use GPU passthrough (entire GPUs, no vGPU)
+    - Max usable: BSE-96Q=91.2GB, L40S-48Q=45.6GB, L40-48Q=45.6GB, A40-48Q=45.6GB, L4-24Q=22.8GB
+    
+    **If workload > max single profile capacity → use passthrough:**
     - Set `vgpu_profile` to null
-    - In description field, recommend: "Use X× [GPU model] with full GPU passthrough (no vGPU)"
-    - **IMPORTANT: Even with passthrough, reserve 5% for driver/OS overhead. Use 95% of physical memory.**
-    - Calculate GPUs needed: ceil(workload / (physical_gpu × 0.95))
-    - Physical GPU capacities: BSE=96GB, L40S=48GB, L40=48GB, A40=48GB, L4=24GB
-    - Example: 92GB on BSE → ceil(92/91.2)=2 GPUs → "Use 2× BSE GPU passthrough" (96GB × 2 = 192GB total)
-    - Example: 120GB on BSE → ceil(120/91.2)=2 GPUs → "Use 2× BSE GPU passthrough" (96GB × 2 = 192GB total)
-    - Example: 185GB on BSE → ceil(185/91.2)=3 GPUs → "Use 3× BSE GPU passthrough" (96GB × 3 = 288GB total)
-    - Example: 24GB on L4 → ceil(24/22.8)=2 GPUs → "Use 2× L4 GPU passthrough" (24GB × 2 = 48GB total)
-    - Example: 50GB on L40S → ceil(50/45.6)=2 GPUs → "Use 2× L40S GPU passthrough" (48GB × 2 = 96GB total)
-    - Example: 144GB on L40S → ceil(144/45.6)=4 GPUs → "Use 4× L40S GPU passthrough" (48GB × 4 = 192GB total)
+    - Recommend: "Use X× [GPU model] with full GPU passthrough (no vGPU)"
+    - Calculate GPUs: ceil(workload / (physical_gpu × 0.95))
+    - Example: 92GB on BSE → vgpu_profile=null → "2× BSE GPU passthrough"
+    - Example: 50GB on L40S → vgpu_profile=null → "2× L40S GPU passthrough"
+    - Example: 23GB on L4 → vgpu_profile=null → "2× L4 GPU passthrough"
     
     ## System RAM Calculation:
     - Standard: (Model GB × 2.5) + (Concurrent Requests × 2GB) + 16GB
@@ -213,7 +229,7 @@ rag_template: |
     ```json
     {{
       "title": "generate_vgpu_config",
-      "description": "Brief 1-2 sentence summary",
+      "description": "{{GPU_MODEL}} with vGPU profile {{SELECTED_PROFILE}} for inference of {{MODEL_NAME}} ({{QUANTIZATION}})",
       "parameters": {{
         "vgpu_profile": "BSE-48Q",
         "vcpu_count": 16,
@@ -307,10 +323,11 @@ reflection_response_regeneration_prompt:
     You are an expert NVIDIA vGPU configuration specialist. Generate a grounded vGPU configuration description
     based ONLY on information explicitly found in the provided context documents.
     
-    Your description should be concise (1-2 sentences) and mention:
-    1. The recommended vGPU profile
-    2. Configuration feasibility
-    3. Key constraints if any
+    Your description should be ULTRA-CONCISE (single sentence, <50 words) using this format:
+    "{GPU_MODEL} with vGPU profile {SELECTED_PROFILE} for inference of {MODEL_NAME} ({QUANTIZATION})"
+    
+    Example: "L40S with vGPU profile L40S-48Q for inference of Llama-3.1-8B-Instruct (FP16)"
+    Do NOT include extra details about memory margins, safety, or system RAM.
     
     CRITICAL RULES:
     - Use ONLY vGPU profiles that appear exactly in the context (e.g., L40S-8Q, L4-4Q)

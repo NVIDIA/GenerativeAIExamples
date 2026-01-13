@@ -19,9 +19,9 @@ import { createContext, useContext, useState, ReactNode } from "react";
 import { Citation } from "@/types/chat";
 
 interface SidebarContextType {
-  activePanel: "citations" | "settings" | null;
+  activePanel: "citations" | "settings" | "chat" | null;
   activeCitations: Citation[];
-  toggleSidebar: (panel: "citations" | "settings") => void;
+  toggleSidebar: (panel: "citations" | "settings" | "chat") => void;
   closeSidebar: () => void;
   setActiveCitations: (citations: Citation[]) => void;
 }
@@ -30,11 +30,11 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [activePanel, setActivePanel] = useState<
-    "citations" | "settings" | null
+    "citations" | "settings" | "chat" | null
   >(null);
   const [activeCitations, setActiveCitations] = useState<Citation[]>([]);
 
-  const toggleSidebar = (panel: "citations" | "settings") => {
+  const toggleSidebar = (panel: "citations" | "settings" | "chat") => {
     setActivePanel(activePanel === panel ? null : panel);
   };
 
