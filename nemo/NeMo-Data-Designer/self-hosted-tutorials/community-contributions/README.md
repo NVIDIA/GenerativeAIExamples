@@ -29,3 +29,4 @@
 | [text-to-python.ipynb](./text-to-code/text-to-python.ipynb) | Text-to-Code        | Generate Python code from natural language instructions with validation and evaluation |
 | [text-to-python-evol.ipynb](./text-to-code/text-to-python-evol.ipynb) | Text-to-Code        | Build advanced Python code generation with evolutionary improvements and iterative refinement |
 | [text-to-sql.ipynb](./text-to-code/text-to-sql.ipynb) | Text-to-Code        | Create SQL queries from natural language descriptions with validation and testing |
+| [japanese_commonsense_qa_data_generator_nemotron_persona_jp_seed.ipynb](./nemotron-persona-jp/japanese_commonsense_qa_data_generator_nemotron_persona_jp_seed.ipynb) | Text-to-Code        | Create SQL queries from natural language descriptions with validation and testing |
