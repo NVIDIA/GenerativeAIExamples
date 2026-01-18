@@ -50,7 +50,7 @@ class Nodes:
             score = automation.retrieval_grader.invoke(
                 {"question": question, "document": doc.page_content}
             )
-            grade = score.binary_score
+            grade = score.get("binary_score") if score else "no"
             if grade == "yes":
                 print("---GRADE: DOCUMENT RELEVANT---")
                 filtered_docs.append(doc)
