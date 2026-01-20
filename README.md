@@ -90,13 +90,13 @@ Follow the links below to learn more:
 
 Experience NVIDIA RAG Pipelines with just a few steps!
 
-1. Get your NVIDIA API key.
+1. Get your NVIDIA NGC API key.
    1. Go to the [NVIDIA API Catalog](https://build.ngc.nvidia.com/explore/).
    1. Select any model.
    1. Click **Get API Key**.
    1. Run:
       ```console
-      export NVIDIA_API_KEY=nvapi-...
+      export NGC_API_KEY=nvapi-...
       ``` 
 
 1. Clone the repository.
@@ -112,7 +112,7 @@ Experience NVIDIA RAG Pipelines with just a few steps!
    docker compose up -d --build
    ```
 
-1. Go to <https://localhost:8090/> and submit queries to the sample RAG Playground.
+1. Go to <http://localhost:8090/> and submit queries to the sample RAG Playground.
 
 1. Stop containers when done. 
   
