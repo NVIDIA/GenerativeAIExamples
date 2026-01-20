@@ -65,8 +65,16 @@ class Nodeoutputs:
 # Usage
 
 
-# Access the API key from environment variables
-api_key = os.getenv('API_KEY')
+# Access the API key from environment variables preferring the well known environemnt variables.
+# Finally falling back to the .env environment variable within this repo
+api_key = (
+    os.getenv('NVIDIA_API_KEY') or
+    os.getenv('NGC_API_KEY') or
+    os.getenv('API_KEY')
+)
+if not api_key:
+    raise RuntimeError("No NVIDIA API key found. Set one of NVIDIA_API_KEY, or NGC_API_KEY, or .env based API_KEY in your environment.")
+
 model = "nvidia/llama-3.3-nemotron-super-49b-v1.5"
 prompts_file = "prompt.json"
 automation = Nodeoutputs(api_key, model, prompts_file)
