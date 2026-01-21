@@ -19,4 +19,7 @@ dependencies = [
     "rich>=13.7.1",
     "pillow",
     "nemo-microservices[data-designer]",
+    "langchain",
+    "smart_open",
+    "unstructured[pdf]",
 ]
