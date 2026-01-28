@@ -1,0 +1,19 @@
+[project]
+name = "kimi-vision-agent"
+version = "0.1.0"
+description = "ML Paper to Webpage Generator using Kimi K2.5 via NVIDIA AI endpoints"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain-nvidia-ai-endpoints>=0.3.0",
+    "langgraph>=0.2.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.27.0",
+    "pillow>=10.0.0",
+    "pypdfium2>=4.0.0",
+    "jupyter>=1.0.0",
+    "ipykernel>=6.0.0",
+]
+
+[tool.uv]
+package = false
