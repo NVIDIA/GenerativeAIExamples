@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>Kimi K2.5: Visual Agentic Intelligence</title>
     <style>
         * {
@@ -81,29 +82,111 @@
             position: relative;
             width: 100%;
             height: 100%;
+=======
+    <title>Kimi K2.5: Visual Agentic Intelligence - Summary</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fafafa;
+            color: #333;
+        }
+        
+        h1 { 
+            color: #1a1a1a; 
+            border-bottom: 3px solid #0066cc; 
+            padding-bottom: 10px; 
+            margin-bottom: 5px;
+        }
+        
+        h2 { 
+            color: #2a2a2a; 
+            margin-top: 30px; 
+            font-size: 1.4em;
+        }
+        
+        .meta {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        
+        .highlight {
+            background: #e8f0fe;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #0066cc;
+        }
+        
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin: 15px 0;
+        }
+        
+        ul { padding-left: 20px; }
+        li { margin: 8px 0; }
+        
+        strong { color: #1a1a1a; }
+        
+        /* Animation Styles */
+        .swarm-container {
+            position: relative;
+            width: 100%;
+            height: 420px;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e8f0fe 100%);
+            border-radius: 12px;
+            margin: 30px 0;
+            overflow: hidden;
+            border: 2px solid #d0e0fc;
+>>>>>>> a3f3d64a66d0e8e300c116a6c0948dcdbcee782e
         }
         
         .orchestrator {
             position: absolute;
+<<<<<<< HEAD
             width: 80px;
             height: 80px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 50%;
             left: 50%;
             top: 50%;
+=======
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #0066cc, #004499);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+>>>>>>> a3f3d64a66d0e8e300c116a6c0948dcdbcee782e
             transform: translate(-50%, -50%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
+<<<<<<< HEAD
             font-size: 0.8rem;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
             z-index: 10;
+=======
+            font-size: 11px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,102,204,0.4);
+            z-index: 10;
+            animation: pulse 3s ease-in-out infinite;
+>>>>>>> a3f3d64a66d0e8e300c116a6c0948dcdbcee782e
         }
         
         .subagent {
             position: absolute;
+<<<<<<< HEAD
             width: 60px;
             height: 60px;
             background: #f8f9fa;
@@ -145,10 +228,56 @@
                 border-color: #667eea;
                 background: #e3f2fd;
             }
+=======
+            width: 65px;
+            height: 65px;
+            background: white;
+            border: 3px solid #0066cc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            text-align: center;
+            color: #0066cc;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 5;
+        }
+        
+        /* Position 6 subagents in hexagonal pattern */
+        .subagent:nth-of-type(2) { top: 10%; left: 50%; transform: translateX(-50%); }
+        .subagent:nth-of-type(3) { top: 25%; right: 12%; }
+        .subagent:nth-of-type(4) { bottom: 25%; right: 12%; }
+        .subagent:nth-of-type(5) { bottom: 10%; left: 50%; transform: translateX(-50%); }
+        .subagent:nth-of-type(6) { bottom: 25%; left: 12%; }
+        .subagent:nth-of-type(7) { top: 25%; left: 12%; }
+        
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            opacity: 0;
+            z-index: 8;
+        }
+        
+        .task {
+            background: #ff6b35;
+            box-shadow: 0 0 8px rgba(255,107,53,0.6);
+        }
+        
+        .result {
+            background: #4caf50;
+            box-shadow: 0 0 8px rgba(76,175,80,0.6);
+>>>>>>> a3f3d64a66d0e8e300c116a6c0948dcdbcee782e
         }
         
         @keyframes pulse {
             0%, 100% { transform: translate(-50%, -50%) scale(1); }
+<<<<<<< HEAD
             50% { transform: translate(-50%, -50%) scale(1.1); }
         }
         
@@ -189,11 +318,87 @@
             background: rgba(255,255,255,0.9);
             padding: 5px 10px;
             border-radius: 4px;
+=======
+            50% { transform: translate(-50%, -50%) scale(1.08); }
+        }
+        
+        @keyframes sendTask {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            10% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            90% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0.5); opacity: 0; }
+        }
+        
+        @keyframes returnResult {
+            0% { transform: translate(var(--tx), var(--ty)) scale(0.5); opacity: 0; }
+            10% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 1; }
+            90% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+        }
+        
+        /* Task animations with staggered delays */
+        .task:nth-of-type(8) { --tx: 0px; --ty: -130px; animation: sendTask 3s ease-in-out infinite; }
+        .task:nth-of-type(9) { --tx: 110px; --ty: -70px; animation: sendTask 3s ease-in-out 0.5s infinite; }
+        .task:nth-of-type(10) { --tx: 110px; --ty: 70px; animation: sendTask 3s ease-in-out 1s infinite; }
+        .task:nth-of-type(11) { --tx: 0px; --ty: 130px; animation: sendTask 3s ease-in-out 1.5s infinite; }
+        .task:nth-of-type(12) { --tx: -110px; --ty: 70px; animation: sendTask 3s ease-in-out 2s infinite; }
+        .task:nth-of-type(13) { --tx: -110px; --ty: -70px; animation: sendTask 3s ease-in-out 2.5s infinite; }
+        
+        /* Result animations starting from subagent positions */
+        .result:nth-of-type(14) { --tx: 0px; --ty: -130px; top: calc(50% - 130px); animation: returnResult 3s ease-in-out 1.5s infinite; }
+        .result:nth-of-type(15) { --tx: 110px; --ty: -70px; top: calc(50% - 70px); left: calc(50% + 110px); animation: returnResult 3s ease-in-out 2s infinite; }
+        .result:nth-of-type(16) { --tx: 110px; --ty: 70px; top: calc(50% + 70px); left: calc(50% + 110px); animation: returnResult 3s ease-in-out 2.5s infinite; }
+        .result:nth-of-type(17) { --tx: 0px; --ty: 130px; top: calc(50% + 130px); animation: returnResult 3s ease-in-out 3s infinite; }
+        .result:nth-of-type(18) { --tx: -110px; --ty: 70px; top: calc(50% + 70px); left: calc(50% - 110px); animation: returnResult 3s ease-in-out 0.5s infinite; }
+        .result:nth-of-type(19) { --tx: -110px; --ty: -70px; top: calc(50% - 70px); left: calc(50% - 110px); animation: returnResult 3s ease-in-out 1s infinite; }
+        
+        .legend {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(255,255,255,0.95);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .legend-item { 
+            display: flex; 
+            align-items: center; 
+            margin: 5px 0; 
+        }
+        
+        .dot { 
+            width: 10px; 
+            height: 10px; 
+            border-radius: 50%; 
+            margin-right: 8px; 
+        }
+        
+        .annotation {
+            position: absolute;
+            font-size: 10px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .annotation.center { top: 50%; left: 50%; margin-top: 55px; transform: translateX(-50%); }
+        
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 0.85em;
+            color: #666;
+>>>>>>> a3f3d64a66d0e8e300c116a6c0948dcdbcee782e
         }
     </style>
 </head>
 <body>
     <h1>Kimi K2.5: Visual Agentic Intelligence</h1>
+<<<<<<< HEAD
     <div class="authors">Technical Report</div>
     
     <div class="abstract">
@@ -224,10 +429,67 @@
             <div class="subagent" id="sa6">Doc<br>Analyzer</div>
             <div class="final-result" id="result">Aggregated Result</div>
             <div class="legend">Cycle: Task Distribution → Parallel Processing → Result Aggregation</div>
+=======
+    <div class="meta">Technical Summary • Open Source Model Release</div>
+    
+    <h2>Abstract</h2>
+    <p>Kimi K2.5 is introduced as the most powerful open-source model to date, building on Kimi K2 with continued pretraining over approximately <span class="highlight">15T mixed visual and text tokens</span>. As a native multimodal model, K2.5 delivers state-of-the-art coding and vision capabilities alongside a <span class="highlight">self-directed agent swarm paradigm</span>. For complex tasks, Kimi K2.5 can self-direct an agent swarm with up to <span class="highlight">100 sub-agents</span>, executing parallel workflows across up to <span class="highlight">1,500 tool calls</span>, reducing execution time by up to <span class="highlight">4.5×</span> compared to single-agent setups without predefined workflows.</p>
+    
+    <h2>Key Contributions</h2>
+    <div class="card">
+        <ul>
+            <li>Native multimodal architecture with continued pretraining on 15T visual and text tokens</li>
+            <li>Self-directed agent swarm paradigm supporting up to 100 sub-agents and 1,500 parallel tool calls</li>
+            <li>State-of-the-art coding capabilities with vision (image/video-to-code generation)</li>
+            <li>Parallel-Agent Reinforcement Learning (PARL) for training parallel orchestrators</li>
+            <li>Critical Steps metric for evaluating parallel execution efficiency</li>
+            <li>Advanced office productivity capabilities handling documents, spreadsheets, PDFs, and slide decks</li>
+            <li>Kimi Code: open-source coding product with IDE integration and autonomous visual debugging</li>
+        </ul>
+    </div>
+    
+    <h2>Agent Swarm Architecture</h2>
+    <p>The animation below illustrates the <strong>self-directed swarm paradigm</strong>: a trainable Orchestrator dynamically instantiates specialized subagents, distributes tasks in parallel (orange), and aggregates results (green) to minimize total latency via the Critical Steps metric.</p>
+    
+    <div class="swarm-container">
+        <div class="orchestrator">Orchestrator<br><span style="font-size:9px;opacity:0.9">(Trainable)</span></div>
+        
+        <div class="subagent">AI<br>Research</div>
+        <div class="subagent">Physics</div>
+        <div class="subagent">Code<br>Gen</div>
+        <div class="subagent">Fact<br>Check</div>
+        <div class="subagent">Web<br>Dev</div>
+        <div class="subagent">Life<br>Sci</div>
+        
+        <!-- Task particles (outgoing from center) -->
+        <div class="particle task"></div>
+        <div class="particle task"></div>
+        <div class="particle task"></div>
+        <div class="particle task"></div>
+        <div class="particle task"></div>
+        <div class="particle task"></div>
+        
+        <!-- Result particles (returning to center) -->
+        <div class="particle result"></div>
+        <div class="particle result"></div>
+        <div class="particle result"></div>
+        <div class="particle result"></div>
+        <div class="particle result"></div>
+        <div class="particle result"></div>
+        
+        <div class="legend">
+            <div class="legend-item"><div class="dot" style="background:#ff6b35"></div>Task Distribution</div>
+            <div class="legend-item"><div class="dot" style="background:#4caf50"></div>Result Aggregation</div>
+            <div style="margin-top:8px;font-size:9px;color:#999;line-height:1.4">
+                Parallel-Agent RL (PARL)<br>
+                CS = T<sub>orchestration</sub> + max(T<sub>subagent</sub>)
+            </div>
+>>>>>>> a3f3d64a66d0e8e300c116a6c0948dcdbcee782e
         </div>
     </div>
     
     <h2>Core Concepts</h2>
+<<<<<<< HEAD
     <ul>
         <li><strong>Visual Agentic Intelligence:</strong> Native multimodal reasoning combining vision and action</li>
         <li><strong>Agent Swarm:</strong> Self-directed coordination of up to 100 parallel sub-agents</li>
@@ -326,5 +588,29 @@
         window.onload = runAnimation;
         setInterval(runAnimation, 5500);
     </script>
+=======
+    <div class="card">
+        <ul>
+            <li><strong>Agent Swarm:</strong> Self-directed coordination of up to 100 specialized subagents without predefined workflows, dynamically created for specific subtasks</li>
+            <li><strong>Parallel-Agent Reinforcement Learning (PARL):</strong> Training methodology using a trainable orchestrator with frozen subagents. Uses staged reward shaping: <em>R = αR<sub>task</sub> + (1-α)R<sub>parallel</sub></em> where α anneals from 0→1 to prevent serial collapse</li>
+            <li><strong>Critical Steps:</strong> Latency-oriented metric measuring total execution time as <em>CS = T<sub>orchestration</sub> + max(T<sub>subagent<sub>i</sub>)</em>, optimizing the critical path rather than just accuracy</li>
+            <li><strong>Serial Collapse:</strong> Failure mode where orchestrator defaults to single-agent execution despite parallel capacity; prevented via auxiliary rewards for subagent instantiation</li>
+            <li><strong>Coding with Vision:</strong> Native multimodal capability converting images and videos into functional code with interactive layouts and animations</li>
+            <li><strong>Staged Reward Shaping:</strong> Training technique gradually shifting reward from encouraging parallelism (early training) to optimizing end-to-end task quality (late training)</li>
+        </ul>
+    </div>
+    
+    <h2>Results</h2>
+    <div class="card">
+        <p>Kimi K2.5 achieves <strong>state-of-the-art performance</strong> across HLE-Full, BrowseComp, SWE-Bench Verified, MMMU Pro, MathVision, and VideoMMMU benchmarks. The Agent Swarm demonstrates up to <span class="highlight">4.5× reduction</span> in execution time and <span class="highlight">80% reduction</span> in end-to-end runtime compared to single-agent setups. The model delivers strong performance at significantly lower cost (up to <span class="highlight">21.1× savings</span> on BrowseComp compared to GPT-5.2).</p>
+    </div>
+    
+    <h2>Conclusions</h2>
+    <p>Kimi K2.5 represents a meaningful step toward AGI for the open-source community, demonstrating strong capability on real-world tasks under real-world constraints. The integration of coding with vision, agent swarms, and office productivity capabilities positions the model as a comprehensive solution for knowledge work. The research demonstrates that at scale, the trade-off between vision and text capabilities disappears, with both improving in unison through continued multimodal pretraining. Future work will push further into the frontier of agentic intelligence.</p>
+    
+    <footer>
+        <strong>Methodology Summary:</strong> Continued pretraining on ~15T mixed visual/text tokens; PARL training with staged reward shaping to prevent serial collapse; Critical Steps optimization for latency reduction; evaluation on AI Office Benchmark and General Agent Benchmark showing 59.3% and 24.3% improvements over K2 Thinking respectively.
+    </footer>
+>>>>>>> a3f3d64a66d0e8e300c116a6c0948dcdbcee782e
 </body>
 </html>
