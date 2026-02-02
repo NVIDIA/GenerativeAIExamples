@@ -14,7 +14,7 @@ dependencies = [
     "jupyter",
     "pydantic>=2.9.2",
     "langchain==0.3.17",
-    "unstructured[pdf]",
+    "unstructured[pdf]<0.18.31",
     "pandas==2.2.3",
     "rich>=13.7.1",
     "pillow",
