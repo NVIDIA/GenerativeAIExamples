@@ -7,7 +7,7 @@ name = "tutorial_helpers"
 version = "0.0.1"
 description = "NeMo Data Designer Tutorial Notebooks"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
     "datasets",
@@ -18,5 +18,5 @@ dependencies = [
     "pandas==2.2.3",
     "rich>=13.7.1",
     "pillow",
-    "nemo-microservices[data-designer]==1.3.0",
+    "nemo-microservices[data-designer]==1.5.0",
 ]
