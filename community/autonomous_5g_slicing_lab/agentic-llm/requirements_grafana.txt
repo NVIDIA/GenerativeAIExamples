@@ -1,0 +1,10 @@
+streamlit>=1.28.0
+pandas>=1.5.0
+numpy>=1.21.0
+watchdog>=3.0.0
+pyyaml>=6.0
+gpudb>=7.2.0
+python-dotenv>=1.0.0
+colorlog>=6.7.0
+influxdb-client>=1.38.0
+requests>=2.31.0 

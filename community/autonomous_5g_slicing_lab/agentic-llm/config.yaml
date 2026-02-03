@@ -1,7 +1,9 @@
 AGENT_LOG_FILE: ../llm-slicing-5g-lab/logs/agent.log
+API_KEY: <enter API Key>
 LOG_FILE_UE1: ../llm-slicing-5g-lab/logs/UE1_iperfc.log
 LOG_FILE_UE2: ../llm-slicing-5g-lab/logs/UE2_iperfc.log
 gnb_logs: ../llm-slicing-5g-lab/logs/gNodeB.log
 interrupt_after: 30
 model_name: meta/llama-3.1-70b-instruct
 reconfig_script_path: ../llm-slicing-5g-lab/change_rc_slice.sh
+GRAPHANA_DASHBOARD: <enter Graphana dashboard id>

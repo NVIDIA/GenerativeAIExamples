@@ -1,4 +1,11 @@
+UE 0 CU UE ID 1 DU UE ID 33657 RNTI 8379 random identity 0000123456789abc S-TMSI 56789abc:
+    RRC status connected
+    PDU session 0 ID 10 status established
+    associated DU:  (local/integrated CU-DU)
+UE 1 CU UE ID 2 DU UE ID 38600 RNTI 96c8 random identity 0000123456789abc S-TMSI 56789abc:
+    RRC status connected
+    PDU session 0 ID 10 status established
+    associated DU:  (local/integrated CU-DU)
 
 1 connected DUs 
-[1] DU ID 3584 (gNB-OAI) integrated DU-CU: nrCellID 12345678, PCI 0, SSB ARFCN 641280
-    TDD: band 78 ARFCN 640008 SCS 30 (kHz) PRB 106
+[1] DU ID 3584 (gNB-OAI) integrated DU-CU: nrCellID 12345678, PCI 0
