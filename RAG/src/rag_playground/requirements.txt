@@ -10,3 +10,4 @@ protobuf==4.25.3
 pycountry==23.12.11
 tritonclient[all]==2.43.0
 uvicorn==0.27.1
+pydantic==2.10.0
