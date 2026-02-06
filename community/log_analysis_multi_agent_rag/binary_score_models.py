@@ -1,4 +1,4 @@
-from langchain_core.pydantic_v1 import BaseModel,Field
+from pydantic import BaseModel, Field
 # Data models
 class GradeDocuments(BaseModel):
     """Binary score for relevance check on retrieved documents."""

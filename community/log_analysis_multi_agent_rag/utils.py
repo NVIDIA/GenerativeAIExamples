@@ -1,11 +1,19 @@
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from binary_score_models import GradeAnswer,GradeDocuments,GradeHallucinations
 import os
 from dotenv import load_dotenv
 load_dotenv()
+import re
 import json
+
+def clean_text(text):
+    # Remove <think> blocks (including content)
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    # Remove any standalone <think> tags just in case
+    text = text.replace('<think>', '').replace('</think>', '')
+    return text
 
 class Nodeoutputs:
     def __init__(self, api_key, model, prompts_file):
@@ -41,7 +49,7 @@ class Nodeoutputs:
                 ("human", self.prompts["grade_human"]),
             ]
         )
-        self.retrieval_grader = grade_prompt | self.llm.with_structured_output(GradeDocuments)
+        self.retrieval_grader = grade_prompt | self.llm | StrOutputParser() | clean_text | JsonOutputParser()
 
         hallucination_prompt = ChatPromptTemplate.from_messages(
             [
@@ -49,7 +57,7 @@ class Nodeoutputs:
                 ("human", self.prompts["hallucination_human"]),
             ]
         )
-        self.hallucination_grader = hallucination_prompt | self.llm.with_structured_output(GradeHallucinations)
+        self.hallucination_grader = hallucination_prompt | self.llm | StrOutputParser() | clean_text | JsonOutputParser()
 
         answer_prompt = ChatPromptTemplate.from_messages(
             [
@@ -57,7 +65,7 @@ class Nodeoutputs:
                 ("human", self.prompts["answer_human"]),
             ]
         )
-        self.answer_grader = answer_prompt | self.llm.with_structured_output(GradeAnswer)
+        self.answer_grader = answer_prompt | self.llm | StrOutputParser() | clean_text | JsonOutputParser()
 
     def format_docs(self, docs):
         return "\n\n".join(doc.page_content for doc in docs)
