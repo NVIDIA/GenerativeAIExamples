@@ -37,9 +37,13 @@ class ChatRequest(BaseModel):
     use_kg: bool
     model_id: str
 
-# # Load the knowledge graph path from environment variables
-DATA_DIR = os.getenv("DATA_DIR")
-KG_GRAPHML_PATH = os.path.join(DATA_DIR, "knowledge_graph.graphml")
+def _get_data_dir() -> str:
+    data_dir = os.getenv("DATA_DIR")
+    if data_dir:
+        return data_dir
+    default_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+    logger.warning("DATA_DIR not set; defaulting to %s", default_dir)
+    return default_dir
 
 # Define an endpoint to get available models
 @router.get("/get-models/")
@@ -60,8 +64,8 @@ async def chat_endpoint(request: ChatRequest):
 
 
     if request.use_kg:
-        DATA_DIR = os.getenv("DATA_DIR")
-        KG_GRAPHML_PATH = os.path.join(DATA_DIR, "knowledge_graph.graphml")
+        data_dir = _get_data_dir()
+        KG_GRAPHML_PATH = os.path.join(data_dir, "knowledge_graph.graphml")
 
         logger.info(f"Entering {KG_GRAPHML_PATH}")
         if os.path.exists(KG_GRAPHML_PATH):

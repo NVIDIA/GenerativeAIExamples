@@ -25,8 +25,13 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from dotenv import load_dotenv
 load_dotenv()
 
-# Get the data directory path from environment variables
-DATA_DIR = os.getenv("DATA_DIR") 
+
+def _get_data_dir() -> str:
+    data_dir = os.getenv("DATA_DIR")
+    if data_dir:
+        return data_dir
+    default_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+    return default_dir
 
 
 # Initialize a FastAPI router
@@ -64,12 +69,14 @@ async def process_documents_endpoint(request: DirectoryRequest, background_tasks
         documents, results = process_documents(directory, llm, update_progress=update_progress)
         search_handler = SearchHandler("hybrid_demo3", use_bge_m3=True, use_reranker=True)
         search_handler.insert_data(documents)
-        save_triples_to_csvs(results)
+        data_dir = _get_data_dir()
+        os.makedirs(data_dir, exist_ok=True)
+        save_triples_to_csvs(results, data_dir=data_dir)
         
         # Load data from CSV files
-        triples_csv_path = os.path.join(DATA_DIR, "triples.csv")
-        entities_csv_path = os.path.join(DATA_DIR, "entities.csv")
-        relations_csv_path = os.path.join(DATA_DIR, "relations.csv")
+        triples_csv_path = os.path.join(data_dir, "triples.csv")
+        entities_csv_path = os.path.join(data_dir, "entities.csv")
+        relations_csv_path = os.path.join(data_dir, "relations.csv")
         triples_df = pd.read_csv(triples_csv_path)
         entities_df = pd.read_csv(entities_csv_path)
         relations_df = pd.read_csv(relations_csv_path)
@@ -97,7 +104,7 @@ async def process_documents_endpoint(request: DirectoryRequest, background_tasks
         nx.set_edge_attributes(G, new_edge_attributes, "relation")
 
        # Save the graph to a GraphML file
-        graphml_path = os.path.join(DATA_DIR, "knowledge_graph.graphml")
+        graphml_path = os.path.join(data_dir, "knowledge_graph.graphml")
         nx.write_graphml(G, graphml_path)
 
     background_tasks.add_task(background_task)
@@ -115,7 +122,8 @@ async def get_progress():
 # Define an endpoint to check if the GraphML file exists
 @router.get("/check-file-exists/")
 async def check_file_exists():
-    graphml_path = os.path.join(DATA_DIR, "knowledge_graph.graphml")
+    data_dir = _get_data_dir()
+    graphml_path = os.path.join(data_dir, "knowledge_graph.graphml")
     if os.path.exists(graphml_path):
         return JSONResponse(content={"file_exists": True})
     else:

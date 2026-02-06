@@ -123,9 +123,16 @@ prompt_template = ChatPromptTemplate.from_messages(
     [("system", "You are a helpful AI assistant named Envie. You will reply to questions only based on the context that you are provided. If something is out of context, you will refrain from replying and politely decline to respond to the user."), ("user", "{input}")]
 )
 
-DATA_DIR = os.getenv("DATA_DIR") 
-KG_GRAPHML_PATH = os.path.join(DATA_DIR, "knowledge_graph.graphml")
-logger.info(KG_GRAPHML_PATH)
+
+def _get_data_dir() -> str:
+    data_dir = os.getenv("DATA_DIR")
+    if data_dir:
+        return data_dir
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+
+
+def _get_graphml_path() -> str:
+    return os.path.join(_get_data_dir(), "knowledge_graph.graphml")
 
 
 def get_text_RAG_response(question, llm):
@@ -142,7 +149,7 @@ def get_text_RAG_response(question, llm):
 def get_graph_RAG_response(question, llm):
     chain = prompt_template | llm | StrOutputParser()
     entity_string = llm.invoke("""Return a JSON with a single key 'entities' and list of entities within this user query. Each element in your list MUST BE part of the user's query. Do not provide any explanation. If the returned list is not parseable in Python, you will be heavily penalized. For example, input: 'What is the difference between Apple and Google?' output: ['Apple', 'Google']. Always follow this output format. Here's the user query: """ + question)
-    graphml_path = KG_GRAPHML_PATH 
+    graphml_path = _get_graphml_path()
     
     G = nx.read_graphml(graphml_path)
     
@@ -168,7 +175,7 @@ def get_graph_RAG_response(question, llm):
 def get_combined_RAG_response(question, llm):
     chain = prompt_template | llm | StrOutputParser()
     entity_string = llm.invoke("""Return a JSON with a single key 'entities' and list of entities within this user query. Each element in your list MUST BE part of the user's query. Do not provide any explanation. If the returned list is not parseable in Python, you will be heavily penalized. For example, input: 'What is the difference between Apple and Google?' output: ['Apple', 'Google']. Always follow this output format. Here's the user query: """ + question)
-    graphml_path = KG_GRAPHML_PATH 
+    graphml_path = _get_graphml_path()
     G = nx.read_graphml(graphml_path)
     graph = NetworkxEntityGraph(G)
 
@@ -203,7 +210,7 @@ async def process_documents_endpoint(request: ProcessRequest, background_tasks: 
     try:
         documents, results = process_documents(directory, llm, triplets=False, chunk_size=2000, chunk_overlap=200)
         logger.info(f"Processed {len(documents)} documents.")
-        data_directory = os.path.join(os.getcwd(), 'data')
+        data_directory = _get_data_dir()
         os.makedirs(data_directory, exist_ok=True)
 
     # Define the path for the documents.csv file
@@ -239,6 +246,17 @@ async def create_qa_pairs(request: QAPairsRequest):
     df = pd.read_csv(documents_csv_path)
     documents = [Document(page_content=row['content']) for index, row in df.iterrows()]
     logger.info(f"Total documents available: {len(documents)}")
+    if not documents:
+        raise HTTPException(status_code=400, detail="No documents available to generate Q&A pairs.")
+    if num_data is None or num_data <= 0:
+        raise HTTPException(status_code=400, detail="num_data must be a positive integer.")
+    if num_data > len(documents):
+        logger.warning(
+            "Requested num_data=%s exceeds available documents=%s. Capping to available documents.",
+            num_data,
+            len(documents),
+        )
+        num_data = len(documents)
     
     async def event_generator():
         json_list = []
@@ -288,7 +306,7 @@ async def run_evaluation(request: QARequest):
             data_directory = os.path.join(os.getcwd(), 'data')
             os.makedirs(data_directory, exist_ok=True)
 
-            combined_results_path = os.path.join(DATA_DIR, "combined_results.csv")
+            combined_results_path = os.path.join(_get_data_dir(), "combined_results.csv")
             with open(combined_results_path, "a", newline="") as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=result.keys())
                 if csvfile.tell() == 0:

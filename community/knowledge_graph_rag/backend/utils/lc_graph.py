@@ -88,14 +88,17 @@ def process_documents(directory, llm, update_progress=None,triplets=True, chunk_
 
 import pandas as pd
 
-def save_triples_to_csvs(triples):
-    data_directory = os.path.join(os.getcwd(), 'data')
-    os.makedirs(data_directory, exist_ok=True)
+def save_triples_to_csvs(triples, data_dir=None):
+    if data_dir is None:
+        data_dir = os.getenv("DATA_DIR")
+    if not data_dir:
+        data_dir = os.path.join(os.getcwd(), "data")
+    os.makedirs(data_dir, exist_ok=True)
 
     # Define paths for the CSV files
-    entities_csv_path = os.path.join(data_directory, 'entities.csv')
-    relations_csv_path = os.path.join(data_directory, 'relations.csv')
-    triples_csv_path = os.path.join(data_directory, 'triples.csv')
+    entities_csv_path = os.path.join(data_dir, "entities.csv")
+    relations_csv_path = os.path.join(data_dir, "relations.csv")
+    triples_csv_path = os.path.join(data_dir, "triples.csv")
     # Create the triples DataFrame
     triples_df = pd.DataFrame(triples, columns=['subject', 'subject_type', 'relation', 'object', 'object_type'])
 
@@ -157,9 +160,9 @@ if __name__ == "__main__":
     # # Load the entities and relations DataFrames
     # entity_df = pd.read_csv("entities.csv", header=None, names=["ID", "Entity"])
     # relations_df = pd.read_csv("relations.csv", header=None, names=["ID", "relation"])
-    triples_df = pd.read_csv(os.path.join(data_directory, "triples.csv"), header=None, names=["Entity1_ID", "relation", "Entity2_ID"])
-    entity_df = pd.read_csv(os.path.join(data_directory, "entities.csv"), header=None, names=["ID", "Entity"])
-    relations_df = pd.read_csv(os.path.join(data_directory, "relations.csv"), header=None, names=["ID", "relation"])
+    triples_df = pd.read_csv(os.path.join(data_dir, "triples.csv"), header=None, names=["Entity1_ID", "relation", "Entity2_ID"])
+    entity_df = pd.read_csv(os.path.join(data_dir, "entities.csv"), header=None, names=["ID", "Entity"])
+    relations_df = pd.read_csv(os.path.join(data_dir, "relations.csv"), header=None, names=["ID", "relation"])
 
     # Create a mapping from IDs to entity names and relation names
     entity_name_map = entity_df.set_index("ID")["Entity"].to_dict()
@@ -182,7 +185,7 @@ if __name__ == "__main__":
     nx.set_edge_attributes(G, {(u, v): relation_name_map[edge_attributes[(u, v)]] for u, v in G.edges()}, "relation")
 
     # Save the graph to a GraphML file so it can be visualized in Gephi Lite
-    graphml_path = os.path.join(data_directory, "knowledge_graph.graphml")
+    graphml_path = os.path.join(data_dir, "knowledge_graph.graphml")
 
     #nx.write_graphml(G, "knowledge_graph.graphml")
     nx.write_graphml(G, graphml_path)

@@ -48,3 +48,9 @@ uv.lock
 
 # data designer exclusion
 data-designer-tutorial-output/
+variables.env
+community/knowledge_graph_rag/.env.example
+community/knowledge_graph_rag/backend/backend/docs/
+community/knowledge_graph_rag/backend/data/
+community/knowledge_graph_rag/backend/docs/
+community/knowledge_graph_rag/.env.example
