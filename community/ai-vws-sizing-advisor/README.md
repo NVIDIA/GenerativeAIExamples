@@ -6,13 +6,13 @@
 
 <p align="center">
   <strong>RAG-powered vGPU sizing recommendations for AI Virtual Workstations</strong><br>
-  Powered by NVIDIA NeMo™ and Nemotron models
+  Powered by NVIDIA NeMo and Nemotron models
 </p>
 
 <p align="center">
   <a href="https://docs.nvidia.com/vgpu/toolkits/sizing-advisor/latest/intro.html">Official Documentation</a> •
   <a href="#demo">Demo</a> •
-  <a href="#deployment">Quick Start</a> •
+  <a href="#deployment">Deployment</a> •
   <a href="./CHANGELOG.md">Changelog</a>
 </p>
 
@@ -27,7 +27,7 @@ AI vWS Sizing Advisor is a RAG-powered tool that helps you determine the optimal
 This tool leverages **NVIDIA Nemotron models** for intelligent sizing recommendations:
 
 - **[Llama-3.3-Nemotron-Super-49B](https://build.nvidia.com/nvidia/llama-3_3-nemotron-super-49b-v1)** — Powers the RAG backend for intelligent conversational sizing guidance
-- **[Nemotron-3 Nano 30B](https://build.nvidia.com/nvidia/nvidia-nemotron-3-nano-30b-a3b-fp8)** — Default model for workload sizing calculations (FP8 optimized)
+- **[Nemotron-3 Nano 30B](https://build.nvidia.com/nvidia/nvidia-nemotron-3-nano-30b-a3b-fp8)** — Default model for workload sizing calculations
 
 ### Key Capabilities
 
@@ -39,6 +39,16 @@ Enter your workload requirements and receive validated recommendations including
 - **Live Testing** — Instantly deploy and validate your configuration locally using vLLM containers
 
 The tool differentiates between RAG and inference workloads by accounting for embedding vectors and database overhead. It intelligently suggests GPU passthrough when jobs exceed standard vGPU profile limits.
+
+---
+
+## Application Workflow
+
+The architecture follows a three-phase pipeline: document ingestion, RAG-based profile suggestion, and local deployment verification.
+
+<p align="center">
+  <img src="deployment_examples/architecture_diagram.png" alt="Application Architecture" width="900">
+</p>
 
 ---
 
@@ -62,68 +72,31 @@ Validate your configuration by deploying a vLLM container locally and comparing 
 
 ---
 
-## Prerequisites
-
-### Hardware
-- **GPU:** NVIDIA RTX Pro 6000 Blackwell Server Edition, L40S, L40, L4, or A40
-- **GPU Memory:** 24 GB minimum
-- **System RAM:** 32 GB recommended
-- **Storage:** 50 GB free space
-
-### Software
-- **OS:** Ubuntu 22.04 LTS
-- **NVIDIA GPU Drivers:** Version 535+
-
-**Quick Install:**
-```bash
-# Install Docker and npm
-sudo apt update && sudo apt install -y docker.io npm
-
-# Add user to docker group (recommended) OR set socket permissions
-sudo usermod -aG docker $USER && newgrp docker
-# OR: sudo chmod 666 /var/run/docker.sock
-
-# Verify installations
-git --version && docker --version && npm --version && curl --version
-
-# Test GPU access in Docker
-docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
-```
-
-> **Note:** Docker must be at `/usr/bin/docker` (verified in `deploy/compose/docker-compose-rag-server.yaml`). User must be in docker group or have socket permissions.
-
-### API Keys
-- **NVIDIA Build API Key** (Required) — [Get your key](https://build.nvidia.com/settings/api-keys)
-- **HuggingFace Token** (Optional) — [Create token](https://huggingface.co/settings/tokens) for gated models
-
----
-
 ## Deployment
 
-**1. Clone and navigate:**
+**Requirements:** Ubuntu 22.04 LTS • NVIDIA GPU (L40S/L40/L4/A40, 24GB+ VRAM) • Driver 535+ • 32GB RAM • 50GB storage
+
 ```bash
+# 1. Install dependencies (skip if already installed)
+sudo apt update && sudo apt install -y docker.io npm
+sudo usermod -aG docker $USER && newgrp docker
+
+# 2. Clone and navigate
 git clone https://github.com/NVIDIA/GenerativeAIExamples.git
 cd GenerativeAIExamples/community/ai-vws-sizing-advisor
-```
 
-**2. Set NGC API key:**
-```bash
+# 3. Set API key (get yours at https://build.nvidia.com/settings/api-keys)
 export NGC_API_KEY="nvapi-your-key-here"
 echo "${NGC_API_KEY}" | docker login nvcr.io -u '$oauthtoken' --password-stdin
-```
 
-**3. Start backend services:**
-```bash
+# 4. Start backend (first run takes 3-5 min)
 ./scripts/start_app.sh
-```
-This automatically starts all backend services (Milvus, ingestion, RAG server). First startup takes 3-5 minutes.
 
-**4. Start frontend (in new terminal):**
-```bash
-cd frontend
-npm install
-npm run dev
+# 5. Start frontend (in new terminal)
+cd frontend && npm install && npm run dev
 ```
+
+> **Note:** A [HuggingFace token](https://huggingface.co/settings/tokens) is required for local deployment testing with gated models (e.g., Llama).
 
 ---
 
@@ -198,9 +171,3 @@ curl -X POST -F "file=@./vgpu_docs/your-document.pdf" http://localhost:8082/v1/i
 Licensed under the Apache License, Version 2.0.
 
 Models governed by [NVIDIA AI Foundation Models Community License](https://docs.nvidia.com/ai-foundation-models-community-license.pdf) and [Llama 3.2 Community License](https://www.llama.com/llama3_2/license/).
-
----
-
-**Version:** 2.3 (January 2026) — See [CHANGELOG.md](./CHANGELOG.md)
-
-**Support:** [GitHub Issues](https://github.com/NVIDIA/GenerativeAIExamples/issues) | [NVIDIA Forums](https://forums.developer.nvidia.com/) | [Official Docs](https://docs.nvidia.com/vgpu/toolkits/sizing-advisor/latest/intro.html)
