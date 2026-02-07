@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BACKEND_URL = os.getenv("BACKEND_URL")
+MILVUS_COLLECTION_NAME = os.getenv("MILVUS_COLLECTION_NAME", "hybrid_demo3")
 
 st.title("Knowledge Graph RAG")
 st.subheader("Load Data from Files")
@@ -40,6 +41,7 @@ else:
 with st.sidebar:
     llm = st.selectbox("Choose an LLM", available_models, index=available_models.index("mistralai/mixtral-8x7b-instruct-v0.1") if "mistralai/mixtral-8x7b-instruct-v0.1" in available_models else 0)
     st.write("You selected: ", llm)
+    st.write("Milvus collection: ", MILVUS_COLLECTION_NAME)
 
 def has_pdf_files(directory):
     for file in os.listdir(directory):

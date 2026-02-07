@@ -45,6 +45,10 @@ def _get_data_dir() -> str:
     logger.warning("DATA_DIR not set; defaulting to %s", default_dir)
     return default_dir
 
+
+def _get_collection_name() -> str:
+    return os.getenv("MILVUS_COLLECTION_NAME", "hybrid_demo3")
+
 # Define an endpoint to get available models
 @router.get("/get-models/")
 async def get_models():
@@ -86,7 +90,7 @@ async def chat_endpoint(request: ChatRequest):
             [("system", "You are a helpful AI assistant named Envie. You will reply to questions only based on the context that you are provided. If something is out of context, you will refrain from replying and politely decline to respond to the user."), ("user", "{input}")]
         )
         chain = prompt_template | llm | StrOutputParser()
-        search_handler = SearchHandler("hybrid_demo3", use_bge_m3=True, use_reranker=True)
+        search_handler = SearchHandler(_get_collection_name(), use_bge_m3=True, use_reranker=True)
     
         user_input = request.user_input
         use_kg = request.use_kg

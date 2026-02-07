@@ -23,6 +23,7 @@ load_dotenv()
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 DATA_DIR = os.getenv("DATA_DIR") 
+MILVUS_COLLECTION_NAME = os.getenv("MILVUS_COLLECTION_NAME", "hybrid_demo3")
 
 
 
@@ -57,6 +58,7 @@ else:
 with st.sidebar:
     llm_selectbox = st.selectbox("Choose an LLM", available_models, index=available_models.index("mistralai/mixtral-8x7b-instruct-v0.1") if "mistralai/mixtral-8x7b-instruct-v0.1" in available_models else 0)
     st.write("You selected: ", llm_selectbox)
+    st.write("Milvus collection: ", MILVUS_COLLECTION_NAME)
 
     num_data = st.slider("How many Q&A pairs to generate?", 10, 100, 50, step=10)
 

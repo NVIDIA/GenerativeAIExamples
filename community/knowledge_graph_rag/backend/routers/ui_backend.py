@@ -34,6 +34,10 @@ def _get_data_dir() -> str:
     return default_dir
 
 
+def _get_collection_name() -> str:
+    return os.getenv("MILVUS_COLLECTION_NAME", "hybrid_demo3")
+
+
 # Initialize a FastAPI router
 router = APIRouter()
 
@@ -67,7 +71,7 @@ async def process_documents_endpoint(request: DirectoryRequest, background_tasks
     # Define a background task for processing documents
     def background_task():
         documents, results = process_documents(directory, llm, update_progress=update_progress)
-        search_handler = SearchHandler("hybrid_demo3", use_bge_m3=True, use_reranker=True)
+        search_handler = SearchHandler(_get_collection_name(), use_bge_m3=True, use_reranker=True)
         search_handler.insert_data(documents)
         data_dir = _get_data_dir()
         os.makedirs(data_dir, exist_ok=True)

@@ -25,9 +25,11 @@ from pymilvus import (
 )
 
 class SearchHandler:
-    def __init__(self, collection_name, use_bge_m3=True, use_reranker=True):
+    def __init__(self, collection_name=None, use_bge_m3=True, use_reranker=True):
         self.use_bge_m3 = use_bge_m3
         self.use_reranker = use_reranker
+        if not collection_name:
+            collection_name = os.getenv("MILVUS_COLLECTION_NAME", "hybrid_demo3")
         self.collection_name = collection_name
         self.dense_dim = None
         self.ef = None

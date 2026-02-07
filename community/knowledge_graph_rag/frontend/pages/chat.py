@@ -24,6 +24,7 @@ load_dotenv()
 
 # Get the backend URL from environment variables
 BACKEND_URL = os.getenv("BACKEND_URL")
+MILVUS_COLLECTION_NAME = os.getenv("MILVUS_COLLECTION_NAME", "hybrid_demo3")
 
 st.set_page_config(layout="wide")
 
@@ -46,6 +47,7 @@ else:
 with st.sidebar:
     llm = st.selectbox("Choose an LLM", available_models, index=available_models.index("mistralai/mixtral-8x7b-instruct-v0.1") if "mistralai/mixtral-8x7b-instruct-v0.1" in available_models else 0)
     st.write("You selected: ", llm)
+    st.write("Milvus collection: ", MILVUS_COLLECTION_NAME)
 
 with st.sidebar:
     use_kg = st.checkbox("Use knowledge graph")

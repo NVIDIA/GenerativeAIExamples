@@ -131,13 +131,17 @@ def _get_data_dir() -> str:
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
 
 
+def _get_collection_name() -> str:
+    return os.getenv("MILVUS_COLLECTION_NAME", "hybrid_demo3")
+
+
 def _get_graphml_path() -> str:
     return os.path.join(_get_data_dir(), "knowledge_graph.graphml")
 
 
 def get_text_RAG_response(question, llm):
     chain = prompt_template | llm | StrOutputParser()
-    search_handler = SearchHandler("hybrid_demo3", use_bge_m3=True, use_reranker=True)
+    search_handler = SearchHandler(_get_collection_name(), use_bge_m3=True, use_reranker=True)
     res = search_handler.search_and_rerank(question, k=5)
     context = "Here are the relevant passages from the knowledge base: \n\n" + "\n".join(item.text for item in res)
     context_return = []
@@ -181,7 +185,7 @@ def get_combined_RAG_response(question, llm):
 
     try:
         entities = json.loads(entity_string.content)['entities']
-        search_handler = SearchHandler("hybrid_demo3", use_bge_m3=True, use_reranker=True)
+        search_handler = SearchHandler(_get_collection_name(), use_bge_m3=True, use_reranker=True)
         res = search_handler.search_and_rerank(question, k=5)
         context = "Here are the relevant passages from the knowledge base: \n\n" + "\n".join(item.text for item in res)
         context_return = []
