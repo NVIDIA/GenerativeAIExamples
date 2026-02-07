@@ -1,0 +1,568 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d1" for="edge" attr.name="relation" attr.type="string"/>
+<key id="d0" for="edge" attr.name="relation_id" attr.type="long"/>
+<graph edgedefault="directed"><node id="Mark Zuckerberg"/>
+<node id="Meta"/>
+<node id="open-source Llama models"/>
+<node id="NVIDIAs Blackwell"/>
+<node id="AI"/>
+<node id="next generation of Meta AI and consumer products"/>
+<node id="Blackwell GPU"/>
+<node id="breakthrough capabilities"/>
+<node id="Google Cloud"/>
+<node id="Google"/>
+<node id="Google DeepMind"/>
+<node id="future discoveries"/>
+<node id="Sam Altman"/>
+<node id="OpenAI"/>
+<node id="Blackwell"/>
+<node id="Massive Performance Leaps"/>
+<node id="Deliver Leading-Edge Models"/>
+<node id="NVIDIA"/>
+<node id="AI Compute"/>
+<node id="1993"/>
+<node id="GPU"/>
+<node id="PC Gaming Market"/>
+<node id="Computer Graphics"/>
+<node id="Modern AI"/>
+<node id="Industrial Digitalization"/>
+<node id="nan"/>
+<node id="Industry"/>
+<node id="Jensen Huang"/>
+<node id="Generative AI"/>
+<node id="Industrial Revolution"/>
+<node id="Dynamic Companies"/>
+<node id="NVIDIA Blackwell platform"/>
+<node id="organizations"/>
+<node id="real-time generative AI"/>
+<node id="trillion-parameter large language models"/>
+<node id="up to 25x less cost"/>
+<node id="energy consumption"/>
+<node id="its predecessor"/>
+<node id="Amazon Web Services"/>
+<node id="Dell Technologies"/>
+<node id="Microsoft"/>
+<node id="Oracle"/>
+<node id="Tesla"/>
+<node id="xAI"/>
+<node id="Satya Nadella"/>
+<node id="Global"/>
+<node id="Advanced Infrastructure"/>
+<node id="Customers AI Workloads"/>
+<node id="GB200 Grace Blackwell Processor"/>
+<node id="Datacenters"/>
+<node id="NVIDIA GPUs"/>
+<node id="Promise Of AI Real"/>
+<node id="Promise Of AI"/>
+<node id="Organizations"/>
+<node id="Blackwell GPU architecture"/>
+<node id="six transformative technologies"/>
+<node id="Transformative technologies"/>
+<node id="Data processing"/>
+<node id="Engineering simulation"/>
+<node id="Electronic design automation"/>
+<node id="Computer-aided drug design"/>
+<node id="Quantum computing"/>
+<node id="Industry opportunities"/>
+<node id="Grace Blackwell Superchips"/>
+<node id="NVIDIA’s AI research and development"/>
+<node id="Project Ceiba"/>
+<node id="AWS"/>
+<node id="AWS Nitro System"/>
+<node id="advanced virtualization"/>
+<node id="ultra-fast Elastic Fabric Adapter networking"/>
+<node id="Run NVIDIA GPUs"/>
+<node id="Michael Dell"/>
+<node id="Technology Industry"/>
+<node id="Smarter Systems"/>
+<node id="Reliable Systems"/>
+<node id="Efficient Systems"/>
+<node id="Shaping the Future of Technology"/>
+<node id="Next-Generation of Accelerated Products and Services"/>
+<node id="Customer Innovation"/>
+<node id="Blackwell-architecture GPUs"/>
+<node id="208 billion transistors"/>
+<node id="2-reticle limit GPU dies"/>
+<node id="Custom-built 4NP TSMC process"/>
+<node id="10 TB/second chip-to-chip link"/>
+<node id="Single, unified GPU"/>
+<node id="Second-Generation Transformer Engine"/>
+<node id="New micro-tensor scaling support"/>
+<node id="NVIDIA TensorRT™-LLM and NeMo Megatron frameworks"/>
+<node id="Double support"/>
+<node id="New Blackwell GPU"/>
+<node id="AI Models"/>
+<node id="NVLink"/>
+<node id="Resilience Technologies"/>
+<node id="Trillion-Parameter-Scale AI Models"/>
+<node id="New Tensor Cores"/>
+<node id="LLM Inference"/>
+<node id="LLM Inference Operating Cost"/>
+<node id="LLM Energy Consumption"/>
+<node id="TensorRT- LLM Compiler"/>
+<node id="New Accelerators"/>
+<node id="Breakthroughs in Data Processing"/>
+<node id="Engineering Simulation"/>
+<node id="Electronic Design Automation"/>
+<node id="Computer-Aided Drug Design"/>
+<node id="Quantum Computing"/>
+<node id="Every Major Cloud Provider"/>
+<node id="Server Maker"/>
+<node id="Leading AI Company"/>
+<edge source="Mark Zuckerberg" target="Meta">
+  <data key="d0">0</data>
+  <data key="d1">Is_Member_Of</data>
+</edge>
+<edge source="Meta" target="open-source Llama models">
+  <data key="d0">1</data>
+  <data key="d1">Produce</data>
+</edge>
+<edge source="Meta" target="NVIDIAs Blackwell">
+  <data key="d0">2</data>
+  <data key="d1">Use</data>
+</edge>
+<edge source="Meta" target="next generation of Meta AI and consumer products">
+  <data key="d0">4</data>
+  <data key="d1">Develop</data>
+</edge>
+<edge source="Meta" target="Blackwell">
+  <data key="d0">30</data>
+  <data key="d1">Adopt</data>
+</edge>
+<edge source="NVIDIAs Blackwell" target="AI">
+  <data key="d0">3</data>
+  <data key="d1">Control</data>
+</edge>
+<edge source="Blackwell GPU" target="breakthrough capabilities">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="Blackwell GPU" target="Google Cloud">
+  <data key="d0">6</data>
+  <data key="d1">Bring</data>
+</edge>
+<edge source="Google" target="Google DeepMind">
+  <data key="d0">7</data>
+  <data key="d1">Include</data>
+</edge>
+<edge source="Google" target="Google">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="Google" target="future discoveries">
+  <data key="d0">9</data>
+  <data key="d1">Positive_Impact_On</data>
+</edge>
+<edge source="Google" target="Blackwell">
+  <data key="d0">30</data>
+  <data key="d1">Adopt</data>
+</edge>
+<edge source="Google DeepMind" target="Google">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="Sam Altman" target="OpenAI">
+  <data key="d0">0</data>
+  <data key="d1">Is_Member_Of</data>
+</edge>
+<edge source="OpenAI" target="Blackwell">
+  <data key="d0">30</data>
+  <data key="d1">Adopt</data>
+</edge>
+<edge source="OpenAI" target="Deliver Leading-Edge Models">
+  <data key="d0">10</data>
+  <data key="d1">Announce</data>
+</edge>
+<edge source="OpenAI" target="NVIDIA">
+  <data key="d0">11</data>
+  <data key="d1">Work_With</data>
+</edge>
+<edge source="Blackwell" target="Massive Performance Leaps">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="Blackwell" target="Generative AI">
+  <data key="d0">21</data>
+  <data key="d1">Relate_To</data>
+</edge>
+<edge source="NVIDIA" target="AI Compute">
+  <data key="d0">12</data>
+  <data key="d1">Enhance</data>
+</edge>
+<edge source="NVIDIA" target="1993">
+  <data key="d0">13</data>
+  <data key="d1">Found</data>
+</edge>
+<edge source="NVIDIA" target="GPU">
+  <data key="d0">14</data>
+  <data key="d1">Invent</data>
+</edge>
+<edge source="NVIDIA" target="nan">
+  <data key="d0">19</data>
+  <data key="d1">Full-Stack Computing Infrastructure Company</data>
+</edge>
+<edge source="NVIDIA" target="Industry">
+  <data key="d0">20</data>
+  <data key="d1">Reshape</data>
+</edge>
+<edge source="NVIDIA" target="Jensen Huang">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="NVIDIA" target="Blackwell">
+  <data key="d0">1</data>
+  <data key="d1">Produce</data>
+</edge>
+<edge source="NVIDIA" target="Industrial Revolution">
+  <data key="d0">22</data>
+  <data key="d1">Participates_In</data>
+</edge>
+<edge source="NVIDIA" target="Dynamic Companies">
+  <data key="d0">23</data>
+  <data key="d1">Collaborate_With</data>
+</edge>
+<edge source="NVIDIA" target="NVIDIA Blackwell platform">
+  <data key="d0">10</data>
+  <data key="d1">Announce</data>
+</edge>
+<edge source="NVIDIA" target="Grace Blackwell Superchips">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="NVIDIA" target="Project Ceiba">
+  <data key="d0">38</data>
+  <data key="d1">Co-develop</data>
+</edge>
+<edge source="GPU" target="PC Gaming Market">
+  <data key="d0">15</data>
+  <data key="d1">Spark</data>
+</edge>
+<edge source="GPU" target="Computer Graphics">
+  <data key="d0">16</data>
+  <data key="d1">Redefine</data>
+</edge>
+<edge source="GPU" target="Modern AI">
+  <data key="d0">17</data>
+  <data key="d1">Ignite</data>
+</edge>
+<edge source="GPU" target="Industrial Digitalization">
+  <data key="d0">18</data>
+  <data key="d1">Fuel</data>
+</edge>
+<edge source="Jensen Huang" target="NVIDIA">
+  <data key="d0">0</data>
+  <data key="d1">Is_Member_Of</data>
+</edge>
+<edge source="Generative AI" target="Industrial Revolution">
+  <data key="d0">21</data>
+  <data key="d1">Relate_To</data>
+</edge>
+<edge source="Generative AI" target="Smarter Systems">
+  <data key="d0">21</data>
+  <data key="d1">Relate_To</data>
+</edge>
+<edge source="Generative AI" target="Reliable Systems">
+  <data key="d0">21</data>
+  <data key="d1">Relate_To</data>
+</edge>
+<edge source="Generative AI" target="Efficient Systems">
+  <data key="d0">21</data>
+  <data key="d1">Relate_To</data>
+</edge>
+<edge source="NVIDIA Blackwell platform" target="organizations">
+  <data key="d0">24</data>
+  <data key="d1">Enable</data>
+</edge>
+<edge source="organizations" target="real-time generative AI">
+  <data key="d0">25</data>
+  <data key="d1">Build_And_Run</data>
+</edge>
+<edge source="real-time generative AI" target="trillion-parameter large language models">
+  <data key="d0">26</data>
+  <data key="d1">On</data>
+</edge>
+<edge source="trillion-parameter large language models" target="up to 25x less cost">
+  <data key="d0">27</data>
+  <data key="d1">At</data>
+</edge>
+<edge source="up to 25x less cost" target="energy consumption">
+  <data key="d0">28</data>
+  <data key="d1">And</data>
+</edge>
+<edge source="energy consumption" target="its predecessor">
+  <data key="d0">29</data>
+  <data key="d1">Than</data>
+</edge>
+<edge source="Amazon Web Services" target="Blackwell">
+  <data key="d0">30</data>
+  <data key="d1">Adopt</data>
+</edge>
+<edge source="Dell Technologies" target="Blackwell">
+  <data key="d0">3</data>
+  <data key="d1">Control</data>
+</edge>
+<edge source="Dell Technologies" target="Technology Industry">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="Dell Technologies" target="Generative AI">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="Dell Technologies" target="Shaping the Future of Technology">
+  <data key="d0">22</data>
+  <data key="d1">Participates_In</data>
+</edge>
+<edge source="Dell Technologies" target="NVIDIA">
+  <data key="d0">11</data>
+  <data key="d1">Work_With</data>
+</edge>
+<edge source="Dell Technologies" target="Next-Generation of Accelerated Products and Services">
+  <data key="d0">1</data>
+  <data key="d1">Produce</data>
+</edge>
+<edge source="Microsoft" target="Blackwell">
+  <data key="d0">30</data>
+  <data key="d1">Adopt</data>
+</edge>
+<edge source="Microsoft" target="Global">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="Microsoft" target="Advanced Infrastructure">
+  <data key="d0">31</data>
+  <data key="d1">Offer</data>
+</edge>
+<edge source="Microsoft" target="GB200 Grace Blackwell Processor">
+  <data key="d0">6</data>
+  <data key="d1">Bring</data>
+</edge>
+<edge source="Microsoft" target="NVIDIA GPUs">
+  <data key="d0">35</data>
+  <data key="d1">Optimize</data>
+</edge>
+<edge source="Microsoft" target="Promise Of AI Real">
+  <data key="d0">36</data>
+  <data key="d1">Make</data>
+</edge>
+<edge source="Oracle" target="Blackwell">
+  <data key="d0">30</data>
+  <data key="d1">Adopt</data>
+</edge>
+<edge source="Tesla" target="Blackwell">
+  <data key="d0">30</data>
+  <data key="d1">Adopt</data>
+</edge>
+<edge source="xAI" target="Blackwell">
+  <data key="d0">30</data>
+  <data key="d1">Adopt</data>
+</edge>
+<edge source="Satya Nadella" target="Microsoft">
+  <data key="d0">0</data>
+  <data key="d1">Is_Member_Of</data>
+</edge>
+<edge source="Advanced Infrastructure" target="Customers AI Workloads">
+  <data key="d0">32</data>
+  <data key="d1">For</data>
+</edge>
+<edge source="GB200 Grace Blackwell Processor" target="Datacenters">
+  <data key="d0">33</data>
+  <data key="d1">To</data>
+</edge>
+<edge source="Datacenters" target="nan">
+  <data key="d0">34</data>
+  <data key="d1">Globally</data>
+</edge>
+<edge source="Promise Of AI" target="Organizations">
+  <data key="d0">32</data>
+  <data key="d1">For</data>
+</edge>
+<edge source="Blackwell GPU architecture" target="NVIDIA">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="Blackwell GPU architecture" target="six transformative technologies">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="Transformative technologies" target="Data processing">
+  <data key="d0">9</data>
+  <data key="d1">Positive_Impact_On</data>
+</edge>
+<edge source="Transformative technologies" target="Engineering simulation">
+  <data key="d0">9</data>
+  <data key="d1">Positive_Impact_On</data>
+</edge>
+<edge source="Transformative technologies" target="Electronic design automation">
+  <data key="d0">9</data>
+  <data key="d1">Positive_Impact_On</data>
+</edge>
+<edge source="Transformative technologies" target="Computer-aided drug design">
+  <data key="d0">9</data>
+  <data key="d1">Positive_Impact_On</data>
+</edge>
+<edge source="Transformative technologies" target="Quantum computing">
+  <data key="d0">9</data>
+  <data key="d1">Positive_Impact_On</data>
+</edge>
+<edge source="Transformative technologies" target="Generative AI">
+  <data key="d0">9</data>
+  <data key="d1">Positive_Impact_On</data>
+</edge>
+<edge source="Transformative technologies" target="Industry opportunities">
+  <data key="d0">21</data>
+  <data key="d1">Relate_To</data>
+</edge>
+<edge source="Industry opportunities" target="NVIDIA">
+  <data key="d0">37</data>
+  <data key="d1">Belong_To</data>
+</edge>
+<edge source="Grace Blackwell Superchips" target="NVIDIA’s AI research and development">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="Project Ceiba" target="NVIDIA’s AI research and development">
+  <data key="d0">21</data>
+  <data key="d1">Relate_To</data>
+</edge>
+<edge source="Project Ceiba" target="AWS">
+  <data key="d0">9</data>
+  <data key="d1">Positive_Impact_On</data>
+</edge>
+<edge source="AWS" target="AWS Nitro System">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="AWS" target="Run NVIDIA GPUs">
+  <data key="d0">39</data>
+  <data key="d1">Best_Place_For</data>
+</edge>
+<edge source="AWS Nitro System" target="advanced virtualization">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="AWS Nitro System" target="ultra-fast Elastic Fabric Adapter networking">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="Michael Dell" target="Dell Technologies">
+  <data key="d0">0</data>
+  <data key="d1">Is_Member_Of</data>
+</edge>
+<edge source="Next-Generation of Accelerated Products and Services" target="Customer Innovation">
+  <data key="d0">9</data>
+  <data key="d1">Positive_Impact_On</data>
+</edge>
+<edge source="Blackwell-architecture GPUs" target="208 billion transistors">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="Blackwell-architecture GPUs" target="2-reticle limit GPU dies">
+  <data key="d0">1</data>
+  <data key="d1">Produce</data>
+</edge>
+<edge source="Blackwell-architecture GPUs" target="Custom-built 4NP TSMC process">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="Blackwell-architecture GPUs" target="10 TB/second chip-to-chip link">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="Blackwell-architecture GPUs" target="Single, unified GPU">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="Blackwell-architecture GPUs" target="Second-Generation Transformer Engine">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="2-reticle limit GPU dies" target="Blackwell-architecture GPUs">
+  <data key="d0">21</data>
+  <data key="d1">Relate_To</data>
+</edge>
+<edge source="2-reticle limit GPU dies" target="Custom-built 4NP TSMC process">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="Second-Generation Transformer Engine" target="New micro-tensor scaling support">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="Second-Generation Transformer Engine" target="NVIDIA TensorRT™-LLM and NeMo Megatron frameworks">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="Second-Generation Transformer Engine" target="Double support">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="New Blackwell GPU" target="AI Models">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="New Blackwell GPU" target="NVLink">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="New Blackwell GPU" target="Resilience Technologies">
+  <data key="d0">5</data>
+  <data key="d1">Has</data>
+</edge>
+<edge source="New Blackwell GPU" target="Trillion-Parameter-Scale AI Models">
+  <data key="d0">21</data>
+  <data key="d1">Relate_To</data>
+</edge>
+<edge source="New Tensor Cores" target="LLM Inference">
+  <data key="d0">8</data>
+  <data key="d1">Operate_In</data>
+</edge>
+<edge source="New Tensor Cores" target="LLM Inference Operating Cost">
+  <data key="d0">40</data>
+  <data key="d1">Decrease</data>
+</edge>
+<edge source="New Tensor Cores" target="LLM Energy Consumption">
+  <data key="d0">40</data>
+  <data key="d1">Decrease</data>
+</edge>
+<edge source="TensorRT- LLM Compiler" target="LLM Inference Operating Cost">
+  <data key="d0">40</data>
+  <data key="d1">Decrease</data>
+</edge>
+<edge source="TensorRT- LLM Compiler" target="LLM Energy Consumption">
+  <data key="d0">40</data>
+  <data key="d1">Decrease</data>
+</edge>
+<edge source="New Accelerators" target="Breakthroughs in Data Processing">
+  <data key="d0">24</data>
+  <data key="d1">Enable</data>
+</edge>
+<edge source="New Accelerators" target="Engineering Simulation">
+  <data key="d0">24</data>
+  <data key="d1">Enable</data>
+</edge>
+<edge source="New Accelerators" target="Electronic Design Automation">
+  <data key="d0">24</data>
+  <data key="d1">Enable</data>
+</edge>
+<edge source="New Accelerators" target="Computer-Aided Drug Design">
+  <data key="d0">24</data>
+  <data key="d1">Enable</data>
+</edge>
+<edge source="New Accelerators" target="Quantum Computing">
+  <data key="d0">24</data>
+  <data key="d1">Enable</data>
+</edge>
+<edge source="New Accelerators" target="Every Major Cloud Provider">
+  <data key="d0">41</data>
+  <data key="d1">Widespread_Adoption</data>
+</edge>
+<edge source="New Accelerators" target="Server Maker">
+  <data key="d0">41</data>
+  <data key="d1">Widespread_Adoption</data>
+</edge>
+<edge source="New Accelerators" target="Leading AI Company">
+  <data key="d0">41</data>
+  <data key="d1">Widespread_Adoption</data>
+</edge>
+</graph></graphml>
