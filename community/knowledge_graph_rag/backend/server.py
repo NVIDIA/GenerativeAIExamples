@@ -14,10 +14,6 @@
 # limitations under the License.
 
 import os
-import subprocess
-from fastapi import FastAPI
-from routers import ui_backend,chat,evaluation,visualization
-import logging
 
 def _load_dotenv():
     env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -36,6 +32,11 @@ def _load_dotenv():
 
 
 _load_dotenv()
+
+import subprocess
+from fastapi import FastAPI
+from routers import ui_backend,chat,evaluation,visualization
+import logging
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
