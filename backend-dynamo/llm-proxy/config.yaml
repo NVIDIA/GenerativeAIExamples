@@ -22,7 +22,7 @@
 llm:
   # IP will be provided by frontend via X-LLM-IP header
   port: "11434"
-  timeout: 30  # Request timeout in seconds
+  timeout: 360  # Request timeout in seconds
 
 # Proxy Server Configuration
 proxy:

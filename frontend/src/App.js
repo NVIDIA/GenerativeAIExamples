@@ -327,7 +327,7 @@ function App() {
           model: appConfig?.llm?.model?.name || "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1",
           messages: contextMessages,
           stream: false,
-          max_tokens: appConfig?.llm?.model?.max_tokens || 512,
+          max_tokens: appConfig?.llm?.model?.max_tokens || 28000,
           temperature: appConfig?.llm?.model?.temperature || 0.6,
           top_p: appConfig?.llm?.model?.top_p || 0.95
         }),
@@ -406,7 +406,7 @@ function App() {
       }
       
       // Clear the RAG index on the backend
-      const response = await fetch(`/api/clear-rag`, {
+      const response = await fetch(`${window.appConfig.api.base_url}/api/clear-rag`, {
         method: 'POST',
       });
 

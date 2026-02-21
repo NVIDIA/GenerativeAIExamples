@@ -45,7 +45,7 @@ llm:
     name: "gemma3:4b-it-q4_K_M"
 
     # Safe settings for local CPU usage
-    max_tokens: 512
+    max_tokens: 28000
     temperature: 0.7
     top_p: 0.9
 
