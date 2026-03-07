@@ -20,6 +20,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import FileIngestion from './components/FileIngestion';
+import ProjectKnowledge from './pages/ProjectKnowledge';
 import configLoader from './config/config_loader';
 import './App.css';
 
@@ -32,6 +33,10 @@ function App() {
   const [useRag, setUseRag] = useState(true);
   const [expandedRefs, setExpandedRefs] = useState({});
   const [appConfig, setAppConfig] = useState(null);
+
+  // NEW: view toggle for Option C
+  const [view, setView] = useState("chat"); // "chat" | "knowledge"
+
   const [serverIp, setServerIp] = useState(() => {
     // Load IP from localStorage on initial render
     const savedIp = localStorage.getItem('serverIp') || '';
@@ -327,7 +332,7 @@ function App() {
           model: appConfig?.llm?.model?.name || "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1",
           messages: contextMessages,
           stream: false,
-          max_tokens: appConfig?.llm?.model?.max_tokens || 28000,
+          max_tokens: appConfig?.llm?.model?.max_tokens || 512,
           temperature: appConfig?.llm?.model?.temperature || 0.6,
           top_p: appConfig?.llm?.model?.top_p || 0.95
         }),
@@ -406,7 +411,7 @@ function App() {
       }
       
       // Clear the RAG index on the backend
-      const response = await fetch(`${window.appConfig.api.base_url}/api/clear-rag`, {
+      const response = await fetch(`/api/clear-rag`, {
         method: 'POST',
       });
 
@@ -585,6 +590,7 @@ function App() {
             </label>
             <span className="toggle-label">Use RAG</span>
           </div>
+
           <div className="rag-toggle">
             <label className="switch">
               <input
@@ -596,45 +602,57 @@ function App() {
             </label>
             <span className="toggle-label">Use Reasoning</span>
           </div>
+
           <div className="button-group">
             <button onClick={clearChat}>Clear Chat and Context</button>
             <button onClick={clearRAG}>Clear RAG</button>
+
+            {/* NEW: Toggle Project Knowledge view */}
+            <button onClick={() => setView(view === "chat" ? "knowledge" : "chat")}>
+              {view === "chat" ? "Open Knowledge" : "Back to Chat"}
+            </button>
           </div>
         </div>
       </header>
 
       <main className="chat-container">
-        <FileIngestion />
-        
-        <div className="messages">
-          {messages.map((message, index) => (
-            <div key={index} className={`message ${message.role}`}>
-              {renderMessage(message)}
-            </div>
-          ))}
-          {isTyping && (
-            <div className="message assistant">
-              <div className="loading-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+        {view === "knowledge" ? (
+          <ProjectKnowledge />
+        ) : (
+          <>
+            <FileIngestion />
 
-        <form onSubmit={handleSubmit} className="input-form">
-          <input
-            type="text"
-            name="messageInput"
-            placeholder="What's on your mind?"
-            disabled={isLoading}
-          />
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? 'Thinking...' : 'Send'}
-          </button>
-        </form>
+            <div className="messages">
+              {messages.map((message, index) => (
+                <div key={index} className={`message ${message.role}`}>
+                  {renderMessage(message)}
+                </div>
+              ))}
+              {isTyping && (
+                <div className="message assistant">
+                  <div className="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <form onSubmit={handleSubmit} className="input-form">
+              <input
+                type="text"
+                name="messageInput"
+                placeholder="What's on your mind?"
+                disabled={isLoading}
+              />
+              <button type="submit" disabled={isLoading}>
+                {isLoading ? "Thinking..." : "Send"}
+              </button>
+            </form>
+          </>
+        )}
       </main>
     </div>
   );
