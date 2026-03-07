@@ -1,0 +1,6 @@
+{
+  "dtype": "half",
+  "gpu_memory_utilization": 0.85,
+  "max_model_len": 2048,
+  "enforce_eager": true
+}

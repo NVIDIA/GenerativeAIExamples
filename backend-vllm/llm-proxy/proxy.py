@@ -15,11 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 """
 Simple NVIDIA Dynamo Proxy Server
 
-A lightweight proxy server that forwards chat completion requests to NVIDIA Dynamo LLM server.
+A lightweight proxy server that forwards chat completion requests
+to NVIDIA Dynamo / Ollama-compatible LLM server.
 """
 
 from fastapi import FastAPI, HTTPException, Header
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 # Load configuration
 def load_config():
     config_path = Path(__file__).parent / "config.yaml"
-    with open(config_path, 'r') as f:
+    with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
 config = load_config()
@@ -51,7 +51,7 @@ app.add_middleware(
     allow_origins=config["proxy"]["cors"]["allow_origins"],
     allow_credentials=config["proxy"]["cors"]["allow_credentials"],
     allow_methods=config["proxy"]["cors"]["allow_methods"],
-    allow_headers=config["proxy"]["cors"]["allow_headers"]
+    allow_headers=config["proxy"]["cors"]["allow_headers"],
 )
 
 # Initialize HTTP client
@@ -63,28 +63,81 @@ class ChatCompletionRequest(BaseModel):
     stream: bool = False
     max_tokens: Optional[int] = None
 
-@app.post("/v1/chat/completions")
-async def proxy_chat_completions(request: ChatCompletionRequest, x_llm_ip: str = Header(None)):
-    """Forward chat completion requests to NVIDIA Dynamo server"""
-    if not x_llm_ip:
-        raise HTTPException(status_code=400, detail="X-LLM-IP header is required")
-    
+
+# ------------------------------------------------------------------
+# NEW: Models endpoint (required by frontend model discovery)
+# ------------------------------------------------------------------
+@app.get("/v1/models")
+async def list_models(x_llm_ip: str = Header(None)):
+    """
+    Returns OpenAI-compatible model list.
+    Fetches models from upstream Ollama/Dynamo server.
+    """
     try:
-        # Forward request to NVIDIA Dynamo server
-        response = await http_client.post(
-            f"http://{x_llm_ip}:{config['llm']['port']}/v1/chat/completions",
-            json=request.dict(),
-            timeout=config['llm']['timeout']
-        )
-        return response.json()
+        # Always use local Ollama upstream; do not trust X-LLM-IP for local routing
+        upstream_url = f"http://127.0.0.1:{config['llm']['port']}/api/tags"
+        response = await http_client.get(upstream_url, timeout=config["llm"]["timeout"])
+        response.raise_for_status()
+
+        data = response.json()
+
+        models = []
+        for m in data.get("models", []):
+            models.append({
+                "id": m.get("name"),
+                "object": "model",
+                "created": 0,
+                "owned_by": "ollama"
+            })
+
+        return {
+            "object": "list",
+            "data": models
+        }
+
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Upstream error: {e.response.text}")
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
+        logger.error(f"Error fetching models: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ------------------------------------------------------------------
+# Chat Completions endpoint
+# ------------------------------------------------------------------
+@app.post("/v1/chat/completions")
+async def proxy_chat_completions(
+    request: ChatCompletionRequest,
+    x_llm_ip: str = Header(None)
+):
+    """Forward chat completion requests to upstream LLM server"""
+
+    try:
+        # Always use local Ollama upstream; do not trust X-LLM-IP for local routing
+        upstream_url = f"http://127.0.0.1:{config['llm']['port']}/v1/chat/completions"
+
+        response = await http_client.post(
+            upstream_url,
+            json=request.model_dump(),  # Pydantic v2 safe
+            timeout=config["llm"]["timeout"]
+        )
+
+        response.raise_for_status()
+        return response.json()
+
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Upstream error: {e.response.text}")
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    except Exception as e:
+        logger.error(f"Proxy error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        app, 
+        app,
         host=config["proxy"]["host"],
-        port=int(config["proxy"]["port"])
-    ) 
+        port=int(config["proxy"]["port"]),
+    )

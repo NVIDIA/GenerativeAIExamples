@@ -17,11 +17,15 @@
 
 
 Common:
-  model: nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1
-  max-model-len: 131072
+  # Ollama model id
+  model: gemma3:4b-it-q4_K_M
+
+  # Keep this sane for Quadro P2200 / local Ollama.
+  # (Ollama context is typically controlled via Modelfile num_ctx; this is an app-side limit.)
+  max-model-len: 4096
 
 Frontend:
-  served_model_name: nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1
+  served_model_name: gemma3:4b-it-q4_K_M
   endpoint: dynamo.Processor.chat/completions
   port: 8000
 
@@ -29,12 +33,14 @@ Processor:
   router: round-robin
   common-configs: [model, max-model-len]
 
-
-VllmWorker:
+# NOTE: Replace this component name with whatever your repo provides for
+# "call an OpenAI-compatible HTTP backend".
+# Common names in stacks like this: OpenAIWorker, HttpWorker, RemoteOpenAIWorker, etc.
+OpenAIWorker:
   router: random
-  tensor-parallel-size: 1
   ServiceArgs:
     workers: 1
-    resources:
-      gpu: 1
+    # Point to Ollama OpenAI-compatible base URL
+    base_url: http://127.0.0.1:11434/v1
+    api_key: ollama   # required by many OpenAI clients, ignored by Ollama
   common-configs: [model, max-model-len]
