@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from typing import List, Dict, Any
 import faiss
 import numpy as np
@@ -27,6 +26,8 @@ import re
 from multiprocessing import Queue
 from config.config_loader import config_loader
 import torch
+import os
+
 # Simple text splitter implementation
 
 # Load configurations
@@ -50,19 +51,23 @@ class RAGService:
         text_config = rag_config['text_processing']
         processing_config = rag_config['processing']
         search_config = rag_config['search']
-        
+
         logger.info(f"Initializing RAG service with model: {model_config['name']}")
         logger.info(f"Using model dimension: {model_config['dimension']}")
         logger.info(f"Using chunk size: {text_config['chunk_size']}, overlap: {text_config['chunk_overlap']}")
         logger.info(f"Using batch size: {processing_config['batch_size']}, max workers: {processing_config['max_workers']}")
-        
+
         # Initialize the model with proper configuration
+        # NOTE: This keeps the embedding model on CPU. This change is only about FAISS GPU usage.
         self.model = SentenceTransformer(
             model_config['name'],
             device='cpu'  # Force CPU to avoid MPS/CUDA issues
         )
-        self.query_instruction = search_config.get('query_instruction', "Represent this sentence for searching relevant passages: ")
-        
+        self.query_instruction = search_config.get(
+            'query_instruction',
+            "Represent this sentence for searching relevant passages: "
+        )
+
         self.index = None
         self.documents = []
         self.metadata = []  # Store metadata for each document
@@ -73,45 +78,134 @@ class RAGService:
         self.batch_size = processing_config['batch_size']  # Get batch size from config
         self.max_workers = processing_config['max_workers']  # Get max workers from config
         self.search_multiplier = search_config.get('deduplication_multiplier', 2)  # Get search multiplier from config
-        
+
         # Initialize text splitter configuration
         self.separators = text_config.get('separators', ["\n\n", "\n", ". ", "! ", "? ", ", ", " "])
-        
+
+        # GPU resources (created lazily)
+        self._gpu_res = None
+
         # Create index if it doesn't exist
         if not self.index:
             self.create_index()
-        
+
+    # ----------------------------
+    # FAISS GPU helpers (optional)
+    # ----------------------------
+    def _gpu_enabled_by_env(self) -> bool:
+        """
+        Enable/disable FAISS GPU via env var:
+          USE_FAISS_GPU=1  (default)
+          USE_FAISS_GPU=0  (disable)
+        """
+        return os.getenv("USE_FAISS_GPU", "1").strip().lower() not in ("0", "false", "no", "off")
+
+    def _gpu_available_in_faiss(self) -> bool:
+        """
+        True only if:
+          - this is a GPU-capable FAISS build (faiss-gpu), AND
+          - CUDA GPUs are visible to FAISS.
+        """
+        return (
+            hasattr(faiss, "get_num_gpus")
+            and hasattr(faiss, "StandardGpuResources")
+            and faiss.get_num_gpus() > 0
+        )
+
+    def _is_gpu_index(self) -> bool:
+        return self.index is not None and "Gpu" in type(self.index).__name__
+
+    def _get_gpu_device_id(self) -> int:
+        """
+        Choose GPU device via env var:
+          FAISS_GPU_DEVICE=0 (default)
+        """
+        val = os.getenv("FAISS_GPU_DEVICE", "0").strip()
+        try:
+            return int(val)
+        except Exception:
+            logger.warning(f"Invalid FAISS_GPU_DEVICE={val!r}; defaulting to 0")
+            return 0
+
+    def _maybe_move_index_to_gpu(self) -> None:
+        """
+        Convert current CPU index to GPU if GPU is enabled + available.
+        No-op if already on GPU or GPU not available.
+        """
+        if self.index is None:
+            return
+        if self._is_gpu_index():
+            return
+        if not self._gpu_enabled_by_env():
+            logger.info("FAISS GPU disabled via USE_FAISS_GPU")
+            return
+        if not self._gpu_available_in_faiss():
+            logger.info("FAISS GPU not available (CPU-only build or no CUDA GPU visible)")
+            return
+
+        try:
+            if self._gpu_res is None:
+                self._gpu_res = faiss.StandardGpuResources()
+
+            device_id = self._get_gpu_device_id()
+            self.index = faiss.index_cpu_to_gpu(self._gpu_res, device_id, self.index)
+            logger.info(f"FAISS index moved to GPU (device {device_id})")
+        except Exception as e:
+            logger.exception(f"Failed to move FAISS index to GPU; staying on CPU: {e}")
+
+    def _maybe_move_index_to_cpu_for_save(self):
+        """
+        faiss.write_index expects a CPU index. If index is GPU, convert to CPU
+        and return that converted instance; otherwise return the existing index.
+        """
+        idx = self.index
+        if idx is None:
+            return None
+        if "Gpu" in type(idx).__name__ and hasattr(faiss, "index_gpu_to_cpu"):
+            try:
+                return faiss.index_gpu_to_cpu(idx)
+            except Exception as e:
+                logger.exception(f"Failed to convert GPU index to CPU for saving: {e}")
+                return idx
+        return idx
+
+    # ----------------------------
+    # Index lifecycle
+    # ----------------------------
     def create_index(self):
         """Create a new FAISS index"""
         logger.info("Creating new FAISS index")
-        # Use L2 distance for normalized vectors (equivalent to cosine similarity)
+        # Use L2 distance for normalized vectors (equivalent ranking to cosine similarity)
         self.index = faiss.IndexFlatL2(self.dimension)
         self.documents = []  # Clear documents when creating new index
         self.metadata = []  # Clear metadata when creating new index
         logger.info("Cleared documents and metadata lists")
-        
+
+        # Try to move to GPU (if enabled + available)
+        self._maybe_move_index_to_gpu()
+
     def chunk_text(self, text: str) -> List[str]:
         """Split text into overlapping chunks using simple implementation"""
         # Clean the text
         text = re.sub(r'\s+', ' ', text).strip()
-        
+
         if len(text) <= self.chunk_size:
             return [text]
-        
+
         chunks = []
         start = 0
-        
+
         while start < len(text):
             # Find the end of the current chunk
             end = start + self.chunk_size
-            
+
             if end >= len(text):
                 # Last chunk
                 chunk = text[start:].strip()
                 if chunk:
                     chunks.append(chunk)
                 break
-            
+
             # Try to find a good break point
             best_break = end
             for separator in self.separators:
@@ -121,36 +215,36 @@ class RAGService:
                 if pos > start:
                     best_break = pos + len(separator)
                     break
-            
+
             # Extract the chunk
             chunk = text[start:best_break].strip()
             if chunk:
                 chunks.append(chunk)
-            
+
             # Move to next chunk with overlap
             start = max(start + 1, best_break - self.chunk_overlap)
-        
+
         logger.info(f"Created {len(chunks)} chunks from text")
         return chunks
-        
+
     def add_documents(self, documents: List[str], metadata: List[Dict[str, Any]] = None, job_queue: Queue = None):
         """Add documents to the index with progress tracking"""
         try:
             if not self.index:
                 self.create_index()
-            
+
             if metadata is None:
                 metadata = [{} for _ in documents]
-            
+
             total_docs = len(documents)
             total_chunks = 0
             processed_chunks = 0
             batch_size = self.batch_size
-            
+
             # Process each document into chunks
             all_chunks = []
             all_metadata = []
-            
+
             for doc, meta in zip(documents, metadata):
                 # Split document into chunks
                 doc_chunks = self.chunk_text(doc)
@@ -160,10 +254,10 @@ class RAGService:
                     chunk_meta["chunk_text"] = chunk
                     all_chunks.append(chunk)
                     all_metadata.append(chunk_meta)
-            
+
             total_chunks_to_process = len(all_chunks)
             logger.info(f"Total chunks to process: {total_chunks_to_process}")
-            
+
             # Send initial progress
             if job_queue:
                 job_queue.put({
@@ -176,35 +270,35 @@ class RAGService:
                     "current_batch": 0,
                     "total_batches": 0
                 })
-            
+
             # Process chunks in batches
             total_batches = (len(all_chunks) + batch_size - 1) // batch_size
             logger.info(f"Processing {len(all_chunks)} chunks in {total_batches} batches")
-            
+
             for batch_start in range(0, len(all_chunks), batch_size):
                 batch_end = min(batch_start + batch_size, len(all_chunks))
                 batch = all_chunks[batch_start:batch_end]
                 batch_metadata = all_metadata[batch_start:batch_end]
                 current_batch = batch_start // batch_size + 1
-                
+
                 # Generate embeddings for batch
                 embeddings = self.model.encode(batch)
-                
-                # Normalize embeddings for cosine similarity
+
+                # Normalize embeddings for cosine similarity ranking
                 faiss.normalize_L2(embeddings)
-                
-                # Add embeddings to FAISS index
+
+                # Add embeddings to FAISS index (GPU or CPU index)
                 self.index.add(np.array(embeddings).astype('float32'))
-                
+
                 # Store original chunks and their metadata
                 self.documents.extend(batch)
                 self.metadata.extend(batch_metadata)
                 processed_chunks += len(batch)
                 total_chunks = len(self.documents)
-                
+
                 # Calculate progress percentage
                 progress_percent = (processed_chunks / total_chunks_to_process) * 100
-                
+
                 # Send progress update after each batch
                 if job_queue:
                     job_queue.put({
@@ -218,9 +312,9 @@ class RAGService:
                         "total_batches": total_batches,
                         "progress_percent": progress_percent
                     })
-                
+
                 logger.info(f"Processed batch {current_batch}/{total_batches}")
-            
+
             # Send completion
             if job_queue:
                 job_queue.put({
@@ -234,7 +328,7 @@ class RAGService:
                     "current_batch": total_batches,
                     "total_batches": total_batches
                 })
-            
+
             logger.info(f"Completed processing {total_chunks} chunks")
         except Exception as e:
             logger.error(f"Error adding documents: {str(e)}")
@@ -244,7 +338,7 @@ class RAGService:
                     "message": str(e)
                 })
             raise
-        
+
     def get_document_count(self) -> int:
         """Get the current number of chunks in the index"""
         count = len(self.documents)
@@ -259,84 +353,91 @@ class RAGService:
             source_file = meta.get("source_file")
             if source_file and isinstance(source_file, str) and source_file.strip():
                 source_files.append(source_file)
-        
+
         # Count unique source files
         unique_docs = set(source_files)
         count = len(unique_docs)
         logger.info(f"Current unique document count: {count} (from {len(source_files)} total source files)")
         return count
-        
+
     def clear(self):
         """Clear the index and documents"""
         logger.info("Clearing RAG index and documents")
         self.documents = []  # Clear documents first
         self.metadata = []   # Clear metadata
-        self.create_index()  # This will also clear documents again, but that's fine
+        self.create_index()  # Recreate index (and move to GPU if enabled/available)
         logger.info("RAG index and documents cleared")
-        
+
     def search(self, query: str, k: int = None) -> List[Dict[str, Any]]:
         """Search for similar documents using the query"""
         try:
             if not self.index or len(self.documents) == 0:
                 logger.warning("No documents in index")
                 return []
-            
+
             # Use configured default_k from RAG config
             if k is None:
                 k = rag_config['search']['default_k']
-            
+
             # Generate query embedding
             query_embedding = self.model.encode([query])[0]
-            
-            # Normalize query embedding for cosine similarity
+
+            # Normalize query embedding for cosine similarity ranking
             faiss.normalize_L2(query_embedding.reshape(1, -1))
-            
+
             # Log query embedding stats
-            logger.info(f"Query embedding stats - min: {query_embedding.min():.4f}, max: {query_embedding.max():.4f}, mean: {query_embedding.mean():.4f}, norm: {np.linalg.norm(query_embedding):.4f}")
-            
+            logger.info(
+                f"Query embedding stats - min: {query_embedding.min():.4f}, "
+                f"max: {query_embedding.max():.4f}, mean: {query_embedding.mean():.4f}, "
+                f"norm: {np.linalg.norm(query_embedding):.4f}"
+            )
+
             # Search for more results than needed to account for deduplication
             search_k = k * self.search_multiplier  # Use configurable multiplier
-            
-            # Search the index
+
+            # Search the index (GPU or CPU)
             distances, indices = self.index.search(np.array([query_embedding]).astype('float32'), search_k)
-            
+
             # Log raw distances
-            logger.info(f"Raw distances - min: {distances[0].min():.4f}, max: {distances[0].max():.4f}, mean: {distances[0].mean():.4f}")
-            
+            logger.info(
+                f"Raw distances - min: {distances[0].min():.4f}, "
+                f"max: {distances[0].max():.4f}, mean: {distances[0].mean():.4f}"
+            )
+
             # Get the results and deduplicate
             results = []
             seen_contents = set()
-            
+
             for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
                 if idx < len(self.documents):  # Ensure index is valid
                     # Convert L2 distance to cosine similarity using a more robust method
                     # For normalized vectors, cosine similarity = 1 - (L2_distance^2)/2
                     # Add a small epsilon to prevent numerical instability
                     epsilon = 1e-6
-                    distance = max(0, min(2, distance))  # Clamp distance to [0, 2]
+                    distance = max(0, min(2, float(distance)))  # Clamp distance to [0, 2]
                     similarity = max(0, min(1, 1 - (distance * distance) / 2 + epsilon))
-                    
+
                     # Log similarity calculation
                     logger.info(f"Result {i+1} - Distance: {distance:.4f}, Similarity: {similarity:.4f}")
-                    
+
                     # Get the document text and metadata
                     document_text = self.documents[idx]
                     metadata = self.metadata[idx]
-                    
+
                     # Check if this content is too similar to any existing result
                     is_duplicate = False
                     normalized_text = document_text.lower().strip()
-                    
+
                     # Skip if we've seen this exact content before
                     if normalized_text in seen_contents:
                         continue
-                    
+
                     # Check for partial matches (one content is contained within another)
                     for seen_text in seen_contents:
                         if normalized_text in seen_text or seen_text in normalized_text:
                             is_duplicate = True
                             break
-                    
+
                     if not is_duplicate:
                         seen_contents.add(normalized_text)
                         results.append({
@@ -344,38 +445,42 @@ class RAGService:
                             "score": float(similarity),
                             "source_file": metadata.get("source_file")
                         })
-                        
+
                         # Stop if we have enough unique results
                         if len(results) >= k:
                             break
-            
+
             # Log final results
             if results:
-                logger.info(f"Final results - min score: {min(r['score'] for r in results):.4f}, max score: {max(r['score'] for r in results):.4f}")
+                logger.info(
+                    f"Final results - min score: {min(r['score'] for r in results):.4f}, "
+                    f"max score: {max(r['score'] for r in results):.4f}"
+                )
             else:
                 logger.info("No results found after deduplication")
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"Error in search: {str(e)}")
             return []
-    
+
     def save_index(self, directory: str):
         """Save the index and documents to disk"""
         if not self.index:
             logger.warning("No index to save")
             return
-            
+
         directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=True)
-        
+
         try:
-            # Save FAISS index
+            # Save FAISS index (convert GPU -> CPU if needed)
             index_path = directory / "faiss.index"
-            faiss.write_index(self.index, str(index_path))
+            idx_to_save = self._maybe_move_index_to_cpu_for_save()
+            faiss.write_index(idx_to_save, str(index_path))
             logger.info(f"Saved FAISS index to {index_path}")
-            
+
             # Save documents and metadata
             docs_path = directory / "documents.json"
             with open(docs_path, "w") as f:
@@ -387,21 +492,23 @@ class RAGService:
         except Exception as e:
             logger.error(f"Error saving index: {str(e)}")
             raise
-            
+
     def load_index(self, directory: str):
         """Load the index and documents from disk"""
         directory = Path(directory)
-        
+
         try:
-            # Load FAISS index
+            # Load FAISS index (CPU index from disk)
             index_path = directory / "faiss.index"
             if index_path.exists():
                 self.index = faiss.read_index(str(index_path))
                 logger.info(f"Loaded FAISS index from {index_path}")
+                # Move to GPU if enabled + available
+                self._maybe_move_index_to_gpu()
             else:
                 logger.info("No existing FAISS index found")
                 self.create_index()
-                
+
             # Load documents and metadata
             docs_path = directory / "documents.json"
             if docs_path.exists():
@@ -419,7 +526,7 @@ class RAGService:
             # Create new index if loading fails
             self.create_index()
             self.documents = []
-            self.metadata = [] 
+            self.metadata = []
 
     def index_documents(self, documents: List[str], metadata: List[Dict[str, Any]] = None) -> None:
         """Index a list of documents"""
@@ -427,34 +534,51 @@ class RAGService:
             if not documents:
                 logger.warning("No documents to index")
                 return
-            
+
             # Generate embeddings for all documents
             embeddings = self.model.encode(documents)
-            
+
             # Log embedding stats before normalization
-            logger.info(f"Pre-normalization stats - min: {embeddings.min():.4f}, max: {embeddings.max():.4f}, mean: {embeddings.mean():.4f}")
-            logger.info(f"Pre-normalization norms - min: {np.linalg.norm(embeddings, axis=1).min():.4f}, max: {np.linalg.norm(embeddings, axis=1).max():.4f}, mean: {np.linalg.norm(embeddings, axis=1).mean():.4f}")
-            
-            # Normalize embeddings for cosine similarity
+            logger.info(
+                f"Pre-normalization stats - min: {embeddings.min():.4f}, "
+                f"max: {embeddings.max():.4f}, mean: {embeddings.mean():.4f}"
+            )
+            logger.info(
+                f"Pre-normalization norms - min: {np.linalg.norm(embeddings, axis=1).min():.4f}, "
+                f"max: {np.linalg.norm(embeddings, axis=1).max():.4f}, "
+                f"mean: {np.linalg.norm(embeddings, axis=1).mean():.4f}"
+            )
+
+            # Normalize embeddings for cosine similarity ranking
             faiss.normalize_L2(embeddings)
-            
+
             # Log embedding stats after normalization
-            logger.info(f"Post-normalization stats - min: {embeddings.min():.4f}, max: {embeddings.max():.4f}, mean: {embeddings.mean():.4f}")
-            logger.info(f"Post-normalization norms - min: {np.linalg.norm(embeddings, axis=1).min():.4f}, max: {np.linalg.norm(embeddings, axis=1).max():.4f}, mean: {np.linalg.norm(embeddings, axis=1).mean():.4f}")
-            
-            # Create FAISS index
+            logger.info(
+                f"Post-normalization stats - min: {embeddings.min():.4f}, "
+                f"max: {embeddings.max():.4f}, mean: {embeddings.mean():.4f}"
+            )
+            logger.info(
+                f"Post-normalization norms - min: {np.linalg.norm(embeddings, axis=1).min():.4f}, "
+                f"max: {np.linalg.norm(embeddings, axis=1).max():.4f}, "
+                f"mean: {np.linalg.norm(embeddings, axis=1).mean():.4f}"
+            )
+
+            # Create FAISS index (CPU first)
             dimension = embeddings.shape[1]
             self.index = faiss.IndexFlatL2(dimension)
-            
+
             # Add vectors to the index
             self.index.add(embeddings.astype('float32'))
-            
+
             # Store documents and metadata
             self.documents = documents
             self.metadata = metadata if metadata else [{}] * len(documents)
-            
+
             logger.info(f"Indexed {len(documents)} documents with dimension {dimension}")
-            
+
+            # Move to GPU if enabled + available
+            self._maybe_move_index_to_gpu()
+
         except Exception as e:
             logger.error(f"Error in index_documents: {str(e)}")
-            raise 
+            raise

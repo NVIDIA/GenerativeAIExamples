@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -60,7 +59,7 @@ logger.info(f"Initialized FastAPI app with title: {app_config['app']['name']}, v
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["*"],   # temporary LAN fix
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -159,19 +158,115 @@ async def process_html(content: bytes) -> List[Dict[str, Any]]:
         "chunk_type": "html"
     }]
 
-async def process_file_content(content: bytes, content_type: str) -> List[Dict[str, Any]]:
+# -----------------------------
+# ADDED: Docling JSON processor
+# -----------------------------
+async def process_docling_json(content: bytes) -> List[Dict[str, Any]]:
+    try:
+        doc = json.loads(content.decode("utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON file: {str(e)}")
+
+    chunks: List[Dict[str, Any]] = []
+
+    def first_page_no(obj: Dict[str, Any]) -> int:
+        prov = obj.get("prov")
+        if isinstance(prov, list) and prov:
+            first = prov[0]
+            if isinstance(first, dict):
+                pn = first.get("page_no")
+                if isinstance(pn, int):
+                    return pn
+        return 1
+
+    def extract_text(obj: Dict[str, Any]) -> Optional[str]:
+        # common fields in Docling exports / variants
+        for key in ("text", "raw_text", "content", "caption", "title"):
+            val = obj.get(key)
+            if isinstance(val, str) and val.strip():
+                return val.strip()
+        # sometimes nested
+        val = obj.get("value")
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+        return None
+
+    # 1) Build a universal self_ref index from any top-level list fields.
+    ref_index: Dict[str, Dict[str, Any]] = {}
+    for _, v in doc.items():
+        if isinstance(v, list):
+            for item in v:
+                if isinstance(item, dict):
+                    sr = item.get("self_ref")
+                    if isinstance(sr, str):
+                        ref_index[sr] = item
+
+    # 2) Preferred path: traverse body/children and resolve self_ref.
+    def traverse(node: Any):
+        if not isinstance(node, dict):
+            return
+        children = node.get("children", [])
+        if not isinstance(children, list):
+            return
+        for child in children:
+            if not isinstance(child, dict):
+                continue
+            sr = child.get("self_ref")
+            if isinstance(sr, str) and sr in ref_index:
+                obj = ref_index[sr]
+                txt = extract_text(obj)
+                if txt:
+                    chunks.append({
+                        "text": txt,
+                        "chunk_type": "docling_ref",
+                        "page_number": first_page_no(obj),
+                    })
+            traverse(child)
+
+    traverse(doc.get("body", {}))
+
+    # 3) Fallback: if tree matching fails, index *all* text-bearing objects.
+    if not chunks:
+        for obj in ref_index.values():
+            txt = extract_text(obj)
+            if txt:
+                chunks.append({
+                    "text": txt,
+                    "chunk_type": "docling_fallback",
+                    "page_number": first_page_no(obj),
+                })
+
+    if not chunks:
+        raise HTTPException(status_code=400, detail="No content could be extracted from Docling JSON")
+
+    return chunks
+
+# -------------------------------------------------------
+# UPDATED: add filename + JSON fallback (octet-stream safe)
+# -------------------------------------------------------
+async def process_file_content(content: bytes, content_type: str, filename: str = "") -> List[Dict[str, Any]]:
     """Process file content based on its type"""
+    fname = (filename or "").lower()
+    ct = content_type or ""
+
+    is_json = (ct == "application/json") or fname.endswith(".json")
+
     processors = {
         'application/pdf': process_pdf,
         'text/plain': process_text,
         'text/markdown': process_markdown,
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document': process_docx,
-        'text/html': process_html
+        'text/html': process_html,
+        # Note: JSON may arrive as octet-stream; handled by is_json fallback above
+        'application/json': process_docling_json,
     }
     
-    processor = processors.get(content_type)
+    if is_json:
+        return await process_docling_json(content)
+
+    processor = processors.get(ct)
     if not processor:
-        raise HTTPException(status_code=400, detail=f"Unsupported file type: {content_type}")
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {ct}")
     
     return await processor(content)
 
@@ -240,8 +335,16 @@ async def upload_files(files: List[UploadFile] = File(...), background_tasks: Ba
         
         for file in files:
             logger.info(f"Processing file: {file.filename} (type: {file.content_type})")
-            
-            if not is_supported_file(file.content_type):
+
+            # -------------------------------------------------------
+            # UPDATED: accept JSON by MIME OR by .json extension
+            # (handles application/octet-stream uploads)
+            # -------------------------------------------------------
+            filename = (file.filename or "").lower()
+            content_type = file.content_type or ""
+            is_json = (content_type == "application/json") or filename.endswith(".json")
+
+            if (not is_json) and (not is_supported_file(content_type)):
                 logger.warning(f"Unsupported file type: {file.content_type}")
                 raise HTTPException(status_code=400, detail=f"Unsupported file type: {file.content_type}")
             
@@ -250,7 +353,15 @@ async def upload_files(files: List[UploadFile] = File(...), background_tasks: Ba
             
             try:
                 file_id = str(uuid.uuid4())
-                extension = get_file_extension(file.content_type)
+
+                # -------------------------------------------------------
+                # UPDATED: choose extension for JSON even if octet-stream
+                # -------------------------------------------------------
+                if is_json:
+                    extension = ".json"
+                else:
+                    extension = get_file_extension(file.content_type)
+
                 file_bytes = await file.read()  # Read once
 
                 # Save the file
@@ -258,8 +369,10 @@ async def upload_files(files: List[UploadFile] = File(...), background_tasks: Ba
                 saved_files.append((file_id, extension))
                 logger.info(f"Saved file with ID: {file_id}")
 
-                # Process file content
-                chunks = await process_file_content(file_bytes, file.content_type)
+                # -------------------------------------------------------
+                # UPDATED: pass filename so process_file_content can fallback
+                # -------------------------------------------------------
+                chunks = await process_file_content(file_bytes, file.content_type, file.filename)
                 
                 if not chunks:
                     logger.warning(f"No content extracted from file: {file.filename}")
@@ -283,9 +396,22 @@ async def upload_files(files: List[UploadFile] = File(...), background_tasks: Ba
                     
                     chunks_metadata.append(chunk_metadata)
                     processed_chunks.append(chunk["text"])
-                
+
+
                 logger.info(f"Successfully processed file: {file.filename} with {len(chunks)} chunks")
-                
+
+            # -------------------------------------------------------
+            # UPDATED: preserve HTTPException.detail (avoid blank str())
+            # -------------------------------------------------------
+            except HTTPException as he:
+                logger.error(f"Error processing file {file.filename}: {he.detail}")
+                # Remove the saved file if processing failed
+                if file_id and extension:
+                    file_path = os.path.join(STORAGE_DIR, f"{file_id}{extension}")
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                raise HTTPException(status_code=he.status_code, detail=f"Error processing file {file.filename}: {he.detail}")
+
             except Exception as e:
                 logger.error(f"Error processing file {file.filename}: {str(e)}")
                 # Remove the saved file if processing failed
@@ -458,6 +584,11 @@ async def get_document(file_id: str):
             content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         elif file_id.endswith('.html'):
             content_type = "text/html"
+        # -----------------------------
+        # ADDED: JSON served correctly
+        # -----------------------------
+        elif file_id.endswith('.json'):
+            content_type = "application/json"
             
         return FileResponse(
             file_path,
@@ -476,4 +607,4 @@ async def get_document(file_id: str):
 if __name__ == "__main__":
     import uvicorn
     logger.info("Starting server...")
-    uvicorn.run(app, host="0.0.0.0", port=8001) 
+    uvicorn.run(app, host="0.0.0.0", port=8001)
