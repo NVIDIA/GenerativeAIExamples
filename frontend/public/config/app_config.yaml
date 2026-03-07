@@ -24,9 +24,7 @@ app:
 
 # API Configuration
 api:
-  ip: "localhost"
-  port: "127.0.0.1"
-  base_url: "http://localhost:8001"  # This will be overridden by the dynamic config
+  base_url: "http://192.168.1.142:8001"
   endpoints:
     upload: "/api/upload"
     search: "/api/search"
@@ -35,23 +33,15 @@ api:
     progress: "/api/upload/progress"
     document: "/api/document"
 
-# Application Configuration
-
+# LLM Configuration
 llm:
-  base_url: "http://localhost:8002/v1"
+  base_url: "http://192.168.1.142:8002/v1"
 
   model:
-    # Must exactly match `ollama list`
     name: "gemma3:4b-it-q4_K_M"
-
-    # Safe settings for local CPU usage
     max_tokens: 28000
     temperature: 0.7
     top_p: 0.9
-
-
-# Keep the rest of your config exactly as-is below this line
-# (Only modify if you know what you're doing)
 
 rag:
   enabled: false
@@ -62,18 +52,9 @@ upload:
 ui:
   title: "Chat LLM (Ollama Backend)"
 
-# LLM Proxy Configuration
-llm_proxy:
-  port: 8002
-  # IP will be provided by user input
-  endpoints:
-    chat: "/chat/completions"
-
-# UI Configuration
-
   components:
     file_upload:
-      max_file_size: 10485760  # 10MB in bytes
+      max_file_size: 10485760
       accepted_file_types:
         - "application/pdf"
         - "text/plain"
@@ -101,3 +82,10 @@ llm_proxy:
         max_messages: 5
         system_prompt: "detailed thinking {status}"
         rag_prefix: "Relevant information from knowledge base:\n"
+
+# LLM Proxy Configuration
+llm_proxy:
+  base_url: "http://192.168.1.142:8002/v1"
+  port: 8002
+  endpoints:
+    chat: "/chat/completions"

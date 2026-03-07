@@ -15,7 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 import yaml from 'js-yaml';
 
 class ConfigLoader {
@@ -24,15 +23,19 @@ class ConfigLoader {
             return ConfigLoader.instance;
         }
         ConfigLoader.instance = this;
-        
+
         this.configs = {};
+        this._config = null;
+
+        // "serverIp" is used for X-LLM-IP. Keep as-is for backward compat.
         this._serverIp = localStorage.getItem('serverIp') || '';
-        
-        // Initialize RAG server URL
-        const ip = window.appConfig?.api?.ip || 'localhost';
-        const port = process.env.REACT_APP_API_PORT || window.appConfig?.api?.port || '8001';
-        this._ragServerUrl = `http://${ip}:${port}`;
-        console.log('RAG server URL:', this._ragServerUrl);
+
+        // Default to same host serving the frontend (avoids "localhost" on Windows clients).
+        this._defaultHost = window.location.hostname || 'localhost';
+        this._ragServerUrl = `http://${this._defaultHost}:8001`;
+
+        console.log('Default host:', this._defaultHost);
+        console.log('Initial RAG server URL:', this._ragServerUrl);
     }
 
     set serverIp(ip) {
@@ -44,27 +47,76 @@ class ConfigLoader {
         return this._serverIp;
     }
 
+    _safeUrl(url) {
+        try {
+            return new URL(url);
+        } catch {
+            return null;
+        }
+    }
+
+    _deriveHostFromConfig(config) {
+        // Prefer explicit ip/host fields, otherwise derive from api.base_url, otherwise frontend host.
+        const fromApi = this._safeUrl(config?.api?.base_url);
+        if (config?.api?.ip) return config.api.ip;
+        if (config?.api?.host) return config.api.host;
+        if (fromApi?.hostname) return fromApi.hostname;
+        return this._defaultHost;
+    }
+
+    _deriveRagUrl(config) {
+        const fromApi = this._safeUrl(config?.api?.base_url);
+        if (fromApi) return fromApi.origin;
+
+        const host = this._deriveHostFromConfig(config);
+        const port = config?.api?.port || process.env.REACT_APP_API_PORT || '8001';
+        return `http://${host}:${port}`;
+    }
+
+    _deriveLlmProxyUrl(config) {
+        // Prefer explicit llm_proxy.ip/host, otherwise derive from llm.base_url host, otherwise frontend host.
+        const fromLlm = this._safeUrl(config?.llm?.base_url);
+        const host =
+            config?.llm_proxy?.ip ||
+            config?.llm_proxy?.host ||
+            fromLlm?.hostname ||
+            this._defaultHost;
+
+        const port =
+            process.env.REACT_APP_LLM_PROXY_PORT ||
+            config?.llm_proxy?.port ||
+            '8002';
+
+        return `http://${host}:${port}`;
+    }
+
+    _shouldSendXLLMIPHeader() {
+        // Only send if user provided/stored a value.
+        // This avoids sending an empty/invalid X-LLM-IP header.
+        return Boolean(this._serverIp && this._serverIp.trim());
+    }
+
     get api() {
         const self = this;
         return {
             get proxy() {
+                // RAG backend URL (FastAPI on 8001)
                 return self._ragServerUrl;
             },
             get llmServer() {
-                const ip = window.appConfig?.llm_proxy?.ip || 'localhost';
-                const port = process.env.REACT_APP_LLM_PROXY_PORT || window.appConfig?.llm_proxy?.port || '8002';
-                const url = `http://${ip}:${port}`;
+                // LLM proxy URL (Express on 8002)
+                const url = self._deriveLlmProxyUrl(self._config || {});
                 return {
                     url,
                     headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    ...(self._config?.llm?.base_url?.includes(":8002")
-                        ? { 'X-LLM-IP': self._serverIp }
-                        : {})
-                    }
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        ...(self._shouldSendXLLMIPHeader()
+                            ? { 'X-LLM-IP': self._serverIp }
+                            : {}),
+                    },
                 };
-            }
+            },
         };
     }
 
@@ -77,19 +129,33 @@ class ConfigLoader {
         try {
             const publicPath = `/config/${configName}.yaml`;
             const response = await fetch(publicPath);
-            
+
             if (!response.ok) {
                 throw new Error(`Failed to load config: ${configName}`);
             }
-            
+
             const yamlText = await response.text();
             const config = yaml.load(yamlText);
-            
+
             if (!config) {
                 throw new Error('YAML parsing resulted in null or undefined');
             }
-            
+
+            // Cache it
             this.configs[configName] = config;
+
+            // Keep a reference to app_config for runtime URL derivation
+            if (configName === 'app_config') {
+                this._config = config;
+
+                // Update RAG server URL based on app_config (avoid "localhost" on Windows)
+                this._ragServerUrl = this._deriveRagUrl(config);
+
+                console.log('Loaded app_config.yaml');
+                console.log('Resolved RAG server URL:', this._ragServerUrl);
+                console.log('Resolved LLM proxy URL:', this._deriveLlmProxyUrl(config));
+            }
+
             return config;
         } catch (error) {
             console.error(`Error loading config ${configName}:`, error);
@@ -104,4 +170,5 @@ class ConfigLoader {
 
 // Create a singleton instance
 const configLoader = new ConfigLoader();
-export default configLoader; 
+
+export default configLoader;
