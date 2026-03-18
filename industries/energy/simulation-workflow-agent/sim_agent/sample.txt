@@ -1,0 +1,1 @@
+Can you run this case: /home/tonishi/Workdir/repos/reservoir-agent/sim_agent/data/knowledge_base/examples/spe1/SPE1CASE1.DATA using OPM flow?

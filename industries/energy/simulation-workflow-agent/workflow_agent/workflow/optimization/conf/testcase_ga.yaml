@@ -1,0 +1,50 @@
+# Optimization test case - GA (Genetic Algorithm)
+# Single injector location optimization (I2)
+
+# Paths
+paths:
+  template: "dataset/SPE10/TEMPLATE/SPE10.DATA"
+  sim_dir_base: "dataset/SPE10"
+  case_name: "SPE10_GA"
+
+# Optimization variables - Injector I2 location with ±3 grid cells range
+variables:
+  I2_I:
+    min: 42
+    max: 48
+    type: int
+    description: "Injector I2 grid I-coordinate (base: 45)"
+  I2_J:
+    min: 17
+    max: 23
+    type: int
+    description: "Injector I2 grid J-coordinate (base: 20)"
+
+# Optimization algorithm settings (GA)
+algorithm:
+  type: "GA"
+  pop_size: 5
+  n_generations: 2
+  n_parallel: 24
+  seed: 42
+
+  ga_params:
+    crossover_prob: 0.9
+    crossover_eta: 15
+    mutation_prob: 0.1
+    mutation_eta: 20
+
+# Objective function - EUR mode
+objective:
+  mode: "EUR"
+
+# Simulation settings
+simulation:
+  simulator_command: "mpirun -np 2 flow ${sim_file_path}"
+  timeout: 600
+
+# Output settings
+output:
+  save_comprehensive: true
+  save_log: true
+  save_plots: true

@@ -1,0 +1,60 @@
+# Top-level orchestration config: points to simulator and workflow agent configs.
+# Paths are relative to repo root unless absolute.
+#
+# Usage:
+#   python -m orchestration_agent --config config/orchestration_config.yaml --interactive
+#   python -m orchestration_agent "your query" --config config/orchestration_config.yaml
+
+# LLM for routing (query -> sim or workflow)
+llm:
+  model_name: nvidia/llama-3.3-nemotron-super-49b-v1.5
+  temperature: 0.1
+  top_p: 0.95
+  max_tokens: 64
+  routing_system_prompt: |
+    You are a router. Reply with exactly one word: simulator_agent or workflow_agent.
+    ALL example questions in sim_agent/EXAMPLES.md route to simulator_agent.
+
+    simulator_agent: Interactive, conversational agent with RAG (doc search). Use for:
+    - Running a single case ("run this case", "run the simulation", path to .DATA file)
+    - Keywords, syntax, input formatting questions
+    - Parsing or modifying .DATA files
+    - Testing one scenario (modify then run)
+    - Plotting, comparing cases, flow diagnostics
+    - Documentation lookups, best practices, follow-up questions, multi-step workflows
+
+    Example queries that route to simulator_agent (aligned with sim_agent/EXAMPLES.md):
+    Understanding keywords: What does the WELSPECS keyword do?; What is the COMPDAT keyword format?; Explain the WCONPROD keyword and its parameters; What is the difference between WCONPROD and WCONINJE?; What is the COMPDAT keyword format?; What parameters does TSTEP accept?
+    Input structure: What are the required sections in a simulator input file?; How do I specify well locations in the input file?; What is the correct format for TSTEP?
+    Working with files: Parse the input file at /path/to/CASE.DATA and explain its structure; Parse /path/to/CASE.DATA and explain the well configuration; Modify /path/to/CASE.DATA to set well PROD1 to 5000 STB/day; Validate the input file at /path/to/MODIFIED.DATA
+    Running simulations: Run the simulation on data/knowledge_base/examples/spe1/SPE1CASE1.DATA; Run the test case ... with 2 MPI processes (np=2); Monitor the simulation at /path/to/CASE.DATA and show progress; Parse the simulation output from /path/to/CASE.PRT
+    Scenario testing: Test a scenario with higher water injection at well I1 in path/to/CASE.DATA; Run a case with decreased BHP at producers in path/to/CASE.DATA; Can you test a scenario with increased water injection rate at I1 in ...
+    Analyzing results: Read simulation summary from /path/to/CASE for variables FOPT and FOPR; Analyze production performance for /path/to/CASE.DATA; Run flow diagnostics on path/to/CASE.DATA; Compute flow diagnostics for the attached case to get time-of-flight and allocation factors; Get grid structure information from /path/to/CASE.DATA; Read pressure and saturation from /path/to/CASE.DATA for the last timestep
+    Visualization: Plot FOPT vs time from /path/to/CASE.DATA; Compare oil production rates between /path/to/CASE1.DATA and /path/to/CASE2.DATA; Plot well WOPR for producers in /path/to/CASE.DATA
+    Best practices: What are best practices for setting timesteps?; What convergence parameters should I use for a black oil model?; What summary keywords should I use to track oil production?
+    Documentation: Show me examples of WELSPECS from the simulator manual; What parameters does WCONPROD accept according to the documentation?
+    Complex workflows: I have a reservoir at /path/to/BASE.DATA. Parse it, create a modified version with well PROD1 at 4000 STB/day, run the simulation, and plot the results; Compare production strategies: run /path/to/RATE_CONTROL.DATA and /path/to/BHP_CONTROL.DATA, then plot cumulative oil production for both; Analyze the grid structure of /path/to/CASE.DATA and show permeability distribution; Parse /path/to/BASE.DATA, modify well PROD1 to 6000 STB/day, validate the changes, then run the simulation
+    Troubleshooting: I am seeing early water breakthrough at P3 in path/to/CASE.DATA, help me understand why
+    Batch/interactive: Parse /data/CASE1.DATA; Analyze production performance; Plot FOPT vs time (interactive or batch queries)
+
+    workflow_agent: Deterministic, non-interactive agent. Runs to completion. MOST USE CASES ROUTE TO simulator_agent. Only trigger workflow_agent when it is absolutely obvious. Use only for:
+    - Optimization (GA/PSO, parameter tuning, multi-run search)
+    - History matching
+    - Uncertainty quantification
+
+    Route to workflow_agent when the user clearly intends optimization/history-matching. The workflow config may be in the query (e.g. workflow_agent/conf/config.yaml) or in uploaded file(s); we validate config content before running.
+    Single-case runs, keyword lookups, plotting, scenario testing, and any .DATA file operations always go to simulator_agent.
+
+    Example queries that route to workflow_agent:
+    - Run optimization with workflow_agent/conf/config.yaml
+    - Run optimization (config in uploaded file)
+
+    When unclear, prefer simulator_agent.
+
+# Simulator agent (sim_agent) config
+sim:
+  config: "sim_agent/config/config.yaml" 
+
+# Workflow agent config
+workflow:
+  config: "workflow_agent/conf/config.yaml" # default fallback config in case the config path is not specified in the query

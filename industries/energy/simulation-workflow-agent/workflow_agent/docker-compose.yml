@@ -1,0 +1,36 @@
+# Workflow agent: workflow + agent services
+# Requires workflow:latest (build from workflow/: docker compose build)
+# Run from workflow_agent: docker compose build && docker compose up -d
+
+services:
+  workflow:
+    image: workflow:latest  # build from workflow/: docker compose build
+    container_name: workflow
+    command: /bin/bash
+    tty: true
+    stdin_open: true
+    environment:
+      OPM_FLOW_EXTRA_ARGS: "--CheckSatfuncConsistency=0"
+      OMPI_ALLOW_RUN_AS_ROOT: "1"
+      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: "1"
+    volumes:
+      - .:/workspace/workflow_agent
+    working_dir: /workspace/workflow_agent
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: agent:latest
+    container_name: agent
+    command: /bin/bash
+    tty: true
+    stdin_open: true
+    environment:
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      OPM_FLOW_EXTRA_ARGS: "--CheckSatfuncConsistency=0"
+      OMPI_ALLOW_RUN_AS_ROOT: "1"
+      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: "1"
+    volumes:
+      - .:/workspace/workflow_agent
+    working_dir: /workspace/workflow_agent

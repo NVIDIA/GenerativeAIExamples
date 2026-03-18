@@ -1,0 +1,15 @@
+.git
+.gitignore
+.venv
+dataset/
+sim_agent/.venv/
+workflow_agent/.venv/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.DS_Store
+**/*.ipynb_checkpoints
+sim_agent/chroma_db/
+sim_agent/volumes/

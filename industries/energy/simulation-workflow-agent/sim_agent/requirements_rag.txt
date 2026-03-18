@@ -1,0 +1,37 @@
+# Optional dependencies for RAG (Knowledge Retrieval)
+# Install with: pip install -r requirements_rag.txt
+# These versions match the pinned optional deps in pyproject.toml.
+
+# Vector database
+chromadb==0.4.24
+
+# Embeddings
+sentence-transformers==2.2.2
+
+# PDF parsing
+pdfplumber==0.11.5
+PyPDF2==3.0.1
+
+pymilvus==2.6.6
+grpcio==1.76.0
+openai
+# For ocr_client_vllm.py (client only; no torch/transformers)
+openai>=1.0.0
+# Core: Milvus pipeline, query script, NVIDIA embeddings, LLM metadata
+numpy
+pymilvus
+langchain-core
+openai
+
+# PDF to PNG (pdf_to_png.py)
+pypdfium2
+
+# Optional: Transformers-based OCR test path (test_ocr_query.py, notebooks)
+torch
+torchvision
+pillow
+accelerate
+jinja2>=3.1.0
+langchain-community
+transformers
+# Or use latest from git: git+https://github.com/huggingface/transformers.git

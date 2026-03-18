@@ -1,0 +1,26 @@
+# Unified simulation-agent: orchestration, sim, and workflow in one image.
+# Run from repo root: docker compose build && docker compose run --rm agent
+#
+# For interactive chat:  docker compose run --rm agent
+# For a query:           docker compose run --rm agent python -m orchestration_agent "your query"
+# With files:            docker compose run --rm -v /path/to/data:/data agent python -m orchestration_agent "run this case" -f /data/case.DATA
+
+services:
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: simulation-agent:latest
+    container_name: simulation-agent
+    stdin_open: true
+    tty: true
+    environment:
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      OPM_FLOW_EXTRA_ARGS: "--CheckSatfuncConsistency=0"
+      OMPI_ALLOW_RUN_AS_ROOT: "1"
+      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: "1"
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    # Override CMD for interactive bash: docker compose run --rm agent
+    command: ["python", "-m", "orchestration_agent", "--interactive"]

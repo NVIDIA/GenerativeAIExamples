@@ -1,0 +1,17 @@
+# GLM-OCR with vLLM: official image + Transformers from source for glm_ocr support
+FROM vllm/vllm-openai:nightly
+
+# Base image has no git; pip install from git requires it.
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Transformers from source so the container has the glm_ocr model architecture.
+# The base image's Transformers is too old and does not include GLM-OCR.
+RUN pip install --no-cache-dir "git+https://github.com/huggingface/transformers.git"
+
+# Keep the default vLLM OpenAI API server entrypoint (no need to set it explicitly).
+# Run with:
+#   docker run --gpus all -p 8080:8080 --ipc=host \
+#     -v ~/.cache/huggingface:/root/.cache/huggingface \
+#     glm-ocr-vllm \
+#     zai-org/GLM-OCR --allowed-local-media-path / --port 8080

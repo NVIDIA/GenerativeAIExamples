@@ -1,0 +1,110 @@
+# Python
+__pycache__/
+pdf2png/
+png2txt/
+processed_png2txt_list.md
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+**/.venv.clean/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+.processed_txt_files.md
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+# test_*.py
+debug_*.py
+
+# Docker volumes and runtime data
+volumes/
+sim_agent/volumes/
+
+# Etcd data
+**/etcd/
+
+# Logs
+*.log
+**/logs/
+
+# Environment files
+.env
+.env.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Vector databases
+*.db
+*.index
+chroma/
+chroma_db/
+# volumes/milvus (runtime data) covered by volumes/ above
+
+# Output and cache
+test_output/
+output/
+workflow_agent/experiments/
+
+# Optimization: generated simulation dirs (dataset/CASE/CASE_RUN.sim/)
+**/*.sim/
+
+# Flow diagnostics output
+**/*.fdout/
+
+# Example cases - generated outputs
+ressim_agent/data/example_cases/SPE10/**/*.RSM
+ressim_agent/data/example_cases/SPE10/**/*_AGENT_GENERATED.DATA
+ressim_agent/data/example_cases/SPE10/**/plot_*.png
+ressim_agent/data/example_cases/SPE10/**/*_FIXED.DATA
+
+*.DBG
+*.EGRID
+*.INIT
+*.PRT
+*.SMSPEC
+*.UNRST
+*.UNSMRY
+
+# Knowledge base - large files (downloaded via download_required.sh)
+ressim_agent/data/knowledge_base/papers/*.pdf
+ressim_agent/data/knowledge_base/papers/.ocr_OPM_Flow_Reference_Manual_2025-10/txts/
+ressim_agent/data/knowledge_base/repos/
+sim_agent/data/knowledge_base/repos/
+data/knowledge_base/repos/
+ressim_agent/data/knowledge_base/examples
+workflow_agent/knowledge_base/manuals/*.pdf
+workflow_agent/workflow/dataset/**/*.GRDECL
+dataset/**/*.GRDECL
