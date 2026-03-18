@@ -30,12 +30,6 @@ A central orchestration agent routes user queries to specialized sub-agents:
 
 ![Architecture: Orchestrator routes user queries to Simulator Agent or Workflow Agent](img/orchestrator_agent.png)
 
-### Agnostic by Design
-While these examples focus on subsurface engineering, the architecture is modular and extensible across two primary dimensions:
-
-1.  **Simulation & Workflow Agnostic:** The agentic layer is decoupled from the underlying physics engine and orchestration environment. While demonstrated with [OPM Flow](https://opm-project.org/), the framework is designed to wrap around any commercial or open-source simulator and integrate into various workflow stacks.
-2.  **Industry Agnostic:** The core logic of automating "dead time" and the "heuristic pause" is applicable to any field reliant on complex, iterative simulation cycles. The framework can be readily extended to industries like geothermal energy, CO2 sequestration, or aerospace manufacturing with only minor updates to the domain-specific agent tools.
-
 ### Extensibility & Reference Points (POC)
 
 This repo serves as a reference for several patterns you can reuse or extend:
