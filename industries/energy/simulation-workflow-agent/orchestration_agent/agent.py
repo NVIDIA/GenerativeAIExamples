@@ -28,6 +28,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Generator
 
+from langchain_community.chat_message_histories import ChatMessageHistory
+
 # Repo root (orchestration_agent/agent.py -> parent=orchestration_agent, parent.parent=repo)
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SIM_DIR = REPO_ROOT / "sim_agent"
@@ -161,6 +163,27 @@ def resolve_path(candidate: str, base: Path = REPO_ROOT) -> Path:
     return (base / candidate).resolve()
 
 
+def _extract_sim_context_from_output(out: dict[str, Any]) -> tuple[str, str, list[str]]:
+    """Extract output_dir, base_simulation_file, uploaded_files from sim_agent output for next turn."""
+    output_dir = (out.get("output_dir") or "").strip()
+    base_file = (out.get("base_simulation_file") or "").strip()
+    uploaded = list(out.get("uploaded_files") or [])
+
+    routing = out.get("routing_to") or []
+    for r in reversed(routing):
+        ti = r.get("tool_input") or {}
+        data_file = (ti.get("data_file") or "").strip()
+        out_dir = (ti.get("output_dir") or "").strip()
+        if data_file or out_dir:
+            if not base_file and data_file:
+                base_file = data_file
+            if not output_dir:
+                output_dir = out_dir or str(Path(data_file).parent) if data_file else ""
+            break
+
+    return (output_dir or ".", base_file, uploaded)
+
+
 def run_sim_agent(
     query: str,
     *,
@@ -169,8 +192,9 @@ def run_sim_agent(
     interactive: bool = False,
     output_dir: str = ".",
     base_file: str = "",
-) -> int:
-    """Call sim_agent via its Python API."""
+    chat_history: list | None = None,
+) -> tuple[int, dict[str, Any]]:
+    """Call sim_agent via its Python API. Returns (exit_code, output_dict)."""
     from simulator_agent.runner import SimulatorAgent
 
     config_str = str(config_path) if config_path and config_path.exists() else None
@@ -182,17 +206,18 @@ def run_sim_agent(
             base_simulation_file=base_file,
             uploaded_files=files,
         )
-        return 0
+        return (0, {})
 
     out = agent.run_single(
         query,
         uploaded_files=files or [],
         output_dir=output_dir,
         base_simulation_file=base_file,
+        chat_history=chat_history or [],
     )
     print("\n--- Result ---")
     print(out.get("agent_final_output", ""))
-    return 0
+    return (0, out)
 
 
 @contextmanager
@@ -249,6 +274,11 @@ def _run_orchestrator_interactive(
     print("Type your query and press Enter. Commands: 'quit' or 'exit' to stop.", file=sys.stderr)
     print("-" * 60, file=sys.stderr)
 
+    sim_chat_history = ChatMessageHistory()
+    cur_output_dir = sim_output_dir
+    cur_base_file = sim_base_file
+    cur_uploaded_files = list(files)
+
     while True:
         try:
             line = input("\nYou: ").strip()
@@ -293,16 +323,25 @@ def _run_orchestrator_interactive(
                 iterations=workflow_iterations,
             )
         else:
-            out = run_sim_agent(
+            exit_code, out = run_sim_agent(
                 line,
                 config_path=sim_config_path,
-                files=files or None,
+                files=cur_uploaded_files or None,
                 interactive=False,
-                output_dir=sim_output_dir,
-                base_file=sim_base_file,
+                output_dir=cur_output_dir,
+                base_file=cur_base_file,
+                chat_history=sim_chat_history.messages,
             )
-            if out != 0:
-                return out
+            if exit_code != 0:
+                return exit_code
+            sim_chat_history.messages = list(out.get("chat_history") or [])
+            ext_dir, ext_base, ext_uploaded = _extract_sim_context_from_output(out)
+            if ext_dir and ext_dir != ".":
+                cur_output_dir = ext_dir
+            if ext_base:
+                cur_base_file = ext_base
+            if ext_uploaded:
+                cur_uploaded_files = ext_uploaded
 
     return 0
 
@@ -407,7 +446,7 @@ def main() -> int:
             iterations=workflow_iterations,
         )
 
-    return run_sim_agent(
+    exit_code, _ = run_sim_agent(
         query or "Hello! How can I help you with simulation?",
         config_path=sim_config_path,
         files=args.files or None,
@@ -415,3 +454,4 @@ def main() -> int:
         output_dir=".",
         base_file=sim_cfg.get("base_file", ""),
     )
+    return exit_code
