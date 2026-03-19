@@ -301,10 +301,13 @@ class SimulatorAgent:
         uploaded_files: Optional[list[str]] = None,
         output_dir: str = ".",
         base_simulation_file: str = "",
+        chat_history: Optional[list] = None,
     ) -> dict[str, Any]:
         """Run a single query and return the output state."""
+        base = base_state()
+        base["chat_history"] = list(chat_history) if chat_history else []
         turn_input: dict[str, Any] = {
-            **base_state(),
+            **base,
             "user_input": query,
             "uploaded_files": uploaded_files or [],
             "output_dir": output_dir,
