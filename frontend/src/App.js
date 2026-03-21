@@ -20,6 +20,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ProjectKnowledge from './pages/ProjectKnowledge';
+import PictureAnnotations from './pages/PictureAnnotations';
 import configLoader from './config/config_loader';
 import './App.css';
 
@@ -37,12 +38,10 @@ function App() {
   const [pictureSearchResults, setPictureSearchResults] = useState([]);
   const [pictureSearchLoading, setPictureSearchLoading] = useState(false);
   const [pictureSearchError, setPictureSearchError] = useState('');
-  const [pinnedPicture, setPinnedPicture] = useState(null);
-  const [pictureSidecarOpen, setPictureSidecarOpen] = useState(true);
-  const [pictureSidecarAutoCollapsed, setPictureSidecarAutoCollapsed] = useState(false);
+  const [, setPinnedPicture] = useState(null);
 
-  // NEW: view toggle for Option C
-  const [view, setView] = useState("chat"); // "chat" | "knowledge"
+  // View toggle
+  const [view, setView] = useState("chat"); // "chat" | "knowledge" | "pictureAnnotations"
 
   const [serverIp, setServerIp] = useState(() => {
     // Load IP from localStorage on initial render
@@ -130,11 +129,31 @@ function App() {
 
 
   useEffect(() => {
-    if (pictureSearchResults.length > 0 && !pictureSidecarAutoCollapsed) {
-      setPictureSidecarOpen(false);
-      setPictureSidecarAutoCollapsed(true);
-    }
-  }, [pictureSearchResults, pictureSidecarAutoCollapsed]);
+    const handleClick = (event) => {
+      const button = event.target.closest('[data-pin-picture]');
+      if (!button) return;
+      const key = button.getAttribute('data-pin-picture');
+      const item = pictureSearchResults.find(
+        (pic) => `${pic.source_file || ''}::${pic.page_no || ''}::${pic.title || ''}` === key
+      );
+      if (!item) return;
+      pinPictureToChat(item);
+      setMessages((prev) => {
+        const next = [...prev];
+        for (let i = next.length - 1; i >= 0; i -= 1) {
+          if (next[i].role === 'assistant') {
+            next[i] = { ...next[i], pinnedPicture: item };
+            return next;
+          }
+        }
+        return prev;
+      });
+    };
+
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [pictureSearchResults]);
+
 
   const updateSummary = async (messages) => {
     try {
@@ -161,7 +180,7 @@ function App() {
             ...summaryMessages
           ],
           stream: false,
-          max_tokens: appConfig?.llm?.model?.max_tokens || 512
+          max_tokens: 128
         }),
       });
 
@@ -294,23 +313,58 @@ function App() {
     return map;
   };
 
-  const getPictureCaption = (doc, picture) => {
+  const getPictureTextParts = (doc, picture) => {
     const textByRef = getTextByRefMap(doc);
     const captions = Array.isArray(picture?.captions) ? picture.captions : [];
+
     const captionTexts = captions
-      .map((c) => (c && typeof c === "object" ? c.$ref : null))
+      .map((c) => {
+        if (typeof c === "string") return c;
+        if (!c || typeof c !== "object") return null;
+        return c.$ref || c.ref || null;
+      })
       .filter(Boolean)
-      .map((ref) => textByRef.get(ref))
+      .map((refOrText) => {
+        if (typeof refOrText !== "string") return "";
+        return textByRef.get(refOrText) || refOrText;
+      })
       .filter((t) => norm(t));
-    if (captionTexts.length) return captionTexts.join("\n\n");
+
+    const directCaptionTexts = captions
+      .map((c) => {
+        if (typeof c === "string") return "";
+        if (!c || typeof c !== "object") return "";
+        return c.text || c.orig || c.caption || c.label || "";
+      })
+      .filter((t) => norm(t))
+      .map((t) => norm(t));
 
     const ann = Array.isArray(picture?.annotations) ? picture.annotations : [];
-    for (const a of ann) {
-      if (a?.kind === "description" && norm(a?.text)) return norm(a.text);
-    }
+    const annotationTexts = ann
+      .map((a) => {
+        if (typeof a === "string") return "";
+        if (!a || typeof a !== "object") return "";
+        return a?.kind === "description" && norm(a?.text) ? norm(a.text) : "";
+      })
+      .filter(Boolean);
 
     const meta = picture?.meta && typeof picture.meta === "object" ? picture.meta : {};
-    return norm(meta.description || meta.caption || meta.desc || "");
+    const metaTexts = [meta.description, meta.caption, meta.desc, meta.place]
+      .filter((t) => norm(t))
+      .map((t) => norm(t));
+
+    const seen = new Set();
+    return [...captionTexts, ...directCaptionTexts, ...annotationTexts, ...metaTexts].filter((t) => {
+      const key = normLower(t);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const getPictureCaption = (doc, picture) => {
+    const parts = getPictureTextParts(doc, picture);
+    return parts.join("\n\n");
   };
 
   const getPageObject = (doc, pageNo) => {
@@ -318,6 +372,8 @@ function App() {
     if (!pages || typeof pages !== "object") return null;
     return pages[String(pageNo)] || pages[pageNo] || null;
   };
+
+
 
   const cropPictureFromPage = async (doc, pageNo, bbox, padPx = 2) => {
     try {
@@ -335,39 +391,70 @@ function App() {
           pxW = Number(imgMeta.size.width || 0);
           pxH = Number(imgMeta.size.height || 0);
         }
-      } else if (typeof imgMeta === "string") {
-        src = imgMeta;
+      } else if (typeof imgMeta === "string" && imgMeta) {
+        src = imgMeta.startsWith("data:") ? imgMeta : `data:image/png;base64,${imgMeta}`;
       }
 
-      if (!src || !pxW || !pxH) return null;
+      if (!src) return null;
 
-      const left = Math.max(0, Math.floor(Math.min(bbox.l, bbox.r) - padPx));
-      const top = Math.max(0, Math.floor(Math.min(bbox.t, bbox.b) - padPx));
-      const width = Math.max(1, Math.floor(Math.abs(bbox.r - bbox.l) + padPx * 2));
-      const height = Math.max(1, Math.floor(Math.abs(bbox.b - bbox.t) + padPx * 2));
-
-      return await new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const canvas = document.createElement("canvas");
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, left, top, width, height, 0, 0, width, height);
-            resolve(canvas.toDataURL("image/png"));
-          } catch (_) {
-            resolve(null);
-          }
-        };
-        img.onerror = () => resolve(null);
-        img.src = src;
+      const img = await new Promise((resolve, reject) => {
+        const el = new window.Image();
+        el.onload = () => resolve(el);
+        el.onerror = reject;
+        el.src = src;
       });
+
+      if (!(pxW > 0 && pxH > 0)) {
+        pxW = img.naturalWidth || img.width || 0;
+        pxH = img.naturalHeight || img.height || 0;
+      }
+      if (!(pxW > 0 && pxH > 0)) return null;
+
+      const pdfSize = page.size && typeof page.size === "object" ? page.size : {};
+      const pdfW = Number(pdfSize.width || 0);
+      const pdfH = Number(pdfSize.height || 0);
+
+      let x0 = 0;
+      let y0 = 0;
+      let x1 = 0;
+      let y1 = 0;
+
+      if (pdfW > 0 && pdfH > 0) {
+        const l = Number(bbox.l || 0);
+        const t = Number(bbox.t || 0);
+        const r = Number(bbox.r || 0);
+        const b = Number(bbox.b || 0);
+        x0 = Math.round((l / pdfW) * pxW);
+        x1 = Math.round((r / pdfW) * pxW);
+        y0 = Math.round(((pdfH - t) / pdfH) * pxH);
+        y1 = Math.round(((pdfH - b) / pdfH) * pxH);
+      } else {
+        x0 = Number(bbox.l || 0);
+        y0 = Number(bbox.t || 0);
+        x1 = Number(bbox.r || 0);
+        y1 = Number(bbox.b || 0);
+      }
+
+      const xs = [x0, x1].sort((a, b) => a - b);
+      const ys = [y0, y1].sort((a, b) => a - b);
+      x0 = Math.max(0, Math.round(xs[0] - padPx));
+      x1 = Math.min(Math.round(pxW), Math.round(xs[1] + padPx));
+      y0 = Math.max(0, Math.round(ys[0] - padPx));
+      y1 = Math.min(Math.round(pxH), Math.round(ys[1] + padPx));
+
+      if (x1 - x0 < 2 || y1 - y0 < 2) return null;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = x1 - x0;
+      canvas.height = y1 - y0;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      ctx.drawImage(img, x0, y0, x1 - x0, y1 - y0, 0, 0, x1 - x0, y1 - y0);
+      return canvas.toDataURL("image/png");
     } catch (_) {
       return null;
     }
   };
-
   const fetchDoc = async (sourceFile) => {
     const baseUrl = appConfig?.api?.base_url || "http://localhost:8001";
     const resp = await fetch(`${baseUrl}/api/document/${encodeURIComponent(sourceFile)}`, {
@@ -377,56 +464,319 @@ function App() {
     return await resp.json();
   };
 
+
+  const escapeHtml = (s) =>
+    String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  const escapeRegExp = (s) => String(s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const highlightHtml = (text, needle) => {
+    const safeText = escapeHtml(text);
+    const q = String(needle || "").trim();
+    if (!q) return safeText;
+    const re = new RegExp(`(${escapeRegExp(q)})`, "ig");
+    return safeText.replace(re, '<mark class="pk-highlight">$1</mark>');
+  };
+
+  const linkifyHtml = (html) =>
+    String(html || "").replace(
+      /(https?:\/\/[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]+)/g,
+      '<a href="$1" target="_blank" rel="noreferrer">$1</a>'
+    );
+
+  const renderPictureSearchCardsHtml = (cards, highlightNeedle) => {
+    if (!cards.length) return `<div class="pk-empty">No rendered picture results.</div>`;
+    return cards
+      .map((card) => {
+        const title = linkifyHtml(highlightHtml(card.title, highlightNeedle));
+        const body = linkifyHtml(highlightHtml(card.body, highlightNeedle));
+        const relevance = card.score != null ? `Relevance: ${Math.round(card.score * 100)}%` : "Relevance: —";
+        const footer = [
+          card.kind ? `Type: ${card.kind}` : null,
+          card.doc_name ? `Name: ${card.doc_name}` : null,
+          Number.isInteger(card.page_no) ? `Page: ${card.page_no}` : null,
+          ...(Array.isArray(card.footer) ? card.footer : []),
+        ]
+          .filter(Boolean)
+          .map((item) => `<span>${linkifyHtml(highlightHtml(item, highlightNeedle))}</span>`)
+          .join("");
+
+        const viewSource = card.source_file
+          ? `<a class="pk-view-source-btn" href="${escapeHtml(`${appConfig?.api?.base_url || "http://localhost:8001"}/api/document/${encodeURIComponent(card.source_file)}`)}" target="_blank" rel="noreferrer">View Source Document</a>`
+          : "";
+        const imageBlock = card.imageDataUrl
+          ? `<div class="pk-reference-image-wrap"><img class="pk-reference-image" src="${escapeHtml(card.imageDataUrl)}" alt="${escapeHtml(card.title || "picture")}" /></div>`
+          : "";
+        const pinKey = `${card.source_file || ''}::${card.page_no || ''}::${card.title || ''}`;
+
+        return `
+          <div class="pk-reference-card">
+            <div class="pk-reference-header">
+              <div class="pk-reference-meta">
+                <div class="pk-reference-score">${escapeHtml(relevance)}</div>
+                <div class="pk-reference-title">${title}</div>
+              </div>
+              ${viewSource}
+            </div>
+            ${imageBlock}
+            <div class="pk-reference-body">${body}</div>
+            ${footer ? `<div class="pk-reference-footer">${footer}</div>` : ""}
+            <div style="margin-top: 10px; display: flex; gap: 8px;">
+              <button type="button" data-pin-picture="${escapeHtml(pinKey)}" class="pk-pin-btn">Pin to Chat</button>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  };
+
+  const projectKnowledgeResultCss = `
+    .pk-results-wrap { margin-top: 1rem; }
+    .pk-results-panel { background: #d9d9dd; border-radius: 8px; padding: 10px; color: #202124; }
+    .pk-results-title { margin: 0 0 0.5rem 0; color: inherit; font-size: 1.1rem; font-weight: 600; }
+    .pk-empty { color: #4a4a4a; padding: 8px 4px; }
+    .pk-highlight { background: rgba(255, 230, 0, 0.35); color: inherit; padding: 0 2px; border-radius: 2px; }
+    .pk-reference-card { background: #efefef; border: 1px solid #d6d6d6; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); padding: 12px; margin-top: 12px; color: #222; }
+    .pk-reference-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .pk-reference-meta { min-width: 0; flex: 1; }
+    .pk-reference-score { font-size: 0.95rem; color: #6a6a6a; margin-bottom: 4px; }
+    .pk-reference-title { font-size: 1rem; font-weight: 500; line-height: 1.45; color: #2b2b2b; white-space: pre-wrap; word-break: break-word; }
+    .pk-view-source-btn, .pk-pin-btn { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; padding: 6px 12px; border-radius: 4px; border: 1px solid #6d3ea2; color: #6d3ea2; background: #f8f6fb; text-decoration: none; font-size: 0.9rem; line-height: 1.2; cursor: pointer; }
+    .pk-view-source-btn:hover, .pk-pin-btn:hover { background: #f1ecf8; }
+    .pk-reference-body { white-space: pre-wrap; line-height: 1.7; color: #303030; overflow-wrap: anywhere; }
+    .pk-reference-footer { margin-top: 10px; font-size: 0.88rem; color: #666; display: flex; flex-wrap: wrap; gap: 10px; }
+    .pk-reference-image-wrap { margin: 0 0 12px 0; }
+    .pk-reference-image { max-width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid #d6d6d6; background: #fff; }
+  `;
+
+
+  const getDoclingPicturePlace = (picture) => {
+    return String(picture?.meta?.place || "").trim();
+  };
+
+  const getDoclingMaterialsText = (doc) => {
+    const texts = Array.isArray(doc?.texts) ? doc.texts : [];
+    return texts
+      .map((item) => String(item?.text || "").trim())
+      .filter((value) => /^MATERIALS\s*:/i.test(value))
+      .join(" | ");
+  };
+
+  const getDoclingTableText = (doc) => {
+    const tables = Array.isArray(doc?.tables) ? doc.tables : [];
+    const parts = [];
+
+    for (const table of tables) {
+      const cells = Array.isArray(table?.data?.table_cells) ? table.data.table_cells : [];
+      for (const cell of cells) {
+        const value = String(cell?.text || "").trim();
+        if (value) parts.push(value);
+      }
+    }
+
+    return parts.join(" | ");
+  };
+
+  const getDoclingMatchText = (doc, picture) => {
+    const captionText = String(getPictureCaption(doc, picture) || "").trim();
+    const picturePlace = getDoclingPicturePlace(picture);
+    const docName = String(doc?.name || "").trim();
+    const materialsText = getDoclingMaterialsText(doc);
+    const tableText = getDoclingTableText(doc);
+
+    return [
+      captionText,
+      picturePlace,
+      docName,
+      materialsText,
+      tableText,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+  };
+
+  const pictureQueryTokens = (value) => {
+    const stop = new Set([
+      "the","and","for","with","that","this","from","into","about","using","what","when","where",
+      "which","whose","then","than","they","them","their","have","has","had","was","were","are",
+      "you","your","assistant","user","answer","based","does","did","show","tell","give","find",
+      "building","picture","image","photo","materials","material"
+    ]);
+    return [...new Set(
+      normLower(value)
+        .split(/[^a-z0-9]+/g)
+        .filter((token) => token && token.length >= 3 && !stop.has(token))
+    )];
+  };
+
+  const pictureMatchScore = (doc, picture, needle) => {
+    const haystack = normLower(getDoclingMatchText(doc, picture));
+    const tokens = pictureQueryTokens(needle);
+    if (!tokens.length) return haystack ? 1 : 0;
+
+    let hits = 0;
+    for (const token of tokens) {
+      if (haystack.includes(token)) hits += 1;
+    }
+    return hits;
+  };
+
+
+  const getImageSizeFromDataUrl = async (src) => {
+    try {
+      if (!src || typeof src !== "string") return null;
+      return await new Promise((resolve) => {
+        const img = new window.Image();
+        img.onload = () =>
+          resolve({
+            width: Number(img.naturalWidth || img.width || 0),
+            height: Number(img.naturalHeight || img.height || 0),
+          });
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  const isLikelyLogoPicture = async (doc, picture, imageDataUrl, pageNo, bbox) => {
+    const textBits = [
+      String(getPictureCaption(doc, picture) || ""),
+      String(doc?.name || ""),
+      String(picture?.meta?.place || ""),
+      String(picture?.meta?.description || ""),
+      String(picture?.meta?.caption || ""),
+      String(picture?.meta?.title || ""),
+    ].filter(Boolean).join(" | ");
+
+    const t = normLower(textBits);
+
+    if (/(^|[^a-z])(logo|wordmark|watermark|icon)([^a-z]|$)/i.test(t)) {
+      return true;
+    }
+
+    if (
+      t.includes("historic england") &&
+      !t.includes("church") &&
+      !t.includes("chapel") &&
+      !t.includes("court") &&
+      !t.includes("house") &&
+      !t.includes("tower")
+    ) {
+      return true;
+    }
+
+    const size = await getImageSizeFromDataUrl(imageDataUrl);
+    if (size && size.width > 0 && size.height > 0) {
+      const aspect = size.width / Math.max(size.height, 1);
+      const area = size.width * size.height;
+
+      if (aspect >= 4.5 && size.height <= 180) return true;
+      if (aspect >= 6) return true;
+      if (area < 18000) return true;
+    }
+
+    const page = getPageObject(doc, pageNo);
+    const pageSize = page?.size && typeof page.size === "object" ? page.size : null;
+    if (pageSize && bbox) {
+      const bw = Math.max(0, Number(bbox?.r || 0) - Number(bbox?.l || 0));
+      const bh = Math.max(0, Number(bbox?.b || 0) - Number(bbox?.t || 0));
+      const pageArea = Math.max(1, Number(pageSize.width || 0) * Number(pageSize.height || 0));
+      const boxArea = bw * bh;
+      const areaRatio = boxArea / pageArea;
+
+      if (bw > 0 && bh > 0) {
+        const boxAspect = bw / Math.max(bh, 1);
+        if (boxAspect >= 4.5 && bh <= 120) return true;
+        if (areaRatio > 0 && areaRatio < 0.01) return true;
+      }
+    }
+
+    return false;
+  };
+
   const extractMatchingPicturesFromDoc = async (doc, sourceFile, needle, score = null) => {
     const out = [];
     const pictures = Array.isArray(doc?.pictures) ? doc.pictures : [];
-    const n = normLower(needle);
+    const materialsText = getDoclingMaterialsText(doc);
+
     for (let i = 0; i < pictures.length; i++) {
       const picture = pictures[i];
       if (!picture || typeof picture !== "object") continue;
-      const caption = getPictureCaption(doc, picture);
-      const matchText = caption || "picture";
-      if (n && !normLower(matchText).includes(n)) continue;
+
+      const combinedText = String(getPictureCaption(doc, picture) || "").trim();
+      const picturePlace = getDoclingPicturePlace(picture);
+      const matchHits = pictureMatchScore(doc, picture, needle);
+
+      if (String(needle || "").trim() && matchHits <= 0) continue;
+
       const pageNo = getPageNo(picture);
       const bbox = getItemBbox(picture);
       const imageDataUrl = await cropPictureFromPage(doc, pageNo, bbox);
+
+      if (await isLikelyLogoPicture(doc, picture, imageDataUrl, pageNo, bbox)) {
+        continue;
+      }
+
       out.push({
         kind: "picture",
-        title: caption || doc?.name || `picture ${i + 1}`,
-        body: caption || "(no caption)",
+        title: picturePlace || combinedText || doc?.name || `picture ${i + 1}`,
+        body: [
+          picturePlace ? `Place: ${picturePlace}` : "",
+          combinedText || "",
+          materialsText ? `Materials: ${materialsText.replace(/^MATERIALS\s*:/i, "").trim()}` : "",
+        ].filter(Boolean).join("\n\n") || "(no Docling picture text)",
         imageDataUrl,
         page_no: pageNo,
         source_file: sourceFile,
         doc_name: doc?.name || "",
-        score,
+        score: matchHits > 0 ? Math.max(Number(score || 0), matchHits / 10) : score,
+        footer: [
+          picturePlace ? `Place: ${picturePlace}` : null,
+          picture?.self_ref ? `Ref: ${picture.self_ref}` : null
+        ].filter(Boolean),
       });
     }
+
     return out;
   };
-
   const buildPictureResultsFromSearch = async (query, refs) => {
     const out = [];
     const seen = new Set();
-    const relevanceThreshold = appConfig?.ui?.components?.search?.relevance_threshold || 0.3;
-    const filteredRefs = (refs || []).filter((ref) => (ref?.score || 0) > relevanceThreshold).slice(0, 8);
 
-    for (const ref of filteredRefs) {
-      const sourceFile = String(ref?.source_file || '').trim();
-      if (!sourceFile) continue;
+    // Do not rely too heavily on backend chunk relevance because
+    // picture annotations/meta may not be indexed by /api/search.
+    const candidateRefs = Array.isArray(refs) ? refs.slice(0, 50) : [];
+    const sourceFiles = [];
+    const sourceSeen = new Set();
+
+    for (const ref of candidateRefs) {
+      const sourceFile = String(ref?.source_file || "").trim();
+      if (!sourceFile || sourceSeen.has(sourceFile)) continue;
+      sourceSeen.add(sourceFile);
+      sourceFiles.push({ sourceFile, score: ref?.score ?? null });
+      if (sourceFiles.length >= 20) break;
+    }
+
+    for (const { sourceFile, score } of sourceFiles) {
       const doc = await fetchDoc(sourceFile);
       if (!doc) continue;
 
-      let pictures = await extractMatchingPicturesFromDoc(doc, sourceFile, query, ref.score);
-      if (!pictures.length) {
-        pictures = (await extractMatchingPicturesFromDoc(doc, sourceFile, '', ref.score)).slice(0, 1);
-      }
+      const pictures = await extractMatchingPicturesFromDoc(doc, sourceFile, query, score);
+      if (!pictures.length) continue;
 
       for (const picture of pictures) {
-        const key = `${picture.source_file || ''}::${picture.page_no || ''}::${picture.title || ''}`;
+        const key = `${picture.source_file || ""}::${picture.page_no || ""}::${picture.title || ""}`;
         if (seen.has(key)) continue;
         seen.add(key);
         out.push(picture);
-        if (out.length >= 12) return out;
+        if (out.length >= 20) return out;
       }
     }
 
@@ -473,7 +823,7 @@ function App() {
     setPictureSearchError('');
 
     try {
-      const refs = await searchChunks(cleanQuery, { k: 8 });
+      const refs = await searchChunks(cleanQuery, { k: 50 });
       const pictures = await buildPictureResultsFromSearch(cleanQuery, refs);
       setPictureSearchResults(pictures);
       if (!pictures.length) {
@@ -546,47 +896,47 @@ function App() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, usePictures, appConfig]);
   const handleSubmit = async (e) => {
     e.preventDefault();
     const input = e.target.elements.messageInput;
     const message = input.value.trim();
-    
+
     if (!message) return;
-    
-    // Add user message
+
     const userMessage = { role: 'user', content: message };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     input.value = '';
     setIsLoading(true);
     setIsTyping(true);
 
     try {
       let relevantResults = [];
-      
-      // Only perform RAG search if enabled
+
       if (useRag) {
         console.log('RAG is enabled, performing search...');
         const results = await searchRAG(message);
-        // Filter results by relevance score with safe fallback
-        const relevanceThreshold = appConfig?.ui?.components?.search?.relevance_threshold || 0.3;
-        relevantResults = results.filter(result => result.score > relevanceThreshold);
-        
+
+        const relevanceThreshold =
+          appConfig?.ui?.components?.search?.relevance_threshold || 0.3;
+
+        relevantResults = results.filter((result) => result.score > relevanceThreshold);
+
         console.log('Filtered RAG results:', {
           totalResults: results.length,
           relevantResults: relevantResults.length,
           threshold: relevanceThreshold,
-          results: relevantResults.map(r => ({
+          results: relevantResults.map((r) => ({
             score: r.score,
             source: r.source_file,
-            preview: r.text.substring(0, 100)
-          }))
+            preview: r.text.substring(0, 100),
+          })),
         });
       } else {
         console.log('RAG is disabled, skipping search');
       }
 
-      // Prepare context messages with RAG results
       const contextMessages = prepareContextMessages(
         messages,
         detailedThinking,
@@ -594,45 +944,44 @@ function App() {
         relevantResults
       );
 
-      // Add the new user message with RAG context if available
       let userContent = message;
       if (relevantResults.length > 0) {
-        const ragPrefix = appConfig?.ui?.chat?.context?.rag_prefix || 'Relevant information from knowledge base:\n';
-        const ragContext = relevantResults.map(r => r.text).join("\n\n");
+        const ragPrefix =
+          appConfig?.ui?.chat?.context?.rag_prefix ||
+          'Relevant information from knowledge base:\n';
+        const ragContext = relevantResults.map((r) => r.text).join('\n\n');
         userContent = `${message}\n\n${ragPrefix}${ragContext}`;
         console.log('Combined user message with RAG context:', userContent);
       }
 
       contextMessages.push({
         role: 'user',
-        content: userContent
+        content: userContent,
       });
 
       console.log('Sending context to LLM:', {
         messageCount: contextMessages.length,
         hasRAGContext: relevantResults.length > 0,
-        systemMessages: contextMessages.filter(m => m.role === 'system').length,
-        contextPreview: contextMessages.map(m => ({
+        systemMessages: contextMessages.filter((m) => m.role === 'system').length,
+        contextPreview: contextMessages.map((m) => ({
           role: m.role,
-          contentPreview: m.content.substring(0, 100) + '...'
-        }))
+          contentPreview: m.content.substring(0, 100) + '...',
+        })),
       });
 
       const response = await fetch(`${configLoader.api.llmServer.url}/v1/chat/completions`, {
         method: 'POST',
         headers: {
           ...configLoader.api.llmServer.headers,
-          ...(appConfig?.llm?.base_url?.includes(":8002")
-            ? { 'X-LLM-IP': serverIp }
-            : {})
+          ...(appConfig?.llm?.base_url?.includes(':8002') ? { 'X-LLM-IP': serverIp } : {}),
         },
         body: JSON.stringify({
-          model: appConfig?.llm?.model?.name || "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1",
+          model: appConfig?.llm?.model?.name || 'nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1',
           messages: contextMessages,
           stream: false,
-          max_tokens: appConfig?.llm?.model?.max_tokens || 512,
+          max_tokens: 128,
           temperature: appConfig?.llm?.model?.temperature || 0.6,
-          top_p: appConfig?.llm?.model?.top_p || 0.95
+          top_p: appConfig?.llm?.model?.top_p || 0.95,
         }),
       });
 
@@ -652,7 +1001,7 @@ function App() {
         content: messageContent,
         references: useRag ? JSON.stringify(relevantResults) : '',
         showThinking: detailedThinking,
-        query: message
+        query: message,
       };
 
       console.log('Received LLM response:', {
@@ -660,32 +1009,85 @@ function App() {
         referenceCount: relevantResults.length,
         thinkingEnabled: detailedThinking,
         responsePreview: messageContent.substring(0, 100) + '...',
-        hasThinkingTags: messageContent.includes('<thinking>')
+        hasThinkingTags: messageContent.includes('<thinking>'),
       });
 
-      setMessages(prev => [...prev, assistantMessage]);
+      let assistantMessageWithPicture = assistantMessage;
       setPictureSearchQuery(message);
 
-      // Update summary after every 3 messages
+      if (usePictures) {
+        try {
+          const pictureQuery = [message, messageContent].filter(Boolean).join('\n');
+          const extraRefs = await searchChunks(pictureQuery, { k: 50 });
+          const mergedRefs = [...relevantResults, ...extraRefs];
+          const dedupedRefs = [];
+          const seenRefKeys = new Set();
+
+          for (const ref of mergedRefs) {
+            const key = `${String(ref?.source_file || '')}::${String(ref?.text || '').slice(0, 120)}`;
+            if (seenRefKeys.has(key)) continue;
+            seenRefKeys.add(key);
+            dedupedRefs.push(ref);
+          }
+
+          const pictures = await buildPictureResultsFromSearch(pictureQuery, dedupedRefs);
+
+          setPictureSearchResults(pictures);
+
+          if (!pictures.length) {
+            setPictureSearchError('No matching pictures found for this query.');
+          } else {
+            setPictureSearchError('');
+
+            const bestPicture = [...pictures].sort(
+              (a, b) => (Number(b.score) || 0) - (Number(a.score) || 0)
+            )[0];
+
+            if (bestPicture) {
+              const pinnedPicture = {
+                ...bestPicture,
+                url: bestPicture?.image || bestPicture?.url || bestPicture?.src || bestPicture?.imageDataUrl || null,
+              };
+
+              pinPictureToChat(pinnedPicture);
+              assistantMessageWithPicture = {
+                ...assistantMessage,
+                pinnedPicture,
+              };
+            }
+          }
+        } catch (pictureError) {
+          console.error('Auto picture search failed:', pictureError);
+          setPictureSearchResults([]);
+          setPictureSearchError('Picture search failed.');
+        }
+      }
+
+      setMessages((prev) => [...prev, assistantMessageWithPicture]);
+
       if ((messages.length + 2) % 3 === 0) {
-        const newSummary = await updateSummary([...messages, userMessage, assistantMessage]);
+        const newSummary = await updateSummary([...messages, userMessage, assistantMessageWithPicture]);
         setConversationSummary(newSummary);
       }
     } catch (error) {
       setIsTyping(false);
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: error.message.includes('LLM server is not accessible') 
-          ? 'The LLM server is not accessible at the moment. Please check if the server is running and try again.'
-          : 'Sorry, there was an error processing your request. Please try again.',
-        references: '',
-        showThinking: detailedThinking
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: error.message.includes('LLM server is not accessible')
+            ? 'The LLM server is not accessible at the moment. Please check if the server is running and try again.'
+            : 'Sorry, there was an error processing your request. Please try again.',
+          references: '',
+          showThinking: detailedThinking,
+        },
+      ]);
     } finally {
       setIsLoading(false);
       setIsTyping(false);
     }
   };
+
 
   const clearChat = () => {
     setMessages([]);
@@ -1071,6 +1473,9 @@ function App() {
             <button onClick={() => setView(view === 'chat' ? 'knowledge' : 'chat')}>
               {view === 'chat' ? 'Open Knowledge' : 'Back to Chat'}
             </button>
+            <button onClick={() => setView(view === 'pictureAnnotations' ? 'chat' : 'pictureAnnotations')}>
+              {view === 'pictureAnnotations' ? 'Back to Chat' : 'Open Picture Annotations'}
+            </button>
           </div>
         </div>
       </header>
@@ -1078,150 +1483,79 @@ function App() {
       <main className="chat-container">
         {view === 'knowledge' ? (
           <ProjectKnowledge usePictures={usePictures} />
+        ) : view === 'pictureAnnotations' ? (
+          <PictureAnnotations />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: pictureSidecarOpen ? 'minmax(0, 1fr) 340px' : 'minmax(0, 1fr) 56px', gap: '1rem', width: '100%', transition: 'grid-template-columns 0.2s ease' }}>
-            <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-              <div className="messages" style={{ flex: 1 }}>
-                {messages.map((message, index) => (
-                  <div key={index} className={`message ${message.role}`}>
-                    {renderMessage(message)}
+          <div className="chat-view-stack">
+            <div className="messages" style={{ flex: 1 }}>
+              {messages.map((message, index) => (
+                <div key={index} className={`message ${message.role}`}>
+                  {renderMessage(message)}
+                </div>
+              ))}
+              {isTyping && (
+                <div className="message assistant">
+                  <div className="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                   </div>
-                ))}
-                {isTyping && (
-                  <div className="message assistant">
-                    <div className="loading-dots">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              <form onSubmit={handleSubmit} className="input-form" style={{ marginTop: '0.85rem' }}>
-                <input
-                  type="text"
-                  name="messageInput"
-                  placeholder="What's on your mind?"
-                  disabled={isLoading}
-                />
-                <button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Thinking...' : 'Send'}
-                </button>
-              </form>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
 
-            <aside style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: pictureSidecarOpen ? '12px' : '8px', background: 'rgba(255,255,255,0.03)', alignSelf: 'start', minHeight: 240, overflow: 'hidden', transition: 'all 0.2s ease' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: pictureSidecarOpen ? 'space-between' : 'center', marginBottom: pictureSidecarOpen ? '0.75rem' : 0 }}>
-                {pictureSidecarOpen ? (
-                  <div>
-                    <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>Picture Context Search</div>
-                    <div style={{ opacity: 0.8, fontSize: '0.9rem' }}>Independent search using the same chunk search flow as Project Knowledge.</div>
-                  </div>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => setPictureSidecarOpen((prev) => !prev)}
-                  title={pictureSidecarOpen ? 'Collapse picture search' : 'Open picture search'}
-                  aria-label={pictureSidecarOpen ? 'Collapse picture search' : 'Open picture search'}
-                  style={{ minWidth: 40, height: 40, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: 'inherit', cursor: 'pointer' }}
-                >
-                  {pictureSidecarOpen ? '→' : '←'}
-                </button>
-              </div>
+            <form onSubmit={handleSubmit} className="input-form" style={{ marginTop: '0.85rem' }}>
+              <input
+                type="text"
+                name="messageInput"
+                placeholder="What's on your mind?"
+                disabled={isLoading}
+              />
+              <button type="submit" disabled={isLoading}>
+                {isLoading ? 'Thinking...' : 'Send'}
+              </button>
+            </form>
 
-              {!pictureSidecarOpen ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-                  <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', letterSpacing: '0.04em', fontSize: '0.78rem', opacity: 0.8 }}>Picture Search</div>
-                  {pictureSearchResults[0]?.imageDataUrl ? (
-                    <img
-                      src={pictureSearchResults[0].imageDataUrl}
-                      alt={pictureSearchResults[0].title || 'picture search preview'}
-                      style={{ width: 38, height: 38, objectFit: 'cover', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)' }}
-                    />
-                  ) : null}
-                </div>
-              ) : (
-                <>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      runPictureContextSearch(pictureSearchQuery);
-                    }}
-                    style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}
-                  >
-                    <input
-                      type="text"
-                      value={pictureSearchQuery}
-                      onChange={(e) => setPictureSearchQuery(e.target.value)}
-                      placeholder="Search picture context"
-                      style={{ flex: 1 }}
-                    />
-                    <button type="submit" disabled={pictureSearchLoading || !pictureSearchQuery.trim()}>
-                      {pictureSearchLoading ? 'Searching...' : 'Search'}
-                    </button>
-                  </form>
+            {usePictures ? (
+              <section className="picture-context-section">
+                <style>{projectKnowledgeResultCss}</style>
+                <div className="pk-results-wrap">
+                  <div className="pk-results-panel">
+                    <div className="pk-results-title picture-context-title">Picture Context Search</div>
+                    <div style={{ color: '#4a4a4a', fontSize: '0.95rem', marginBottom: '0.75rem' }}>
+                      Rendered with the same card style used in Project Knowledge.
+                    </div>
 
-                  {pictureSearchError ? (
-                    <div style={{ color: '#ffb4b4', marginBottom: '0.75rem' }}>{pictureSearchError}</div>
-                  ) : null}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        runPictureContextSearch(pictureSearchQuery);
+                      }}
+                      style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}
+                    >
+                      <input
+                        type="text"
+                        value={pictureSearchQuery}
+                        onChange={(e) => setPictureSearchQuery(e.target.value)}
+                        placeholder="Search picture context"
+                        style={{ flex: 1 }}
+                      />
+                      <button type="submit" disabled={pictureSearchLoading || !pictureSearchQuery.trim()}>
+                        {pictureSearchLoading ? 'Searching...' : 'Search'}
+                      </button>
+                    </form>
 
-                  <div style={{ display: 'grid', gap: '0.75rem' }}>
-                    {pictureSearchResults.map((item, index) => (
-                      <div key={`${item.source_file || 'pic'}-${item.page_no || index}-${index}`} style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px', background: 'rgba(255,255,255,0.02)' }}>
-                        {item.imageDataUrl ? (
-                          <img
-                            src={item.imageDataUrl}
-                            alt={item.title || 'search result picture'}
-                            style={{ width: '100%', height: 'auto', borderRadius: 8, marginBottom: '0.5rem' }}
-                          />
-                        ) : null}
-                        <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{item.title}</div>
-                        {item.body ? (
-                          <div style={{ fontSize: '0.92rem', opacity: 0.9, whiteSpace: 'pre-wrap', marginBottom: '0.5rem' }}>{item.body}</div>
-                        ) : null}
-                        <div style={{ fontSize: '0.82rem', opacity: 0.75, marginBottom: '0.5rem' }}>
-                          {item.source_file || item.doc_name || 'source'}
-                          {item.page_no ? ` · page ${item.page_no}` : ''}
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              pinPictureToChat(item);
-                              setMessages((prev) => {
-                                const next = [...prev];
-                                for (let i = next.length - 1; i >= 0; i -= 1) {
-                                  if (next[i].role === 'assistant') {
-                                    next[i] = { ...next[i], pinnedPicture: item };
-                                    return next;
-                                  }
-                                }
-                                return [...prev, { role: 'assistant', content: 'Pinned related image.', references: '', showThinking: false, pinnedPicture: item }];
-                              });
-                            }}
-                          >
-                            Pin to Chat
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPictureSidecarOpen(false)}
-                          >
-                            Fold Away
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {!pictureSearchLoading && !pictureSearchResults.length && !pictureSearchError ? (
-                      <div style={{ opacity: 0.7, fontSize: '0.92rem' }}>Search for a topic to find pictures from Project Knowledge.</div>
+                    {pictureSearchError ? (
+                      <div style={{ color: '#8a2d2d', marginBottom: '0.75rem' }}>{pictureSearchError}</div>
                     ) : null}
+
+                    <div dangerouslySetInnerHTML={{ __html: renderPictureSearchCardsHtml(pictureSearchResults, pictureSearchQuery) }} />
                   </div>
-                </>
-              )}
-            </aside>
-          </div>
-        )}
+                </div>
+              </section>
+            ) : null}
+          </div>        )}
       </main>
     </div>
   );

@@ -1151,3 +1151,27 @@ input:checked + .slider:before {
 .error-message.fade-out {
   animation: fadeOut 0.3s ease-out forwards;
 }
+
+
+.chat-view-stack {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.picture-context-section {
+  order: 3;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.picture-context-title {
+  margin-bottom: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .picture-context-section {
+    margin-top: 0.75rem;
+  }
+}

@@ -30,6 +30,11 @@ export default function ProjectKnowledge() {
   const [status, setStatus] = useState("");
   const [err, setErr] = useState(null);
 
+  const openPictureCaptionsAnnotations = () => {
+    window.open("/picture-captions-annotations", "_blank", "noopener,noreferrer");
+  };
+
+
   const pageIndexCacheRef = useRef(new Map());
   const docCacheRef = useRef(new Map());
   const docNameCacheRef = useRef(new Map());
@@ -224,23 +229,72 @@ export default function ProjectKnowledge() {
     return map;
   };
 
-  const getPictureCaption = (doc, picture) => {
+  const dedupeTextParts = (parts) => {
+    const seen = new Set();
+    return (parts || []).filter((t) => {
+      const cleaned = norm(t);
+      const key = normLower(cleaned);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const getPictureCaptionTexts = (doc, picture) => {
     const textByRef = getTextByRefMap(doc);
     const captions = Array.isArray(picture?.captions) ? picture.captions : [];
-    const captionTexts = captions
-      .map((c) => (c && typeof c === "object" ? c.$ref : null))
-      .filter(Boolean)
-      .map((ref) => textByRef.get(ref))
-      .filter((t) => norm(t));
-    if (captionTexts.length) return captionTexts.join("\n\n");
+    const refTexts = captions
+      .map((c) => {
+        if (typeof c === "string") return textByRef.get(c) || c;
+        if (c && typeof c === "object") {
+          const ref = c.$ref || c.ref;
+          if (ref) return textByRef.get(ref) || "";
+          return c.text || c.orig || "";
+        }
+        return "";
+      })
+      .map((t) => norm(t));
 
+    const directTexts = captions
+      .map((c) => {
+        if (!c || typeof c !== "object") return "";
+        return c.text || c.orig || c.caption || c.label || "";
+      })
+      .map((t) => norm(t));
+
+    return dedupeTextParts([...refTexts, ...directTexts]);
+  };
+
+  const getPictureAnnotationTexts = (picture) => {
     const ann = Array.isArray(picture?.annotations) ? picture.annotations : [];
-    for (const a of ann) {
-      if (a?.kind === "description" && norm(a?.text)) return norm(a.text);
-    }
+    const annotationTexts = ann
+      .map((a) => {
+        if (typeof a === "string") return a;
+        if (!a || typeof a !== "object") return "";
+        return a?.kind === "description" ? a?.text || "" : "";
+      })
+      .map((t) => norm(t));
 
     const meta = picture?.meta && typeof picture.meta === "object" ? picture.meta : {};
-    return norm(meta.description || meta.caption || meta.desc || "");
+    const metaTexts = [meta.description, meta.caption, meta.desc].map((t) => norm(t));
+
+    return dedupeTextParts([...annotationTexts, ...metaTexts]);
+  };
+
+  const getPicturePlace = (picture) => {
+    const meta = picture?.meta && typeof picture.meta === "object" ? picture.meta : {};
+    return norm(meta.place || "");
+  };
+
+  const getPictureTextParts = (doc, picture) => {
+    const captionTexts = getPictureCaptionTexts(doc, picture);
+    const annotationTexts = getPictureAnnotationTexts(picture);
+    return dedupeTextParts([...captionTexts, ...annotationTexts]);
+  };
+
+  const getPictureCaption = (doc, picture) => {
+    const parts = getPictureCaptionTexts(doc, picture);
+    return parts.join("\n\n");
   };
 
   const getPageObject = (doc, pageNo) => {
@@ -461,9 +515,37 @@ export default function ProjectKnowledge() {
     imageDataUrl: imageDataUrl || "",
   });
 
+  const shouldHideRenderedResult = (card) => {
+    const haystack = normLower([card?.title, card?.body].filter(Boolean).join(" "));
+    if (!haystack) return false;
+
+    const blockedPhrases = [
+      "does not contain",
+      "does not clearly show",
+      "does not show",
+      "no visible architectural",
+      "no architectural",
+      "no built-environment",
+      "no built environment",
+      "no visible built",
+      "no visible structure",
+      "no visible structures",
+      "no visible building",
+      "no visible buildings",
+      "no structural elements",
+      "no architectural elements",
+      "monochrome photograph of an individual",
+      "individual and does not contain",
+      "return exactly: skip",
+    ];
+
+    return blockedPhrases.some((phrase) => haystack.includes(phrase));
+  };
+
   const renderCardsHtml = (cards, highlightNeedle) => {
-    if (!cards.length) return `<div class="pk-empty">No rendered results.</div>`;
-    return cards
+    const visibleCards = (cards || []).filter((card) => !shouldHideRenderedResult(card));
+    if (!visibleCards.length) return `<div class="pk-empty">No rendered results.</div>`;
+    return visibleCards
       .map((card) => {
         const title = linkifyHtml(highlightHtml(card.title, highlightNeedle));
         const body = linkifyHtml(highlightHtml(card.body, highlightNeedle));
@@ -611,6 +693,24 @@ export default function ProjectKnowledge() {
   };
 
 
+  const containsSameMeaning = (a, b) => {
+    const x = normLower(a);
+    const y = normLower(b);
+    if (!x || !y) return false;
+    return x === y || x.includes(y) || y.includes(x);
+  };
+
+  const uniquePictureParts = (parts) => {
+    const out = [];
+    for (const part of parts || []) {
+      const cleaned = norm(part);
+      if (!cleaned) continue;
+      if (out.some((existing) => containsSameMeaning(existing, cleaned))) continue;
+      out.push(cleaned);
+    }
+    return out;
+  };
+
   const extractMatchingPicturesFromDoc = async (doc, sf, needle, score = null) => {
     const out = [];
     const pictures = Array.isArray(doc?.pictures) ? doc.pictures : [];
@@ -619,24 +719,55 @@ export default function ProjectKnowledge() {
     for (let i = 0; i < pictures.length; i++) {
       const picture = pictures[i];
       if (!picture || typeof picture !== "object") continue;
-      const caption = getPictureCaption(doc, picture);
-      const matchText = caption || "picture";
+
+      const rawCaptionParts = getPictureCaptionTexts(doc, picture);
+      const rawAnnotationParts = getPictureAnnotationTexts(picture);
+      const place = getPicturePlace(picture);
+
+      const captionParts = uniquePictureParts(rawCaptionParts);
+      const annotationParts = uniquePictureParts(
+        rawAnnotationParts.filter(
+          (part) => !captionParts.some((cap) => containsSameMeaning(cap, part))
+        )
+      );
+
+      const title = captionParts[0] || annotationParts[0] || doc?.name || `picture ${i + 1}`;
+
+      const bodyParts = uniquePictureParts(
+        [
+          place ? `Place: ${place}` : "",
+          ...captionParts.slice(1),
+          ...annotationParts,
+        ].filter((part) => !containsSameMeaning(title, part))
+      );
+
+      const searchParts = uniquePictureParts([title, ...bodyParts, place]);
+      const searchText = searchParts.join("\n\n");
+      const body = bodyParts.join("\n\n") || "(no caption or annotation)";
+      const matchText = searchText || "picture";
+
+      if (shouldHideRenderedResult({ title, body })) continue;
       if (n && !normLower(matchText).includes(n)) continue;
+
       const pageNo = getPageNo(picture);
       const bbox = getItemBbox(picture);
       const imageDataUrl = await cropPictureFromPage(doc, pageNo, bbox);
+
       out.push(
         makeRenderedCard({
           key: `${sf}-picture-${picture?.self_ref || i}`,
-          title: caption || doc?.name || `picture ${i + 1}`,
-          body: caption || "(no caption)",
+          title,
+          body,
           source_file: String(sf || "").trim(),
           doc_name: doc?.name || "",
           page_no: pageNo,
           kind: "picture",
           score,
           imageDataUrl,
-          footer: [picture?.self_ref ? `Ref: ${picture.self_ref}` : null],
+          footer: [
+            place ? `Place: ${place}` : null,
+            picture?.self_ref ? `Ref: ${picture.self_ref}` : null,
+          ],
         })
       );
     }
@@ -946,6 +1077,9 @@ export default function ProjectKnowledge() {
                   </button>
                   <button onClick={discoverFiles} disabled={loading}>
                     {loading ? "Working..." : "Discover Files"}
+                  </button>
+                  <button onClick={openPictureCaptionsAnnotations} disabled={loading}>
+                    {loading ? "Working..." : "Picture Captions Annotations"}
                   </button>
                 </div>
               </div>
