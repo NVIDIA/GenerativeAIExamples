@@ -61,7 +61,7 @@ class LLMConfig(ConfigWizard):
     model_engine: str = configfield(
         "model_engine",
         default="nvidia-ai-endpoints",
-        help_txt="The server type of the hosted model. Allowed values are nvidia-ai-endpoints",
+        help_txt="The server type of the hosted model. Allowed values are nvidia-ai-endpoints and minimax",
     )
     model_name_pandas_ai: str = configfield(
         "model_name_pandas_ai",

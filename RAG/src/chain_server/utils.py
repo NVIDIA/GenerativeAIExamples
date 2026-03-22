@@ -80,6 +80,11 @@ except Exception as e:
     logger.error(f"Langchain nvidia ai endpoints import failed with error: {e}")
 
 try:
+    from langchain_openai import ChatOpenAI
+except Exception as e:
+    logger.error(f"Langchain openai import failed with error: {e}")
+
+try:
     from langchain_community.docstore.in_memory import InMemoryDocstore
     from langchain_community.vectorstores import Milvus, PGVector
 except Exception as e:
@@ -397,9 +402,31 @@ def get_llm(**kwargs) -> LLM | SimpleChatModel:
                 top_p=kwargs.get('top_p', None),
                 max_tokens=kwargs.get('max_tokens', None),
             )
+    elif settings.llm.model_engine == "minimax":
+        unused_params = [key for key in kwargs.keys() if key not in ['temperature', 'top_p', 'max_tokens']]
+        if unused_params:
+            logger.warning(
+                f"The following parameters from kwargs are not supported: {unused_params} for {settings.llm.model_engine}"
+            )
+        # MiniMax provides an OpenAI-compatible API at https://api.minimax.io/v1
+        model_name = settings.llm.model_name if settings.llm.model_name != "ensemble" else "MiniMax-M2.7"
+        base_url = settings.llm.server_url if settings.llm.server_url else "https://api.minimax.io/v1"
+        temperature = kwargs.get('temperature', None)
+        if temperature is not None:
+            temperature = max(0.0, min(1.0, temperature))
+        logger.info(f"Using MiniMax model {model_name} via {base_url}")
+        return ChatOpenAI(
+            model=model_name,
+            openai_api_key=os.environ.get("MINIMAX_API_KEY", ""),
+            openai_api_base=base_url,
+            temperature=temperature,
+            top_p=kwargs.get('top_p', None),
+            max_tokens=kwargs.get('max_tokens', None),
+        )
     else:
         raise RuntimeError(
-            "Unable to find any supported Large Language Model server. Supported engine name is nvidia-ai-endpoints."
+            "Unable to find any supported Large Language Model server."
+            " Supported engine names are nvidia-ai-endpoints and minimax."
         )
 
 
