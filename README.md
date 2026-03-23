@@ -328,3 +328,49 @@ python proxy.py
 - It is useful for validating **Docling extraction quality and chunk segmentation**.
 - FAISS search results and rendered document sections can be compared directly inside the UI.
 
+## Pinned Picture Index
+
+The application supports a dedicated picture-focused retrieval flow alongside the existing general FAISS knowledge search.
+
+### Purpose
+The Pinned Picture Index improves retrieval for visual follow-up questions by searching picture-derived context separately from the general document index.
+
+### Picture index API
+- `POST /api/picture-index/build`
+- `POST /api/picture-index/search`
+- `POST /api/picture-index/clear`
+- `GET /api/picture-index/status`
+
+### Indexed picture fields
+Picture-index records may include:
+- `picture_id`
+- `source_file`
+- `doc_name`
+- `page_number`
+- `place`
+- `picture_classification`
+- `caption_text`
+- `annotation_text`
+
+### Search behavior
+- **General FAISS** remains the default for broad document knowledge queries.
+- **Pinned Picture Index** is used for image-specific retrieval.
+- When a picture is pinned, the UI can search picture-scoped context separately from general knowledge.
+
+### Project Knowledge dashboard
+`frontend/src/pages/ProjectKnowledge.js`
+
+The dashboard supports:
+- general FAISS exploration
+- DoclingDocument rendering
+- picture rendering with captions
+- pinned picture workflows
+- picture-index search and inspection
+
+### Frontend feature summary
+The frontend includes:
+- chat interface
+- Project Knowledge dashboard
+- Docling-based rendered results
+- picture context search
+- pinned picture retrieval controls

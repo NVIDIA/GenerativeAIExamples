@@ -1,36 +1,22 @@
 # Frontend Application
 
-This is the React frontend for the chat application. It provides a user interface for uploading documents, searching, and chatting with the AI model.
+This React frontend provides:
+- chat with the LLM backend
+- document upload
+- Project Knowledge dashboard
+- FAISS search exploration
+- DoclingDocument rendering
+- picture context search
+- pinned picture retrieval via the Picture Index
 
-## Prerequisites
+## Key pages
+- `src/App.js` — main chat application
+- `src/pages/ProjectKnowledge.js` — Project Knowledge dashboard
 
-- Node.js 18 or higher
-- npm 8 or higher
-- Modern web browser with JavaScript enabled
+## Features
+- upload and search document knowledge
+- inspect FAISS retrieval results
+- render Docling sections, groups, tables, and pictures
+- search picture-derived context
+- pin a picture and query picture-specific retrieval separately from general knowledge
 
-## Setup
-
-1. Install dependencies:
-```bash
-npm install
-```
-
-## Configuration
-
-The application can be configured through YAML configuration file (in `public/config/`):
-
-   - `app_config.yaml`: Main application settings
-
-## Running the Application
-
-1. Make sure you're in the frontend directory:
-```bash
-cd frontend
-```
-
-2. Start the development server:
-```bash
-npm start
-```
-
-The application will start on http://localhost:3000
