@@ -1,0 +1,20 @@
+# OPM Knowledge Base - Papers Configuration
+# Add new papers here. Download via: ./scripts/knowledge_base/download_required.sh or download_opm_flow_manual.py
+
+papers:
+  # Core OPM Documentation
+  - name: "OPM Flow Reference Manual"
+    url: "opm_flow_manual"
+    filename: "OPM_Flow_Reference_Manual_2025-10.pdf"
+    category: "manual"
+    priority: "high"
+    description: "Official OPM Flow reference manual (2025-10 revision)"
+    
+# Add your custom papers below:
+# - name: "Your Paper Name"
+#   url: "https://example.com/paper.pdf"
+#   filename: "your_paper.pdf"
+#   category: "research|manual|tutorial"
+#   priority: "high|medium|low"
+#   enabled: true
+#   description: "Brief description"

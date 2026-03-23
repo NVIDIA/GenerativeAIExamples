@@ -1,0 +1,51 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 64"]
+
+[project]
+name = "sim_agent"
+version = "0.2.0"
+dependencies = [
+  "pyyaml==6.0.1",
+  "numpy==1.26.4",
+  "colorama==0.4.6",
+  "langchain==0.1.20",
+  "langchain-community==0.0.38",
+  "langchain-nvidia-ai-endpoints==0.1.7",
+  "langgraph==0.0.46",
+  "openai>=1.0",
+  "fastmcp",
+]
+requires-python = ">=3.11,<3.14"
+description = "Simulation Assistant - AI-powered assistant for simulation tools (OPM Flow, etc.) with LangChain/LangGraph"
+license = {text = "Apache-2.0"}
+classifiers = ["Programming Language :: Python"]
+
+[project.optional-dependencies]
+# RAG (Knowledge Retrieval): vector DB, embeddings, PDF parsing, optional OCR
+rag = [
+  "chromadb==0.4.24",
+  "sentence-transformers==2.2.2",
+  "pdfplumber==0.11.5",
+  "PyPDF2==3.0.1",
+  "grpcio==1.76.0",
+  "pymilvus==2.6.6",
+  "pypdfium2",
+  "langchain-core",
+  "jinja2>=3.1.0",
+  "torch",
+  "torchvision",
+  "pillow",
+  "accelerate",
+  "transformers",
+]
+analysis = [
+  "matplotlib==3.8.4",
+  "pandas==2.2.2",
+]
+flow_diagnostics = [
+  "pyflowdiagnostics",
+]
+dev = [
+  "pytest>=7.0",
+]

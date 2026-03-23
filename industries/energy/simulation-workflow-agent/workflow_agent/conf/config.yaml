@@ -1,0 +1,78 @@
+# Agentic Workflow Configuration
+# Use: python -m workflow_agent --workflow-config conf/config.yaml
+# Or via orchestration: Run optimization with workflow_agent/conf/config.yaml
+
+llm:
+  routing_strategy: "task_based"
+  default_temperature: 0.7
+  default_max_tokens: 4096
+  endpoints:
+    primary:
+      enabled: true
+      provider: "nvidia"
+      model: "meta/llama-3.1-70b-instruct"
+      api_url: "https://integrate.api.nvidia.com/v1/chat/completions"
+      api_key_env: "NVIDIA_API_KEY"
+      temperature: 0.7
+      max_tokens: 4096
+      priority: 4
+      task_preferences: ["reservoir_analysis", "strategy_proposal", "result_analysis", "general"]
+    critic:
+      enabled: true
+      provider: "nvidia"
+      model: "meta/llama-3.1-70b-instruct"
+      api_url: "https://integrate.api.nvidia.com/v1/chat/completions"
+      api_key_env: "NVIDIA_API_KEY"
+      temperature: 0.5
+      max_tokens: 4096
+      priority: 3
+      task_preferences: ["critique"]
+  task_routing:
+    reservoir_analysis: ["primary"]
+    strategy_proposal: ["primary"]
+    critique: ["critic", "primary"]
+    result_analysis: ["primary"]
+    knowledge_retrieval: ["primary"]
+    general: ["primary"]
+  fallback:
+    enabled: true
+    max_retries: 1
+    timeout_seconds: 30
+
+agents:
+  reservoir_analyst:
+    enabled: true
+  strategy_proposer:
+    enabled: true
+  critic:
+    enabled: true
+  result_analyst:
+    enabled: true
+  knowledge_retriever:
+    enabled: false
+
+evolution:
+  max_iterations: 1
+  quick_generations_ratio: 0.25
+
+execution:
+  max_parallel_experiments: 2
+  quick_experiment_timeout: 3600
+  full_experiment_timeout: 14400
+  stream_workflow_output: true
+
+knowledge_base:
+  path: "./knowledge_base"
+  archive_best_solutions: true
+  archive_threshold: 0.9
+
+output:
+  experiments_dir: "./experiments"
+
+workflow:
+  base_config_path: "./workflow/optimization/conf/testcase_ga.yaml"
+  run_command: "python ./optimization/src/run_optimization.py {config_path}"
+  run_cwd: "./workflow"
+
+constraints:
+  max_total_simulations: 5000

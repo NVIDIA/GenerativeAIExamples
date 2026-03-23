@@ -1,0 +1,50 @@
+# Optimization test case - PSO (Particle Swarm Optimization)
+# Single injector location optimization (I2)
+
+# Paths
+paths:
+  template: "dataset/SPE10/TEMPLATE/SPE10.DATA"
+  sim_dir_base: "dataset/SPE10"
+  case_name: "SPE10_PSO"
+
+# Optimization variables - Injector I2 location with ±3 grid cells range
+variables:
+  I2_I:
+    min: 42
+    max: 48
+    type: int
+    description: "Injector I2 grid I-coordinate (base: 45)"
+  I2_J:
+    min: 17
+    max: 23
+    type: int
+    description: "Injector I2 grid J-coordinate (base: 20)"
+
+# Optimization algorithm settings (PSO)
+algorithm:
+  type: "PSO"
+  pop_size: 5
+  n_generations: 2
+  n_parallel: 24
+  seed: 42
+
+  pso_params:
+    w: 0.9
+    c1: 2.0
+    c2: 2.0
+    adaptive: true
+
+# Objective function - EUR mode
+objective:
+  mode: "EUR"
+
+# Simulation settings
+simulation:
+  simulator_command: "mpirun -np 2 flow ${sim_file_path}"
+  timeout: 600
+
+# Output settings
+output:
+  save_comprehensive: true
+  save_log: true
+  save_plots: true

@@ -1,0 +1,22 @@
+# Optimization workflow - independent module
+# Run from workflow_agent/workflow: docker compose up -d
+# Run from workflow_agent:          docker compose -f workflow/docker-compose.yml up -d
+
+services:
+  workflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: workflow:latest
+    container_name: workflow
+    command: /bin/bash
+    tty: true
+    stdin_open: true
+    environment:
+      OPM_FLOW_EXTRA_ARGS: "--CheckSatfuncConsistency=0"
+      # Allow mpirun to run as root (container runs as root)
+      OMPI_ALLOW_RUN_AS_ROOT: "1"
+      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: "1"
+    volumes:
+      - .:/workspace/workflow  # workflow only (includes dataset)
+    working_dir: /workspace/workflow

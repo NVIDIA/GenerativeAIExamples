@@ -1,0 +1,37 @@
+OPM Flow Simulator — GPL-3.0-or-later Notice
+=============================================
+
+Packages: libopm-simulators, libopm-simulators-bin
+Source:   https://github.com/OPM/opm-simulators
+License:  GNU General Public License v3.0 or later (SPDX: GPL-3.0-or-later)
+
+Copyright (C) 2011-2024 SINTEF Digital, Mathematics & Cybernetics
+Copyright (C) 2011-2024 Equinor ASA
+Copyright (C) 2011-2024 OPM contributors (see AUTHORS in upstream repo)
+
+Usage model:
+  OPM Flow is used strictly as a standalone external executable, invoked
+  via subprocess (process boundary). It is not linked into, and does not
+  form a combined work with, the application code in this repository.
+  The GPL-3.0-or-later license therefore applies solely to the OPM
+  binaries bundled in this image; the application code remains
+  Apache-2.0 licensed.
+
+These binaries are distributed in the hope that they will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+Full license text:
+  https://www.gnu.org/licenses/gpl-3.0.html
+
+Written offer for Corresponding Source (GPL-3.0 §6d):
+  The source code for all GPL-licensed OPM components in this image is
+  available, at no charge, from the upstream repositories listed below.
+  This written offer is valid for three years from the date this image
+  was built.
+
+  https://github.com/OPM/opm-simulators
+  https://github.com/OPM/opm-common
+  https://github.com/OPM/opm-grid
+  https://github.com/OPM/opm-models

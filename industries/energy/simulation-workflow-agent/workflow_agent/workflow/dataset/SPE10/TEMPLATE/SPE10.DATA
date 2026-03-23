@@ -1,0 +1,286 @@
+-- This reservoir simulation is made available under the open Database 
+-- License: http://opendatacommons.org/licenses/odbl/1.0/
+-- Individual contents of the database are licensed under the Database contents
+-- License : http://opendatacommons.org/licenses/dbcl/1.0/
+
+
+
+-- Copyright(C) 2015 Statoil
+
+
+
+-- ===============================================================================
+-- SPE 10 - MODEL 2
+-- Simulation based on the followinf SPE paper:
+-- "Tenth SPE comparative solution project: a comparison of upscaling techniques"
+-- By Mike Christie (Heriot-Wat University) and Martin Blunt (Imperial College)
+-- SPE, August 2001
+-- ===============================================================================
+
+
+RUNSPEC
+
+TITLE
+    TENTH SPE COMPARATIVE SOLUTION PROJECT: A COMPARISON OF UPSCALING TECHNIQUES - MODEL 2
+
+DIMENS
+
+ 60  220  1  /
+
+NONNC
+
+
+OIL
+
+WATER
+
+GAS
+
+
+FIELD
+
+EQLDIMS
+  /
+
+TABDIMS
+  /
+
+WELLDIMS
+    6   340  1    6  /
+
+
+
+
+UNIFOUT
+
+START
+    1 'FEB' 1967  /
+
+NSTACK
+   300  /
+
+
+
+
+--      =================================================
+------- In theis section, the geometry of the simulation 
+------- grid and the rock perøeabilities, porosities are
+------- defined.
+--      =================================================
+
+GRID
+
+
+INIT
+
+--OLDTRAN   
+ 
+DX
+  13200*20    /
+DY   
+  13200*10    / 
+DZ     
+  13200*2     /
+
+TOPS
+  13200*12000  
+/
+-- In the PORO file, all the values equal to 0  have been replaced 
+-- by a minimum by a minimum value (1e-7) in order not to have 'dead cells'.
+
+INCLUDE 
+   '../INCLUDE/PORO_TOPLAYER.GRDECL'
+/
+
+INCLUDE 
+   '../INCLUDE/PERMX_TOPLAYER.GRDECL' 
+/
+
+COPY
+PERMX PERMY /
+PERMX PERMZ /
+/
+
+MESSAGES
+   3* 100000  5* 100000 /
+
+
+-- =======================================================
+PROPS
+
+
+--Sw	  Krw     Kro
+SWOF
+
+0.200	0.0000	1.0000  0
+0.250	0.0069	0.8403  0
+0.300	0.0278	0.6944  0
+0.350	0.0625	0.5625  0
+0.400	0.1111	0.4444  0
+0.450	0.1736	0.3403  0
+0.500	0.2500	0.2500  0
+0.550	0.3403	0.1736  0
+0.600	0.4444	0.1111  0
+0.650	0.5625	0.0625  0
+0.700	0.6944	0.0278  0
+0.750	0.8403	0.0069  0
+0.800	1.0000	0.0000  0  /
+
+
+
+-- No gas, but table needed because Flo is a 3-phase simulator 
+-- Sgmax is setto 0.8 to have coherent data with SWOF
+-- simplest table has been considered
+
+-- Sg             Krg              Kro            Pcgo
+SGOF
+ 0.000000	0		1.000000	0.000000
+ 0.800000	1		0.000000	0.000000   /  
+
+
+-- Oil  Wat   Gas
+DENSITY
+   53   64   0.0624  /
+
+PVDO
+   300   1.05  2.85  
+   800   1.02  2.99
+   8000  1.01  3
+/
+
+PVTW
+   6000  1.01  0.000003  0.3   0  /
+
+--PVT oif gas for 3-phi simulator flow - MADE UP DATA
+PVDG
+   14.7   178.1   0.005
+   8000   1       0.01
+/
+
+ROCK
+   6000    0.000001 
+/
+
+
+SOLUTION ========================================================
+
+EQUIL
+
+--    DATUM  DATUM   OWC    OWC    GOC    GOC    RSVD   RVVD   SOLN
+--    DEPTH  PRESS  DEPTH   PCOW  DEPTH   PCOG  TABLE  TABLE   METH
+
+      12000  6000   12170    0    12000    0     1*      1*      0   /
+
+
+SUMMARY ==========================================================
+
+RUNSUM
+
+FPR
+FOPR
+FOPT
+FWPT
+FOPR
+FWPR
+FWCT
+FWIR
+FWIT
+
+WWIR
+/
+WWIT
+/
+
+WBHP
+/
+
+WOPR
+/
+
+WWCT
+/
+
+WOPT
+/
+
+WWPR
+/
+WWPT
+/
+
+
+SCHEDULE =====================================================
+
+RPTRST
+    'BASIC=2'  /
+
+
+TUNING
+  /
+  /
+  2* 300 1* 12 /
+
+
+WELSPECS
+'I1'     'G1'     30    110    12001    'WATER'  /
+'I2'     'G1'     ${I2_I}    ${I2_J}    12001    'WATER'  /
+'P1'     'G1'     1      1     12001    'OIL'    /
+'P2'     'G1'     60     1     12001    'OIL'    /
+'P3'     'G1'     60    220    12001    'OIL'    /
+'P4'     'G1'     1     220    12001    'OIL'    /
+/
+
+COMPDAT
+'I1'    30   110   1   1   'OPEN'   2*   2  /
+'I2'    ${I2_I}    ${I2_J}   1   1   'OPEN'   2*   2  /
+'P1'     1    1     1   1   'OPEN'   2*   2  /
+'P2'     60   1     1   1   'OPEN'   2*   2  /
+'P3'     60   220   1   1   'OPEN'   2*   2  /
+'P4'     1    220   1   1   'OPEN'   2*   2  /
+/
+
+WCONINJE
+'I*'   'WATER'   'OPEN'   'RESV'   1*   50    10000 /
+/
+
+WCONPROD
+'P*'     'OPEN'    'BHP'   5*   4000 /
+/
+
+TSTEP
+1 2 3 4 5 5 10 10 20 20 30 30 30 30 50 50 17*100 / -- 2000 days
+
+--DATES
+-- $$$ 2  FEB 1967 /
+-- $$$ 3  FEB 1967 /
+-- $$$ 4  FEB 1967 /
+-- $$$ 5  FEB 1967 /
+-- $$$ 15 FEB 1967 /
+-- $$$ 1  MAR 1967 /
+-- $$$ 1  APR 1967 /
+-- $$$ 1  MAY 1967 /
+-- $$$ 1  AUG 1967 /
+-- $$$ 1  NOV 1967 /
+-- $$$ 1  FEB 1968 /
+-- $$$ 1  MAY 1968 /
+-- $$$ 1  AUG 1968 /
+-- $$$ 1  NOV 1968 /
+-- $$$ 1  FEB 1969 /
+-- $$$ 1  MAY 1969 /
+-- $$$ 1  AUG 1969 /
+-- $$$ 1  NOV 1969 /
+-- $$$ 1  FEB 1970 /
+-- $$$ 1  MAY 1970 /
+-- $$$ 1  AUG 1970 /
+-- $$$ 1  NOV 1970 /
+-- $$$ 1  FEB 1971 /
+-- $$$ 1  MAY 1971 /
+-- $$$ 1  AUG 1971 /
+-- $$$ 1  NOV 1971 /
+-- $$$ 1  FEB 1972 /
+-- $$$ 1  MAY 1972 /
+-- $$$ 24 JUL 1972 /
+-- $$$ /
+
+END
+
