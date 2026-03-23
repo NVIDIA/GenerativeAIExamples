@@ -38,7 +38,6 @@ function App() {
   const [pictureSearchResults, setPictureSearchResults] = useState([]);
   const [pictureSearchLoading, setPictureSearchLoading] = useState(false);
   const [pictureSearchError, setPictureSearchError] = useState('');
-  const [picturePlaceOnly, setPicturePlaceOnly] = useState(false);
   const [, setPinnedPicture] = useState(null);
 
   // View toggle
@@ -121,7 +120,7 @@ function App() {
   }, [error]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "nearest" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -181,7 +180,7 @@ function App() {
             ...summaryMessages
           ],
           stream: false,
-          max_tokens: 256
+          max_tokens: 128
         }),
       });
 
@@ -291,6 +290,45 @@ function App() {
   const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
   const normLower = (s) => norm(s).toLowerCase();
 
+  const placeStopWords = new Set([
+    "the", "of", "and", "for", "with", "from", "into", "about", "near", "historic", "england",
+    "listed", "building", "grade", "official", "entry", "photo", "export", "pdf", "annotated",
+    "image", "picture", "church", "chapel", "cathedral", "place"
+  ]);
+
+  const normalizePlaceToken = (token) => {
+    const rawValue = String(token || "").toLowerCase().trim();
+    if (!rawValue) return "";
+
+    const withoutPossessive = rawValue.replace(/(^'+|'+$)/g, "").replace(/'s$/g, "");
+    const value = withoutPossessive.replace(/[^a-z0-9]+/g, "").trim();
+
+    if (!value) return "";
+    if (value === "st") return "saint";
+    if (value.endsWith("s") && value.length > 4) return value.slice(0, -1);
+    return value;
+  };
+
+  const placeTokens = (value) => {
+    return [...new Set(
+      normLower(value)
+        .split(/[^a-z0-9']+/g)
+        .map((token) => normalizePlaceToken(token))
+        .filter((token) => token && token.length >= 2 && !placeStopWords.has(token))
+    )];
+  };
+
+  const placeFingerprint = (value) => placeTokens(value).sort().join(" ");
+
+  const overlapCount = (left, right) => {
+    const leftSet = new Set(Array.isArray(left) ? left : []);
+    let hits = 0;
+    for (const token of Array.isArray(right) ? right : []) {
+      if (leftSet.has(token)) hits += 1;
+    }
+    return hits;
+  };
+
   const getPageNo = (obj) => {
     const prov = Array.isArray(obj?.prov) ? obj.prov : [];
     const pageNo = prov[0]?.page_no;
@@ -366,50 +404,6 @@ function App() {
   const getPictureCaption = (doc, picture) => {
     const parts = getPictureTextParts(doc, picture);
     return parts.join("\n\n");
-  };
-
-  const getPictureCaptionsOnly = (doc, picture) => {
-    const textByRef = getTextByRefMap(doc);
-    const captions = Array.isArray(picture?.captions) ? picture.captions : [];
-    const seen = new Set();
-    return captions.flatMap((c) => {
-      if (typeof c === "string") return [norm(c)];
-      if (!c || typeof c !== "object") return [];
-      const vals = [];
-      const ref = c.$ref || c.ref;
-      if (ref && textByRef.get(ref)) vals.push(norm(textByRef.get(ref)));
-      for (const v of [c.text, c.orig, c.caption]) if (norm(v)) vals.push(norm(v));
-      return vals;
-    }).filter((x) => {
-      const k = normLower(x);
-      if (!k || seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-  };
-
-  const getPictureAnnotationTexts = (picture) => {
-    const ann = Array.isArray(picture?.annotations) ? picture.annotations : [];
-    const seen = new Set();
-    return ann.map((a) => {
-      if (typeof a === "string") return norm(a);
-      if (!a || typeof a !== "object") return "";
-      return norm(a?.text || "");
-    }).filter((x) => {
-      const k = normLower(x);
-      if (!k || seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-  };
-
-  const getPictureClassification = (picture) => {
-    const meta = picture?.meta && typeof picture.meta === "object" ? picture.meta : {};
-    return norm(meta.picture_classification || meta.classification || meta.pictureClass || "");
-  };
-
-  const formatClassificationText = (classification) => {
-    return classification ? `Classification: ${classification}` : "";
   };
 
   const getPageObject = (doc, pageNo) => {
@@ -540,7 +534,7 @@ function App() {
       .map((card) => {
         const title = linkifyHtml(highlightHtml(card.title, highlightNeedle));
         const body = linkifyHtml(highlightHtml(card.body, highlightNeedle));
-        const relevance = card.score != null ? `Relevance: ${Math.round(card.score * 100)}%` : "Relevance: â";
+        const relevance = card.score != null ? `Relevance: ${Math.round(card.score * 100)}%` : "Relevance: —";
         const footer = [
           card.kind ? `Type: ${card.kind}` : null,
           card.doc_name ? `Name: ${card.doc_name}` : null,
@@ -604,12 +598,70 @@ function App() {
     return String(picture?.meta?.place || "").trim();
   };
 
-  const getDoclingMaterialsText = (doc) => {
+  const getSectionHeaderTexts = (doc) => {
     const texts = Array.isArray(doc?.texts) ? doc.texts : [];
     return texts
+      .filter((item) => item?.label === "section_header")
       .map((item) => String(item?.text || "").trim())
-      .filter((value) => /^MATERIALS\s*:/i.test(value))
-      .join(" | ");
+      .filter(Boolean);
+  };
+
+  const getDoclingPlaceAliases = (doc, picture = null) => {
+    const aliases = [
+      picture ? getDoclingPicturePlace(picture) : "",
+      String(doc?.name || "").replace(/[_-]+/g, " "),
+      ...getSectionHeaderTexts(doc),
+    ]
+      .map((value) => norm(value))
+      .filter(Boolean);
+
+    const out = [];
+    const seen = new Set();
+
+    for (const alias of aliases) {
+      const variants = new Set([alias]);
+      variants.add(alias.replace(/\bchurch of\b/gi, ""));
+      variants.add(alias.replace(/\bthe\b/gi, ""));
+      variants.add(alias.replace(/\bsaint\b/gi, "st"));
+      variants.add(alias.replace(/\bst\.?\b/gi, "saint"));
+      variants.add(alias.replace(/\bchurch\b/gi, ""));
+
+      for (const variant of variants) {
+        const cleaned = norm(variant);
+        if (!cleaned) continue;
+        const key = placeFingerprint(cleaned) || normLower(cleaned);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push(cleaned);
+      }
+    }
+
+    return out;
+  };
+
+  const getDoclingMaterialsText = (doc) => {
+    const texts = Array.isArray(doc?.texts) ? doc.texts : [];
+    const values = [];
+
+    for (const item of texts) {
+      const value = String(item?.text || "").trim();
+      if (!value) continue;
+      if (/^MATERIALS\s*:/i.test(value)) {
+        values.push(value);
+        continue;
+      }
+      if (/\b(limestone|sandstone|rubble|stone|brick|flint|tile|tiles|timber|wood|lead|slate|ashlar|mortar)\b/i.test(value)) {
+        values.push(value);
+      }
+    }
+
+    const seen = new Set();
+    return values.filter((value) => {
+      const key = normLower(value);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).join(" | ");
   };
 
   const getDoclingTableText = (doc) => {
@@ -650,171 +702,113 @@ function App() {
       "the","and","for","with","that","this","from","into","about","using","what","when","where",
       "which","whose","then","than","they","them","their","have","has","had","was","were","are",
       "you","your","assistant","user","answer","based","does","did","show","tell","give","find",
-      "building","picture","image","photo","materials","material"
+      "building","picture","image","photo","materials","material","listed","official","entry"
     ]);
     return [...new Set(
       normLower(value)
-        .split(/[^a-z0-9]+/g)
+        .split(/[^a-z0-9']+/g)
+        .map((token) => normalizePlaceToken(token))
         .filter((token) => token && token.length >= 3 && !stop.has(token))
     )];
   };
 
-  const pictureMatchScore = (doc, picture, needle, options = {}) => {
-    const placeOnly = !!options.placeOnly;
-    const rawNeedle = String(needle || "").trim();
-    const cleanedNeedle = rawNeedle.replace(/^place\s*:\s*/i, "").trim();
+  const pictureMatchScore = (doc, picture, needle) => {
     const haystack = normLower(getDoclingMatchText(doc, picture));
-    const placeText = normLower(getDoclingPicturePlace(picture));
-    const queryNorm = normLower(cleanedNeedle);
-    const tokens = pictureQueryTokens(cleanedNeedle);
-
-    if (placeOnly) {
-      if (!placeText) return 0;
-      if (queryNorm && placeText === queryNorm) return 100;
-      if (!tokens.length) return placeText ? 1 : 0;
-      let placeHits = 0;
-      for (const token of tokens) {
-        if (placeText.includes(token)) placeHits += 1;
-      }
-      return placeHits;
-    }
-
+    const tokens = pictureQueryTokens(needle);
+    const placeAliasTokens = getDoclingPlaceAliases(doc, picture).flatMap((alias) => placeTokens(alias));
     if (!tokens.length) return haystack ? 1 : 0;
 
     let hits = 0;
     for (const token of tokens) {
       if (haystack.includes(token)) hits += 1;
+      if (placeAliasTokens.includes(token)) hits += 1;
     }
-
-    if (placeText && queryNorm) {
-      if (placeText === queryNorm) hits += 100;
-      else {
-        let placeHits = 0;
-        for (const token of tokens) {
-          if (placeText.includes(token)) placeHits += 1;
-        }
-        hits += placeHits * 3;
-      }
-    }
-
     return hits;
   };
-
-  const stripAssistantIntroPreamble = (content) => {
-  let text = String(content || "").trim();
-  if (!text) return text;
-
-  const lines = text.split("\n");
-  let cut = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-
-    if (
-      line.match(/^\d+\./) ||        // 1. Heading
-      line.startsWith("- ") ||        // bullet
-      line.startsWith("* ") ||
-      (line.includes(":") && line.length < 120) // section label like "Location & Context:"
-    ) {
-      cut = i;
-      break;
-    }
-  }
-
-  if (cut > 0) {
-    return lines.slice(cut).join("\n").trim();
-  }
-
-  return text;
-};
 
 
   const getImageSizeFromDataUrl = async (src) => {
     try {
-      if (!src) return null;
+      if (!src || typeof src !== "string") return null;
       return await new Promise((resolve) => {
         const img = new window.Image();
-        img.onload = () => resolve({
-          width: Number(img.naturalWidth || img.width || 0),
-          height: Number(img.naturalHeight || img.height || 0),
-        });
+        img.onload = () =>
+          resolve({
+            width: Number(img.naturalWidth || img.width || 0),
+            height: Number(img.naturalHeight || img.height || 0),
+          });
         img.onerror = () => resolve(null);
         img.src = src;
       });
-    } catch (_) {
+    } catch {
       return null;
     }
   };
 
   const isLikelyLogoPicture = async (doc, picture, imageDataUrl, pageNo, bbox) => {
-    try {
-      const pictureText = normLower(getPictureCaption(doc, picture));
-      const picturePlace = normLower(getDoclingPicturePlace(picture));
-      const titleish = normLower(picture?.title || "");
-      const allText = [pictureText, picturePlace, titleish].filter(Boolean).join(" ");
+    const textBits = [
+      String(getPictureCaption(doc, picture) || ""),
+      String(doc?.name || ""),
+      String(picture?.meta?.place || ""),
+      String(picture?.meta?.description || ""),
+      String(picture?.meta?.caption || ""),
+      String(picture?.meta?.title || ""),
+    ].filter(Boolean).join(" | ");
 
-      // HARD reject logos (critical fix)
-      if (
-        allText.includes("historic england") ||
-        allText.includes("logo") ||
-        allText.includes("wordmark") ||
-        allText.includes("crest")
-      ) {
-        return true;
-      }
+    const t = normLower(textBits);
 
+    if (/(^|[^a-z])(logo|wordmark|watermark|icon)([^a-z]|$)/i.test(t)) {
+      return true;
+    }
 
-      if (/\b(logo|wordmark|brand mark|brandmark|letterhead|header logo|footer logo)\b/i.test(allText)) {
-        return true;
-      }
+    if (
+      t.includes("historic england") &&
+      !t.includes("church") &&
+      !t.includes("chapel") &&
+      !t.includes("court") &&
+      !t.includes("house") &&
+      !t.includes("tower")
+    ) {
+      return true;
+    }
 
-      const size = await getImageSizeFromDataUrl(imageDataUrl);
-      const iw = Number(size?.width || 0);
-      const ih = Number(size?.height || 0);
-      const area = iw * ih;
+    const size = await getImageSizeFromDataUrl(imageDataUrl);
+    if (size && size.width > 0 && size.height > 0) {
+      const aspect = size.width / Math.max(size.height, 1);
+      const area = size.width * size.height;
 
-      const page = getPageObject(doc, pageNo);
-      const pageSize = page?.size && typeof page.size === "object" ? page.size : {};
-      const pdfW = Number(pageSize.width || 0);
-      const pdfH = Number(pageSize.height || 0);
+      if (aspect >= 4.5 && size.height <= 180) return true;
+      if (aspect >= 6) return true;
+      if (area < 18000) return true;
+    }
 
-      const l = Number(bbox?.l || 0);
-      const t = Number(bbox?.t || 0);
-      const r = Number(bbox?.r || 0);
-      const b = Number(bbox?.b || 0);
-      const bw = Math.max(0, r - l);
-      const bh = Math.max(0, t - b);
-
-      const topBand = pdfH > 0 ? t >= (pdfH * 0.88) : false;
-      const bottomBand = pdfH > 0 ? b <= (pdfH * 0.12) : false;
-      const edgeBand = topBand || bottomBand;
-
+    const page = getPageObject(doc, pageNo);
+    const pageSize = page?.size && typeof page.size === "object" ? page.size : null;
+    if (pageSize && bbox) {
+      const bw = Math.max(0, Number(bbox?.r || 0) - Number(bbox?.l || 0));
+      const bh = Math.max(0, Number(bbox?.b || 0) - Number(bbox?.t || 0));
+      const pageArea = Math.max(1, Number(pageSize.width || 0) * Number(pageSize.height || 0));
       const boxArea = bw * bh;
-      const pageArea = pdfW > 0 && pdfH > 0 ? pdfW * pdfH : 0;
-      const areaRatio = pageArea > 0 ? (boxArea / pageArea) : 0;
+      const areaRatio = boxArea / pageArea;
 
       if (bw > 0 && bh > 0) {
         const boxAspect = bw / Math.max(bh, 1);
         if (boxAspect >= 4.5 && bh <= 120) return true;
-        if (areaRatio > 0 && areaRatio < 0.01 && edgeBand) return true;
+        if (areaRatio > 0 && areaRatio < 0.01) return true;
       }
-
-      if (iw > 0 && ih > 0) {
-        const imgAspect = iw / Math.max(ih, 1);
-        if (imgAspect >= 4.5 && ih <= 140) return true;
-        if (area > 0 && area < 25000 && edgeBand) return true;
-      }
-
-      return false;
-    } catch (_) {
-      return false;
     }
+
+    return false;
   };
 
-  const extractMatchingPicturesFromDoc = async (doc, sourceFile, needle, score = null, options = {}) => {
+  const extractMatchingPicturesFromDoc = async (doc, sourceFile, needle, score = null) => {
     const out = [];
     const pictures = Array.isArray(doc?.pictures) ? doc.pictures : [];
     const materialsText = getDoclingMaterialsText(doc);
+    const tableText = getDoclingTableText(doc);
+    const queryTokens = pictureQueryTokens(needle);
+    const tableTokens = pictureQueryTokens(tableText);
+    const docPlaceAliases = getDoclingPlaceAliases(doc);
 
     for (let i = 0; i < pictures.length; i++) {
       const picture = pictures[i];
@@ -822,10 +816,23 @@ function App() {
 
       const combinedText = String(getPictureCaption(doc, picture) || "").trim();
       const picturePlace = getDoclingPicturePlace(picture);
-      const captionTexts = getPictureCaptionsOnly(doc, picture);
-      const annotationTexts = getPictureAnnotationTexts(picture);
-      const pictureClassification = getPictureClassification(picture);
-      const matchHits = pictureMatchScore(doc, picture, needle, options);
+      const picturePlaceAliases = getDoclingPlaceAliases(doc, picture);
+      let matchHits = pictureMatchScore(doc, picture, needle);
+
+      const queryPlaceTokens = placeTokens(needle);
+      const aliasTokens = [...new Set([...docPlaceAliases, ...picturePlaceAliases].flatMap((alias) => placeTokens(alias)))];
+      const placeHits = overlapCount(queryPlaceTokens, aliasTokens);
+      if (placeHits > 0) {
+        matchHits += placeHits * 2;
+      }
+
+      if (queryTokens.length && tableTokens.length) {
+        const queryTokenSet = new Set(queryTokens);
+        const overlappingTableHits = tableTokens.filter((token) => queryTokenSet.has(token)).length;
+        if (overlappingTableHits > 0) {
+          matchHits += overlappingTableHits * 2;
+        }
+      }
 
       if (String(needle || "").trim() && matchHits <= 0) continue;
 
@@ -837,46 +844,24 @@ function App() {
         continue;
       }
 
-      const titleText =
-        captionTexts[0] ||
-        picturePlace ||
-        combinedText ||
-        doc?.name ||
-        `picture ${i + 1}`;
-
-      const bodyParts = [];
-
-      const classificationText = formatClassificationText(pictureClassification);
-      if (classificationText) {
-        bodyParts.push(classificationText);
-      }
-
-      if (captionTexts.length) {
-        const filteredCaptions = captionTexts.filter((c) => normLower(c) !== normLower(titleText));
-        if (filteredCaptions.length) {
-          bodyParts.push(`Captions:\n${filteredCaptions.join("\n")}`);
-        }
-      }
-
-      if (annotationTexts.length) {
-        bodyParts.push(`Annotations:\n${annotationTexts.join("\n")}`);
-      }
-
-      if (materialsText) {
-        bodyParts.push(`Materials: ${materialsText.replace(/^MATERIALS\s*:/i, "").trim()}`);
-      }
-
       out.push({
         kind: "picture",
-        title: titleText,
-        body: bodyParts.length ? bodyParts.join("\n\n") : "",
+        title: picturePlace || combinedText || doc?.name || `picture ${i + 1}`,
+        body: [
+          picturePlace ? `Place: ${picturePlace}` : "",
+          combinedText || "",
+          materialsText ? `Materials: ${materialsText.replace(/^MATERIALS\s*:/i, "").trim()}` : "",
+          tableText ? `Table: ${tableText}` : "",
+        ].filter(Boolean).join("\n\n") || "(no Docling picture text)",
         imageDataUrl,
         page_no: pageNo,
         source_file: sourceFile,
         doc_name: doc?.name || "",
+        place_aliases: [...new Set([...docPlaceAliases, ...picturePlaceAliases])],
         score: matchHits > 0 ? Math.max(Number(score || 0), matchHits / 10) : score,
         footer: [
           picturePlace ? `Place: ${picturePlace}` : null,
+          docPlaceAliases.length ? `Aliases: ${docPlaceAliases.slice(0, 3).join(" | ")}` : null,
           picture?.self_ref ? `Ref: ${picture.self_ref}` : null
         ].filter(Boolean),
       });
@@ -884,7 +869,7 @@ function App() {
 
     return out;
   };
-  const buildPictureResultsFromSearch = async (query, refs, options = {}) => {
+  const buildPictureResultsFromSearch = async (query, refs) => {
     const out = [];
     const seen = new Set();
 
@@ -893,12 +878,43 @@ function App() {
     const candidateRefs = Array.isArray(refs) ? refs.slice(0, 50) : [];
     const sourceFiles = [];
     const sourceSeen = new Set();
+    const placeAliasCandidates = new Set();
+
+    const addSourceCandidate = (sourceFile, score = null) => {
+      const cleanSourceFile = String(sourceFile || "").trim();
+      if (!cleanSourceFile || sourceSeen.has(cleanSourceFile)) return;
+      sourceSeen.add(cleanSourceFile);
+      sourceFiles.push({ sourceFile: cleanSourceFile, score });
+    };
 
     for (const ref of candidateRefs) {
-      const sourceFile = String(ref?.source_file || "").trim();
-      if (!sourceFile || sourceSeen.has(sourceFile)) continue;
-      sourceSeen.add(sourceFile);
-      sourceFiles.push({ sourceFile, score: ref?.score ?? null });
+      addSourceCandidate(ref?.source_file, ref?.score ?? null);
+      const docName = String(ref?.doc_name || ref?.title || ref?.source_file || "").trim();
+      if (docName) placeAliasCandidates.add(docName);
+      const refText = String(ref?.text || "").trim();
+      if (refText) placeAliasCandidates.add(refText.split(/\n+/).slice(0, 3).join(" "));
+      if (sourceFiles.length >= 20) break;
+    }
+
+    const aliasSeedQueries = [query, ...placeAliasCandidates].slice(0, 12);
+    const aliasQueries = [...new Set(aliasSeedQueries.flatMap((value) => {
+      const aliases = getDoclingPlaceAliases({ name: value, texts: [{ label: "section_header", text: value }] });
+      const compact = aliases
+        .map((alias) => placeTokens(alias).join(" "))
+        .filter((alias) => alias.split(/\s+/).filter(Boolean).length >= 2);
+      return compact.slice(0, 2);
+    }).filter(Boolean))].slice(0, 8);
+
+    for (const aliasQuery of aliasQueries) {
+      try {
+        const extraRefs = await searchChunks(aliasQuery, { k: 10 });
+        for (const ref of extraRefs) {
+          addSourceCandidate(ref?.source_file, ref?.score ?? null);
+          if (sourceFiles.length >= 20) break;
+        }
+      } catch (error) {
+        console.error('Alias picture search failed:', error);
+      }
       if (sourceFiles.length >= 20) break;
     }
 
@@ -906,7 +922,7 @@ function App() {
       const doc = await fetchDoc(sourceFile);
       if (!doc) continue;
 
-      const pictures = await extractMatchingPicturesFromDoc(doc, sourceFile, query, score, options);
+      const pictures = await extractMatchingPicturesFromDoc(doc, sourceFile, query, score);
       if (!pictures.length) continue;
 
       for (const picture of pictures) {
@@ -962,7 +978,7 @@ function App() {
 
     try {
       const refs = await searchChunks(cleanQuery, { k: 50 });
-      const pictures = await buildPictureResultsFromSearch(cleanQuery, refs, { placeOnly: picturePlaceOnly });
+      const pictures = await buildPictureResultsFromSearch(cleanQuery, refs);
       setPictureSearchResults(pictures);
       if (!pictures.length) {
         setPictureSearchError('No matching pictures found for this query.');
@@ -1117,7 +1133,7 @@ function App() {
           model: appConfig?.llm?.model?.name || 'nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1',
           messages: contextMessages,
           stream: false,
-          max_tokens: 256,
+          max_tokens: 128,
           temperature: appConfig?.llm?.model?.temperature || 0.6,
           top_p: appConfig?.llm?.model?.top_p || 0.95,
         }),
@@ -1128,8 +1144,7 @@ function App() {
       }
 
       const data = await response.json();
-      const rawMessageContent = data.choices[0].message.content;
-      const messageContent = stripAssistantIntroPreamble(rawMessageContent);
+      const messageContent = data.choices[0].message.content;
 
       if (!messageContent) {
         throw new Error('Received empty response from LLM server');
@@ -1178,11 +1193,60 @@ function App() {
           } else {
             setPictureSearchError('');
 
-            const bestPicture = [...pictures].sort(
-              (a, b) => (Number(b.score) || 0) - (Number(a.score) || 0)
+            const autoPinThreshold =
+              appConfig?.ui?.components?.search?.auto_pin_threshold ?? 0.9;
+
+            const answerTokens = pictureQueryTokens(messageContent).filter((token) => token.length >= 5);
+            const queryTokens = pictureQueryTokens(message).filter((token) => token.length >= 4);
+
+            const rankedPictures = pictures.map((picture) => {
+              const haystack = normLower([
+                picture?.title || '',
+                picture?.body || '',
+                picture?.doc_name || '',
+                picture?.source_file || '',
+              ].join(' '));
+
+              let entityHits = 0;
+              for (const token of answerTokens) {
+                if (haystack.includes(token)) entityHits += 1;
+              }
+
+              let queryHits = 0;
+              for (const token of queryTokens) {
+                if (haystack.includes(token)) queryHits += 1;
+              }
+
+              const baseScore = Number(picture?.score) || 0;
+              const autoPinScore =
+                baseScore +
+                (entityHits * 0.2) +
+                (queryHits * 0.1);
+
+              return {
+                ...picture,
+                autoPinScore,
+              };
+            });
+
+            const entityFilteredPictures = rankedPictures.filter((picture) => {
+              if (!answerTokens.length) return true;
+              const haystack = normLower([
+                picture?.title || '',
+                picture?.body || '',
+                picture?.doc_name || '',
+                picture?.source_file || '',
+              ].join(' '));
+              return answerTokens.some((token) => haystack.includes(token));
+            });
+
+            const finalPictures = entityFilteredPictures.length ? entityFilteredPictures : rankedPictures;
+
+            const bestPicture = [...finalPictures].sort(
+              (a, b) => (Number(b.autoPinScore) || 0) - (Number(a.autoPinScore) || 0)
             )[0];
 
-            if (bestPicture) {
+            if (bestPicture && (Number(bestPicture.autoPinScore) || 0) >= autoPinThreshold) {
               const pinnedPicture = {
                 ...bestPicture,
                 url: bestPicture?.image || bestPicture?.url || bestPicture?.src || bestPicture?.imageDataUrl || null,
@@ -1336,9 +1400,7 @@ function App() {
               kind: 'picture_caption',
             },
           });
-          // Do not push caption into bodyChildren; the picture already references it
-          // through picture.captions, and adding it here causes duplicate rendering in
-          // consumers that display both standalone body text nodes and picture captions.
+          bodyChildren.push({ $ref: captionRef });
           textIndex += 1;
         }
 
@@ -1506,7 +1568,7 @@ function App() {
                                 <div style={{ whiteSpace: "pre-wrap", opacity: 0.95 }}>{item.body}</div>
                               ) : null}
                               <div style={{ marginTop: "0.35rem", opacity: 0.8, fontSize: "0.9em" }}>
-                                picture{item.page_no ? ` Â· page ${item.page_no}` : ""}
+                                picture{item.page_no ? ` · page ${item.page_no}` : ""}
                               </div>
                             </div>
                           ))}
@@ -1552,7 +1614,7 @@ function App() {
       <header className="App-header" style={{ paddingBottom: '0.75rem' }}>
         {error && (
           <div className={`error-message ${errorTimeoutRef.current ? 'fade-out' : ''}`} role="alert">
-            <span className="error-icon">â ï¸</span>
+            <span className="error-icon">⚠️</span>
             {error}
             <button
               className="close-button"
@@ -1564,7 +1626,7 @@ function App() {
               }}
               aria-label="Close error message"
             >
-              Ã
+              ×
             </button>
           </div>
         )}
@@ -1657,14 +1719,6 @@ function App() {
                 {isLoading ? 'Thinking...' : 'Send'}
               </button>
             </form>
-
-                    <div className="rag-toggle" style={{ marginBottom: "0.75rem" }}>
-                      <label className="switch">
-                        <input type="checkbox" checked={picturePlaceOnly} onChange={(e) => setPicturePlaceOnly(e.target.checked)} />
-                        <span className="slider round"></span>
-                      </label>
-                      <span className="toggle-label">Place only</span>
-                    </div>
 
             {usePictures ? (
               <section className="picture-context-section">
