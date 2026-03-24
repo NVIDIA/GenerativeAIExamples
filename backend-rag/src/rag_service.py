@@ -71,6 +71,9 @@ class RAGService:
         self.index = None
         self.documents = []
         self.metadata = []  # Store metadata for each document
+        self.picture_index = None
+        self.picture_documents = []
+        self.picture_metadata = []
         self.dimension = model_config['dimension']
         self.chunk_size = text_config['chunk_size']
         self.chunk_overlap = text_config['chunk_overlap']
@@ -464,6 +467,128 @@ class RAGService:
         except Exception as e:
             logger.error(f"Error in search: {str(e)}")
             return []
+
+
+
+    def build_picture_records_from_docling_file(self, file_path: str) -> List[Dict[str, Any]]:
+        """Extract picture-index records from one Docling JSON file"""
+        path = Path(file_path)
+        with open(path, "r") as f:
+            data = json.load(f)
+
+        doc_name = data.get("name") or path.stem
+        pictures = data.get("pictures") or []
+        records = []
+
+        for i, pic in enumerate(pictures):
+            meta = pic.get("meta") or {}
+            picture_id = pic.get("self_ref") or f"#/pictures/{i}"
+            place = meta.get("place") or ""
+            picture_classification = meta.get("picture_classification") or meta.get("classification") or ""
+            captions = pic.get("captions") or []
+            caption_text = " ".join(str(x).strip() for x in captions if str(x).strip())
+            annotation_text = ""
+            page_number = 1
+
+            prov = pic.get("prov") or []
+            if prov and isinstance(prov, list):
+                first_prov = prov[0] or {}
+                page_no = first_prov.get("page_no")
+                if page_no is not None:
+                    page_number = page_no
+
+            embedding_text = " ".join(
+                x for x in [caption_text, annotation_text, place, picture_classification] if x
+            ).strip()
+
+            if not embedding_text:
+                continue
+
+            records.append({
+                "picture_id": picture_id,
+                "source_file": str(path),
+                "doc_name": doc_name,
+                "page_number": page_number,
+                "place": place,
+                "picture_classification": picture_classification,
+                "caption_text": caption_text,
+                "annotation_text": annotation_text,
+                "embedding_text": embedding_text,
+                "scope": "picture_index"
+            })
+
+        return records
+
+    def build_picture_index(self, records: List[Dict[str, Any]]):
+        """Build a separate FAISS index for picture records"""
+        if not records:
+            self.picture_index = None
+            self.picture_documents = []
+            self.picture_metadata = []
+            return 0
+
+        texts = [r.get("embedding_text", "") for r in records]
+        embeddings = self.model.encode(texts)
+        faiss.normalize_L2(embeddings)
+
+        dimension = embeddings.shape[1]
+        self.picture_index = faiss.IndexFlatL2(dimension)
+        self.picture_index.add(embeddings.astype("float32"))
+
+        self.picture_documents = texts
+        self.picture_metadata = records
+
+        return len(records)
+
+    def search_picture_index(self, query: str, k: int = None) -> List[Dict[str, Any]]:
+        """Search the separate picture FAISS index"""
+        if self.picture_index is None or not self.picture_documents:
+            return []
+
+        if k is None:
+            k = rag_config["search"]["default_k"]
+
+        query_embedding = self.model.encode([query])[0]
+        faiss.normalize_L2(query_embedding.reshape(1, -1))
+
+        distances, indices = self.picture_index.search(
+            np.array([query_embedding]).astype("float32"), k
+        )
+
+        results = []
+        for distance, idx in zip(distances[0], indices[0]):
+            if idx < len(self.picture_documents):
+                distance = max(0, min(2, float(distance)))
+                similarity = max(0, min(1, 1 - (distance * distance) / 2))
+                meta = self.picture_metadata[idx]
+                results.append({
+                    "text": self.picture_documents[idx],
+                    "score": float(similarity),
+                    "picture_id": meta.get("picture_id"),
+                    "source_file": meta.get("source_file"),
+                    "doc_name": meta.get("doc_name"),
+                    "page_number": meta.get("page_number"),
+                    "place": meta.get("place"),
+                    "picture_classification": meta.get("picture_classification"),
+                    "caption_text": meta.get("caption_text"),
+                    "annotation_text": meta.get("annotation_text"),
+                    "scope": "picture_index"
+                })
+
+        return results
+
+    def clear_picture_index(self):
+        """Clear the picture-only FAISS index"""
+        self.picture_index = None
+        self.picture_documents = []
+        self.picture_metadata = []
+
+    def get_picture_index_status(self) -> Dict[str, Any]:
+        """Return picture-index readiness and count"""
+        return {
+            "ready": self.picture_index is not None,
+            "document_count": len(self.picture_documents)
+        }
 
     def save_index(self, directory: str):
         """Save the index and documents to disk"""

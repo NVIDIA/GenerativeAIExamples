@@ -452,6 +452,39 @@ class SearchRequest(BaseModel):
     k: Optional[int] = None  # Will use rag_config['search']['default_k'] if not provided
     use_rag: bool = rag_config['search']['use_rag']
 
+class PictureIndexSearchRequest(BaseModel):
+    query: str
+    k: Optional[int] = None
+    pinned_picture_id: Optional[str] = None
+
+class PictureIndexBuildRequest(BaseModel):
+    records: List[Dict[str, Any]]
+
+@app.get("/api/picture-index/status")
+async def get_picture_index_status():
+    return rag_service.get_picture_index_status()
+
+@app.post("/api/picture-index/build")
+async def build_picture_index(request: PictureIndexBuildRequest):
+    count = rag_service.build_picture_index(request.records)
+    status = rag_service.get_picture_index_status()
+    return {"message": "Picture index built", "document_count": count, **status}
+
+@app.post("/api/picture-index/clear")
+async def clear_picture_index():
+    rag_service.clear_picture_index()
+    return {"message": "Picture index cleared", **rag_service.get_picture_index_status()}
+
+@app.post("/api/picture-index/search")
+async def search_picture_index(request: PictureIndexSearchRequest):
+    results = rag_service.search_picture_index(request.query, request.k)
+    return {
+        "results": results,
+        "query": request.query,
+        "scope": "picture_index",
+        **rag_service.get_picture_index_status()
+    }
+
 @app.post("/api/search")
 async def search(request: SearchRequest):
     try:
