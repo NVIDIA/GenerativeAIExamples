@@ -24,7 +24,7 @@ app:
 
 # API Configuration
 api:
-  base_url: "http://192.168.1.142:8001"
+  base_url: "http://192.168.1.178:8001"
   endpoints:
     upload: "/api/upload"
     search: "/api/search"

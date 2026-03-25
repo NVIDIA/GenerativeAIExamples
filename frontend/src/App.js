@@ -84,10 +84,7 @@ function App() {
 
   useEffect(() => {
     if (!serverIp) {
-      const fallbackHost = window.location.hostname || '127.0.0.1';
-      if (fallbackHost) {
-        setServerIp(fallbackHost);
-      }
+      setServerIp("192.168.1.178");
     }
   }, [serverIp]);
 
@@ -501,7 +498,7 @@ function App() {
     }
   };
   const fetchDoc = async (sourceFile) => {
-    const baseUrl = appConfig?.api?.base_url || "http://localhost:8001";
+    const baseUrl = appConfig?.api?.base_url || "http://192.168.1.178:8001";
     const resp = await fetch(`${baseUrl}/api/document/${encodeURIComponent(sourceFile)}`, {
       headers: { Accept: "application/json" },
     });
@@ -552,7 +549,7 @@ function App() {
           .join("");
 
         const viewSource = card.source_file
-          ? `<a class="pk-view-source-btn" href="${escapeHtml(`${appConfig?.api?.base_url || "http://localhost:8001"}/api/document/${encodeURIComponent(card.source_file)}`)}" target="_blank" rel="noreferrer">View Source Document</a>`
+          ? `<a class="pk-view-source-btn" href="${escapeHtml(`${appConfig?.api?.base_url || "http://192.168.1.178:8001"}/api/document/${encodeURIComponent(card.source_file)}`)}" target="_blank" rel="noreferrer">View Source Document</a>`
           : "";
         const imageBlock = card.imageDataUrl
           ? `<div class="pk-reference-image-wrap"><img class="pk-reference-image" src="${escapeHtml(card.imageDataUrl)}" alt="${escapeHtml(card.title || "picture")}" /></div>`
@@ -928,7 +925,7 @@ function App() {
     if (!cleanQuery) return [];
 
     const k = Number.isInteger(options.k) ? options.k : (appConfig?.ui?.components?.search?.default_k || 5);
-    const baseUrl = appConfig?.api?.base_url || 'http://localhost:8001';
+    const baseUrl = appConfig?.api?.base_url || 'http://192.168.1.178:8001';
     const searchEndpoint = appConfig?.api?.endpoints?.search || '/api/search';
 
     const response = await fetch(`${baseUrl}${searchEndpoint}`, {
@@ -1454,7 +1451,7 @@ function App() {
                           Relevance: {Math.round(ref.score * 100)}%
                         </span>
                         <a
-                          href={`${appConfig?.api?.base_url || "http://localhost:8001"}/api/document/${encodeURIComponent(
+                          href={`${appConfig?.api?.base_url || "http://192.168.1.178:8001"}/api/document/${encodeURIComponent(
                             ref.source_file
                           )}`}
                           target="_blank"

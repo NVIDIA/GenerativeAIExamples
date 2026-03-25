@@ -3,7 +3,7 @@ import React from "react";
 export default function DoclingStructuredRenderer({
   items = [],
   query = "",
-  apiBase = "http://localhost:8001",
+  apiBase = "http://192.168.1.178:8001",
   usePictures = true,
 }) {
   const escapeRegExp = (s) => String(s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

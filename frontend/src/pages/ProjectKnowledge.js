@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import FileIngestion from "../components/FileIngestion";
 
 export default function ProjectKnowledge() {
-  const API_BASE = "http://192.168.1.142:8001";
+  const API_BASE = "http://192.168.1.178:8001";
 
   const DISCOVER_QUERIES = useMemo(
     () => [

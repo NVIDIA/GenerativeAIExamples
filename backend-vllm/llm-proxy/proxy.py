@@ -75,7 +75,7 @@ async def list_models(x_llm_ip: str = Header(None)):
     """
     try:
         # Always use local Ollama upstream; do not trust X-LLM-IP for local routing
-        upstream_url = f"http://127.0.0.1:{config['llm']['port']}/api/tags"
+        upstream_url = f"http://192.168.1.178:{config['llm']['port']}/api/tags"
         response = await http_client.get(upstream_url, timeout=config["llm"]["timeout"])
         response.raise_for_status()
 
@@ -115,7 +115,7 @@ async def proxy_chat_completions(
 
     try:
         # Always use local Ollama upstream; do not trust X-LLM-IP for local routing
-        upstream_url = f"http://127.0.0.1:{config['llm']['port']}/v1/chat/completions"
+        upstream_url = f"http://192.168.1.178:{config['llm']['port']}/v1/chat/completions"
 
         response = await http_client.post(
             upstream_url,

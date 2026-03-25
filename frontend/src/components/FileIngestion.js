@@ -51,7 +51,7 @@ function FileIngestion() {
     let eventSource;
     if (currentJobId) {
       // Use local RAG server for progress tracking
-      eventSource = new EventSource(`http://localhost:8001/api/upload/progress/${currentJobId}`);
+      eventSource = new EventSource(`http://192.168.1.178:8001/api/upload/progress/${currentJobId}`);
       
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -195,7 +195,7 @@ function FileIngestion() {
       });
 
       // Use local RAG server for file upload
-      const response = await fetch(`http://localhost:8001/api/upload`, {
+      const response = await fetch(`http://192.168.1.178:8001/api/upload`, {
         method: 'POST',
         body: formData,
       }).catch(error => {
