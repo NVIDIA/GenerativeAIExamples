@@ -1,0 +1,48 @@
+FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    USE_FAISS_GPU=1 \
+    FAISS_GPU_DEVICE=0 \
+    PORT=8001
+
+WORKDIR /opt/backend-rag
+
+RUN apt-get update && apt-get install -y \
+    python3 python3-dev python3-pip python3-setuptools python3-wheel \
+    build-essential cmake ninja-build pkg-config git swig wget curl ca-certificates \
+    libopenblas-dev liblapack-dev libomp-dev libgflags-dev libgoogle-glog-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install --upgrade pip setuptools wheel \
+    && python3 -m pip install numpy scipy
+
+WORKDIR /tmp
+RUN git clone --depth=1 https://github.com/facebookresearch/faiss.git
+
+WORKDIR /tmp/faiss
+RUN cmake -B build \
+    -DFAISS_ENABLE_GPU=ON \
+    -DFAISS_ENABLE_PYTHON=ON \
+    -DBUILD_TESTING=OFF \
+    -DFAISS_OPT_LEVEL=generic \
+    -DCMAKE_BUILD_TYPE=Release \
+    .
+
+RUN cmake --build build -j"$(nproc)" --target faiss
+RUN cmake --build build -j"$(nproc)" --target swigfaiss
+
+WORKDIR /tmp/faiss/build/faiss/python
+RUN python3 setup.py install
+
+WORKDIR /opt/backend-rag
+COPY requirements.txt ./requirements.txt
+RUN grep -vi '^faiss-cpu' requirements.txt > requirements.no-faiss.txt \
+    && python3 -m pip install -r requirements.no-faiss.txt
+
+COPY . .
+
+EXPOSE 8001
+CMD ["python3", "src/app.py"]
