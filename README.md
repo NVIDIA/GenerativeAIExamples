@@ -27,6 +27,8 @@ This repository is a starting point for developers looking to integrate with the
   * [RAG Examples](#rag-examples)
   * [RAG Tools](#rag-tools)
   * [RAG Projects](#rag-projects)
+* [Synthetic Data Generation](#synthetic-data-generation)
+  * [NeMo Data Designer Notebooks](#nemo-data-designer-notebooks)
 * [Documentation](#documentation)
   * [Getting Started](#getting-started)
   * [How To's](#how-tos)
@@ -43,6 +45,12 @@ These tutorials demonstrate Data Flywheel workflows that use NVIDIA NeMo Microse
 
 - [Tool Calling Fine-tuning, Inference, Evaluation, and Guardrailing with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/tool-calling)
 - [Embedding Fine-tuning, Inference, and Evaluation with NVIDIA NeMo Microservices and NIMs](./nemo/data-flywheel/embedding-finetuning/)
+
+### Synthetic Data Generation
+
+Generate high-quality synthetic datasets with NVIDIA NeMo Data Designer microservice using agentic workflows for training and fine-tuning.
+
+- [NeMo Data Designer 101: Getting Started with Synthetic Data Generation](./nemo/NeMo-Data-Designer/intro-tutorials/)
 
 ### Safer Agentic AI
 
@@ -184,6 +192,16 @@ Example tools and tutorials to enhance LLM development and productivity when usi
 
 - [NVIDIA Tokkio LLM-RAG](https://docs.nvidia.com/ace/latest/workflows/tokkio/text/Tokkio_LLM_RAG_Bot.html): Use Tokkio to add avatar animation for RAG responses.
 - [Hybrid RAG Project on AI Workbench](https://github.com/NVIDIA/workbench-example-hybrid-rag): Run an NVIDIA AI Workbench example project for RAG.
+
+## Synthetic Data Generation
+
+### NeMo Data Designer Notebooks
+
+These notebooks demonstrate how to generate synthetic datasets using NVIDIA NeMo Data Designer microservice with agentic generation combining LLMs, samplers, and structured outputs.
+
+- [The Basics](./nemo/NeMo-Data-Designer/intro-tutorials/1-the-basics.ipynb) - Core concepts with product review dataset generation
+- [Structured Outputs and Jinja Expressions](./nemo/NeMo-Data-Designer/intro-tutorials/2-structured-outputs-and-jinja-expressions.ipynb) - Advanced schemas and templating
+- [Seeding with External Datasets](./nemo/NeMo-Data-Designer/intro-tutorials/3-seeding-with-a-dataset.ipynb) - Bootstrap generation with existing data
 
 ## Documentation
 
