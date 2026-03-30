@@ -74,7 +74,7 @@ git clone https://github.com/NVIDIA/GenerativeAIExamples/ && cd GenerativeAIExam
 export NVIDIA_API_KEY="nvapi-*******************"
 ```
 
-If you don't have an API key, follow [these instructions](https://github.com/NVIDIA/GenerativeAIExamples/blob/main/docs/api-catalog.md#get-an-api-key-for-the-accessing-models-on-the-api-catalog) to sign up for an NVIDIA AI Foundation developer account and obtain access.
+If you don't have an API key, follow [these instructions](https://build.nvidia.com/explore/discover) to sign up for an NVIDIA AI Foundation developer account and obtain access.
 
 ### 3. Create a Python virtual environment and activate it
 
