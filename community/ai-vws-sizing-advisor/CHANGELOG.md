@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog, and this project adheres to Semantic Versioning.
 
+## [2.4] - 2026-01-13
+Added the architecture diagram to the readme.
 
 ## [2.3] - 2026-01-08
 
