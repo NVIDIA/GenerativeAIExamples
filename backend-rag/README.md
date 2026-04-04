@@ -1,71 +1,73 @@
-# Backend RAG (Jetson FAISS)
+# RAG Backend Service
 
-## Overview
-Lightweight FAISS-based RAG backend running on Jetson with Docker.
-Single active service on port **8001**.
+This is the RAG (Retrieval-Augmented Generation) backend service for the chat application. It provides APIs for document processing, search, and chat functionality using FAISS for vector similarity search and Sentence Transformers for text embeddings. 
 
-## Key Changes
-- Removed duplicate picture-index APIs
-- Single backend service (8001 only)
-- Host-mounted storage
-- Cleaned project structure
+## Prerequisites
 
-## Storage
-- Active FAISS data dir: `faiss-general/`
-- Optional future dir: `faiss-pictures/`
+- Python 3.8 or higher
+- NVIDIA GPU with CUDA support (optional, for faster processing)
+- Sufficient disk space for document storage and vector indices
 
-## Directory Structure
-```text
-.
-./backend-rag-jetson-faiss.tar.gz
-./docker-compose.yml
-./Dockerfile.jetson
-./.gitignore
-./index
-./index/documents.json
-./index/faiss.index
-./projects.cfg
-./README.md
-./requirements.txt
-./src
-./src/app.py
-./src/config
-./src/__pycache__
-./src/rag_service.py
-./src/requirements.txt
-./storage
-./storage/documents
-./.venv
-./.venv/bin
-./.venv/Dockerfile.jetson
-./.venv-gpu
-./.venv-gpu/bin
-./.venv-gpu/lib
-./.venv-gpu/lib64
-./.venv-gpu/pyvenv.cfg
-./.venv-gpu/share
-./.venv/include
-./.venv/lib
-./.venv/lib64
-./.venv/pyvenv.cfg
-./.venv/share
-```
+## Setup
 
-## Docker Run
+For Unix/macOS:
 ```bash
-docker run -d \
-  --name backend-rag \
-  --restart unless-stopped \
-  --runtime nvidia \
-  -p 8001:8001 \
-  -v /home/hp/projects/chat-llama-nemotron/backend-rag:/home/hp/projects/chat-llama-nemotron/backend-rag \
-  backend-rag:jetson-faiss-host
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-## API
-- `GET /api/rag-status`
-- `POST /api/upload`
+For Windows:
+```bash
+# Create and activate virtual environment
+python -m venv venv
+.\venv\Scripts\activate
 
-## Notes
-- Persistence uses host bind mount
-- Focused on single backend on 8001
+# Install dependencies
+pip install -r requirements.txt
+```
+
+## Configuration
+
+The service can be configured through the configuration files: 
+
+- `src/config/app_config.yaml`
+- `src/config/rag_config.yaml`
+
+
+## Running the Service
+
+For Unix/macOS:
+```bash
+# Make sure you're in the backend-rag directory
+cd backend-rag
+
+# Activate the virtual environment if not already activated
+source venv/bin/activate
+
+# Start the server
+python src/app.py
+```
+
+For Windows:
+```bash
+# Make sure you're in the backend-rag directory
+cd backend-rag
+
+# Activate the virtual environment if not already activated
+.\venv\Scripts\activate
+
+# Start the server
+python src\app.py
+```
+
+## Architecture
+
+This service implements a RAG (Retrieval-Augmented Generation) system that:
+1. Processes and chunks documents
+2. Generates embeddings 
+3. Stores vectors in a FAISS index
+4. Provides semantic search capabilities
