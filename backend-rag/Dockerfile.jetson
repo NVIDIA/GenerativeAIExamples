@@ -1,3 +1,4 @@
+# Jetson / L4T base image (matches JetPack)
 FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -11,16 +12,39 @@ ENV DEBIAN_FRONTEND=noninteractive \
 WORKDIR /opt/backend-rag
 
 RUN apt-get update && apt-get install -y \
-    python3 python3-dev python3-pip python3-setuptools python3-wheel \
-    build-essential cmake ninja-build pkg-config git swig wget curl ca-certificates \
-    libopenblas-dev liblapack-dev libomp-dev libgflags-dev libgoogle-glog-dev \
+    python3 \
+    python3-dev \
+    python3-pip \
+    python3-setuptools \
+    python3-wheel \
+    build-essential \
+    ninja-build \
+    pkg-config \
+    git \
+    swig \
+    wget \
+    curl \
+    ca-certificates \
+    libopenblas-dev \
+    liblapack-dev \
+    libomp-dev \
+    libgflags-dev \
+    libgoogle-glog-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --upgrade pip setuptools wheel \
-    && python3 -m pip install numpy scipy
+RUN wget -q https://github.com/Kitware/CMake/releases/download/v4.3.0/cmake-4.3.0-linux-aarch64.tar.gz \
+    && tar -xzf cmake-4.3.0-linux-aarch64.tar.gz \
+    && mv cmake-4.3.0-linux-aarch64 /opt/cmake
+
+ENV PATH=/opt/cmake/bin:$PATH
+
+RUN cmake --version && python3 --version
+
+RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && python3 -m pip install --no-cache-dir "numpy<2" scipy
 
 WORKDIR /tmp
-RUN git clone --depth=1 https://github.com/facebookresearch/faiss.git
+RUN git clone --depth=1 https://github.com/facebookresearch/faiss.git /tmp/faiss
 
 WORKDIR /tmp/faiss
 RUN cmake -B build \
@@ -39,10 +63,11 @@ RUN python3 setup.py install
 
 WORKDIR /opt/backend-rag
 COPY requirements.txt ./requirements.txt
-RUN grep -vi '^faiss-cpu' requirements.txt > requirements.no-faiss.txt \
-    && python3 -m pip install -r requirements.no-faiss.txt
+RUN python3 -m pip install --no-cache-dir -r requirements.txt \
+    && python3 -c "import fastapi, uvicorn; print('fastapi ok')"
 
 COPY . .
 
 EXPOSE 8001
+
 CMD ["python3", "src/app.py"]

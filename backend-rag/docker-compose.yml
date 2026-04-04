@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+  backend-rag:
+    image: backend-rag:jetson-faiss
+    container_name: backend-rag
+    restart: unless-stopped
+    runtime: nvidia
+    working_dir: /home/hp/projects/chat-llama-nemotron/backend-rag
+    command: ["python3", "/home/hp/projects/chat-llama-nemotron/backend-rag/src/app.py"]
+    volumes:
+      - /home/hp/projects/chat-llama-nemotron/backend-rag:/home/hp/projects/chat-llama-nemotron/backend-rag
+    ports:
+      - "8001:8001"
