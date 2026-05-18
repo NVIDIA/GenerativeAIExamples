@@ -117,7 +117,7 @@ We want to populate a vector database with our Threat Intelligence. To do so, we
 Run all cells of the notebook. It may take several minutes. Alert summaries per user will be generated and uploaded to a *new* vector database.
 
 > **[!TROUBLESHOOTING]**  
->  If you recieve a File Does Not Exist error, create the missing file (and any missing directories along the specified file path) in the Jupyter notebook.
+>  If you receive a File Does Not Exist error, create the missing file (and any missing directories along the specified file path) in the Jupyter notebook.
 
 > **[!OPTIONAL]**  
 > This example project is currently configured to point to build.nvidia API for the Summary Inference Morpheus pipeline step. To use your self-hosted LLM NIM instead (which you have spun up in a previous optional step), edit the `chat_nvidia_service.py` file and add a `base_url` parameter to the ChatNVIDIA model instantiation. Point the `base_url` to your locally hosted model.
