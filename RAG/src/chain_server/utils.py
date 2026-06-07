@@ -409,7 +409,7 @@ def get_llm(**kwargs) -> LLM | SimpleChatModel:
                 f"The following parameters from kwargs are not supported: {unused_params} for {settings.llm.model_engine}"
             )
         # MiniMax provides an OpenAI-compatible API at https://api.minimax.io/v1
-        model_name = settings.llm.model_name if settings.llm.model_name != "ensemble" else "MiniMax-M2.7"
+        model_name = settings.llm.model_name if settings.llm.model_name != "ensemble" else "MiniMax-M3"
         base_url = settings.llm.server_url if settings.llm.server_url else "https://api.minimax.io/v1"
         temperature = kwargs.get('temperature', None)
         if temperature is not None:

@@ -166,7 +166,7 @@ class TestGetLlmMiniMax(unittest.TestCase):
             raw = raw.__wrapped__
         cls._raw_fn = [raw]
 
-    def _make_config(self, model_engine="minimax", model_name="MiniMax-M2.7", server_url=""):
+    def _make_config(self, model_engine="minimax", model_name="MiniMax-M3", server_url=""):
         cfg = MagicMock()
         cfg.llm.model_engine = model_engine
         cfg.llm.model_name = model_name
@@ -184,7 +184,7 @@ class TestGetLlmMiniMax(unittest.TestCase):
             self._call_get_llm()
             mock_chat.assert_called_once()
             kw = mock_chat.call_args.kwargs
-            self.assertEqual(kw["model"], "MiniMax-M2.7")
+            self.assertEqual(kw["model"], "MiniMax-M3")
             self.assertEqual(kw["openai_api_key"], "test-key-123")
             self.assertEqual(kw["openai_api_base"], "https://api.minimax.io/v1")
 
@@ -194,15 +194,15 @@ class TestGetLlmMiniMax(unittest.TestCase):
              patch.object(self.utils, "ChatOpenAI") as mock_chat:
             mock_chat.return_value = MagicMock()
             self._call_get_llm()
-            self.assertEqual(mock_chat.call_args.kwargs["model"], "MiniMax-M2.7")
+            self.assertEqual(mock_chat.call_args.kwargs["model"], "MiniMax-M3")
 
     @patch.dict(os.environ, {"MINIMAX_API_KEY": "test-key-123"})
     def test_minimax_custom_model_name(self):
-        with patch.object(self.utils, "get_config", return_value=self._make_config(model_name="MiniMax-M2.5-highspeed")), \
+        with patch.object(self.utils, "get_config", return_value=self._make_config(model_name="MiniMax-M2.7-highspeed")), \
              patch.object(self.utils, "ChatOpenAI") as mock_chat:
             mock_chat.return_value = MagicMock()
             self._call_get_llm()
-            self.assertEqual(mock_chat.call_args.kwargs["model"], "MiniMax-M2.5-highspeed")
+            self.assertEqual(mock_chat.call_args.kwargs["model"], "MiniMax-M2.7-highspeed")
 
     @patch.dict(os.environ, {"MINIMAX_API_KEY": "test-key-123"})
     def test_minimax_custom_server_url(self):
@@ -328,7 +328,7 @@ class TestMiniMaxIntegration(unittest.TestCase):
     def test_minimax_chat_completion(self):
         from langchain_openai import ChatOpenAI
         llm = ChatOpenAI(
-            model="MiniMax-M2.7",
+            model="MiniMax-M3",
             openai_api_key=os.environ["MINIMAX_API_KEY"],
             openai_api_base="https://api.minimax.io/v1",
             temperature=0.1,
@@ -340,7 +340,7 @@ class TestMiniMaxIntegration(unittest.TestCase):
     def test_minimax_streaming(self):
         from langchain_openai import ChatOpenAI
         llm = ChatOpenAI(
-            model="MiniMax-M2.7",
+            model="MiniMax-M3",
             openai_api_key=os.environ["MINIMAX_API_KEY"],
             openai_api_base="https://api.minimax.io/v1",
             temperature=0.1,
@@ -348,10 +348,10 @@ class TestMiniMaxIntegration(unittest.TestCase):
         chunks = list(llm.stream("Say 'world' and nothing else."))
         self.assertTrue(len(chunks) > 0)
 
-    def test_minimax_m25_highspeed(self):
+    def test_minimax_m27_highspeed(self):
         from langchain_openai import ChatOpenAI
         llm = ChatOpenAI(
-            model="MiniMax-M2.5-highspeed",
+            model="MiniMax-M2.7-highspeed",
             openai_api_key=os.environ["MINIMAX_API_KEY"],
             openai_api_base="https://api.minimax.io/v1",
             temperature=0.1,
