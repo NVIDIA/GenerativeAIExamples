@@ -53,7 +53,7 @@ export NVIDIA_API_KEY="your-api-key"
 export NVIDIA_MODEL="nvidia/nemotron-3-super-120b-a12b"
 ```
 
-The model override is optional. The default endpoint is `https://integrate.api.nvidia.com/v1`, and the default model is `nvidia/nemotron-3-super-120b-a12b`. The adapter requests one tool call and treats missing, multiple, malformed, non-object, or request-error output as an explicit rejected action with a finite penalty; it never silently substitutes `noop`.
+The model override is optional. Leaving `NVIDIA_MODEL=` blank uses `nvidia/nemotron-3-super-120b-a12b`. The default endpoint is `https://integrate.api.nvidia.com/v1`. The adapter requests one tool call and treats missing, multiple, malformed, non-object, or request-error output as an explicit rejected action with a finite penalty; it never silently substitutes `noop`.
 
 ## Files and architecture
 
@@ -109,13 +109,15 @@ python -m py_compile community/5g-network-operator-agent/network_environment.py
 Execute an output copy offline, leaving the source notebook unchanged:
 
 ```bash
-env -u NVIDIA_API_KEY jupyter nbconvert --to notebook --execute \
+NVIDIA_API_KEY= jupyter nbconvert --to notebook --execute \
   --output /tmp/5g_network_operator_agent.executed.ipynb \
   community/5g-network-operator-agent/5g_network_operator_agent.ipynb \
   --ExecutePreprocessor.timeout=180
 jupyter nbconvert --clear-output --inplace \
   community/5g-network-operator-agent/5g_network_operator_agent.ipynb
 ```
+
+The explicit empty value is intentional: it takes precedence over a populated example-local `.env`, so this command cannot re-enable hosted evaluation.
 
 If imports fail, confirm the virtual environment is active and reinstall `requirements.txt`. If the hosted section rejects a response, inspect its bounded action name and transition error; do not reinterpret it as a successful decision.
 
@@ -127,4 +129,4 @@ rm -rf .venv
 rm -rf community/5g-network-operator-agent/outputs
 ```
 
-Never commit `.env`, a real key, executed hosted outputs, prompts containing sensitive data, or exported rollouts that contain sensitive additions. The example reads only `NVIDIA_API_KEY` and the optional `NVIDIA_MODEL`; it does not print environment values. Revoke a key immediately if it is exposed.
+Never commit `.env`, a real key, executed hosted outputs, prompts containing sensitive data, or exported rollouts that contain sensitive additions. The notebook loads only the example-local `.env` with existing shell values taking precedence; it reads `NVIDIA_API_KEY` and the optional `NVIDIA_MODEL` without printing either value. Revoke a key immediately if it is exposed.
