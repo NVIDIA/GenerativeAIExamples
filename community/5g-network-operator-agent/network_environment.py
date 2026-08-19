@@ -113,16 +113,6 @@ class Transition:
     error: str | None
     reward: dict[str, float]
 
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "before": self.before.to_dict(),
-            "action": _json_safe(self.action),
-            "after": self.after.to_dict(),
-            "accepted": self.accepted,
-            "error": self.error,
-            "reward": self.reward,
-        }
-
 
 @dataclass(frozen=True)
 class EpisodeResult:
@@ -136,15 +126,6 @@ class EpisodeResult:
         """Return the sum of the per-transition total rewards."""
 
         return sum((transition.reward["total"] for transition in self.transitions), 0.0)
-
-    def to_dict(self) -> dict[str, object]:
-        """Return a strictly JSON-safe episode record."""
-
-        return {
-            "initial_observation": self.initial_observation.to_dict(),
-            "transitions": [transition.to_dict() for transition in self.transitions],
-            "total_reward": self.total_reward,
-        }
 
 
 def default_scenario() -> Scenario:
@@ -226,6 +207,7 @@ class NetworkEnvironment:
     """A resettable deterministic network model with no external dependencies."""
 
     def __init__(self, scenario: Scenario) -> None:
+        _validate_scenario(scenario)
         self.scenario = scenario
         self._controls = ControlState()
         self._step = 0
@@ -394,26 +376,6 @@ class NetworkEnvironment:
         return allocations
 
 
-def render_observation(observation: Observation) -> str:
-    """Render a compact, dependency-free human-readable KPI table."""
-
-    lines = [
-        "Synthetic 5G cell KPI observation",
-        (
-            f"step={observation.step} delivered={observation.cell.delivered_mbps:.2f} Mbps "
-            f"sla_violations={observation.cell.sla_violations} "
-            f"prb_util={observation.cell.prb_util_pct:.1f}%"
-        ),
-        "UE  offered  delivered  SLA  satisfaction  PRB%",
-    ]
-    lines.extend(
-        f"{ue.ue_id:<2}  {ue.offered_mbps:>7.2f}  {ue.delivered_mbps:>9.2f}  "
-        f"{ue.sla_mbps:>4.2f}  {ue.satisfaction_ratio:>12.2f}  {ue.prb_pct:>4.1f}"
-        for ue in observation.ues
-    )
-    return "\n".join(lines)
-
-
 def _require_exact_fields(arguments: dict[str, object], required: set[str]) -> None:
     if set(arguments) != required:
         raise ValueError(f"arguments must contain exactly: {', '.join(sorted(required)) or 'no fields'}")
@@ -496,7 +458,6 @@ def run_episode(
 
     if not isinstance(max_steps, int) or isinstance(max_steps, bool) or max_steps < 0:
         raise ValueError("max_steps must be a non-negative integer")
-    _validate_scenario(scenario)
 
     environment = NetworkEnvironment(scenario)
     observation = environment.reset()
@@ -507,15 +468,3 @@ def run_episode(
         transitions.append(transition)
         observation = transition.after
     return EpisodeResult(initial_observation=initial_observation, transitions=tuple(transitions))
-
-
-def _json_safe(value: object) -> object:
-    if isinstance(value, float) and not isfinite(value):
-        return str(value)
-    if isinstance(value, dict):
-        return {str(key): _json_safe(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_json_safe(item) for item in value]
-    if value is None or isinstance(value, (bool, int, str)):
-        return value
-    return repr(value)

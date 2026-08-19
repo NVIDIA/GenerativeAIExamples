@@ -3,52 +3,83 @@
 SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 -->
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="260" viewBox="0 0 1200 260" role="img" aria-labelledby="title description">
-  <title id="title">5G network operator agent educational architecture</title>
-  <desc id="description">Five-stage flow from a deterministic synthetic scenario through a notebook policy and bounded action validator to a synthetic single-cell model and inspectable transition score.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title description">
+  <title id="title">5G network operator agent loop</title>
+  <desc id="description">A hand-drawn loop where a policy reads synthetic 5G KPIs, emits one bounded tool call, the environment validates and applies it, then returns new KPIs and a decomposed score.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5b6770"/>
+    <marker id="arrow-black" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 9 5 L 0 10" fill="none" stroke="#202020" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 9 5 L 0 10" fill="none" stroke="#76b900" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
     <style>
-      .node { fill: #f7f9fb; stroke: #5b6770; stroke-width: 2; rx: 12; }
-      .accent { fill: #eef8df; stroke: #76b900; }
-      .label { font: 600 17px Arial, sans-serif; fill: #1f2933; text-anchor: middle; }
-      .detail { font: 14px Arial, sans-serif; fill: #425466; text-anchor: middle; }
-      .arrow { stroke: #5b6770; stroke-width: 2.5; marker-end: url(#arrow); }
+      .box { fill: #fff; stroke: #202020; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+      .box-green { fill: #f4fbe9; stroke: #76b900; stroke-width: 2.7; stroke-linecap: round; stroke-linejoin: round; }
+      .echo { fill: none; stroke: #202020; stroke-width: 1; opacity: .22; stroke-linecap: round; stroke-linejoin: round; }
+      .echo-green { fill: none; stroke: #76b900; stroke-width: 1; opacity: .28; stroke-linecap: round; stroke-linejoin: round; }
+      .ink { fill: none; stroke: #202020; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+      .green-ink { fill: none; stroke: #76b900; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+      .title { fill: #202020; font: 600 18px "Virgil", "Comic Sans MS", "Marker Felt", sans-serif; text-anchor: middle; }
+      .detail { fill: #454545; font: 15px "Virgil", "Comic Sans MS", "Marker Felt", sans-serif; text-anchor: middle; }
+      .note { fill: #454545; font: 14px "Virgil", "Comic Sans MS", "Marker Felt", sans-serif; text-anchor: middle; }
     </style>
   </defs>
-  <rect width="1200" height="260" fill="#ffffff"/>
 
-  <rect class="node" x="25" y="70" width="190" height="110"/>
-  <text class="label" x="120" y="112">Synthetic scenario</text>
-  <text class="detail" x="120" y="139">fixed cell and UE</text>
-  <text class="detail" x="120" y="158">profiles</text>
+  <rect width="1200" height="420" fill="#fff"/>
 
-  <line class="arrow" x1="215" y1="125" x2="250" y2="125"/>
+  <!-- KPI snapshot -->
+  <path class="box" d="M 30 112 Q 31 92 51 93 L 193 91 Q 214 92 212 113 L 214 234 Q 212 254 192 253 L 50 255 Q 29 253 31 233 Z"/>
+  <path class="echo" d="M 34 109 Q 35 96 53 96 L 190 94 Q 208 95 209 112 L 211 230 Q 210 248 190 249 L 53 251 Q 35 249 35 231 Z"/>
+  <text class="title" x="122" y="126">5G KPI snapshot</text>
+  <text class="detail" x="122" y="153">PRB utilization</text>
+  <text class="detail" x="122" y="176">throughput · fairness</text>
+  <text class="detail" x="122" y="199">SINR · SLA violations</text>
 
-  <rect class="node accent" x="255" y="70" width="210" height="110"/>
-  <text class="label" x="360" y="107">Notebook policy</text>
-  <text class="detail" x="360" y="136">local baseline or</text>
-  <text class="detail" x="360" y="157">optional hosted NIM</text>
+  <!-- Policy -->
+  <path class="box-green" d="M 251 112 Q 251 92 272 93 L 414 91 Q 435 92 433 113 L 435 234 Q 433 254 413 253 L 271 255 Q 250 253 252 233 Z"/>
+  <path class="echo-green" d="M 255 109 Q 256 96 274 96 L 411 94 Q 429 95 430 112 L 432 230 Q 431 248 411 249 L 274 251 Q 256 249 256 231 Z"/>
+  <text class="title" x="343" y="137">Policy</text>
+  <text class="detail" x="343" y="166">local baseline</text>
+  <text class="detail" x="343" y="189">or hosted NIM</text>
 
-  <line class="arrow" x1="465" y1="125" x2="500" y2="125"/>
+  <!-- Tool call -->
+  <path class="box-green" d="M 472 112 Q 472 92 493 93 L 635 91 Q 656 92 654 113 L 656 234 Q 654 254 634 253 L 492 255 Q 471 253 473 233 Z"/>
+  <path class="echo-green" d="M 476 109 Q 477 96 495 96 L 632 94 Q 650 95 651 112 L 653 230 Q 652 248 632 249 L 495 251 Q 477 249 477 231 Z"/>
+  <text class="title" x="564" y="137">One tool call</text>
+  <text class="detail" x="564" y="166">scheduler · PRB cap</text>
+  <text class="detail" x="564" y="189">UL power · noop</text>
+  <text class="detail" x="564" y="216">bounded arguments</text>
 
-  <rect class="node" x="505" y="70" width="190" height="110"/>
-  <text class="label" x="600" y="112">Bounded action</text>
-  <text class="detail" x="600" y="141">validator</text>
+  <!-- Validator -->
+  <path class="box" d="M 693 112 Q 693 92 714 93 L 856 91 Q 877 92 875 113 L 877 234 Q 875 254 855 253 L 713 255 Q 692 253 694 233 Z"/>
+  <path class="echo" d="M 697 109 Q 698 96 716 96 L 853 94 Q 871 95 872 112 L 874 230 Q 873 248 853 249 L 716 251 Q 698 249 698 231 Z"/>
+  <text class="title" x="785" y="137">Validate</text>
+  <text class="detail" x="785" y="166">exactly one action</text>
+  <text class="detail" x="785" y="189">name + argument bounds</text>
 
-  <line class="arrow" x1="695" y1="125" x2="730" y2="125"/>
+  <!-- Synthetic transition -->
+  <path class="box" d="M 914 112 Q 914 92 935 93 L 1077 91 Q 1098 92 1096 113 L 1098 234 Q 1096 254 1076 253 L 934 255 Q 913 253 915 233 Z"/>
+  <path class="echo" d="M 918 109 Q 919 96 937 96 L 1074 94 Q 1092 95 1093 112 L 1095 230 Q 1094 248 1074 249 L 937 251 Q 919 249 919 231 Z"/>
+  <text class="title" x="1006" y="137">Synthetic network</text>
+  <text class="detail" x="1006" y="166">apply the action</text>
+  <text class="detail" x="1006" y="189">update cell + UE state</text>
+  <text class="detail" x="1006" y="216">deterministically</text>
 
-  <rect class="node" x="735" y="70" width="210" height="110"/>
-  <text class="label" x="840" y="106">Deterministic</text>
-  <text class="detail" x="840" y="135">synthetic single-cell</text>
-  <text class="detail" x="840" y="156">model</text>
+  <!-- Forward arrows -->
+  <path class="green-ink" marker-end="url(#arrow-green)" d="M 215 173 C 226 169 237 176 247 172"/>
+  <path class="green-ink" marker-end="url(#arrow-green)" d="M 436 173 C 447 169 458 176 468 172"/>
+  <path class="ink" marker-end="url(#arrow-black)" d="M 657 173 C 668 169 679 176 689 172"/>
+  <path class="ink" marker-end="url(#arrow-black)" d="M 878 173 C 889 169 900 176 910 172"/>
 
-  <line class="arrow" x1="945" y1="125" x2="980" y2="125"/>
+  <!-- Score and feedback loop -->
+  <path class="box" d="M 412 296 Q 413 276 434 277 L 766 275 Q 787 276 785 297 L 787 379 Q 785 400 765 399 L 433 401 Q 411 399 413 378 Z"/>
+  <path class="echo" d="M 416 293 Q 418 280 436 280 L 763 278 Q 781 279 782 296 L 784 376 Q 782 395 763 396 L 436 398 Q 417 396 417 377 Z"/>
+  <text class="title" x="600" y="316">New KPIs + decomposed score</text>
+  <text class="detail" x="600" y="349">0 is ideal · more negative is worse</text>
+  <text class="detail" x="600" y="378">every cost remains inspectable</text>
 
-  <rect class="node accent" x="985" y="70" width="190" height="110"/>
-  <text class="label" x="1080" y="107">Transition</text>
-  <text class="detail" x="1080" y="136">before / after KPIs</text>
-  <text class="detail" x="1080" y="157">and score</text>
+  <path class="ink" marker-end="url(#arrow-black)" d="M 1007 257 C 1002 309 929 337 791 338"/>
+  <path class="ink" marker-end="url(#arrow-black)" d="M 408 338 C 263 339 123 316 121 260"/>
+  <text class="note" x="235" y="374">repeat with the next snapshot (4 turns)</text>
 </svg>

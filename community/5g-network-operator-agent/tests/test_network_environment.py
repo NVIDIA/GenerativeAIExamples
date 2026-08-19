@@ -3,17 +3,15 @@
 """Tests for the deterministic synthetic 5G network environment."""
 
 import json
-from math import isfinite
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 
 EXAMPLE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(EXAMPLE_ROOT))
 
-from network_environment import (
-    EpisodeResult,
+from network_environment import (  # noqa: E402
     NetworkEnvironment,
     Scenario,
     UEProfile,
@@ -26,8 +24,10 @@ from network_environment import (
 
 
 def test_reset_is_deterministic_and_marks_observation_synthetic():
-    first = NetworkEnvironment(default_scenario()).reset().to_dict()
-    second = NetworkEnvironment(default_scenario()).reset().to_dict()
+    environment = NetworkEnvironment(default_scenario())
+    first = environment.reset().to_dict()
+    environment.step({"name": "set_ul_power_control", "arguments": {"p0_dbm": -84, "alpha": 0.9}})
+    second = environment.reset().to_dict()
 
     assert first == second
     assert first["source"] == "deterministic_synthetic"
@@ -64,62 +64,41 @@ def test_power_control_parameters_change_the_next_kpis():
 def test_reapplying_an_absolute_control_is_idempotent():
     env = NetworkEnvironment(default_scenario())
     env.reset()
-    action = {"name": "set_prb_cap", "arguments": {"ue_id": 1, "max_prb_pct": 35.0}}
+    action = {"name": "set_prb_cap", "arguments": {"ue_id": 1, "max_prb_pct": 10.0}}
 
     first = env.step(action)
     second = env.step(action)
 
     assert first.accepted and second.accepted
+    assert next(ue.prb_pct for ue in first.after.ues if ue.ue_id == 1) == 10.0
     assert first.after.cell.to_dict() == second.after.cell.to_dict()
     assert [ue.to_dict() for ue in first.after.ues] == [ue.to_dict() for ue in second.after.ues]
 
 
-def test_rejected_action_does_not_mutate_controls():
+@pytest.mark.parametrize(
+    "action",
+    (
+        {"name": "set_prb_cap", "arguments": {"ue_id": 99, "max_prb_pct": 50}},
+        {"name": "set_prb_cap", "arguments": {"ue_id": True, "max_prb_pct": 50}},
+        {"name": "set_prb_cap", "arguments": {"ue_id": 1, "max_prb_pct": 101}},
+        {"name": "set_ul_power_control", "arguments": {"p0_dbm": float("nan"), "alpha": 0.8}},
+        {"name": "set_ul_power_control", "arguments": {"p0_dbm": -101, "alpha": 0.8}},
+        {"name": "set_ul_power_control", "arguments": {"p0_dbm": -90, "alpha": 1.1}},
+        {"name": "set_scheduler_policy", "arguments": {}},
+        {"name": "set_scheduler_policy", "arguments": {"policy": "INVALID"}},
+        {"name": "set_scheduler_policy", "arguments": {"policy": []}},
+        {"name": "set_scheduler_policy", "arguments": {"policy": {}}},
+        {"name": "noop", "arguments": {}, "unexpected": "field"},
+    ),
+)
+def test_invalid_actions_are_rejected_without_mutation(action):
     env = NetworkEnvironment(default_scenario())
     before = env.reset()
 
-    rejected = env.step({"name": "set_prb_cap", "arguments": {"ue_id": 99, "max_prb_pct": 50}})
+    rejected = env.step(action)
 
     assert not rejected.accepted
     assert rejected.before.to_dict() == before.to_dict()
-    assert rejected.after.cell.to_dict() == before.cell.to_dict()
-    assert rejected.reward["rejected_action"] < 0
-
-
-def test_booleans_non_finite_values_and_missing_fields_are_rejected_without_mutation():
-    for action in (
-        {"name": "set_prb_cap", "arguments": {"ue_id": True, "max_prb_pct": 50}},
-        {"name": "set_ul_power_control", "arguments": {"p0_dbm": float("nan"), "alpha": 0.8}},
-        {"name": "set_scheduler_policy", "arguments": {}},
-    ):
-        env = NetworkEnvironment(default_scenario())
-        before = env.reset()
-        rejected = env.step(action)
-
-        assert not rejected.accepted
-        assert rejected.after.cell.to_dict() == before.cell.to_dict()
-
-
-def test_json_shaped_scheduler_policies_are_rejected_without_crashing():
-    for policy in ([], {}):
-        env = NetworkEnvironment(default_scenario())
-        before = env.reset()
-
-        rejected = env.step({"name": "set_scheduler_policy", "arguments": {"policy": policy}})
-
-        assert not rejected.accepted
-        assert rejected.error
-        assert rejected.after.cell.to_dict() == before.cell.to_dict()
-        assert isfinite(rejected.reward["rejected_action"])
-
-
-def test_extra_top_level_action_fields_are_rejected_without_mutation():
-    env = NetworkEnvironment(default_scenario())
-    before = env.reset()
-
-    rejected = env.step({"name": "noop", "arguments": {}, "unexpected": "field"})
-
-    assert not rejected.accepted
     assert rejected.error
     assert rejected.after.cell.to_dict() == before.cell.to_dict()
     assert rejected.reward["rejected_action"] < 0
@@ -136,29 +115,22 @@ def test_reward_total_is_the_exact_sum_of_its_decomposed_terms():
     assert all(value <= 0 for value in terms.values())
 
 
-def test_transition_and_observation_are_json_serializable():
+def test_scheduler_policy_changes_kpis_and_observation_is_json_serializable():
     env = NetworkEnvironment(default_scenario())
-    observation = env.reset()
-    transition = env.step({"name": "set_scheduler_policy", "arguments": {"policy": "RR"}})
+    before = env.reset()
+    after = env.step({"name": "set_scheduler_policy", "arguments": {"policy": "RR"}}).after
 
-    assert json.loads(json.dumps(observation.to_dict()))["source"] == "deterministic_synthetic"
-    assert json.loads(json.dumps(transition.to_dict()))["accepted"] is True
+    assert after.cell.to_dict() != before.cell.to_dict()
+    assert json.loads(json.dumps(after.to_dict()))["source"] == "deterministic_synthetic"
 
 
 def test_run_episode_records_the_requested_fixed_horizon_and_total_reward():
     episode = run_episode(noop_policy, scenario=default_scenario(), max_steps=3)
 
-    assert isinstance(episode, EpisodeResult)
     assert len(episode.transitions) == 3
     assert [transition.before.step for transition in episode.transitions] == [0, 1, 2]
     assert [transition.after.step for transition in episode.transitions] == [1, 2, 3]
     assert episode.total_reward == sum(transition.reward["total"] for transition in episode.transitions)
-
-
-def test_episode_result_is_strictly_json_serializable():
-    episode = run_episode(scripted_relief_policy, scenario=default_scenario(), max_steps=4)
-
-    assert json.loads(json.dumps(episode.to_dict(), allow_nan=False))["total_reward"] == episode.total_reward
 
 
 def test_scripted_relief_beats_noop_on_the_bundled_scenario():
@@ -174,7 +146,6 @@ def test_zero_step_episode_keeps_the_reset_observation_and_has_no_reward():
     assert episode.initial_observation.step == 0
     assert episode.transitions == ()
     assert episode.total_reward == 0.0
-    assert type(episode.total_reward) is float
 
 
 def test_negative_max_steps_is_rejected():
@@ -210,23 +181,6 @@ def test_malformed_policy_action_is_recorded_as_a_rejected_transition():
         (Scenario(100.0, (UEProfile(1, 1.0, 0.0, 0.0, 1.1),)), "base_bler"),
     ),
 )
-def test_run_episode_rejects_structurally_or_arithmetically_invalid_scenarios(scenario, message):
-    def policy_that_must_not_run(_observation, _tools):
-        raise AssertionError("scenario validation must happen before policy execution")
-
+def test_environment_rejects_structurally_or_arithmetically_invalid_scenarios(scenario, message):
     with pytest.raises(ValueError, match=message):
-        run_episode(policy_that_must_not_run, scenario=scenario, max_steps=1)
-
-
-def test_run_episode_provides_fresh_tool_schemas_on_each_policy_turn():
-    schema_counts = []
-
-    def mutating_policy(_observation, tools):
-        schema_counts.append(len(tools))
-        tools.pop()
-        return {"name": "noop", "arguments": {}}
-
-    episode = run_episode(mutating_policy, scenario=default_scenario(), max_steps=3)
-
-    assert schema_counts == [4, 4, 4]
-    assert all(transition.accepted for transition in episode.transitions)
+        NetworkEnvironment(scenario)

@@ -1,8 +1,4 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-.env
 .ipynb_checkpoints/
-__pycache__/
-*.py[cod]
-outputs/
