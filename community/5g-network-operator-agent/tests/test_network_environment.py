@@ -7,11 +7,13 @@ from math import isfinite
 from pathlib import Path
 import sys
 
+import pytest
 
 EXAMPLE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(EXAMPLE_ROOT))
 
 from network_environment import (
+    EpisodeResult,
     NetworkEnvironment,
     default_scenario,
     noop_policy,
@@ -141,8 +143,48 @@ def test_transition_and_observation_are_json_serializable():
     assert json.loads(json.dumps(transition.to_dict()))["accepted"] is True
 
 
-def test_scripted_relief_has_a_better_return_than_the_noop_baseline():
-    noop_episode = run_episode(NetworkEnvironment(default_scenario()), noop_policy, horizon=3)
-    relief_episode = run_episode(NetworkEnvironment(default_scenario()), scripted_relief_policy, horizon=3)
+def test_run_episode_records_the_requested_fixed_horizon_and_total_reward():
+    episode = run_episode(noop_policy, scenario=default_scenario(), max_steps=3)
 
-    assert relief_episode["return"] > noop_episode["return"]
+    assert isinstance(episode, EpisodeResult)
+    assert len(episode.transitions) == 3
+    assert [transition.before.step for transition in episode.transitions] == [0, 1, 2]
+    assert [transition.after.step for transition in episode.transitions] == [1, 2, 3]
+    assert episode.total_reward == sum(transition.reward["total"] for transition in episode.transitions)
+
+
+def test_episode_result_is_strictly_json_serializable():
+    episode = run_episode(scripted_relief_policy, scenario=default_scenario(), max_steps=4)
+
+    assert json.loads(json.dumps(episode.to_dict(), allow_nan=False))["total_reward"] == episode.total_reward
+
+
+def test_scripted_relief_beats_noop_on_the_bundled_scenario():
+    noop_episode = run_episode(noop_policy, scenario=default_scenario(), max_steps=4)
+    relief_episode = run_episode(scripted_relief_policy, scenario=default_scenario(), max_steps=4)
+
+    assert relief_episode.total_reward > noop_episode.total_reward
+
+
+def test_zero_step_episode_keeps_the_reset_observation_and_has_no_reward():
+    episode = run_episode(noop_policy, scenario=default_scenario(), max_steps=0)
+
+    assert episode.initial_observation.step == 0
+    assert episode.transitions == ()
+    assert episode.total_reward == 0.0
+
+
+def test_negative_max_steps_is_rejected():
+    with pytest.raises(ValueError, match="max_steps"):
+        run_episode(noop_policy, scenario=default_scenario(), max_steps=-1)
+
+
+def test_malformed_policy_action_is_recorded_as_a_rejected_transition():
+    def malformed_policy(_observation, _tools):
+        return {"name": "not_a_tool", "arguments": {}}
+
+    episode = run_episode(malformed_policy, scenario=default_scenario(), max_steps=1)
+
+    assert len(episode.transitions) == 1
+    assert not episode.transitions[0].accepted
+    assert episode.transitions[0].error == "unknown tool: not_a_tool"

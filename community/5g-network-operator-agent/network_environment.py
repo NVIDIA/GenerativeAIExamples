@@ -124,6 +124,29 @@ class Transition:
         }
 
 
+@dataclass(frozen=True)
+class EpisodeResult:
+    """Recorded result of running one policy from a reset environment."""
+
+    initial_observation: Observation
+    transitions: tuple[Transition, ...]
+
+    @property
+    def total_reward(self) -> float:
+        """Return the sum of the per-transition total rewards."""
+
+        return sum(transition.reward["total"] for transition in self.transitions)
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a strictly JSON-safe episode record."""
+
+        return {
+            "initial_observation": self.initial_observation.to_dict(),
+            "transitions": [transition.to_dict() for transition in self.transitions],
+            "total_reward": self.total_reward,
+        }
+
+
 def default_scenario() -> Scenario:
     """Return the fixed, overloaded scenario used by the example notebook."""
 
@@ -416,41 +439,43 @@ def _score(observation: Observation, *, rejected: bool) -> dict[str, float]:
     return terms
 
 
-Policy = Callable[[Observation, int], dict[str, object]]
+Policy = Callable[[Observation, list[dict[str, object]]], dict[str, object]]
 
 
-def noop_policy(_observation: Observation, _turn: int) -> dict[str, object]:
+def noop_policy(_observation: Observation, _tools: list[dict[str, object]]) -> dict[str, object]:
     """Return the deterministic no-action baseline."""
 
     return {"name": "noop", "arguments": {}}
 
 
-def scripted_relief_policy(_observation: Observation, turn: int) -> dict[str, object]:
-    """A transparent deterministic baseline that improves the fixed scenario."""
+def scripted_relief_policy(
+    observation: Observation, _tools: list[dict[str, object]]
+) -> dict[str, object]:
+    """Apply one bounded power-control adjustment, then preserve it."""
 
-    if turn == 0:
+    if observation.step == 0:
         return {"name": "set_ul_power_control", "arguments": {"p0_dbm": -84.0, "alpha": 0.9}}
-    return {"name": "noop", "arguments": {}}
+    return noop_policy(observation, _tools)
 
 
 def run_episode(
-    environment: NetworkEnvironment, policy: Policy, *, horizon: int
-) -> dict[str, object]:
-    """Run a policy from reset and return JSON-ready transition records and return."""
+    policy: Policy, *, scenario: Scenario, max_steps: int = 4
+) -> EpisodeResult:
+    """Run a policy for exactly ``max_steps`` and retain every transition."""
 
-    if horizon < 0:
-        raise ValueError("horizon must not be negative")
+    if not isinstance(max_steps, int) or isinstance(max_steps, bool) or max_steps < 0:
+        raise ValueError("max_steps must be a non-negative integer")
+
+    environment = NetworkEnvironment(scenario)
     observation = environment.reset()
+    initial_observation = observation
     transitions: list[Transition] = []
-    for turn in range(horizon):
-        transition = environment.step(policy(observation, turn))
+    tools = tool_schemas()
+    for _ in range(max_steps):
+        transition = environment.step(policy(observation, tools))
         transitions.append(transition)
         observation = transition.after
-    return {
-        "initial_observation": environment.reset().to_dict() if horizon == 0 else transitions[0].before.to_dict(),
-        "transitions": [transition.to_dict() for transition in transitions],
-        "return": sum(transition.reward["total"] for transition in transitions),
-    }
+    return EpisodeResult(initial_observation=initial_observation, transitions=tuple(transitions))
 
 
 def _json_safe(value: object) -> object:
@@ -458,6 +483,8 @@ def _json_safe(value: object) -> object:
         return str(value)
     if isinstance(value, dict):
         return {str(key): _json_safe(item) for key, item in value.items()}
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple)):
         return [_json_safe(item) for item in value]
-    return value
+    if value is None or isinstance(value, (bool, int, str)):
+        return value
+    return repr(value)
