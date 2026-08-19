@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Deterministic, synthetic single-cell 5G environment for tool-calling demos.
 
 The calculations intentionally trade physical fidelity for a small, inspectable
@@ -244,6 +245,7 @@ class NetworkEnvironment:
     def _apply_action(self, controls: ControlState, action: dict[str, object]) -> None:
         if not isinstance(action, dict):
             raise ValueError("action must be an object")
+        _require_exact_fields(action, {"name", "arguments"})
         name = action.get("name")
         arguments = action.get("arguments")
         if not isinstance(name, str):
@@ -254,7 +256,7 @@ class NetworkEnvironment:
         if name == "set_scheduler_policy":
             _require_exact_fields(arguments, {"policy"})
             policy = arguments["policy"]
-            if policy not in {"PF", "RR", "MAX_CI"}:
+            if not isinstance(policy, str) or policy not in {"PF", "RR", "MAX_CI"}:
                 raise ValueError("policy must be PF, RR, or MAX_CI")
             controls.scheduler_policy = policy
             return

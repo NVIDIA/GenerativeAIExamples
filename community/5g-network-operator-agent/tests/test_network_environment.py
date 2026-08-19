@@ -1,6 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
 """Tests for the deterministic synthetic 5G network environment."""
 
 import json
+from math import isfinite
 from pathlib import Path
 import sys
 
@@ -91,6 +93,31 @@ def test_booleans_non_finite_values_and_missing_fields_are_rejected_without_muta
 
         assert not rejected.accepted
         assert rejected.after.cell.to_dict() == before.cell.to_dict()
+
+
+def test_json_shaped_scheduler_policies_are_rejected_without_crashing():
+    for policy in ([], {}):
+        env = NetworkEnvironment(default_scenario())
+        before = env.reset()
+
+        rejected = env.step({"name": "set_scheduler_policy", "arguments": {"policy": policy}})
+
+        assert not rejected.accepted
+        assert rejected.error
+        assert rejected.after.cell.to_dict() == before.cell.to_dict()
+        assert isfinite(rejected.reward["rejected_action"])
+
+
+def test_extra_top_level_action_fields_are_rejected_without_mutation():
+    env = NetworkEnvironment(default_scenario())
+    before = env.reset()
+
+    rejected = env.step({"name": "noop", "arguments": {}, "unexpected": "field"})
+
+    assert not rejected.accepted
+    assert rejected.error
+    assert rejected.after.cell.to_dict() == before.cell.to_dict()
+    assert rejected.reward["rejected_action"] < 0
 
 
 def test_reward_total_is_the_exact_sum_of_its_decomposed_terms():
