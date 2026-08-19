@@ -135,7 +135,7 @@ class EpisodeResult:
     def total_reward(self) -> float:
         """Return the sum of the per-transition total rewards."""
 
-        return sum(transition.reward["total"] for transition in self.transitions)
+        return sum((transition.reward["total"] for transition in self.transitions), 0.0)
 
     def to_dict(self) -> dict[str, object]:
         """Return a strictly JSON-safe episode record."""
@@ -425,6 +425,37 @@ def _finite_number(value: object, name: str) -> float:
     return float(value)
 
 
+def _validate_scenario(scenario: Scenario) -> None:
+    """Reject scenario values that would make the simulator arithmetic invalid."""
+
+    if not isinstance(scenario, Scenario):
+        raise ValueError("scenario must be a Scenario")
+    if _finite_number(scenario.cell_capacity_prb, "cell_capacity_prb") <= 0:
+        raise ValueError("cell_capacity_prb must be positive")
+    if not scenario.ues:
+        raise ValueError("scenario must contain at least one UE")
+
+    observed_ids: set[int] = set()
+    for profile in scenario.ues:
+        if not isinstance(profile, UEProfile):
+            raise ValueError("scenario ues must contain UEProfile values")
+        if (
+            not isinstance(profile.ue_id, int)
+            or isinstance(profile.ue_id, bool)
+            or profile.ue_id in observed_ids
+        ):
+            raise ValueError("ue_id must be a unique integer")
+        observed_ids.add(profile.ue_id)
+        if _finite_number(profile.offered_mbps, "offered_mbps") <= 0:
+            raise ValueError("offered_mbps must be positive")
+        if _finite_number(profile.sla_mbps, "sla_mbps") < 0:
+            raise ValueError("sla_mbps must be non-negative")
+        _finite_number(profile.base_sinr_db, "base_sinr_db")
+        base_bler = _finite_number(profile.base_bler, "base_bler")
+        if not 0.0 <= base_bler <= 1.0:
+            raise ValueError("base_bler must be between 0 and 1")
+
+
 def _score(observation: Observation, *, rejected: bool) -> dict[str, float]:
     """Return transparent non-positive congestion costs and their exact total."""
 
@@ -465,14 +496,14 @@ def run_episode(
 
     if not isinstance(max_steps, int) or isinstance(max_steps, bool) or max_steps < 0:
         raise ValueError("max_steps must be a non-negative integer")
+    _validate_scenario(scenario)
 
     environment = NetworkEnvironment(scenario)
     observation = environment.reset()
     initial_observation = observation
     transitions: list[Transition] = []
-    tools = tool_schemas()
     for _ in range(max_steps):
-        transition = environment.step(policy(observation, tools))
+        transition = environment.step(policy(observation, tool_schemas()))
         transitions.append(transition)
         observation = transition.after
     return EpisodeResult(initial_observation=initial_observation, transitions=tuple(transitions))

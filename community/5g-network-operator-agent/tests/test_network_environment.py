@@ -15,6 +15,8 @@ sys.path.insert(0, str(EXAMPLE_ROOT))
 from network_environment import (
     EpisodeResult,
     NetworkEnvironment,
+    Scenario,
+    UEProfile,
     default_scenario,
     noop_policy,
     run_episode,
@@ -172,6 +174,7 @@ def test_zero_step_episode_keeps_the_reset_observation_and_has_no_reward():
     assert episode.initial_observation.step == 0
     assert episode.transitions == ()
     assert episode.total_reward == 0.0
+    assert type(episode.total_reward) is float
 
 
 def test_negative_max_steps_is_rejected():
@@ -188,3 +191,42 @@ def test_malformed_policy_action_is_recorded_as_a_rejected_transition():
     assert len(episode.transitions) == 1
     assert not episode.transitions[0].accepted
     assert episode.transitions[0].error == "unknown tool: not_a_tool"
+
+
+@pytest.mark.parametrize(
+    ("scenario", "message"),
+    (
+        (Scenario(float("nan"), (UEProfile(1, 1.0, 0.0, 0.0, 0.0),)), "cell_capacity_prb"),
+        (Scenario(0.0, (UEProfile(1, 1.0, 0.0, 0.0, 0.0),)), "cell_capacity_prb"),
+        (Scenario(100.0, ()), "at least one UE"),
+        (
+            Scenario(100.0, (UEProfile(1, 1.0, 0.0, 0.0, 0.0), UEProfile(1, 1.0, 0.0, 0.0, 0.0))),
+            "unique integer",
+        ),
+        (Scenario(100.0, (UEProfile(1.5, 1.0, 0.0, 0.0, 0.0),)), "unique integer"),
+        (Scenario(100.0, (UEProfile(1, 0.0, 0.0, 0.0, 0.0),)), "offered_mbps"),
+        (Scenario(100.0, (UEProfile(1, 1.0, -1.0, 0.0, 0.0),)), "sla_mbps"),
+        (Scenario(100.0, (UEProfile(1, 1.0, 0.0, float("inf"), 0.0),)), "base_sinr_db"),
+        (Scenario(100.0, (UEProfile(1, 1.0, 0.0, 0.0, 1.1),)), "base_bler"),
+    ),
+)
+def test_run_episode_rejects_structurally_or_arithmetically_invalid_scenarios(scenario, message):
+    def policy_that_must_not_run(_observation, _tools):
+        raise AssertionError("scenario validation must happen before policy execution")
+
+    with pytest.raises(ValueError, match=message):
+        run_episode(policy_that_must_not_run, scenario=scenario, max_steps=1)
+
+
+def test_run_episode_provides_fresh_tool_schemas_on_each_policy_turn():
+    schema_counts = []
+
+    def mutating_policy(_observation, tools):
+        schema_counts.append(len(tools))
+        tools.pop()
+        return {"name": "noop", "arguments": {}}
+
+    episode = run_episode(mutating_policy, scenario=default_scenario(), max_steps=3)
+
+    assert schema_counts == [4, 4, 4]
+    assert all(transition.accepted for transition in episode.transitions)
