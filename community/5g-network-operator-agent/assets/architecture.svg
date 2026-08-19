@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: Apache-2.0
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="260" viewBox="0 0 1200 260" role="img" aria-labelledby="title description">
+  <title id="title">5G network operator agent educational architecture</title>
+  <desc id="description">Five-stage flow from a deterministic synthetic scenario through a notebook policy and bounded action validator to a synthetic single-cell model and inspectable transition score.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5b6770"/>
+    </marker>
+    <style>
+      .node { fill: #f7f9fb; stroke: #5b6770; stroke-width: 2; rx: 12; }
+      .accent { fill: #eef8df; stroke: #76b900; }
+      .label { font: 600 17px Arial, sans-serif; fill: #1f2933; text-anchor: middle; }
+      .detail { font: 14px Arial, sans-serif; fill: #425466; text-anchor: middle; }
+      .arrow { stroke: #5b6770; stroke-width: 2.5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="260" fill="#ffffff"/>
+
+  <rect class="node" x="25" y="70" width="190" height="110"/>
+  <text class="label" x="120" y="112">Synthetic scenario</text>
+  <text class="detail" x="120" y="139">fixed cell and UE</text>
+  <text class="detail" x="120" y="158">profiles</text>
+
+  <line class="arrow" x1="215" y1="125" x2="250" y2="125"/>
+
+  <rect class="node accent" x="255" y="70" width="210" height="110"/>
+  <text class="label" x="360" y="107">Notebook policy</text>
+  <text class="detail" x="360" y="136">local baseline or</text>
+  <text class="detail" x="360" y="157">optional hosted NIM</text>
+
+  <line class="arrow" x1="465" y1="125" x2="500" y2="125"/>
+
+  <rect class="node" x="505" y="70" width="190" height="110"/>
+  <text class="label" x="600" y="112">Bounded action</text>
+  <text class="detail" x="600" y="141">validator</text>
+
+  <line class="arrow" x1="695" y1="125" x2="730" y2="125"/>
+
+  <rect class="node" x="735" y="70" width="210" height="110"/>
+  <text class="label" x="840" y="106">Deterministic</text>
+  <text class="detail" x="840" y="135">synthetic single-cell</text>
+  <text class="detail" x="840" y="156">model</text>
+
+  <line class="arrow" x1="945" y1="125" x2="980" y2="125"/>
+
+  <rect class="node accent" x="985" y="70" width="190" height="110"/>
+  <text class="label" x="1080" y="107">Transition</text>
+  <text class="detail" x="1080" y="136">before / after KPIs</text>
+  <text class="detail" x="1080" y="157">and score</text>
+</svg>

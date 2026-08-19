@@ -39,6 +39,8 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
   This example demonstrates an interactive, agentic data analysis application that leverages NVIDIA Llama-3.1-Nemotron-Ultra-253B-v1 for advanced reasoning and data exploration. Users can upload CSV files, ask questions in natural language, and receive automated visualizations with clear, step-by-step reasoning. The implementation features a modular agent architecture for data insight, code generation, execution, and transparent reasoning.
 
+* [**5G Network Operator Agent with NVIDIA NIM**](./5g-network-operator-agent/) — A self-contained notebook in which local baselines and an optional hosted NIM select bounded actions in a deterministic synthetic 5G congestion model. It is an educational example; it does not train a policy or connect to a live RAN.
+
 * [NVIDIA RAG in 5 minutes](./5_mins_rag_no_gpu/)
 
   This is a simple standalone implementation showing rag pipeline using Nvidia API Catalog models. It uses a simple Streamlit UI and one file implementation of a minimalistic RAG pipeline.
