@@ -5,6 +5,7 @@
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -75,6 +76,35 @@ def test_reapplying_an_absolute_control_is_idempotent():
     assert [ue.to_dict() for ue in first.after.ues] == [ue.to_dict() for ue in second.after.ues]
 
 
+def test_prb_observations_remain_percentages_for_non_default_capacity():
+    scenario = Scenario(200.0, default_scenario().ues)
+    env = NetworkEnvironment(scenario)
+    env.reset()
+
+    after = env.step(
+        {"name": "set_prb_cap", "arguments": {"ue_id": 1, "max_prb_pct": 10.0}}
+    ).after
+
+    assert next(ue.prb_pct for ue in after.ues if ue.ue_id == 1) == pytest.approx(10.0)
+    assert sum(ue.prb_pct for ue in after.ues) == pytest.approx(100.0)
+
+
+def test_observation_exposes_persistent_controls_to_the_policy():
+    uncapped = NetworkEnvironment(default_scenario())
+    capped = NetworkEnvironment(default_scenario())
+    uncapped.reset()
+    capped.reset()
+
+    uncapped_after = uncapped.step({"name": "noop", "arguments": {}}).after
+    capped_after = capped.step(
+        {"name": "set_prb_cap", "arguments": {"ue_id": 4, "max_prb_pct": 18.2}}
+    ).after
+
+    assert uncapped_after.cell.to_dict() == capped_after.cell.to_dict()
+    assert uncapped_after.to_dict() != capped_after.to_dict()
+    assert capped_after.to_dict()["controls"]["prb_caps_pct"] == {4: 18.2}
+
+
 @pytest.mark.parametrize(
     "action",
     (
@@ -101,6 +131,19 @@ def test_invalid_actions_are_rejected_without_mutation(action):
     assert rejected.before.to_dict() == before.to_dict()
     assert rejected.error
     assert rejected.after.cell.to_dict() == before.cell.to_dict()
+    assert rejected.reward["rejected_action"] < 0
+
+
+def test_oversized_model_number_is_rejected_without_crashing():
+    env = NetworkEnvironment(default_scenario())
+    env.reset()
+
+    rejected = env.step(
+        {"name": "set_prb_cap", "arguments": {"ue_id": 1, "max_prb_pct": 10**400}}
+    )
+
+    assert not rejected.accepted
+    assert rejected.error == "max_prb_pct must be a finite number"
     assert rejected.reward["rejected_action"] < 0
 
 
@@ -184,3 +227,72 @@ def test_malformed_policy_action_is_recorded_as_a_rejected_transition():
 def test_environment_rejects_structurally_or_arithmetically_invalid_scenarios(scenario, message):
     with pytest.raises(ValueError, match=message):
         NetworkEnvironment(scenario)
+
+
+def _notebook_policy_namespace(**values):
+    notebook = json.loads((EXAMPLE_ROOT / "5g_network_operator_agent.ipynb").read_text())
+    policy_source = next(
+        "".join(cell["source"])
+        for cell in notebook["cells"]
+        if cell.get("id") == "parser-and-policy"
+    )
+    namespace = {"json": json, **values}
+    exec(policy_source, namespace)
+    return namespace
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    (
+        '{"max_prb_pct":' + "9" * 4301 + "}",
+        "[" * 10000 + "0" + "]" * 10000,
+    ),
+    ids=("oversized_integer", "excessive_nesting"),
+)
+def test_notebook_parser_rejects_json_runtime_limits(arguments):
+    namespace = _notebook_policy_namespace()
+    tool_call = SimpleNamespace(
+        type="function",
+        function=SimpleNamespace(name="set_prb_cap", arguments=arguments),
+    )
+    response = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(tool_calls=[tool_call]))]
+    )
+
+    action = namespace["_parse_tool_call_response"](response)
+
+    assert action == {
+        "name": "__invalid_model_output__:invalid_json_arguments",
+        "arguments": {},
+    }
+
+
+def test_notebook_hosted_policy_requests_a_non_streaming_response():
+    tool_call = SimpleNamespace(
+        type="function",
+        function=SimpleNamespace(name="noop", arguments="{}"),
+    )
+    response = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(tool_calls=[tool_call]))]
+    )
+
+    class RecordingCompletions:
+        def __init__(self):
+            self.kwargs = None
+
+        def create(self, **kwargs):
+            self.kwargs = kwargs
+            return response
+
+    completions = RecordingCompletions()
+    namespace = _notebook_policy_namespace(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=completions)),
+        model_id="test-model",
+    )
+
+    action = namespace["nim_policy"](
+        NetworkEnvironment(default_scenario()).reset(), tool_schemas()
+    )
+
+    assert action == {"name": "noop", "arguments": {}}
+    assert completions.kwargs["stream"] is False

@@ -43,6 +43,22 @@ class ControlState:
 
 
 @dataclass(frozen=True)
+class ControlObservation:
+    scheduler_policy: str
+    prb_caps_pct: tuple[tuple[int, float], ...]
+    p0_dbm: float
+    alpha: float
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "scheduler_policy": self.scheduler_policy,
+            "prb_caps_pct": dict(self.prb_caps_pct),
+            "p0_dbm": self.p0_dbm,
+            "alpha": self.alpha,
+        }
+
+
+@dataclass(frozen=True)
 class UEObservation:
     ue_id: int
     offered_mbps: float
@@ -90,6 +106,7 @@ class CellObservation:
 class Observation:
     source: str
     step: int
+    controls: ControlObservation
     cell: CellObservation
     ues: tuple[UEObservation, ...]
 
@@ -97,6 +114,7 @@ class Observation:
         return {
             "source": self.source,
             "step": self.step,
+            "controls": self.controls.to_dict(),
             "cell": self.cell.to_dict(),
             "ues": [ue.to_dict() for ue in self.ues],
         }
@@ -319,7 +337,7 @@ class NetworkEnvironment:
                 ),
                 sinr_db=links[profile.ue_id][0],
                 bler=links[profile.ue_id][1],
-                prb_pct=allocations[profile.ue_id],
+                prb_pct=100.0 * allocations[profile.ue_id] / self.scenario.cell_capacity_prb,
             )
             for profile in self.scenario.ues
         )
@@ -335,7 +353,13 @@ class NetworkEnvironment:
             sla_violations=sum(ue.delivered_mbps < ue.sla_mbps for ue in ues),
             prb_util_pct=100.0 * sum(allocations.values()) / self.scenario.cell_capacity_prb,
         )
-        return Observation("deterministic_synthetic", self._step, cell, ues)
+        controls = ControlObservation(
+            scheduler_policy=self._controls.scheduler_policy,
+            prb_caps_pct=tuple(sorted(self._controls.prb_caps_pct.items())),
+            p0_dbm=self._controls.p0_dbm,
+            alpha=self._controls.alpha,
+        )
+        return Observation("deterministic_synthetic", self._step, controls, cell, ues)
 
     def _link_metrics(self, profile: UEProfile) -> tuple[float, float, float]:
         power_shift = 2.0 * (self._controls.p0_dbm + 90.0) + 12.0 * (self._controls.alpha - 0.8)
@@ -382,9 +406,15 @@ def _require_exact_fields(arguments: dict[str, object], required: set[str]) -> N
 
 
 def _finite_number(value: object, name: str) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{name} must be a finite number")
-    return float(value)
+    try:
+        number = float(value)
+    except OverflowError:
+        raise ValueError(f"{name} must be a finite number") from None
+    if not isfinite(number):
+        raise ValueError(f"{name} must be a finite number")
+    return number
 
 
 def _validate_scenario(scenario: Scenario) -> None:
