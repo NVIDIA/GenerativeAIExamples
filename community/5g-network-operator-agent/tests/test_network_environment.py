@@ -230,7 +230,7 @@ def test_environment_rejects_structurally_or_arithmetically_invalid_scenarios(sc
 
 
 def _notebook_policy_namespace(**values):
-    notebook = json.loads((EXAMPLE_ROOT / "5g_network_operator_agent.ipynb").read_text())
+    notebook = json.loads((EXAMPLE_ROOT / "5g_network_operator_agent.ipynb").read_text(encoding="utf-8"))
     policy_source = next(
         "".join(cell["source"])
         for cell in notebook["cells"]
