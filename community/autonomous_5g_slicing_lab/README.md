@@ -15,7 +15,7 @@ A shutdown notebook is also provided to reinitialize the lab if needed.
 To run the lab, ensure you have:
 - **Operating System**: Ubuntu (tested on 20.04 or later).
 - **Hardware**:
-  - CPU: 12+ cores @ 3,8 GHz, AVX-512 is a necessary
+  - CPU: 12+ cores @ 3.8 GHz, AVX-512 is required
   - RAM: 32 GB
   - OS: Modern Linux (e.g., Ubuntu 22.04)
   - Docker & Docker Compose (latest stable)
@@ -28,7 +28,7 @@ To run the lab, ensure you have:
 
 ## Lab Setup
 
-The lab setup configures a fully functional 5G network simulation environment. To set up the lab, first you will need to run autonomous_5g_slicing_lab/Automatic_5G_Network_Lab_Setup.ipynb to configure your environment, and then you will need to run the Jupyter notebook located at `autonomous_5g_slicing_lab/llm-slicing-5g-lab/DLI_Lab_Setup.ipynb`. The notebook automates the following steps:
+The lab setup configures a fully functional 5G network simulation environment. To set up the lab, first you will need to run `autonomous_5g_slicing_lab/Automatic_5G_Network_Lab_Setup.ipynb` to configure your environment, and then you will need to run the Jupyter notebook located at `autonomous_5g_slicing_lab/llm-slicing-5g-lab/DLI_Lab_Setup.ipynb`. The notebook automates the following steps:
 
 1. **Install Dependencies**: Installs iPerf3 and Python packages required for the lab, then restarts the Jupyter kernel to apply changes.
 2. **Compile FlexRIC and gNodeB**: Builds the FlexRIC and gNodeB components using a provided script, preparing the RAN Intelligent Controller and base station software.
@@ -41,8 +41,8 @@ The lab setup configures a fully functional 5G network simulation environment. T
 9. **Generate Traffic and Log Data**: Runs iPerf clients on the UEs to generate UDP traffic at alternating speeds (30 Mbps and 120 Mbps), logging performance metrics (e.g., bitrate, packet loss) to a Kinetica database and local log files.
 
 In summary, to start your lab, you need to follow these steps:
-1. **Open 'autonomous_5g_slicing_lab/Automatic_5G_Network_Lab_Setup.ipynb' in the main directory and set up your environment keys
-2. **Open 'autonomous_5g_slicing_lab/llm-slicing-5g-lab/DLI_Lab_Setup.ipynb and set up your 5G Network Environment
+1. Open `autonomous_5g_slicing_lab/Automatic_5G_Network_Lab_Setup.ipynb` in the main directory and set up your environment keys.
+2. Open `autonomous_5g_slicing_lab/llm-slicing-5g-lab/DLI_Lab_Setup.ipynb` and set up your 5G Network Environment.
 
 ## Running the Agentic Workflow
 
@@ -102,13 +102,13 @@ For issues or contributions, please open a GitHub issue or submit a pull request
 
 1. [Aaron Bossert](https://www.linkedin.com/in/aaron-bossert/), Director of Solutions Engineering, [Kinetica](https://www.kinetica.com/)
 2. [Stefan Spettel](https://www.linkedin.com/in/stefan-spettel/), CEO & Co-Founder, [phine.tech](https://phine.tech/)
-4. [Fransiscus Asisi Bimo](https://www.linkedin.com/in/fransiscusbimo/), Ph.D., National Taiwan University of Science and Technology
-6. [Shibani Likhite](https://www.linkedin.com/in/shibani-likhite/), Solution Architect, NVIDIA
-7. [Swastika Dutta](https://www.linkedin.com/in/swastika-dutta/), Solution Architect, NVIDIA
-8. [Ari Uskudar](https://www.linkedin.com/in/ari-u-628b30148/), Product Manager, NVIDIA.
-9. [Maria Amparo Canaveras Galdon](https://www.linkedin.com/in/amparo-canaveras-b2152522/), Senior Solution Architect, NVIDIA
-10. [Ira Bargon III](https://www.linkedin.com/in/ira-bargon-iii-a8661514/), Sr. Director of Technology and Innovation, Sterling
-11. [Lukas Rothender](https://www.linkedin.com/in/lukas-rotheneder-82984327a/), CTO & Co-Founder, [phine.tech](https://phine.tech/)
+3. [Fransiscus Asisi Bimo](https://www.linkedin.com/in/fransiscusbimo/), Ph.D., National Taiwan University of Science and Technology
+4. [Shibani Likhite](https://www.linkedin.com/in/shibani-likhite/), Solution Architect, NVIDIA
+5. [Swastika Dutta](https://www.linkedin.com/in/swastika-dutta/), Solution Architect, NVIDIA
+6. [Ari Uskudar](https://www.linkedin.com/in/ari-u-628b30148/), Product Manager, NVIDIA.
+7. [Maria Amparo Canaveras Galdon](https://www.linkedin.com/in/amparo-canaveras-b2152522/), Senior Solution Architect, NVIDIA
+8. [Ira Bargon III](https://www.linkedin.com/in/ira-bargon-iii-a8661514/), Sr. Director of Technology and Innovation, Sterling
+9. [Lukas Rothender](https://www.linkedin.com/in/lukas-rotheneder-82984327a/), CTO & Co-Founder, [phine.tech](https://phine.tech/)
 
 
 

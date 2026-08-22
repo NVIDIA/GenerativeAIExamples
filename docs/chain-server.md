@@ -78,7 +78,7 @@ As a simple example, consider the following steps that show how to add support f
    docker compose up -d --build
    ```
 
-After the containers start, ingest a Juypter Notebook to the knowledge base and then query the LLM about the notebook.
+After the containers start, ingest a Jupyter Notebook to the knowledge base and then query the LLM about the notebook.
 
 ## Chain Server REST API Reference
 

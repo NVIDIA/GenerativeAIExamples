@@ -48,7 +48,7 @@ You can determine the available model names using one of the following methods:
   View the sample Python code and get the model name from the `model` argument to the `client.embeddings.create` method.
 
 - Install the [langchain-nvidia-ai-endpoints](https://pypi.org/project/langchain-nvidia-ai-endpoints/) Python package from PyPi.
-  Use the `get_available_models()` method to on an instance of an `NVIDIAEmbeddings` object to list the models.
+  Use the `get_available_models()` method on an instance of an `NVIDIAEmbeddings` object to list the models.
   Refer to the package web page for sample code to list the models.
 
 
