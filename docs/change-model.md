@@ -52,6 +52,28 @@ You can determine the available model names using one of the following methods:
   Refer to the package web page for sample code to list the models.
 
 
+## Alternative LLM Providers
+
+### Using MiniMax
+
+In addition to NVIDIA AI endpoints, you can use [MiniMax](https://www.minimax.io/) as the LLM provider. MiniMax offers an OpenAI-compatible API with models such as `MiniMax-M3` (512K context, 128K max output, supports image input) and `MiniMax-M2.7` (192K context).
+
+1. Get a MiniMax API key from [MiniMax Platform](https://platform.minimaxi.com/).
+
+2. Set the environment variables and start the Chain Server:
+
+   ```console
+   APP_LLM_MODELENGINE='minimax' \
+   APP_LLM_MODELNAME='MiniMax-M3' \
+   MINIMAX_API_KEY='your-minimax-api-key' \
+   docker compose up -d --build
+   ```
+
+   Available MiniMax models:
+   - `MiniMax-M3` — Latest flagship model, 512K context, max output 128K (default)
+   - `MiniMax-M2.7` — Previous generation flagship
+   - `MiniMax-M2.7-highspeed` — Previous generation, optimized for speed
+
 ## On Premises Microservices
 
 You can specify the model for NVIDIA NIM containers to use in the `docker-compose-nim-ms.yaml` file.
