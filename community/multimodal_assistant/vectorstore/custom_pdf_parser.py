@@ -143,7 +143,6 @@ def parse_all_tables(filename, page, pagenum, text_blocks, ongoing_tables):
                 table_img_path = os.path.join(tablerefdir, f"table{ctr}-page{pagenum}.jpg")
                 table_img.save(table_img_path)
                 description = process_graph(table_img_path)
-                ctr += 1
 
                 caption = before_text.replace("\n", " ") + description + after_text.replace("\n", " ")
                 if before_text == "" and after_text == "":
@@ -161,6 +160,7 @@ def parse_all_tables(filename, page, pagenum, text_blocks, ongoing_tables):
                 all_cols = ", ".join(list(pandas_df.columns.values))
                 doc = Document(page_content="This is a table with the caption: " + caption + f"\nThe columns are {all_cols}", metadata=table_metadata)
                 table_docs.append(doc)
+                ctr += 1
     return table_docs, table_bboxes, ongoing_tables
 
 def parse_all_images(filename, page, pagenum, text_blocks):
