@@ -40,8 +40,8 @@ class Edge:
 
         print("GRADE GENERATED vs QUESTION")
         try:
-            score_text = automation.answer_grader.invoke({"question": question, "generation": generation})
-            if "yes" in score_text.lower():
+            score = automation.answer_grader.invoke({"question": question, "generation": generation})
+            if score and score.get("binary_score") == "yes":
                 print("DECISION: GENERATION ADDRESSES QUESTION")
                 return "useful"
             else:
