@@ -5,6 +5,35 @@
 
 # Basic RAG Using LangChain
 
+# What driver is “missing”?
+1. You need the NVIDIA proprietary GPU driver on the host with CUDA 12.x support, plus the NVIDIA Container Toolkit.
+2. Recommended driver branch: R550+ (or at least R535+) so it’s compatible with CUDA 12.x images used by Milvus GPU and NIM.
+3. Also required: nvidia-container-toolkit configured with Docker so the nvidia runtime is available.
+If you’re on WSL2/Windows: install the Windows NVIDIA driver with WSL2 GPU support and enable GPU for Docker Desktop/WSL. The error “WSL environment detected but no adapters were found” means no GPU is exposed to WSL/Docker.
+
+# How to run without a local GPU (CPU-only path)
+Option A: Use pgvector (CPU) instead of Milvus GPU and keep LLM/embeddings on NVIDIA AI Endpoints:
+1. Set vector DB to pgvector:
+  Override env: APP_VECTORSTORE_NAME=pgvector
+2. Start only the pgvector service via profiles:
+   export NVIDIA_API_KEY=YOUR_KEY   # required for NVIDIA AI Endpoints
+   export APP_VECTORSTORE_NAME=pgvector
+   docker compose --profile pgvector up -d --build
+This avoids the Milvus GPU container entirely and uses CPU Postgres+pgvector.
+Option B: Keep Milvus but switch to CPU image:
+1. Edit RAG/examples/local_deploy/docker-compose-vectordb.yaml:
+    - Change image: milvusdb/milvus:v2.4.15-gpu to milvusdb/milvus:v2.4.15
+    - Remove the deploy.resources.reservations.devices block.
+2. Then run docker compose up -d --build.
+Don’t enable the NIM microservices profiles (local-nim, nemo-retriever) unless you have a GPU—they each reserve GPUs.
+
+# If you do want local GPU
+- Install an NVIDIA driver R550+ (or R535+) on the host; verify nvidia-smi works.
+- Install and configure NVIDIA Container Toolkit:
+  sudo apt-get install -y nvidia-container-toolkit
+  sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker
+- On WSL2, ensure the Windows NVIDIA driver with WSL support is installed and Docker Desktop has GPU enabled.
+
 ## Example Features
 
 This example deploys a basic RAG pipeline for chat Q&A and serves inferencing from an NVIDIA API Catalog endpoint.
