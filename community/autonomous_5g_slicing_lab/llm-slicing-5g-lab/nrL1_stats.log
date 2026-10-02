@@ -6,14 +6,14 @@ Blacklisted PRBs 0/106
  0. 0. 0. 0. 0. 0.
 max_IO = 0 (0), min_I0 = 0 (0), avg_I0 = 0 dB
 PRACH I0 = 0.0 dB
+DLSCH RNTI 8379: current_Qm 2, current_RI 1, total_bytes TX -798829223
+DLSCH RNTI 96c8: current_Qm 2, current_RI 1, total_bytes TX 337087230
+ULSCH RNTI 8379, 976: ulsch_power[0] 50,9 ulsch_noise_power[0] 0.0, sync_pos 1
+                 round_trials 348737(2.9e-06):1(0.0e+00):0(0.0e+00):0, DTX 0, current_Qm 2, current_RI 1, total_bytes RX/SCHED 0/24
+ULSCH RNTI 96c8, 976: ulsch_power[0] 51,0 ulsch_noise_power[0] 0.0, sync_pos 2
+                 round_trials 329857(3.0e-06):1(0.0e+00):0(0.0e+00):0, DTX 0, current_Qm 2, current_RI 1, total_bytes RX/SCHED 0/24
 
-LSCH RNTI 12f1: current_Qm 2, current_RI 1, total_bytes TX 1702867412
-ULSCH RNTI 12f1, 802: ulsch_power[0] 50,9 ulsch_noise_power[0] 0.0, sync_pos 2
-                 round_trials 183157(0.0e+00):0(0.0e+00):0(0.0e+00):0, DTX 0, current_Qm 0, current_RI 0, total_bytes RX/SCHED 0/0
 
-0e+00):0, DTX 0, current_Qm 0, current_RI 0, total_bytes RX/SCHED 0/0
-ULSCH RNTI 12f1, 545: ulsch_power[0] 50,9 ulsch_noise_power[0] 0.0, sync_pos 1
-                 round_trials 183132(0.0e+00):0(0.0e+00):0(0.0e+00):0, DTX 0, current_Qm 0, current_RI 0, total_bytes RX/SCHED 0/0
 
 
 

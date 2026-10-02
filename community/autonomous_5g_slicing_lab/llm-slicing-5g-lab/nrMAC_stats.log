@@ -1,2 +1,20 @@
+UE RNTI 8379 CU-UE-ID 1 in-sync PH 0 dB PCMAX 0 dBm, average RSRP -44 (14 meas)
+UE 8379: UL-RI 1, TPMI 0
+UE 8379: dlsch_rounds 3091288/1/0/0, dlsch_errors 0, pucch0_DTX 0, BLER 0.00000 MCS (0) 9
+UE 8379: ulsch_rounds 348726/1/0/0, ulsch_errors 0, ulsch_DTX 0, BLER 0.00000 MCS (0) 9
+UE 8379: MAC:    TX    20676005450 RX       12370876 bytes
+UE 8379: LCID 1: TX           1022 RX            325 bytes
+UE 8379: LCID 2: TX              0 RX              0 bytes
+UE 8379: LCID 4: TX    20576415186 RX         502152 bytes
+UE RNTI 96c8 CU-UE-ID 2 in-sync PH 0 dB PCMAX 0 dBm, average RSRP -44 (14 meas)
+UE 96c8: UL-RI 1, TPMI 0
+UE 96c8: dlsch_rounds 3068318/1/0/0, dlsch_errors 0, pucch0_DTX 0, BLER 0.00000 MCS (0) 9
+UE 96c8: ulsch_rounds 329846/1/0/0, ulsch_errors 0, ulsch_DTX 0, BLER 0.00000 MCS (0) 9
+UE 96c8: MAC:    TX    21811921874 RX       11870039 bytes
+UE 96c8: LCID 1: TX           1024 RX            330 bytes
+UE 96c8: LCID 2: TX              0 RX              0 bytes
+UE 96c8: LCID 4: TX    21715052955 RX         502469 bytes
 
-                     Name                      Total                 Per Trials                 Num Trials                 CPU_F_GHz 2.000292
+s
+
+
