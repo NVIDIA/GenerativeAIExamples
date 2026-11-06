@@ -130,7 +130,7 @@ If you see any errors while navigating the web UI, you could use `docker logs ch
 
 - [Vector Database Customizations](../../../docs/vector-database.md) to customize GPU acceleration for the Milvus vector database.
 - Stop the containers by running `docker compose down`.
-- If you're interested in adapting this application to use on premises machines for NVIDIA Inference Microservices (NIMs), for the LLM, embedding model and reranking model, please refer to [local-deploy README](../../../RAG/examples/local_deploy/README.md) for the requirement and configuration.
+- If you're interested in adapting this application to use on premises machines for NVIDIA Inference Microservices (NIMs), for the LLM, embedding model and reranking model, please refer to [local-deploy README](https://github.com/NVIDIA/GenerativeAIExamples/tree/203b0de48d1142124842d56d4b40f3733888f5ee/RAG/examples/local_deploy/README.md) for the requirement and configuration.
 
 ## Evaluating the IFU RAG
 In [evaluation/](./evaluation/), you will find the process of evaluating the IFU RAG with pairs of questions and answers as ground truth.

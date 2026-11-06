@@ -17,7 +17,7 @@ FROM ubuntu:22.04
 WORKDIR /workspace/src
 
 ADD community/streaming_ingest_rag/producer/src .
-ADD RAG/tools/evaluation/dataset.zip data
+ADD community/streaming_ingest_rag/producer/data/dataset.zip data
 
 SHELL ["/bin/bash", "-c"]
 
