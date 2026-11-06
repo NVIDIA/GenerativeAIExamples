@@ -3,6 +3,9 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 
+> This guide describes the removed `RAG/` pipeline. Use the [historical source](https://github.com/NVIDIA/GenerativeAIExamples/tree/203b0de48d1142124842d56d4b40f3733888f5ee) to follow these instructions.
+
+
 # Using the Sample Chat Web Application
 
 <!-- TOC -->
@@ -29,7 +32,7 @@
 
    Alternatively, click on the microphone button to the right of the text box and ask the question verbally.
 
-   ![Grace query failure](../RAG/notebooks/langchain/data/imgs/grace_noanswer_with_riva.png)
+   ![Grace query failure](https://github.com/NVIDIA/GenerativeAIExamples/tree/203b0de48d1142124842d56d4b40f3733888f5ee/RAG/notebooks/langchain/data/imgs/grace_noanswer_with_riva.png)
 
 1. Upload the sample data to the knowledge base.
 
@@ -43,7 +46,7 @@
 
 1. Reenter the question: "How many cores does the Grace superchip contain?"
 
-   ![Grace query success](../RAG/notebooks/langchain/data/imgs/grace_answer_with_riva.png)
+   ![Grace query success](https://github.com/NVIDIA/GenerativeAIExamples/tree/203b0de48d1142124842d56d4b40f3733888f5ee/RAG/notebooks/langchain/data/imgs/grace_answer_with_riva.png)
 
    ```{tip}
    The default prompts are optimized for Llama chat model.

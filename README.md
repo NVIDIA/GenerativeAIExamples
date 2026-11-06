@@ -19,13 +19,9 @@ This repository is a starting point for developers looking to integrate with the
   * [Agentic Workflows with Llama 3.1](#agentic-workflows-with-llama-31)
   * [RAG with Local NIM Deployment and LangChain](#rag-with-local-nim-deployment-and-langchain)
   * [Vision NIM Workflows](#vision-nim-workflows)
-* [Try it Now!](#try-it-now)
 * [Data Flywheel](#data-flywheel)
   * [Tool-Calling Notebooks](#tool-calling-notebooks)
 * [RAG](#rag)
-  * [RAG Notebooks](#rag-notebooks)
-  * [RAG Examples](#rag-examples)
-  * [RAG Tools](#rag-tools)
   * [RAG Projects](#rag-projects)
 * [Documentation](#documentation)
   * [Getting Started](#getting-started)
@@ -59,7 +55,7 @@ This example implements a GPU-accelerated pipeline for creating and querying kno
 
 ### Agentic Workflows with Llama 3.1
 
-- Build an Agentic RAG Pipeline with Llama 3.1 and NVIDIA NeMo Retriever NIM microservices [[Blog](https://developer.nvidia.com/blog/build-an-agentic-rag-pipeline-with-llama-3-1-and-nvidia-nemo-retriever-nims/), [Notebook](RAG/notebooks/langchain/agentic_rag_with_nemo_retriever_nim.ipynb)]
+- Build an Agentic RAG Pipeline with Llama 3.1 and NVIDIA NeMo Retriever NIM microservices [[Blog](https://developer.nvidia.com/blog/build-an-agentic-rag-pipeline-with-llama-3-1-and-nvidia-nemo-retriever-nims/), [Notebook](https://github.com/NVIDIA/GenerativeAIExamples/tree/203b0de48d1142124842d56d4b40f3733888f5ee/RAG/notebooks/langchain/agentic_rag_with_nemo_retriever_nim.ipynb)]
 - [NVIDIA Morpheus, NIM microservices, and RAG pipelines integrated to create LLM-based agent pipelines](https://github.com/NVIDIA/GenerativeAIExamples/blob/v0.7.0/experimental/event-driven-rag-cve-analysis)
 
 
@@ -86,42 +82,6 @@ Follow the links below to learn more:
 - [Learn how to use embeddings with NVDINOv2 and a Milvus VectorDB to build a few shot classification model.](nim_workflows/nvdinov2_few_shot/README.md)
 
 
-## Try it Now!
-
-Experience NVIDIA RAG Pipelines with just a few steps!
-
-1. Get your NVIDIA API key.
-   1. Go to the [NVIDIA API Catalog](https://build.ngc.nvidia.com/explore/).
-   1. Select any model.
-   1. Click **Get API Key**.
-   1. Run:
-      ```console
-      export NVIDIA_API_KEY=nvapi-...
-      ``` 
-
-1. Clone the repository.
-
-   ```console
-   git clone https://github.com/nvidia/GenerativeAIExamples.git
-   ```
-
-1. Build and run the basic RAG pipeline.
-
-   ```console
-   cd GenerativeAIExamples/RAG/examples/basic_rag/langchain/
-   docker compose up -d --build
-   ```
-
-1. Go to <https://localhost:8090/> and submit queries to the sample RAG Playground.
-
-1. Stop containers when done. 
-  
-   ```console
-   docker compose down
-   ``` 
-      
-
-
 ## Data Flywheel
 
 A [Data Flywheel](https://www.nvidia.com/en-us/glossary/data-flywheel/) is a self-reinforcing cycle where user interactions generate data that improves AI models or products, leading to better outcomes that attract more users and further enhance data quality. This feedback loop relies on continuous data processing, model refinement, and guardrails to ensure accuracy and compliance while compounding value over time. Real-world applications range from personalized customer experiences to operational systems like inventory management, where improved predictions drive efficiency and growth.
@@ -134,51 +94,7 @@ This end-to-end [tutorial](./nemo/data-flywheel/tool-calling) demonstrates how t
 
 ## RAG
 
-### RAG Notebooks
-
-NVIDIA has first-class support for popular generative AI developer frameworks like [LangChain](https://python.langchain.com/v0.2/docs/integrations/chat/nvidia_ai_endpoints/), [LlamaIndex](https://docs.llamaindex.ai/en/stable/examples/llm/nvidia/), and [Haystack](https://haystack.deepset.ai/integrations/nvidia). These end-to-end notebooks show how to integrate NIM microservices using your preferred generative AI development framework.
-
-Use these [notebooks](./RAG/notebooks/README.md) to learn about the LangChain and LlamaIndex connectors.
-
-#### LangChain Notebooks
-
-- RAG
-  - [Basic RAG with CHATNVIDIA LangChain Integration](./RAG/notebooks/langchain/langchain_basic_RAG.ipynb)
-  - [RAG using local NIM microservices for LLMs and Retrieval](./RAG/notebooks/langchain/RAG_Langchain_with_Local_NIM.ipynb)
-  - [RAG for HTML Documents](./RAG/notebooks/langchain/RAG_for_HTML_docs_with_Langchain_NVIDIA_AI_Endpoints.ipynb)
-  - [Chat with NVIDIA Financial Reports](./RAG/notebooks/langchain/Chat_with_nvidia_financial_reports.ipynb)
-- Agents
-  - [NIM Tool Calling 101](https://github.com/langchain-ai/langchain-nvidia/blob/main/cookbook/nvidia_nim_agents_llama3.1.ipynb)
-  - [Agentic RAG with NeMo Retriever](./RAG/notebooks/langchain/agentic_rag_with_nemo_retriever_nim.ipynb)
-  - [Agents with Human in the Loop](./RAG/notebooks/langchain/LangGraph_HandlingAgent_IntermediateSteps.ipynb)
-
-
-#### LlamaIndex Notebooks
-
-- [Basic RAG with LlamaIndex Integration](./RAG/notebooks/llamaindex/llamaindex_basic_RAG.ipynb)
-
-### RAG Examples
-
-By default, these end-to-end [examples](RAG/examples/README.md) use preview NIM endpoints on [NVIDIA API Catalog](https://catalog.ngc.nvidia.com). Alternatively, you can run any of the examples [on premises](./RAG/examples/local_deploy/).
-
-#### Basic RAG Examples
-
-  - [LangChain example](./RAG/examples/basic_rag/langchain/README.md)
-  - [LlamaIndex example](./RAG/examples/basic_rag/llamaindex/README.md)
-
-#### Advanced RAG Examples
-
-  - [Multi-Turn](./RAG/examples/advanced_rag/multi_turn_rag/README.md)
-  - [Multimodal Data](./RAG/examples/advanced_rag/multimodal_rag/README.md)
-  - [Structured Data](./RAG/examples/advanced_rag/structured_data_rag/README.md) (CSV)
-  - [Query Decomposition](./RAG/examples/advanced_rag/query_decomposition_rag/README.md)
-
-### RAG Tools
-
-Example tools and tutorials to enhance LLM development and productivity when using NVIDIA RAG pipelines.
-
-- [Evaluation](./RAG/tools/evaluation/README.md)
-- [Observability](./RAG/tools/observability/README.md)
+The former `RAG/` examples, notebooks, and tools have been removed. They remain available in the [repository history](https://github.com/NVIDIA/GenerativeAIExamples/tree/203b0de48d1142124842d56d4b40f3733888f5ee/RAG).
 
 ### RAG Projects
 

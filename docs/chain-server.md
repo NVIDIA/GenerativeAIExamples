@@ -3,6 +3,9 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 
+> This guide describes the removed `RAG/` pipeline. Use the [historical source](https://github.com/NVIDIA/GenerativeAIExamples/tree/203b0de48d1142124842d56d4b40f3733888f5ee) to follow these instructions.
+
+
 # Customizing the Chain Server
 
 <!-- TOC -->
@@ -42,7 +45,7 @@ To run the server for development purposes, run the following commands:
 ## Supporting Additional Document File Types
 
 Most of the examples support reading text files, Markdown files, and PDF files.
-The [multimodal example](../RAG/examples/advanced_rag/multimodal_rag/) supports PDF, PowerPoint, and PNG files.
+The [multimodal example](https://github.com/NVIDIA/GenerativeAIExamples/tree/203b0de48d1142124842d56d4b40f3733888f5ee/RAG/examples/advanced_rag/multimodal_rag/) supports PDF, PowerPoint, and PNG files.
 
 As a simple example, consider the following steps that show how to add support for ingesting Jupyter Notebooks with LangChain.
 

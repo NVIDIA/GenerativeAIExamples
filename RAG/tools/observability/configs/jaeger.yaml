@@ -1,3 +1,0 @@
-query.base-path: /jaeger/ui
-cassandra.keyspace: jaeger_v1_dc1
-cassandra.servers: cassandra
