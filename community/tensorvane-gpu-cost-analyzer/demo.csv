@@ -1,0 +1,24 @@
+﻿Date,Price,GPU_Hrs,Utilization,Client Name,Region
+2026-09-21,1650,42,69,Northstar,West
+2026-09-22,2120,53,76,VectorWorks,East
+2026-09-23,1280,32,61,Northstar,West
+2026-09-24,2640,66,80,Atlas,Central
+2026-09-25,1850,46,71,VectorWorks,East
+2026-09-26,900,22,56,Atlas,Central
+2026-09-27,1200,30,60,Northstar,West
+2026-09-28,2240,56,78,Northstar,West
+2026-09-29,1790,45,67,VectorWorks,East
+2026-09-30,2890,72,88,Atlas,Central
+2026-10-01,3120,78,88,Northstar,West
+2026-10-02,2200,55,75,VectorWorks,East
+2026-10-03,2460,61,82,Atlas,Central
+2026-10-04,1100,27,62,Atlas,Central
+2026-10-05,3480,87,91,Northstar,West
+2026-10-06,2650,66,82,VectorWorks,East
+2026-10-07,3070,77,89,Atlas,Central
+2026-10-08,2940,74,86,Northstar,West
+2026-10-10,2780,69,85,VectorWorks,East
+2026-10-10,2780,69,85,VectorWorks,East
+2026-10-10,2000,,60,Atlas,Central
+2026-10-11,800,-3,108,Atlas,Central
+2026-10-11,1530,38,72,Northstar,West

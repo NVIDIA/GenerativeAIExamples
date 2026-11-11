@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173d2b">
+  <meta name="description" content="Pears Analyzer: explore operational data with validated calculations, transparent data quality checks, and AI-assisted analysis.">
+  <title>Pears Analyzer &middot; Analytics workspace</title>
+  <link rel="icon" type="image/svg+xml" href="/web/pear.svg">
+  <link rel="stylesheet" href="/web/styles.css?v={{ asset_version }}">
+  <script src="/web/app.js?v={{ asset_version }}" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#page-title">Skip to content</a>
+  <aside class="sidebar">
+    <a class="brand" href="#overview" aria-label="Pears Analyzer overview"><img class="logo" src="/web/pear.svg" width="40" height="40" alt=""><span>Pears<span class="brand-subtitle">Analyzer</span></span></a>
+    <nav aria-label="Workspace">
+      <a href="#overview" data-view="overview" aria-current="page">Overview</a>
+      <a href="#quality" data-view="quality">Data quality</a>
+      <a href="#mapping" data-view="mapping">Detected columns</a>
+      <a href="#chat" data-view="chat">Ask your data</a>
+      <a href="#calculations" data-view="calculations">Calculations</a>
+    </nav>
+    <div class="sidebar-foot"><span class="signal"></span><span id="mode">Connecting</span></div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <span class="breadcrumb">Workspace <span class="divider">/</span> <span id="breadcrumb-page">Overview</span></span>
+      <div class="topbar-actions">
+        <button id="model-settings" class="button secondary" type="button" aria-haspopup="dialog">Model settings</button>
+        <label class="button primary upload">Upload CSV <span aria-hidden="true">&#8599;</span><input id="file" type="file" accept=".csv,text/csv"></label>
+      </div>
+    </header>
+    <div class="content">
+      <section class="intro">
+        <div>
+          <h1 id="page-title" tabindex="-1">Overview</h1>
+          <p id="page-description">Your operational data at a glance.</p>
+        </div>
+        <button id="demo" class="button secondary">Load demo dataset</button>
+      </section>
+      <p id="notice" role="status" aria-live="polite" hidden></p>
+      <section class="dataset-strip" id="dataset-strip" aria-label="Active dataset" hidden>
+        <div class="file-icon" aria-hidden="true">CSV</div>
+        <div class="dataset-name-wrap"><strong id="dataset-name">No dataset loaded</strong><small id="dataset-meta">Upload a CSV to begin.</small></div>
+        <span id="dataset-status" class="dataset-status"></span>
+        <button id="run" class="button primary" disabled>Run analysis <span aria-hidden="true">&#8599;</span></button>
+      </section>
+
+      <div data-page="overview">
+        <section id="workspace-empty" class="panel empty-workspace">
+          <div class="file-icon" aria-hidden="true">CSV</div>
+          <h2 id="empty-title">Start with your data</h2>
+          <p id="empty-description">Upload a CSV to see totals, trends, and data quality in one place.</p>
+          <div class="empty-actions">
+            <button id="empty-action" class="button primary">Choose CSV</button>
+            <button id="demo-inline" class="button secondary">Try demo</button>
+          </div>
+          <small id="upload-help">Drop a CSV here or choose a file · up to 8 MB</small>
+        </section>
+        <div id="analysis-dashboard" hidden>
+        <section class="cards" id="metrics" aria-label="Key metrics"></section>
+        <div class="overview-toolbar">
+          <h2>Performance</h2>
+          <label id="metric-control" hidden>Metric <select id="chart-metric" aria-label="Dashboard metric"></select></label>
+        </div>
+        <div class="overview-grid">
+          <section class="panel trend-panel">
+            <div class="panel-head">
+              <div><h2 id="chart-title">Time trend</h2><p id="chart-subtitle">Run an analysis to explore the timeline.</p></div>
+              <button id="trend-data" class="text-button" disabled>View data <span aria-hidden="true">&#8599;</span></button>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="chart" role="img" tabindex="0" aria-label="Aggregate time trend" hidden></canvas>
+              <output id="chart-tooltip" class="chart-tooltip" hidden></output>
+              <p id="chart-empty" class="empty">No time series is available for this metric.</p>
+            </div>
+            <div id="trend-caption" class="chart-caption"></div>
+          </section>
+          <section class="panel insights-panel">
+            <div class="panel-head"><h2>Summary</h2><span id="analysis-time" class="muted"></span></div>
+            <p id="summary" class="summary">Run an analysis to generate a summary.</p>
+            <a class="text-button" href="#calculations">Explore calculations <span aria-hidden="true">&#8599;</span></a>
+          </section>
+        </div>
+        <section id="account-usage-panel" class="panel section" hidden>
+          <div class="panel-head">
+            <div><h2>Usage by account</h2><p id="account-usage-description"></p></div>
+            <label class="account-search"><span class="sr-only">Search accounts</span><input id="account-search" type="search" placeholder="Search accounts" autocomplete="off"></label>
+          </div>
+          <div id="account-usage-table"></div>
+          <div id="account-pagination" class="pagination">
+            <span id="account-page-status" aria-live="polite"></span>
+            <div><button id="account-previous" class="button secondary" type="button">Previous</button><button id="account-next" class="button secondary" type="button">Next</button></div>
+          </div>
+        </section>
+        <div id="rankings" class="rankings-grid"></div>
+        <section class="panel health-panel" aria-label="Data quality snapshot">
+          <div class="health-content"><h2>Data quality</h2><div id="quality-snapshot" class="quality-snapshot">Quality checks appear after analysis.</div></div>
+          <a href="#quality" class="text-button">Review quality <span aria-hidden="true">&#8599;</span></a>
+        </section>
+        <section id="extra-metrics-panel" class="panel section" hidden>
+          <div class="panel-head"><h2>Additional metrics</h2></div>
+          <div id="extra-metrics" class="additional-metrics"></div>
+        </section>
+        </div>
+      </div>
+
+      <section class="panel" id="quality" data-page="quality" hidden>
+        <div class="panel-head"><div><h2>Validation results</h2><p>Rows used in this analysis and the issues found on upload.</p></div></div>
+        <dl class="quality-list" id="quality-values"></dl>
+        <p id="missing-days" class="quality-note" hidden></p>
+        <div id="quality-details" class="quality-details"></div>
+        <label class="daily" id="daily-control" hidden><input type="checkbox" id="daily"> Check for gaps in daily data</label>
+      </section>
+
+      <section class="panel" id="mapping" data-page="mapping" hidden>
+        <div class="panel-head">
+          <div><h2>Detected fields</h2><p>Column types, interpretations, and detection results.</p></div>
+          <button id="suggest" class="button secondary" hidden>Refresh detection</button>
+        </div>
+        <div class="mapping-body">
+          <div class="mapping-row mapping-header" aria-hidden="true"><span>Source column</span><span>Used as</span><span>Detection result</span><span></span></div>
+          <div id="mapping-body"><p class="empty">Load a dataset to see its columns.</p></div>
+        </div>
+      </section>
+
+      <section class="panel chat-panel" id="chat" data-page="chat" hidden>
+        <div class="panel-head"><div><h2>Ask your data</h2><p>Explore a metric, compare groups, or trace a trend.</p></div></div>
+        <div id="chat-suggestions" class="chat-suggestions"></div>
+        <div id="conversation" aria-live="polite"></div>
+        <form id="chat-form">
+          <label class="sr-only" for="question">Question</label>
+          <input id="question" maxlength="1000" placeholder="Ask a question about this dataset&#8230;" required>
+          <button id="send" class="button primary" disabled>Ask <span aria-hidden="true">&#8599;</span></button>
+        </form>
+      </section>
+
+      <section class="panel" id="calculations" data-page="calculations" hidden>
+        <div class="panel-head">
+          <div><h2>Calculation results</h2><p>Inspect the values behind the dashboard.</p></div>
+        </div>
+        <label class="result-picker">Calculation <select id="calculation-select" disabled aria-label="Calculation"></select></label>
+        <div id="results"><p class="empty">Run an analysis to inspect its results.</p></div>
+        <details id="report-plan" class="plan" hidden><summary>View validated plan</summary><pre></pre></details>
+      </section>
+    </div>
+  </main>
+  <dialog id="settings-dialog" aria-labelledby="settings-heading">
+    <div class="panel-head">
+      <div><h2 id="settings-heading">Model settings</h2><p>Connect a provider and choose a model for Pears Analyzer.</p></div>
+      <form method="dialog"><button class="button secondary" aria-label="Close model settings">Close</button></form>
+    </div>
+    <p id="settings-notice" role="status" aria-live="polite" hidden></p>
+    <form id="model-selection" class="settings-form">
+      <label for="saved-model">Active model</label>
+      <div class="settings-actions">
+        <select id="saved-model"><option value="">Local analysis</option></select>
+        <button class="button primary">Use model</button>
+      </div>
+    </form>
+    <form id="provider-form" class="settings-form">
+      <label for="provider">Provider</label>
+      <select id="provider">
+        <option value="openai">OpenAI / GPT</option>
+        <option value="anthropic">Anthropic / Claude</option>
+        <option value="gemini">Google Gemini</option>
+        <option value="compatible">OpenAI-compatible endpoint</option>
+      </select>
+      <div id="endpoint-field" class="settings-form" hidden>
+        <label for="endpoint">Base URL</label>
+        <input id="endpoint" type="url" placeholder="https://provider.example/v1">
+      </div>
+      <label for="provider-key">API key</label>
+      <input id="provider-key" type="password" autocomplete="off" spellcheck="false" maxlength="1200">
+      <small id="key-help">Saved in your system credential store.</small>
+      <label for="manual-model">Model ID <span class="optional">(optional)</span></label>
+      <input id="manual-model" maxlength="200" spellcheck="false" placeholder="Enter a model ID if it is missing from the list">
+      <div class="settings-actions">
+        <button id="save-provider" class="button primary">Save provider and find models</button>
+        <button id="remove-provider" class="button secondary" type="button" hidden>Remove provider</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
