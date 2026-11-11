@@ -77,4 +77,4 @@ Run the browser checks with **Local analysis** selected. They cover demo analysi
 
 The evaluation writes detailed results to `test-results/`. Live inference accuracy requires configured provider credentials. Regression tests exercise provider mapping and consent with mocked model responses.
 
-The archive evaluation (`evaluate_test_data.py`) and archive-based tests need `nv-a-test-data.zip`, which is kept in the [original repository](https://github.com/AQishere/Tensorvane-AI-GPU-Cost-Analyzer). Without it, those tests are skipped.
+The archive evaluation (`evaluate_test_data.py`) and archive-based tests need a test-data archive (`nv-a-test-data.zip`) that is not published. Without it, those tests are skipped.
