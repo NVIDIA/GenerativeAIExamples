@@ -101,3 +101,7 @@ Community examples are sample code and deployments for RAG pipelines that are no
 * [Reasoning Coder](./reasoning_coder/)
 
   Reasoning Coder is a demonstration of a coding agent for reasoning-aware code generation powered by the open-source [NVIDIA Nemotron Nano 9B v2 model](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2). The agent combines the strengths of large language model coding capabilities with a reasoning budget control mechanism, enabling more transparent and efficient problem-solving. It is designed to showcase how developers can integrate self-hosted vLLM deployments to run advanced code assistants locally or on their own infrastructure. The demo highlights how NVIDIA Nemotron Nano 9B v2 reasoning features can be applied to software development workflows, making it easier to experiment with streaming, non-streaming, and reasoning-driven code generation in a reproducible environment.
+
+* [Tensorvane: AI GPU Cost Analyzer](./tensorvane-gpu-cost-analyzer/)
+
+  A local planner-executor workspace for GPU usage and cost CSVs. Pandas cleans the data and computes every number, while the LLM (NVIDIA NIM or any OpenAI-compatible endpoint) only proposes validated JSON analysis plans and writes the narrative from computed facts. It handles messy files (renamed or non-English headers, EU decimals, missing days, impossible values), maps columns automatically, and supports chat over the results.

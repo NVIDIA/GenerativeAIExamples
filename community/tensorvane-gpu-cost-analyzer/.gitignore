@@ -1,0 +1,18 @@
+﻿.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+graphify-out/
+
+# secrets / local env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials*.json
+
+# logs and local run output
+*.log
+test-results/*.log
