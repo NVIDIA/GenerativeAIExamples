@@ -835,6 +835,6 @@ The Asset Lifecycle Management Agent provides a foundation for comprehensive ind
 ---
 
 **Resources:**
-- [NeMo Agent Toolkit Documentation](https://docs.nvidia.com/nemo-agent-toolkit/)
+- [NeMo Agent Toolkit Documentation](https://docs.nvidia.com/nemo/agent-toolkit/latest/)
 - [Phoenix Observability](https://phoenix.arize.com/)
 - [NV-Tesseract Models](https://developer.nvidia.com/blog/new-nvidia-nv-tesseract-time-series-models-advance-dataset-processing-and-anomaly-detection/)
