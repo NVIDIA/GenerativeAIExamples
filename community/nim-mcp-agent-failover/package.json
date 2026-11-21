@@ -1,0 +1,21 @@
+{
+  "name": "nim-mcp-agent-failover",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP tool-calling agent on NVIDIA Nemotron with model failover, for hosted or self-hosted NIM",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "demo": "bash scripts/demo.sh",
+    "agent": "node agent/agent.mjs",
+    "mock": "node local/mock-nim.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  },
+  "license": "Apache-2.0"
+}
