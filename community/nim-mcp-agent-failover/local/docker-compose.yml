@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 Jeremy Schoemaker
 # SPDX-License-Identifier: Apache-2.0
 # Self-hosted NIM, written from NVIDIA documentation.
-# Run once by the author on a rented NVIDIA L4 (2026-11-21) with
+# Run by the author on a rented NVIDIA L4 (2026-11-21) and L40S (2026-11-22) with
 # NIM_IMAGE=nvcr.io/nim/nvidia/nemotron-3.5-bolt-e4b-4gb:2.1.4. The author owns no NVIDIA GPU.
 # This recipe needs an NVIDIA GPU, an NGC key and about 200 GB of disk.
 # Current launch, image, port, cache and readiness docs (checked 2026-11-21):

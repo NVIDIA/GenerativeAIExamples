@@ -215,12 +215,32 @@ export NIM_PASSTHROUGH_ARGS="--gpu-memory-utilization 0.97 --enable-auto-tool-ch
 
 With those settings the agent completed three MCP tool calls against the self-hosted container, and five sequential streamed runs measured a median of 83 ms to first token and 26.4 tokens per second, with speculative decoding off and the client on the same host.
 
+### On a 48 GB GPU, with and without speculative decoding
+
+The same image ran on 2026-11-22 on a single rented NVIDIA L40S (48 GB). It started at default settings, with speculative decoding on and neither memory setting. The table is five sequential streamed runs per row, taken after one warm-up pass, with the same prompt and settings as above and the client on the same host:
+
+| Speculative decoding | Median time to first token | Median tokens per second | Range |
+|---|---|---|---|
+| On (the image default) | 38 ms | 124.5 | 118.7 to 128.4 |
+| Off (`NIM_SPECDEC_ENABLE=0`) | 33 ms | 69.6 | 69.4 to 69.7 |
+
+On this card and this prompt, speculative decoding gave 1.8 times the tokens per second. This is one card, one prompt and one stream at a time.
+
+One thing differed from the L4. The default launch on the L40S did not enable tool calling, so a request with `tools` returned HTTP 400, while the default launch on the L4 had included the flags. Setting them fixed it and left speculative decoding on:
+
+```sh
+export NIM_PASSTHROUGH_ARGS="--enable-auto-tool-choice --tool-call-parser gemma4 --reasoning-parser gemma4"
+```
+
+The `Launching vLLM:` line in the container log shows which flags a card got. The agent then completed three MCP tool calls.
+
 ## What was run
 
 | Path | Status |
 | --- | --- |
 | Hosted API catalog | Run on 2026-11-21 |
 | Self-hosted NIM container on an NVIDIA L4 | Run once on 2026-11-21, on a rented instance |
+| Self-hosted NIM container on an NVIDIA L40S | Run once on 2026-11-22, on a rented instance |
 | Offline mock | Run in the tests and the demo |
 | Linux, and macOS with the stock bash 3.2 | Tests and both demo modes |
 
@@ -247,7 +267,7 @@ The only dependencies are `@modelcontextprotocol/sdk` and `zod`, used by the age
 | HTTP 410 for a model id from an older tutorial | The model reached end of life | Run `node router/nim-route.mjs models` and pick a current id |
 | HTTP 404 from a catalog entry | The entry is not a chat model (embedding, safety, vision) | Run `models --probe` to see which entries answer chat |
 | Empty answer from a reasoning model | The token budget went to `reasoning_content` | Raise `--max-tokens` on `route` or `bench` |
-| HTTP 400 about tool choice on a self-hosted container | The tool calling flags are not set | See "Fitting a 24 GB GPU" |
+| HTTP 400 about tool choice on a self-hosted container | The tool calling flags are not set | See "Fitting a 24 GB GPU" and "On a 48 GB GPU" |
 | "Port 8089 is busy" from the demo | Another process holds the mock's port | `MOCK_PORT=8189 bash scripts/demo.sh` |
 
 ## Notes
