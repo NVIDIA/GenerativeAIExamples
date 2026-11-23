@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 Jeremy Schoemaker
+# SPDX-License-Identifier: Apache-2.0
+
+node_modules/
+.env

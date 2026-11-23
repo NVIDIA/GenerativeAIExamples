@@ -39,6 +39,8 @@ Community examples are sample code and deployments for RAG pipelines that are no
 
   This example demonstrates an interactive, agentic data analysis application that leverages NVIDIA Llama-3.1-Nemotron-Ultra-253B-v1 for advanced reasoning and data exploration. Users can upload CSV files, ask questions in natural language, and receive automated visualizations with clear, step-by-step reasoning. The implementation features a modular agent architecture for data insight, code generation, execution, and transparent reasoning.
 
+* [**MCP Tool-Calling Agent with Model Failover on NVIDIA NIM**](./nim-mcp-agent-failover/) — A self-contained Node.js example in which an NVIDIA Nemotron model calls Model Context Protocol tools through the OpenAI-compatible NIM API, with a router that parks rate limited models and drops end-of-life ones. It runs against the hosted API catalog, a self-hosted NIM container, or a bundled offline mock. It is an educational example, not a production gateway.
+
 * [**5G Network Operator Agent with NVIDIA NIM**](./5g-network-operator-agent/) — A self-contained notebook in which local baselines and an optional hosted NIM select bounded actions in a deterministic synthetic 5G congestion model. It is an educational example; it does not train a policy or connect to a live RAN.
 
 * [NVIDIA RAG in 5 minutes](./5_mins_rag_no_gpu/)
