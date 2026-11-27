@@ -36,7 +36,7 @@ The default sample deployment contains:
 
 - A Chain Server uses [LangChain](https://github.com/langchain-ai/langchain/) and [LlamaIndex](https://www.llamaindex.ai/) for combining language model components and easily constructing question-answering from a company's database.
 
-- [Sample Jupyter Notebooks](jupyter-server.md) and [](./frontend.md) so that you can test the chat system in an interactive manner.
+- [Sample Jupyter Notebooks](https://nvidia.github.io/GenerativeAIExamples/0.7.0/jupyter-server.html) and [RAG Playground Web Application](./frontend.md) so that you can test the chat system in an interactive manner.
 
 - [Milvus](https://milvus.io/docs/install_standalone-docker.md) or [pgvector](https://github.com/pgvector/pgvector) - Embeddings are stored in a vector database. Milvus is an open-source vector database capable of NVIDIA GPU-accelerated vector searches.
 

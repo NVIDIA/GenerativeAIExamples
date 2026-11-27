@@ -21,7 +21,7 @@ The web application provides a user interface to the RAG [chain server](./chain-
 - By selecting **Use knowledge base**, the chat bot returns responses that are augmented with data from documents that you uploaded and were stored in the vector database.
 - To store content in the vector database, click **Knowledge Base** in the upper right corner and upload documents.
 
-![Diagram](images/image4.jpg)
+![NVIDIA LLM Playground converse interface showing a llama-2-70b-chat window with a user prompt, assistant reply, an input box, and control buttons.](images/image4.jpg)
 
 ## Web Application Design
 
