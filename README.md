@@ -80,10 +80,10 @@ git clone https://github.com/nvidia/GenerativeAIExamples --recurse-submodules
 The workflows will then be located at [GenerativeAIExamples/vision_workflows](vision_workflows/README.md)
 
 Follow the links below to learn more:
-- [Learn how to use VLMs to automatically monitor a video stream for custom events.](nim_workflows/vlm_alerts/README.md)
-- [Learn how to search images with natural language using NV-CLIP.](nim_workflows/nvclip_multimodal_search/README.md)
-- [Learn how to combine VLMs, LLMs and CV models to build a robust text extraction pipeline.](nim_workflows/vision_text_extraction/README.md)
-- [Learn how to use embeddings with NVDINOv2 and a Milvus VectorDB to build a few shot classification model.](nim_workflows/nvdinov2_few_shot/README.md)
+- [Learn how to use VLMs to automatically monitor a video stream for custom events.](https://github.com/NVIDIA/metropolis-nim-workflows/blob/main/nim_workflows/vlm_alerts/README.md)
+- [Learn how to search images with natural language using NV-CLIP.](https://github.com/NVIDIA/metropolis-nim-workflows/blob/main/nim_workflows/nvclip_multimodal_search/README.md)
+- [Learn how to combine VLMs, LLMs and CV models to build a robust text extraction pipeline.](https://github.com/NVIDIA/metropolis-nim-workflows/blob/main/nim_workflows/vision_text_extraction/README.md)
+- [Learn how to use embeddings with NVDINOv2 and a Milvus VectorDB to build a few shot classification model.](https://github.com/NVIDIA/metropolis-nim-workflows/blob/main/nim_workflows/nvdinov2_few_shot/README.md)
 
 
 ## Try it Now!
